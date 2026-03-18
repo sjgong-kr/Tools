@@ -1,0 +1,134 @@
+{
+  "inputState": {
+    "charClass": "knight",
+    "conStat": "18",
+    "wisStat": "9",
+    "currentLv": "14",
+    "currentHp": "176",
+    "currentMp": "20",
+    "targetLvNum": "32"
+  },
+  "growthDiary": [
+    {
+      "lv": 14,
+      "hp": 176,
+      "mp": 20,
+      "memo": "2026-03-16 09:00",
+      "date": "2026. 3. 16."
+    },
+    {
+      "lv": 15,
+      "hp": 188,
+      "mp": 20,
+      "memo": "2026-03-16 11:18",
+      "date": "2026. 3. 16."
+    }
+  ],
+  "adenaHistory": [
+    {
+      "timestamp": "2026.03.16 10:44",
+      "amount": 15000
+    }
+  ],
+  "adenaRate": "5000",
+  "inventory": {
+    "weapon": [
+      {
+        "id": "item_1773625049069",
+        "name": "+6 크로스보우",
+        "ac": 0,
+        "price": 520000
+      }
+    ],
+    "armor": [
+      {
+        "id": "item_1773625091646",
+        "name": "+3 요정족 사슬 갑옷",
+        "ac": 8,
+        "price": 110000
+      },
+      {
+        "id": "item_1773625816316",
+        "name": "요정족 흉갑",
+        "ac": 4,
+        "price": 1000
+      }
+    ],
+    "cloak": [
+      {
+        "id": "item_1773625125002",
+        "name": "+4 보호망토",
+        "ac": 7,
+        "price": 168000
+      }
+    ],
+    "belt": [
+      {
+        "id": "item_1773625154879",
+        "name": "+0 트롤의 벨트",
+        "ac": 0,
+        "price": 45000
+      }
+    ],
+    "glove": [
+      {
+        "id": "item_1773625432044",
+        "name": "+0 활골무",
+        "ac": 0,
+        "price": 3500
+      }
+    ],
+    "boots": [
+      {
+        "id": "item_1773625759482",
+        "name": "+0 부츠",
+        "ac": 2,
+        "price": 1000
+      }
+    ],
+    "helm": [
+      {
+        "id": "item_1773625782651",
+        "name": "+0 신속투구",
+        "ac": 1,
+        "price": 22000
+      }
+    ]
+  },
+  "equippedItems": {
+    "weapon": "item_1773625049069",
+    "armor": "item_1773625091646",
+    "cloak": "item_1773625125002",
+    "belt": "item_1773625154879",
+    "glove": "item_1773625432044",
+    "boots": "item_1773625759482",
+    "helm": "item_1773625782651"
+  },
+  "activeBuffs": [
+    "buff_sub",
+    "buff_sec"
+  ],
+  "customBuffAc": "1",
+  "cashHistory": [
+    {
+      "date": "2026-03-14",
+      "desc": "바로템 20만 아데나 구입",
+      "amount": 100000
+    },
+    {
+      "date": "2026-03-13",
+      "desc": "신비의 큐브 10개",
+      "amount": 30000
+    },
+    {
+      "date": "2026-03-13",
+      "desc": "샤르나의 화이트데이 바구니 10개",
+      "amount": 30000
+    },
+    {
+      "date": "2026-03-12",
+      "amount": 70000,
+      "desc": "3개월 계정"
+    }
+  ]
+}
