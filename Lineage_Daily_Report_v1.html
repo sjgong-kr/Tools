@@ -57,6 +57,7 @@
                 <h2 class="text-2xl font-black text-gray-800">비밀 성장 일기장</h2>
                 <p class="text-xs text-gray-500 mt-2">인가된 작가님과 지인만 접근 가능합니다.</p>
                 <div id="cloudStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 hidden">☁️ 클라우드 동기화 서버 연결됨</div>
+                <div id="localStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-600 hidden">💾 기기 내 저장 모드 작동 중 (오프라인)</div>
             </div>
             
             <div class="space-y-4 text-left">
@@ -99,7 +100,7 @@
                 <h1 class="text-3xl font-bold flex items-center justify-center gap-2 mt-8 md:mt-2">
                     <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
                 </h1>
-                <p class="mt-2 opacity-90 text-sm mb-5">실시간 클라우드 동기화 시스템 탑재</p>
+                <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
                 
                 <!-- 백업/복원 버튼 영역 -->
                 <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
@@ -558,7 +559,7 @@
             cashHistory: []
         };
 
-        // Firebase 초기화 (캔버스 환경에서만 동작)
+        // Firebase 초기화 로직 (오직 캔버스 환경에서만 동작)
         if (isCloudEnabled) {
             const firebaseConfig = JSON.parse(__firebase_config);
             const app = initializeApp(firebaseConfig);
@@ -581,14 +582,71 @@
                 }
             });
             document.getElementById('cloudStatusIndicator').classList.remove('hidden');
+        } else {
+            // 깃허브 등 외부 환경일 경우 로컬 스토리지 모드 안내 표시
+            const localIndicator = document.getElementById('localStatusIndicator');
+            if(localIndicator) localIndicator.classList.remove('hidden');
+        }
+
+        // 동적 스토리지 키 생성 함수 (계정 분리 - 로컬 저장용)
+        function lsSet(key, value) {
+            if (!currentUser) return;
+            localStorage.setItem('lineage_' + currentUser + '_' + key, value);
+        }
+
+        function lsGet(key) {
+            if (!currentUser) return null;
+            return localStorage.getItem('lineage_' + currentUser + '_' + key);
+        }
+
+        function lsRemove(key) {
+            if (!currentUser) return;
+            localStorage.removeItem('lineage_' + currentUser + '_' + key);
+        }
+
+        // 구버전(공용) 데이터를 pokarekong 계정으로 이전
+        function migrateOldData() {
+            const oldKeysMap = {
+                'lineageInputState': 'InputState',
+                'lineageGrowthDiary': 'GrowthDiary',
+                'lineageAdenaHistory': 'AdenaHistory',
+                'lineageAdenaRate': 'AdenaRate',
+                'lineageInventory': 'Inventory',
+                'lineageEquippedItems': 'EquippedItems',
+                'lineageActiveBuffs': 'ActiveBuffs',
+                'lineageCustomBuffAc': 'CustomBuffAc',
+                'lineageCashHistory': 'CashHistory'
+            };
+
+            let migrated = false;
+            for (let oldKey in oldKeysMap) {
+                const data = localStorage.getItem(oldKey);
+                if (data) {
+                    localStorage.setItem('lineage_pokarekong_' + oldKeysMap[oldKey], data);
+                    localStorage.removeItem(oldKey);
+                    migrated = true;
+                }
+            }
+            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 마이그레이션 되었습니다.");
         }
 
         // ==========================================
-        // 클라우드 저장 / 불러오기 로직
+        // 저장 / 불러오기 로직 (클라우드 & 로컬)
         // ==========================================
         let saveTimeout;
         function triggerSave() {
-            // 변경사항이 있을 때마다 appData를 클라우드에 업로드 (0.5초 디바운싱 적용)
+            // 1. 항상 기기 로컬 스토리지에 우선 저장 (오프라인/깃허브 대비)
+            lsSet('InputState', JSON.stringify(appData.inputState || {}));
+            lsSet('GrowthDiary', JSON.stringify(appData.growthDiary || []));
+            lsSet('AdenaHistory', JSON.stringify(appData.adenaHistory || []));
+            lsSet('AdenaRate', appData.adenaRate || '30');
+            lsSet('Inventory', JSON.stringify(appData.inventory || {}));
+            lsSet('EquippedItems', JSON.stringify(appData.equippedItems || {}));
+            lsSet('ActiveBuffs', JSON.stringify(appData.activeBuffs || []));
+            lsSet('CustomBuffAc', appData.customBuffAc || 0);
+            lsSet('CashHistory', JSON.stringify(appData.cashHistory || []));
+
+            // 2. 만약 클라우드 연결 상태면 클라우드에도 업로드
             if (!isCloudEnabled || !userAuth || !currentUser) return;
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
@@ -610,20 +668,38 @@
             try {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    // 클라우드에 기존 데이터가 있으면 덮어씌움
+                    // 클라우드 데이터가 있다면 우선 적용
                     const cloudData = docSnap.data();
                     appData = { ...appData, ...cloudData };
+                    triggerSave(); // 로컬에도 덮어쓰기
                 } else {
-                    // 새 계정이면 초기화 된 appData 업로드
+                    // 클라우드가 비어있다면 로컬 데이터를 올려줌
+                    loadLocalDataToApp();
                     triggerSave(); 
                 }
-                initAppUI(); // 데이터 로드 후 화면 새로고침
+                initAppUI(); 
             } catch(e) {
                 console.error(e);
-                alert("서버 연결에 실패했습니다. 오프라인 모드로 실행합니다.");
+                alert("클라우드 서버 연결에 실패했습니다. 기기 내 저장 모드로 전환합니다.");
+                loadLocalDataToApp();
+                initAppUI();
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
+        }
+
+        function loadLocalDataToApp() {
+            appData = {
+                inputState: JSON.parse(lsGet('InputState')) || {},
+                growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
+                adenaHistory: JSON.parse(lsGet('AdenaHistory')) || [],
+                adenaRate: lsGet('AdenaRate') || '30',
+                inventory: JSON.parse(lsGet('Inventory')) || {},
+                equippedItems: JSON.parse(lsGet('EquippedItems')) || {},
+                activeBuffs: JSON.parse(lsGet('ActiveBuffs')) || [],
+                customBuffAc: lsGet('CustomBuffAc') || 0,
+                cashHistory: JSON.parse(lsGet('CashHistory')) || []
+            };
         }
 
         // ==========================================
@@ -647,7 +723,8 @@
                 if (userAuth && isCloudEnabled) {
                     fetchCloudData();
                 } else {
-                    // 로컬 환경(Git 등) 대비용 UI 초기화
+                    // 깃허브 등 로컬 환경
+                    loadLocalDataToApp();
                     initAppUI();
                 }
             } else {
@@ -666,6 +743,8 @@
         };
 
         window.checkSession = function() {
+            migrateOldData(); // 앱 시작 시 마이그레이션 확인
+
             const sessionUser = sessionStorage.getItem('lineageSessionUser');
             if (sessionUser && ACCOUNTS[sessionUser]) {
                 currentUser = sessionUser;
@@ -677,6 +756,7 @@
                 if (userAuth && isCloudEnabled) {
                     fetchCloudData();
                 } else {
+                    loadLocalDataToApp();
                     initAppUI();
                 }
             } else {
@@ -706,9 +786,9 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     appData = { ...appData, ...data };
-                    triggerSave(); // 클라우드에 바로 업로드
+                    triggerSave(); 
                     initAppUI();
-                    alert("성공적으로 데이터를 복원했습니다!");
+                    alert("성공적으로 계정 데이터를 복원했습니다!");
                 } catch(err) {
                     alert("잘못된 JSON 파일입니다. 파일을 다시 확인해주세요.");
                 }
