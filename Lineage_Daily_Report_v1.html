@@ -56,6 +56,7 @@
                 </div>
                 <h2 class="text-2xl font-black text-gray-800">비밀 성장 일기장</h2>
                 <p class="text-xs text-gray-500 mt-2">인가된 작가님과 지인만 접근 가능합니다.</p>
+                <div id="cloudStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 hidden">☁️ 클라우드 동기화 서버 연결됨</div>
             </div>
             
             <div class="space-y-4 text-left">
@@ -77,8 +78,14 @@
 
     <!-- 🌟 메인 앱 화면 (로그인 성공 시 표시) -->
     <div id="mainApp" class="hidden flex-1 w-full p-2 md:p-6">
-        <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 relative">
             
+            <!-- 로딩 오버레이 -->
+            <div id="loadingOverlay" class="hidden absolute inset-0 bg-white bg-opacity-90 z-50 flex flex-col items-center justify-center">
+                <i data-lucide="loader" class="w-10 h-10 text-indigo-500 animate-spin mb-3"></i>
+                <p class="font-bold text-indigo-800">클라우드 서버에서 데이터를 불러오는 중...</p>
+            </div>
+
             <!-- 헤더 영역 -->
             <div class="bg-indigo-600 text-white p-6 text-center relative flex flex-col items-center">
                 <div class="absolute top-4 left-4 bg-indigo-800 px-3 py-1.5 rounded-lg border border-indigo-500 flex items-center gap-2 shadow-sm">
@@ -90,9 +97,9 @@
                 </button>
 
                 <h1 class="text-3xl font-bold flex items-center justify-center gap-2 mt-8 md:mt-2">
-                    <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 2.0
+                    <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
                 </h1>
-                <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 내 캐릭터 진단기 탑재</p>
+                <p class="mt-2 opacity-90 text-sm mb-5">실시간 클라우드 동기화 시스템 탑재</p>
                 
                 <!-- 백업/복원 버튼 영역 -->
                 <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
@@ -522,70 +529,112 @@
         </div>
     </div>
 
-    <script>
-        lucide.createIcons();
+    <!-- Firebase 기반 클라우드 DB 로직 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // 🔐 계정 로그인 시스템 및 스토리지 관리
-        // ==========================================
         const ACCOUNTS = {
             "pokarekong": "Root+123",
             "nodage07": "Root+123"
         };
         
         let currentUser = null;
+        let db, auth, userAuth;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lineage-diary';
+        const isCloudEnabled = typeof __firebase_config !== 'undefined';
 
-        // 동적 스토리지 키 생성 함수 (계정 분리)
-        function lsSet(key, value) {
-            if (!currentUser) return;
-            localStorage.setItem('lineage_' + currentUser + '_' + key, value);
-        }
+        // 앱 전체 데이터를 통합 관리하는 객체
+        let appData = {
+            inputState: {},
+            growthDiary: [],
+            adenaHistory: [],
+            adenaRate: '30',
+            inventory: {},
+            equippedItems: {},
+            activeBuffs: [],
+            customBuffAc: 0,
+            cashHistory: []
+        };
 
-        function lsGet(key) {
-            if (!currentUser) return null;
-            return localStorage.getItem('lineage_' + currentUser + '_' + key);
-        }
+        // Firebase 초기화 (캔버스 환경에서만 동작)
+        if (isCloudEnabled) {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
 
-        function lsRemove(key) {
-            if (!currentUser) return;
-            localStorage.removeItem('lineage_' + currentUser + '_' + key);
-        }
-
-        // 구버전(공용) 데이터를 pokarekong 계정으로 이전
-        function migrateOldData() {
-            const oldKeysMap = {
-                'lineageInputState': 'InputState',
-                'lineageGrowthDiary': 'GrowthDiary',
-                'lineageAdenaHistory': 'AdenaHistory',
-                'lineageAdenaRate': 'AdenaRate',
-                'lineageInventory': 'Inventory',
-                'lineageEquippedItems': 'EquippedItems',
-                'lineageActiveBuffs': 'ActiveBuffs',
-                'lineageCustomBuffAc': 'CustomBuffAc',
-                'lineageCashHistory': 'CashHistory'
-            };
-
-            let migrated = false;
-            for (let oldKey in oldKeysMap) {
-                const data = localStorage.getItem(oldKey);
-                if (data) {
-                    // pokarekong 계정으로 이전
-                    localStorage.setItem('lineage_pokarekong_' + oldKeysMap[oldKey], data);
-                    // 원본 삭제
-                    localStorage.removeItem(oldKey);
-                    migrated = true;
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
                 }
-            }
-            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 마이그레이션 되었습니다.");
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (u) => {
+                userAuth = u;
+                if (u && currentUser) {
+                    fetchCloudData();
+                }
+            });
+            document.getElementById('cloudStatusIndicator').classList.remove('hidden');
         }
 
-        function attemptLogin() {
+        // ==========================================
+        // 클라우드 저장 / 불러오기 로직
+        // ==========================================
+        let saveTimeout;
+        function triggerSave() {
+            // 변경사항이 있을 때마다 appData를 클라우드에 업로드 (0.5초 디바운싱 적용)
+            if (!isCloudEnabled || !userAuth || !currentUser) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
+                try {
+                    await setDoc(docRef, appData, { merge: true });
+                } catch(e) {
+                    console.error("Cloud save error:", e);
+                }
+            }, 500);
+        }
+
+        async function fetchCloudData() {
+            if (!userAuth || !currentUser) return;
+            
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    // 클라우드에 기존 데이터가 있으면 덮어씌움
+                    const cloudData = docSnap.data();
+                    appData = { ...appData, ...cloudData };
+                } else {
+                    // 새 계정이면 초기화 된 appData 업로드
+                    triggerSave(); 
+                }
+                initAppUI(); // 데이터 로드 후 화면 새로고침
+            } catch(e) {
+                console.error(e);
+                alert("서버 연결에 실패했습니다. 오프라인 모드로 실행합니다.");
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 🔐 계정 로그인 시스템 
+        // ==========================================
+        window.attemptLogin = function() {
             const idInput = document.getElementById('loginId').value.trim();
             const pwInput = document.getElementById('loginPw').value;
             const errEl = document.getElementById('loginError');
 
             if (ACCOUNTS[idInput] && ACCOUNTS[idInput] === pwInput) {
-                // 로그인 성공
                 currentUser = idInput;
                 sessionStorage.setItem('lineageSessionUser', currentUser);
                 errEl.classList.add('hidden');
@@ -595,28 +644,28 @@
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
                 
-                initApp(); // 데이터 로드 및 렌더링
+                if (userAuth && isCloudEnabled) {
+                    fetchCloudData();
+                } else {
+                    // 로컬 환경(Git 등) 대비용 UI 초기화
+                    initAppUI();
+                }
             } else {
-                // 로그인 실패
                 errEl.classList.remove('hidden');
             }
-        }
+        };
 
-        function logout() {
+        window.logout = function() {
             currentUser = null;
             sessionStorage.removeItem('lineageSessionUser');
-            
             document.getElementById('loginId').value = '';
             document.getElementById('loginPw').value = '';
-            
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('flex');
             document.getElementById('loginScreen').classList.remove('hidden');
-        }
+        };
 
-        function checkSession() {
-            migrateOldData(); // 앱 시작 시 마이그레이션 확인
-            
+        window.checkSession = function() {
             const sessionUser = sessionStorage.getItem('lineageSessionUser');
             if (sessionUser && ACCOUNTS[sessionUser]) {
                 currentUser = sessionUser;
@@ -624,12 +673,48 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
-                initApp();
+                
+                if (userAuth && isCloudEnabled) {
+                    fetchCloudData();
+                } else {
+                    initAppUI();
+                }
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
             }
-        }
+        };
 
+        window.exportAllData = function() {
+            if(!currentUser) return;
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `LineageDiary_${currentUser}_AllData.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.importAllData = function(event) {
+            const file = event.target.files[0];
+            if (!file || !currentUser) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    appData = { ...appData, ...data };
+                    triggerSave(); // 클라우드에 바로 업로드
+                    initAppUI();
+                    alert("성공적으로 데이터를 복원했습니다!");
+                } catch(err) {
+                    alert("잘못된 JSON 파일입니다. 파일을 다시 확인해주세요.");
+                }
+            };
+            reader.readAsText(file);
+        };
 
         // ==========================================
         // 📊 기존 차트 및 스탯 관련 로직
@@ -752,7 +837,7 @@
         }
 
         function saveInputState() {
-            const state = {
+            appData.inputState = {
                 charClass: getSelectedClass(),
                 conStat: document.getElementById('conStat').value,
                 wisStat: document.getElementById('wisStat').value,
@@ -761,91 +846,37 @@
                 currentMp: document.getElementById('currentMp').value,
                 targetLvNum: document.getElementById('targetLvNum').value
             };
-            lsSet('InputState', JSON.stringify(state));
+            triggerSave();
         }
 
         function loadInputState() {
-            const saved = lsGet('InputState');
-            if (saved) {
-                const state = JSON.parse(saved);
-                if (state.charClass) document.querySelector(`input[name="charClass"][value="${state.charClass}"]`).checked = true;
-                if (state.conStat) document.getElementById('conStat').value = state.conStat;
-                if (state.wisStat) document.getElementById('wisStat').value = state.wisStat;
-                if (state.currentLv) document.getElementById('currentLv').value = state.currentLv;
-                if (state.currentHp) document.getElementById('currentHp').value = state.currentHp;
-                if (state.currentMp) document.getElementById('currentMp').value = state.currentMp;
-                if (state.targetLvNum) {
-                    document.getElementById('targetLvNum').value = state.targetLvNum;
-                    document.getElementById('targetLvRange').value = state.targetLvNum;
-                }
+            const state = appData.inputState || {};
+            if (state.charClass) document.querySelector(`input[name="charClass"][value="${state.charClass}"]`).checked = true;
+            if (state.conStat) document.getElementById('conStat').value = state.conStat;
+            if (state.wisStat) document.getElementById('wisStat').value = state.wisStat;
+            if (state.currentLv) document.getElementById('currentLv').value = state.currentLv;
+            if (state.currentHp) document.getElementById('currentHp').value = state.currentHp;
+            if (state.currentMp) document.getElementById('currentMp').value = state.currentMp;
+            if (state.targetLvNum) {
+                document.getElementById('targetLvNum').value = state.targetLvNum;
+                document.getElementById('targetLvRange').value = state.targetLvNum;
             }
         }
 
-        function exportAllData() {
-            if(!currentUser) return;
-            const allData = {
-                inputState: JSON.parse(lsGet('InputState') || '{}'),
-                growthDiary: JSON.parse(lsGet('GrowthDiary') || '[]'),
-                adenaHistory: JSON.parse(lsGet('AdenaHistory') || '[]'),
-                adenaRate: lsGet('AdenaRate') || '30',
-                inventory: JSON.parse(lsGet('Inventory') || '{}'),
-                equippedItems: JSON.parse(lsGet('EquippedItems') || '{}'),
-                activeBuffs: JSON.parse(lsGet('ActiveBuffs') || '[]'),
-                customBuffAc: lsGet('CustomBuffAc') || '0',
-                cashHistory: JSON.parse(lsGet('CashHistory') || '[]')
-            };
-            const dataStr = JSON.stringify(allData, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `LineageDiary_${currentUser}_AllData.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function importAllData(event) {
-            const file = event.target.files[0];
-            if (!file || !currentUser) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.inputState) lsSet('InputState', JSON.stringify(data.inputState));
-                    if(data.growthDiary) lsSet('GrowthDiary', JSON.stringify(data.growthDiary));
-                    if(data.adenaHistory) lsSet('AdenaHistory', JSON.stringify(data.adenaHistory));
-                    if(data.adenaRate) lsSet('AdenaRate', data.adenaRate);
-                    if(data.inventory) lsSet('Inventory', JSON.stringify(data.inventory));
-                    if(data.equippedItems) lsSet('EquippedItems', JSON.stringify(data.equippedItems));
-                    if(data.activeBuffs) lsSet('ActiveBuffs', JSON.stringify(data.activeBuffs));
-                    if(data.customBuffAc) lsSet('CustomBuffAc', data.customBuffAc);
-                    if(data.cashHistory) lsSet('CashHistory', JSON.stringify(data.cashHistory));
-                    
-                    alert("성공적으로 계정 데이터를 복원했습니다!");
-                    initApp(); // 전체 리로드 대신 앱 리초기화
-                } catch(err) {
-                    alert("잘못된 JSON 파일입니다. 파일을 다시 확인해주세요.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function setLv1Base() {
+        window.setLv1Base = function() {
             const cls = getSelectedClass();
             document.getElementById('currentLv').value = 1;
             document.getElementById('currentHp').value = baseStats[cls].hp;
             document.getElementById('currentMp').value = baseStats[cls].mp;
             saveInputState();
-            handleCurrentLvChange();
-        }
+            window.handleCurrentLvChange();
+        };
 
-        function handleCurrentLvChange() {
-            reactToInput();
-        }
+        window.handleCurrentLvChange = function() {
+            window.reactToInput();
+        };
 
-        function syncTargetLv(source) {
+        window.syncTargetLv = function(source) {
             let range = document.getElementById('targetLvRange');
             let num = document.getElementById('targetLvNum');
             
@@ -857,9 +888,9 @@
             }
             saveInputState();
             renderTargetGrowth();
-        }
+        };
 
-        function expandMaxLevel() {
+        window.expandMaxLevel = function() {
             const range = document.getElementById('targetLvRange');
             const num = document.getElementById('targetLvNum');
             const label = document.getElementById('rangeMaxLabel');
@@ -869,13 +900,13 @@
             num.max = 99;
             label.innerText = 'Lv.99';
             btn.style.display = 'none';
-        }
+        };
 
-        function reactToInput() {
+        window.reactToInput = function() {
             saveInputState();
             updateCharts();
             renderTargetGrowth();
-        }
+        };
 
         function updateCharts() {
             const charClass = getSelectedClass();
@@ -1080,17 +1111,7 @@
         // ==========================================
         let growthLogs = [];
 
-        function initGrowthLog() {
-            const saved = lsGet('GrowthDiary');
-            if (saved) {
-                growthLogs = JSON.parse(saved);
-            } else {
-                growthLogs = [];
-            }
-            renderGrowthLog();
-        }
-
-        function saveGrowthLog() {
+        window.saveGrowthLog = function() {
             const lv = parseInt(document.getElementById('logLv').value);
             const hp = parseInt(document.getElementById('logHp').value);
             const mp = parseInt(document.getElementById('logMp').value);
@@ -1109,7 +1130,8 @@
             }
 
             growthLogs.sort((a, b) => a.lv - b.lv);
-            lsSet('GrowthDiary', JSON.stringify(growthLogs));
+            appData.growthDiary = growthLogs;
+            triggerSave();
             
             document.getElementById('logLv').value = '';
             document.getElementById('logHp').value = '';
@@ -1117,9 +1139,9 @@
             document.getElementById('logMemo').value = '';
             
             renderGrowthLog();
-        }
+        };
 
-        function editGrowthLog(lv) {
+        window.editGrowthLog = function(lv) {
             const log = growthLogs.find(l => l.lv === lv);
             if (log) {
                 document.getElementById('logLv').value = log.lv;
@@ -1128,14 +1150,15 @@
                 document.getElementById('logMemo').value = log.memo || '';
                 document.getElementById('logLv').focus();
             }
-        }
+        };
 
-        function deleteGrowthLog(lv) {
+        window.deleteGrowthLog = function(lv) {
             if(!confirm(`Lv.${lv} 기록을 정말 삭제할까요?`)) return;
             growthLogs = growthLogs.filter(log => log.lv !== lv);
-            lsSet('GrowthDiary', JSON.stringify(growthLogs));
+            appData.growthDiary = growthLogs;
+            triggerSave();
             renderGrowthLog();
-        }
+        };
 
         function renderGrowthLog() {
             const list = document.getElementById('growthLogList');
@@ -1184,7 +1207,7 @@
                 `;
                 list.appendChild(li);
             });
-            lucide.createIcons();
+            window.lucide.createIcons();
         }
 
         // ==========================================
@@ -1226,31 +1249,10 @@
             { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 }
         ];
 
-        function initAssetManagement() {
-            const savedAdena = lsGet('AdenaHistory');
-            adenaHistory = savedAdena ? JSON.parse(savedAdena) : [];
-            
-            const savedCash = lsGet('CashHistory');
-            cashHistory = savedCash ? JSON.parse(savedCash) : [];
-            
-            const savedRate = lsGet('AdenaRate');
-            if (savedRate) document.getElementById('adenaRate').value = savedRate;
-
-            inventory = JSON.parse(lsGet('Inventory')) || {};
-            equipped = JSON.parse(lsGet('EquippedItems')) || {};
-
-            document.getElementById('cashDateInput').valueAsDate = new Date();
-
-            renderAdenaLog();
-            renderCashHistory();
-            renderBuffs();
-            renderManualArmorTable();
-        }
-
         function renderBuffs() {
             const container = document.getElementById('buffChecklist');
-            const activeBuffs = JSON.parse(lsGet('ActiveBuffs')) || [];
-            const customAc = lsGet('CustomBuffAc') || 0;
+            const activeBuffs = appData.activeBuffs || [];
+            const customAc = appData.customBuffAc || 0;
             
             document.getElementById('customBuffAc').value = customAc;
             
@@ -1265,7 +1267,7 @@
             }).join('');
         }
 
-        function recordAdena() {
+        window.recordAdena = function() {
             const inputEl = document.getElementById('adenaInput');
             const amount = parseInt(inputEl.value);
             if (!amount || amount < 0) return;
@@ -1281,29 +1283,32 @@
                 adenaHistory.unshift({ timestamp: timeString, amount: amount });
             }
             
-            lsSet('AdenaHistory', JSON.stringify(adenaHistory));
+            appData.adenaHistory = adenaHistory;
+            triggerSave();
             inputEl.value = '';
             renderAdenaLog();
-        }
+        };
         
-        function editAdenaRecord(index) {
+        window.editAdenaRecord = function(index) {
             editingAdenaIndex = index;
             document.getElementById('adenaInput').value = adenaHistory[index].amount;
             document.getElementById('btnAdenaSave').textContent = '수정';
             document.getElementById('adenaInput').focus();
-        }
+        };
 
-        function deleteAdenaRecord(index) {
+        window.deleteAdenaRecord = function(index) {
             if(!confirm('해당 아데나 기록을 삭제하시겠습니까?')) return;
             adenaHistory.splice(index, 1);
-            lsSet('AdenaHistory', JSON.stringify(adenaHistory));
+            appData.adenaHistory = adenaHistory;
+            triggerSave();
+
             if (editingAdenaIndex === index) {
                 editingAdenaIndex = -1;
                 document.getElementById('adenaInput').value = '';
                 document.getElementById('btnAdenaSave').textContent = '기록';
             }
             renderAdenaLog();
-        }
+        };
 
         function renderAdenaLog() {
             const list = document.getElementById('adenaLogList');
@@ -1333,12 +1338,12 @@
                     list.appendChild(li);
                 });
             }
-            lucide.createIcons();
+            window.lucide.createIcons();
             updateTotalAssetSummary();
         }
 
         // --- 캐쉬 결제 (과금) 내역 기능 ---
-        function recordCash() {
+        window.recordCash = function() {
             const dateInput = document.getElementById('cashDateInput').value;
             const descInput = document.getElementById('cashDescInput').value.trim();
             const amountInput = document.getElementById('cashAmountInput').value.replace(/,/g, '');
@@ -1358,27 +1363,32 @@
             
             cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            lsSet('CashHistory', JSON.stringify(cashHistory));
+            appData.cashHistory = cashHistory;
+            triggerSave();
+
             document.getElementById('cashAmountInput').value = '';
             document.getElementById('cashDescInput').value = '';
             
             renderCashHistory();
-        }
+        };
         
-        function editCashRecord(index) {
+        window.editCashRecord = function(index) {
             editingCashIndex = index;
             document.getElementById('cashDateInput').value = cashHistory[index].date;
             document.getElementById('cashDescInput').value = cashHistory[index].desc || '';
             document.getElementById('cashAmountInput').value = cashHistory[index].amount;
-            formatPriceInput(document.getElementById('cashAmountInput'));
+            window.formatPriceInput(document.getElementById('cashAmountInput'));
             document.getElementById('btnCashSave').textContent = '수정';
             document.getElementById('cashDescInput').focus();
-        }
+        };
 
-        function deleteCashRecord(index) {
+        window.deleteCashRecord = function(index) {
             if(!confirm('해당 결제 내역을 삭제하시겠습니까?')) return;
             cashHistory.splice(index, 1);
-            lsSet('CashHistory', JSON.stringify(cashHistory));
+            
+            appData.cashHistory = cashHistory;
+            triggerSave();
+
             if (editingCashIndex === index) {
                 editingCashIndex = -1;
                 document.getElementById('cashDateInput').valueAsDate = new Date();
@@ -1387,7 +1397,7 @@
                 document.getElementById('btnCashSave').textContent = '기록';
             }
             renderCashHistory();
-        }
+        };
 
         function renderCashHistory() {
             const list = document.getElementById('cashLogList');
@@ -1413,7 +1423,7 @@
                     list.appendChild(li);
                 });
             }
-            lucide.createIcons();
+            window.lucide.createIcons();
             updateTotalAssetSummary();
         }
 
@@ -1459,16 +1469,16 @@
                 tbody.appendChild(tr);
             });
             
-            lucide.createIcons();
-            calculateTotalManualGear();
+            window.lucide.createIcons();
+            window.calculateTotalManualGear();
         }
 
-        function formatPriceInput(inputEl) {
+        window.formatPriceInput = function(inputEl) {
             let val = inputEl.value.replace(/,/g, '').replace(/[^0-9]/g, '');
             inputEl.value = val ? Number(val).toLocaleString() : '';
-        }
+        };
 
-        function openAddItemModal(slotId) {
+        window.openAddItemModal = function(slotId) {
             currentAddingSlot = slotId;
             const slotName = manualGearSlots.find(s => s.id === slotId).name;
             document.getElementById('modalSlotName').textContent = slotName;
@@ -1478,14 +1488,14 @@
             document.getElementById('newItemPrice').value = '';
             
             document.getElementById('gearModal').classList.remove('hidden');
-        }
+        };
 
-        function closeAddItemModal() {
+        window.closeAddItemModal = function() {
             document.getElementById('gearModal').classList.add('hidden');
             currentAddingSlot = null;
-        }
+        };
 
-        function saveNewItem() {
+        window.saveNewItem = function() {
             if (!currentAddingSlot) return;
 
             const name = document.getElementById('newItemName').value.trim();
@@ -1509,20 +1519,22 @@
             inventory[currentAddingSlot].push(newItem);
             equipped[currentAddingSlot] = newItem.id;
 
-            lsSet('Inventory', JSON.stringify(inventory));
-            lsSet('EquippedItems', JSON.stringify(equipped));
+            appData.inventory = inventory;
+            appData.equippedItems = equipped;
+            triggerSave();
 
-            closeAddItemModal();
+            window.closeAddItemModal();
             renderManualArmorTable();
-        }
+        };
 
-        function changeEquippedItem(slotId, itemId) {
+        window.changeEquippedItem = function(slotId, itemId) {
             equipped[slotId] = itemId;
-            lsSet('EquippedItems', JSON.stringify(equipped));
+            appData.equippedItems = equipped;
+            triggerSave();
             renderManualArmorTable(); 
-        }
+        };
 
-        function deleteItem(slotId, itemId) {
+        window.deleteItem = function(slotId, itemId) {
             if (!confirm('이 장비를 보관함에서 삭제하시겠습니까?')) return;
 
             inventory[slotId] = inventory[slotId].filter(i => i.id !== itemId);
@@ -1531,13 +1543,14 @@
                 equipped[slotId] = 'none';
             }
 
-            lsSet('Inventory', JSON.stringify(inventory));
-            lsSet('EquippedItems', JSON.stringify(equipped));
+            appData.inventory = inventory;
+            appData.equippedItems = equipped;
+            triggerSave();
             
             renderManualArmorTable();
-        }
+        };
 
-        function calculateTotalManualGear() {
+        window.calculateTotalManualGear = function() {
             let totalAcBonus = 0;
             let totalCost = 0;
 
@@ -1565,8 +1578,8 @@
             const customAc = parseInt(document.getElementById('customBuffAc').value) || 0;
             buffAcBonus += customAc;
 
-            lsSet('ActiveBuffs', JSON.stringify(activeBuffs));
-            lsSet('CustomBuffAc', customAc);
+            appData.activeBuffs = activeBuffs;
+            appData.customBuffAc = customAc;
 
             const finalAc = 10 - totalAcBonus - buffAcBonus;
             
@@ -1575,13 +1588,14 @@
 
             const rateInput = document.getElementById('adenaRate');
             let rate = parseInt(rateInput.value) || 0;
-            lsSet('AdenaRate', rate); 
+            appData.adenaRate = rate;
+            triggerSave();
             
             const cashValue = (totalCost / 10000) * rate;
             document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor(cashValue).toLocaleString()} <span class="text-sm text-green-600">원</span>`;
 
             renderStorageTable();
-        }
+        };
 
         function renderStorageTable() {
             const tbody = document.getElementById('storageTableBody');
@@ -1635,7 +1649,7 @@
             const storageCashValue = (storageTotalCost / 10000) * rate;
             document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor(storageCashValue).toLocaleString()} 원)`;
             
-            lucide.createIcons();
+            window.lucide.createIcons();
             updateTotalAssetSummary();
         }
 
@@ -1684,17 +1698,29 @@
             }
         }
 
-        // 전체 초기화 (로그인 후 실행)
-        function initApp() {
+        // 전체 초기화 (데이터 준비 후 UI 적용)
+        function initAppUI() {
+            adenaHistory = appData.adenaHistory || [];
+            cashHistory = appData.cashHistory || [];
+            document.getElementById('adenaRate').value = appData.adenaRate || 30;
+            inventory = appData.inventory || {};
+            equipped = appData.equippedItems || {};
+            growthLogs = appData.growthDiary || [];
+            
+            document.getElementById('cashDateInput').valueAsDate = new Date();
+
             loadInputState();
-            handleCurrentLvChange();
-            initGrowthLog();
-            initAssetManagement(); 
+            window.handleCurrentLvChange();
+            renderGrowthLog();
+            renderAdenaLog();
+            renderCashHistory();
+            renderBuffs();
+            renderManualArmorTable(); 
         }
 
-        window.onload = () => {
-            checkSession(); 
-        };
+        window.addEventListener('load', () => {
+            window.checkSession(); 
+        });
     </script>
 </body>
 </html>
