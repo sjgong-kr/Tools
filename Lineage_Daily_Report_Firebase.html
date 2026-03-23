@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리니지 클래식 육성 계산기 & 스탯 일기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
+        body {
+            font-family: 'Gowun Dodum', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .diary-border {
+            border: 2px dashed #9ca3af;
+        }
+        /* 커스텀 슬라이더 스타일 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-gray-800 bg-[#f3f4f6] min-h-screen flex flex-col">
+
+    <!-- 🌟 로그인 화면 -->
+    <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-200 max-w-sm w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-3 bg-indigo-500"></div>
+            <div class="mb-6 mt-4">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-600">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-800">비밀 성장 일기장</h2>
+                <p class="text-xs text-gray-500 mt-2">인가된 작가님과 지인만 접근 가능합니다.</p>
+                <div id="cloudStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 hidden">☁️ 클라우드 동기화 서버 연결됨</div>
+                <div id="localStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-600 hidden">💾 기기 내 저장 모드 작동 중 (오프라인)</div>
+            </div>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">아이디 (ID)</label>
+                    <input type="text" id="loginId" placeholder="아이디를 입력하세요" class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 font-bold transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">비밀번호 (Password)</label>
+                    <input type="password" id="loginPw" placeholder="비밀번호를 입력하세요" class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 font-bold transition" onkeyup="if(event.key==='Enter') attemptLogin()">
+                </div>
+                <button onclick="attemptLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg mt-2 flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-5 h-5"></i> 다이어리 열기
+                </button>
+                <p id="loginError" class="text-red-500 text-xs font-bold text-center hidden mt-2">아이디 또는 비밀번호가 일치하지 않습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 메인 앱 화면 (로그인 성공 시 표시) -->
+    <div id="mainApp" class="hidden flex-1 w-full p-2 md:p-6">
+        <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 relative">
+            
+            <!-- 로딩 오버레이 -->
+            <div id="loadingOverlay" class="hidden absolute inset-0 bg-white bg-opacity-90 z-50 flex flex-col items-center justify-center">
+                <i data-lucide="loader" class="w-10 h-10 text-indigo-500 animate-spin mb-3"></i>
+                <p class="font-bold text-indigo-800">클라우드 서버에서 데이터를 불러오는 중...</p>
+            </div>
+
+            <!-- 헤더 영역 -->
+            <div class="bg-indigo-600 text-white p-6 text-center relative flex flex-col items-center">
+                <div class="absolute top-4 left-4 bg-indigo-800 px-3 py-1.5 rounded-lg border border-indigo-500 flex items-center gap-2 shadow-sm">
+                    <i data-lucide="user-check" class="w-4 h-4 text-indigo-300"></i>
+                    <span class="text-sm font-bold"><span id="displayUserId" class="text-yellow-300"></span> 작가님</span>
+                </div>
+                <button onclick="logout()" class="absolute top-4 right-4 bg-indigo-800 hover:bg-indigo-900 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition border border-indigo-500 shadow-sm">
+                    <i data-lucide="log-out" class="w-3 h-3"></i> 잠그기
+                </button>
+
+                <h1 class="text-3xl font-bold flex items-center justify-center gap-2 mt-8 md:mt-2">
+                    <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
+                </h1>
+                <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
+                
+                <!-- 백업/복원 버튼 영역 -->
+                <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
+                    <button onclick="exportAllData()" class="flex-1 bg-white text-indigo-700 hover:bg-gray-100 font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow">
+                        <i data-lucide="download" class="w-4 h-4"></i> 내 데이터 백업 (.json)
+                    </button>
+                    <label class="flex-1 bg-indigo-800 hover:bg-indigo-900 text-white font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow cursor-pointer border border-indigo-500">
+                        <i data-lucide="upload" class="w-4 h-4"></i> 데이터 불러오기
+                        <input type="file" accept=".json" class="hidden" onchange="importAllData(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 왼쪽: 현재 상태 및 진단 영역 -->
+                <div class="space-y-6">
+                    <h2 class="text-xl font-bold border-b-2 border-indigo-100 pb-2 flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5 text-indigo-600"></i> 내 캐릭터 정보
+                    </h2>
+                    
+                    <!-- 클래스 선택 -->
+                    <div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="charClass" value="knight" class="peer sr-only" checked onchange="reactToInput()">
+                                <div class="text-center p-2 rounded-xl border-2 border-gray-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 font-bold transition">기사</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="charClass" value="elf" class="peer sr-only" onchange="reactToInput()">
+                                <div class="text-center p-2 rounded-xl border-2 border-gray-200 peer-checked:border-green-600 peer-checked:bg-green-50 font-bold transition">요정</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="charClass" value="mage" class="peer sr-only" onchange="reactToInput()">
+                                <div class="text-center p-2 rounded-xl border-2 border-gray-200 peer-checked:border-purple-600 peer-checked:bg-purple-50 font-bold transition">마법사</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="charClass" value="prince" class="peer sr-only" onchange="reactToInput()">
+                                <div class="text-center p-2 rounded-xl border-2 border-gray-200 peer-checked:border-yellow-600 peer-checked:bg-yellow-50 font-bold transition">군주</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 스탯 입력 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-red-50 p-3 rounded-xl border border-red-100">
+                            <label class="block text-sm font-bold mb-1 text-red-600 text-center">CON (체력)</label>
+                            <input type="number" id="conStat" value="18" min="8" max="35" class="w-full p-2 border border-red-200 rounded-lg text-center font-bold outline-none" oninput="reactToInput()">
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                            <label class="block text-sm font-bold mb-1 text-blue-600 text-center">WIS (마나)</label>
+                            <input type="number" id="wisStat" value="18" min="8" max="35" class="w-full p-2 border border-blue-200 rounded-lg text-center font-bold outline-none" oninput="reactToInput()">
+                        </div>
+                    </div>
+
+                    <!-- 레벨 & 현재 상태 -->
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 shadow-inner">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-sm font-bold text-gray-700">현재 레벨과 피/엠</label>
+                            <button onclick="setLv1Base()" class="text-xs bg-white border border-gray-300 hover:bg-gray-100 px-2 py-1 rounded shadow-sm transition">Lv.1 리셋</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1 text-center">Lv</label>
+                                <input type="number" id="currentLv" value="10" min="1" class="w-full p-2 border rounded-lg text-center font-bold" oninput="handleCurrentLvChange()">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-red-500 mb-1 text-center">HP</label>
+                                <input type="number" id="currentHp" value="100" min="1" class="w-full p-2 border border-red-300 rounded-lg text-center font-bold text-red-600" oninput="reactToInput()">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-blue-500 mb-1 text-center">MP</label>
+                                <input type="number" id="currentMp" value="30" min="0" class="w-full p-2 border border-blue-300 rounded-lg text-center font-bold text-blue-600" oninput="reactToInput()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 내 캐릭터 축/망캐 진단기 (그래프) -->
+                    <div id="chartContainer" class="hidden flex-col gap-4 mt-4">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative">
+                            <h3 class="text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
+                                <span><i data-lucide="bar-chart-2" class="w-4 h-4 inline"></i> 현재 내 캐릭터 위치 진단</span>
+                                <span id="diagnosticMsg" class="text-xs px-2 py-1 rounded-full bg-gray-100">분석중...</span>
+                            </h3>
+                            <div class="w-full h-32 relative">
+                                <canvas id="hpChart"></canvas>
+                            </div>
+                            <div class="w-full h-32 relative mt-4">
+                                <canvas id="mpChart"></canvas>
+                            </div>
+                            <p class="text-[10px] text-center text-gray-400 mt-2">* 곡선(정규분포)은 1레벨부터 현재까지의 스탯 확률을 의미하며, 점선은 내 실제 수치입니다.</p>
+                        </div>
+                    </div>
+                    <div id="chartPlaceholder" class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center text-gray-400 mt-4">
+                        <i data-lucide="trending-up" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                        <p class="text-sm">현재 레벨이 2 이상일 때<br>내 캐릭터가 축캐인지 진단해줍니다.</p>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 성장 목표 및 일기장 영역 -->
+                <div class="relative flex flex-col h-full">
+                    <h2 class="text-xl font-bold border-b-2 border-indigo-100 pb-2 flex items-center gap-2 mb-4">
+                        <i data-lucide="target" class="w-5 h-5 text-indigo-600"></i> 목표 레벨 설정
+                    </h2>
+
+                    <!-- 슬라이더 영역 -->
+                    <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <label class="font-bold text-gray-700">목표 달성 레벨</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="targetLvNum" value="52" min="2" max="52" class="w-20 p-2 border-2 border-indigo-200 rounded-lg text-center font-bold text-indigo-700 focus:ring-2 outline-none" oninput="syncTargetLv('number')">
+                                <button id="expandBtn" onclick="expandMaxLevel()" class="px-2 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 border border-indigo-200 transition">+ 99까지 확장</button>
+                            </div>
+                        </div>
+                        <input type="range" id="targetLvRange" min="2" max="52" value="52" oninput="syncTargetLv('range')">
+                        <div class="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                            <span id="rangeMinLabel">Lv.2</span>
+                            <span id="rangeMaxLabel">Lv.52</span>
+                        </div>
+                    </div>
+
+                    <!-- 결과 출력 다이어리 -->
+                    <div class="bg-[#fffdf2] diary-border rounded-2xl p-4 md:p-6 flex-1 shadow-inner relative flex flex-col">
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-300 rounded-full opacity-50 shadow-sm border border-gray-400"></div>
+
+                        <div class="text-center mb-4 mt-2">
+                            <span id="resClassBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-1"></span>
+                            <h3 class="text-xl font-bold">1레벨부터 <span id="resTargetLv" class="text-indigo-600 text-2xl"></span>까지 육성 시</h3>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-center">
+                                <div class="text-red-800 font-bold text-sm mb-1">예상 평균 HP</div>
+                                <div class="text-2xl font-black text-red-600" id="resExpectedHp"></div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
+                                <div class="text-blue-800 font-bold text-sm mb-1">예상 평균 MP</div>
+                                <div class="text-2xl font-black text-blue-600" id="resExpectedMp"></div>
+                            </div>
+                        </div>
+
+                        <!-- 확률별 상세 표 -->
+                        <div class="mt-auto">
+                            <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1 border-b pb-1">
+                                <i data-lucide="list" class="w-4 h-4"></i> 운에 따른 확률별 예상치 (10~100%)
+                            </h4>
+                            <div class="overflow-hidden rounded-xl border border-gray-200">
+                                <table class="w-full text-xs text-center">
+                                    <thead class="bg-gray-100 text-gray-600 font-bold">
+                                        <tr>
+                                            <th class="py-2 border-r border-gray-200">등급</th>
+                                            <th class="py-2 border-r border-gray-200 text-red-600">HP</th>
+                                            <th class="py-2 text-blue-600">MP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="percentileTable" class="bg-white">
+                                        <!-- JS에서 렌더링 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🌟 성장 일지 (피/엠 기록장) -->
+            <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-white">
+                <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
+                    <i data-lucide="edit-2" class="w-6 h-6 text-indigo-500"></i> 나의 렙업 성장 일지
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 입력 폼 -->
+                    <div class="bg-[#fffdf2] diary-border p-4 rounded-xl shadow-sm">
+                        <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">새로운 레벨업 기록</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">달성 레벨</label>
+                                <input type="number" id="logLv" placeholder="예: 46" class="w-full p-2 border rounded-lg outline-none focus:border-indigo-500 font-bold">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-red-500 mb-1">최대 HP</label>
+                                    <input type="number" id="logHp" placeholder="HP 입력" class="w-full p-2 border border-red-200 rounded-lg outline-none font-bold text-red-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-blue-500 mb-1">최대 MP</label>
+                                    <input type="number" id="logMp" placeholder="MP 입력" class="w-full p-2 border border-blue-200 rounded-lg outline-none font-bold text-blue-600">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">오늘의 한줄 평 (선택)</label>
+                                <input type="text" id="logMemo" placeholder="예: 드디어 데스나이트!" class="w-full p-2 border rounded-lg outline-none text-sm">
+                            </div>
+                            <button onclick="saveGrowthLog()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition shadow">기록 / 덮어쓰기</button>
+                        </div>
+                    </div>
+                    <!-- 기록 리스트 -->
+                    <div class="md:col-span-2 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col h-full min-h-[250px]">
+                        <div class="bg-gray-200 px-4 py-2 text-xs font-bold text-gray-600 grid grid-cols-12 gap-2 text-center items-center">
+                            <div class="col-span-2">레벨</div>
+                            <div class="col-span-3">총 HP/MP</div>
+                            <div class="col-span-2">상승량</div>
+                            <div class="col-span-3">메모</div>
+                            <div class="col-span-2">관리</div>
+                        </div>
+                        <ul id="growthLogList" class="flex-1 overflow-y-auto p-2 space-y-2 text-sm">
+                            <!-- JS 렌더링 -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🌟 자산 및 장비 관리 영역 -->
+            <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#f8fafc]">
+                <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
+                    <i data-lucide="wallet" class="w-6 h-6 text-yellow-500"></i> 자산 관리 & 장비 가치 평가
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- 아데나 기록장 -->
+                    <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
+                        <h3 class="text-lg font-bold mb-3 flex items-center justify-between">
+                            <span>💰 보유 아데나 기록</span>
+                        </h3>
+                        
+                        <div class="flex gap-2 mb-4">
+                            <input type="number" id="adenaInput" placeholder="보유 아데나 입력" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 text-right font-bold text-sm">
+                            <button id="btnAdenaSave" onclick="recordAdena()" class="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm whitespace-nowrap">기록</button>
+                        </div>
+
+                        <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+                            <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between border-b">
+                                <span>기록 일시</span>
+                                <span>보유 금액 / 관리</span>
+                            </div>
+                            <ul id="adenaLogList" class="flex-1 overflow-y-auto max-h-[300px] p-2 space-y-1 text-sm">
+                                <!-- 아데나 기록 -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 수동 장비 셋업 시뮬레이터 -->
+                    <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
+                        <div class="flex justify-between items-end mb-3 border-b pb-2">
+                            <div>
+                                <h3 class="text-lg font-bold flex items-center gap-1">
+                                    <i data-lucide="swords" class="w-5 h-5 text-gray-600"></i> 전체 장비 세팅 및 가치 산출
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">* 보유하신 장비명, 방어력, 시세를 입력해 내 캐릭터의 가치를 확인하세요.</p>
+                            </div>
+                            <div class="text-right bg-green-50 p-2 rounded-lg border border-green-200 shadow-sm">
+                                <label class="text-xs font-bold text-green-800 block mb-1">현재 아데나 시세 (1만당)</label>
+                                <div class="flex items-center gap-1 justify-end">
+                                    <input type="number" id="adenaRate" value="30" placeholder="예: 30" class="w-20 p-1 text-right border border-green-300 rounded outline-none font-bold text-green-700" oninput="calculateTotalManualGear()">
+                                    <span class="text-xs font-bold text-green-700">원</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                            <table class="w-full text-xs text-center whitespace-nowrap">
+                                <thead class="bg-gray-100 text-gray-600 font-bold">
+                                    <tr>
+                                        <th class="py-2 px-2 border-r border-b w-16">부위</th>
+                                        <th class="py-2 px-2 border-r border-b">장착 중인 장비 선택 (인벤토리)</th>
+                                        <th class="py-2 px-2 border-r border-b w-20" title="아이템이 제공하는 방어력(AC)">방어력(+)</th>
+                                        <th class="py-2 px-2 border-b w-32">시세 (아데나)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="manualArmorTableBody" class="bg-white divide-y divide-gray-100">
+                                    <!-- JS 동적 렌더링 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 버프 및 추가 AC 영역 -->
+                        <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 적용 중인 버프 & 추가 방어력 (다중 선택)
+                            </h4>
+                            <div class="flex flex-wrap gap-2 mb-2" id="buffChecklist">
+                                <!-- JS에서 버프 체크박스 렌더링 -->
+                            </div>
+                            <div class="flex items-center gap-2 text-xs border-t border-gray-200 pt-2 mt-2">
+                                <span class="font-bold text-gray-600">스탯/레벨 등 기타 방어력 보너스:</span>
+                                <span class="text-gray-400">+</span>
+                                <input type="number" id="customBuffAc" value="0" class="w-16 p-1 border border-gray-300 rounded text-center outline-none focus:ring-1 focus:ring-indigo-400 font-bold text-indigo-700 bg-white shadow-sm" oninput="calculateTotalManualGear()">
+                            </div>
+                        </div>
+
+                        <!-- 총합 요약 -->
+                        <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center text-white mt-auto">
+                            <div>
+                                <span class="text-xs text-gray-400 block mb-1">현재 AC 환산</span>
+                                <div class="text-xl font-black text-indigo-300" id="manualTotalAcDisplay">AC 10 <span class="text-sm font-normal text-gray-400">(방어합 0)</span></div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-gray-400 block mb-1">장착 장비 총 가치 (아데나 / 원화)</span>
+                                <div class="flex items-baseline gap-3 justify-end">
+                                    <div class="text-xl font-black text-yellow-400" id="manualTotalPriceDisplay">0 <span class="text-sm text-yellow-600">아데나</span></div>
+                                    <div class="text-2xl font-black text-green-400" id="manualTotalCashDisplay">≈ 0 <span class="text-sm text-green-600">원</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 미장착 보관함 UI -->
+                        <div class="mt-6 border-t-2 border-dashed border-gray-200 pt-5">
+                            <div class="flex justify-between items-end mb-3">
+                                <h4 class="text-md font-bold text-gray-700 flex items-center gap-1">
+                                    <i data-lucide="box" class="w-5 h-5 text-gray-500"></i> 미장착 보관함 (여분 장비)
+                                </h4>
+                                <div class="text-right text-sm">
+                                    <span class="text-gray-500 font-bold">보관함 자산:</span> 
+                                    <span id="storageTotalPrice" class="font-black text-yellow-600 ml-1">0</span> <span class="text-xs text-yellow-700">아데나</span>
+                                    <span id="storageTotalCash" class="font-bold text-green-600 text-xs ml-1">(≈ 0 원)</span>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto rounded-xl border border-gray-200 bg-gray-50">
+                                <table class="w-full text-xs text-center whitespace-nowrap">
+                                    <thead class="bg-gray-200 text-gray-600 font-bold">
+                                        <tr>
+                                            <th class="py-2 px-2 border-r border-b w-16">부위</th>
+                                            <th class="py-2 px-2 border-r border-b">장비 이름</th>
+                                            <th class="py-2 px-2 border-r border-b w-16">방어력(+)</th>
+                                            <th class="py-2 px-2 border-r border-b w-28">시세 (아데나)</th>
+                                            <th class="py-2 px-2 border-b w-12">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="storageTableBody" class="bg-white divide-y divide-gray-100">
+                                        <!-- JS 렌더링 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🌟 총 자산 평가 & 과금 내역 -->
+            <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#fff5f5]">
+                <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
+                    <i data-lucide="pie-chart" class="w-6 h-6 text-red-500"></i> 자산 총괄 평가 & 쌀먹 지수
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- 과금 내역 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col h-full">
+                        <h3 class="text-lg font-bold mb-3 flex items-center justify-between text-red-800">
+                            <span>💳 캐쉬 결제 (과금) 내역</span>
+                        </h3>
+                        
+                        <div class="flex flex-col gap-2 mb-4">
+                            <div class="flex gap-2">
+                                <input type="date" id="cashDateInput" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 text-sm font-bold text-gray-600">
+                                <input type="text" id="cashAmountInput" placeholder="결제 금액 (원)" class="w-1/2 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-right font-bold text-sm" oninput="formatPriceInput(this)">
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="cashDescInput" placeholder="결제 내용 (예: 드다 패키지)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-sm font-bold">
+                                <button id="btnCashSave" onclick="recordCash()" class="bg-red-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm whitespace-nowrap">기록</button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+                            <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between items-center border-b">
+                                <span class="w-1/4">일자</span>
+                                <span class="w-1/2 text-center">내용</span>
+                                <span class="w-1/4 text-right">금액/관리</span>
+                            </div>
+                            <ul id="cashLogList" class="flex-1 overflow-y-auto max-h-[250px] p-2 space-y-1 text-sm">
+                                <!-- 과금 기록 -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 자산 평가 요약 (손익) -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center items-center text-center">
+                        <h3 class="text-lg font-bold mb-5 text-gray-700 w-full text-left border-b pb-2">📊 내 캐릭터의 진짜 가치는?</h3>
+
+                        <div class="grid grid-cols-2 gap-4 w-full mb-6">
+                            <div class="bg-red-50 p-4 rounded-xl border border-red-100 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 opacity-10"><i data-lucide="credit-card" class="w-16 h-16"></i></div>
+                                <span class="block text-xs font-bold text-red-800 mb-1">총 과금액 (투자)</span>
+                                <div class="text-xl font-black text-red-600"><span id="summaryTotalCash">0</span> 원</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-xl border border-green-100 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 opacity-10"><i data-lucide="coins" class="w-16 h-16"></i></div>
+                                <span class="block text-xs font-bold text-green-800 mb-1">현재 총 자산 환산액</span>
+                                <div class="text-xl font-black text-green-600"><span id="summaryTotalAssetCash">0</span> 원</div>
+                                <div class="text-[10px] text-green-700 mt-1 font-bold">(<span id="summaryTotalAdena">0</span> 아데나)</div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-gray-800 rounded-xl p-5 text-white shadow-lg border-2 border-gray-700 relative">
+                            <span class="block text-sm text-gray-400 mb-2">최종 손익 (총 자산 - 과금액)</span>
+                            <div id="summaryNetProfit" class="text-3xl font-black text-gray-300 transition-all duration-500">0 원</div>
+                            <div id="summaryMemo" class="text-sm mt-3 font-bold py-1.5 px-3 rounded-full inline-block transition-all duration-500">과금 내역을 입력해보세요!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 새 장비 등록 모달 -->
+            <div id="gearModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-xl w-80 overflow-hidden border border-gray-200 transform transition-all scale-100">
+                    <div class="bg-indigo-600 p-4 text-white font-bold flex justify-between items-center">
+                        <span>새 장비 보관함에 넣기 (<span id="modalSlotName"></span>)</span>
+                        <button onclick="closeAddItemModal()" class="text-white hover:text-indigo-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">장비 이름</label>
+                            <input type="text" id="newItemName" placeholder="예: +7 요정족 사슬 갑옷" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-bold text-gray-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">방어력 보너스 (숫자만, 무기/악세는 0)</label>
+                            <input type="number" id="newItemAc" placeholder="예: 11" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-bold text-indigo-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">현재 시세 (아데나)</label>
+                            <input type="text" id="newItemPrice" placeholder="예: 1,500,000" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-yellow-500 text-sm font-bold text-right text-gray-800" oninput="formatPriceInput(this)">
+                        </div>
+                        <button onclick="saveNewItem()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition shadow mt-2">저장 및 즉시 장착하기</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase 기반 클라우드 DB 로직 -->
+    <script type="module">
+        // 1. 파이어베이스 라이브러리 불러오기 (Realtime Database 전용)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const ACCOUNTS = {
+            "pokarekong": "Root+123",
+            "nodage07": "Root+123"
+        };
+        
+        let currentUser = null;
+
+        // 2. 전달해주신 파이어베이스 설정값 적용
+        const firebaseConfig = {
+            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+            authDomain: "openzeroc.firebaseapp.com",
+            projectId: "openzeroc",
+            storageBucket: "openzeroc.firebasestorage.app",
+            messagingSenderId: "465944510778",
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+            measurementId: "G-M4K79K2XPG",
+            // ★ 대부분의 기본 DB 주소 포맷입니다 (안될 경우 콘솔에서 확인 후 변경)
+            databaseURL: "https://openzeroc-default-rtdb.firebaseio.com" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 앱 전체 데이터 객체
+        let appData = {
+            inputState: {},
+            growthDiary: [],
+            adenaHistory: [],
+            adenaRate: '30',
+            inventory: {},
+            equippedItems: {},
+            activeBuffs: [],
+            customBuffAc: 0,
+            cashHistory: []
+        };
+
+        // ==========================================
+        // 로컬 스토리지 보조 기능 (오프라인/에러 대비용)
+        // ==========================================
+        function lsSet(key, value) {
+            if (!currentUser) return;
+            localStorage.setItem('lineage_' + currentUser + '_' + key, value);
+        }
+
+        function lsGet(key) {
+            if (!currentUser) return null;
+            return localStorage.getItem('lineage_' + currentUser + '_' + key);
+        }
+
+        function lsRemove(key) {
+            if (!currentUser) return;
+            localStorage.removeItem('lineage_' + currentUser + '_' + key);
+        }
+
+        function migrateOldData() {
+            const oldKeysMap = {
+                'lineageInputState': 'InputState',
+                'lineageGrowthDiary': 'GrowthDiary',
+                'lineageAdenaHistory': 'AdenaHistory',
+                'lineageAdenaRate': 'AdenaRate',
+                'lineageInventory': 'Inventory',
+                'lineageEquippedItems': 'EquippedItems',
+                'lineageActiveBuffs': 'ActiveBuffs',
+                'lineageCustomBuffAc': 'CustomBuffAc',
+                'lineageCashHistory': 'CashHistory'
+            };
+
+            let migrated = false;
+            for (let oldKey in oldKeysMap) {
+                const data = localStorage.getItem(oldKey);
+                if (data) {
+                    localStorage.setItem('lineage_pokarekong_' + oldKeysMap[oldKey], data);
+                    localStorage.removeItem(oldKey);
+                    migrated = true;
+                }
+            }
+            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 이전되었습니다.");
+        }
+
+        // ==========================================
+        // 🚀 파이어베이스 클라우드 동기화 (핵심 로직)
+        // ==========================================
+        let saveTimeout;
+        window.triggerSave = function() {
+            // 1. 기기 로컬 스토리지에 우선 저장 (보험용)
+            lsSet('InputState', JSON.stringify(appData.inputState || {}));
+            lsSet('GrowthDiary', JSON.stringify(appData.growthDiary || []));
+            lsSet('AdenaHistory', JSON.stringify(appData.adenaHistory || []));
+            lsSet('AdenaRate', appData.adenaRate || '30');
+            lsSet('Inventory', JSON.stringify(appData.inventory || {}));
+            lsSet('EquippedItems', JSON.stringify(appData.equippedItems || {}));
+            lsSet('ActiveBuffs', JSON.stringify(appData.activeBuffs || []));
+            lsSet('CustomBuffAc', appData.customBuffAc || 0);
+            lsSet('CashHistory', JSON.stringify(appData.cashHistory || []));
+
+            // 2. 파이어베이스 클라우드에 덮어쓰기 저장
+            if (!currentUser) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                const statusIndicator = document.getElementById('cloudStatusIndicator');
+                statusIndicator.classList.remove('hidden');
+                statusIndicator.innerText = "☁️ 동기화 중...";
+                statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-yellow-50 text-yellow-600";
+                
+                try {
+                    await set(ref(db, 'lineageAccounts/' + currentUser), appData);
+                    statusIndicator.innerText = "☁️ 클라우드 동기화 완료";
+                    statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600";
+                } catch(e) {
+                    console.error("Cloud save error:", e);
+                    statusIndicator.innerText = "⚠️ 동기화 실패 (기기에만 저장됨)";
+                    statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-red-50 text-red-600";
+                }
+            }, 500);
+        };
+
+        window.fetchCloudData = async function() {
+            if (!currentUser) return;
+            
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, 'lineageAccounts/' + currentUser));
+                
+                if (snapshot.exists()) {
+                    console.log("클라우드 데이터 로드 성공!");
+                    const cloudData = snapshot.val();
+                    appData = { ...appData, ...cloudData };
+                    window.triggerSave(); 
+                } else {
+                    console.log("클라우드가 비어있어 로컬 데이터를 업로드합니다.");
+                    window.loadLocalDataToApp();
+                    window.triggerSave(); 
+                }
+                initAppUI(); 
+            } catch(e) {
+                console.error("Cloud fetch error:", e);
+                alert("서버 연결에 실패했습니다! 기존 기기에 저장된 데이터를 불러옵니다.");
+                window.loadLocalDataToApp();
+                initAppUI();
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        };
+
+        window.loadLocalDataToApp = function() {
+            appData = {
+                inputState: JSON.parse(lsGet('InputState')) || {},
+                growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
+                adenaHistory: JSON.parse(lsGet('AdenaHistory')) || [],
+                adenaRate: lsGet('AdenaRate') || '30',
+                inventory: JSON.parse(lsGet('Inventory')) || {},
+                equippedItems: JSON.parse(lsGet('EquippedItems')) || {},
+                activeBuffs: JSON.parse(lsGet('ActiveBuffs')) || [],
+                customBuffAc: lsGet('CustomBuffAc') || 0,
+                cashHistory: JSON.parse(lsGet('CashHistory')) || []
+            };
+        };
+
+        // ==========================================
+        // 🔐 계정 로그인 시스템 
+        // ==========================================
+        window.attemptLogin = function() {
+            const idInput = document.getElementById('loginId').value.trim();
+            const pwInput = document.getElementById('loginPw').value;
+            const errEl = document.getElementById('loginError');
+
+            if (ACCOUNTS[idInput] && ACCOUNTS[idInput] === pwInput) {
+                currentUser = idInput;
+                sessionStorage.setItem('lineageSessionUser', currentUser);
+                errEl.classList.add('hidden');
+                
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('flex');
+                document.getElementById('displayUserId').textContent = currentUser;
+                
+                window.fetchCloudData(); // 로그인 성공 시 클라우드 연동
+            } else {
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        window.logout = function() {
+            currentUser = null;
+            sessionStorage.removeItem('lineageSessionUser');
+            document.getElementById('loginId').value = '';
+            document.getElementById('loginPw').value = '';
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('flex');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        };
+
+        window.checkSession = function() {
+            migrateOldData(); 
+
+            const sessionUser = sessionStorage.getItem('lineageSessionUser');
+            if (sessionUser && ACCOUNTS[sessionUser]) {
+                currentUser = sessionUser;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('flex');
+                document.getElementById('displayUserId').textContent = currentUser;
+                
+                window.fetchCloudData(); // 새로고침 시 클라우드 데이터 유지
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        };
+
+        window.exportAllData = function() {
+            if(!currentUser) return;
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `LineageDiary_${currentUser}_AllData.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.importAllData = function(event) {
+            const file = event.target.files[0];
+            if (!file || !currentUser) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    appData = { ...appData, ...data };
+                    window.triggerSave(); 
+                    initAppUI();
+                    alert("성공적으로 복원하여 서버에 업로드했습니다!");
+                } catch(err) {
+                    alert("잘못된 JSON 파일입니다. 파일을 다시 확인해주세요.");
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // ==========================================
+        // 📊 기존 차트 및 스탯 관련 로직
+        // ==========================================
+        let chartHpInstance = null;
+        let chartMpInstance = null;
+
+        Chart.defaults.font.family = "'Gowun Dodum', sans-serif";
+
+        const baseStats = {
+            knight: { hp: 14, mp: 1, name: '기사', color: 'bg-indigo-100 text-indigo-800' },
+            elf:    { hp: 15, mp: 4, name: '요정', color: 'bg-green-100 text-green-800' },
+            mage:   { hp: 12, mp: 4, name: '마법사', color: 'bg-purple-100 text-purple-800' },
+            prince: { hp: 14, mp: 2, name: '군주', color: 'bg-yellow-100 text-yellow-800' }
+        };
+
+        const zScores = {
+            100: Infinity, 10: 1.282, 20: 0.842, 30: 0.524, 40: 0.253, 50: 0.000,
+            60: -0.253, 70: -0.524, 80: -0.842, 90: -1.282, 0: -Infinity
+        };
+
+        function calcProps(arr) {
+            let min = Math.min(...arr), max = Math.max(...arr);
+            let mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            let variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
+            return { min, max, mean, variance };
+        }
+        function rangeProps(min, max) {
+            let mean = (min + max) / 2;
+            let variance = (Math.pow(max - min + 1, 2) - 1) / 12;
+            return { min, max, mean, variance };
+        }
+
+        function getSelectedClass() {
+            return document.querySelector('input[name="charClass"]:checked').value;
+        }
+
+        function getHpStats(charClass, con) {
+            if (charClass === 'knight') {
+                if (con <= 15) return rangeProps(6, 12);
+                if (con === 16) return rangeProps(7, 13);
+                if (con === 17) return rangeProps(8, 14);
+                if (con === 18) return rangeProps(9, 15);
+                if (con === 19) return rangeProps(10, 16);
+                if (con === 20) return rangeProps(11, 17);
+                if (con === 21) return rangeProps(12, 18);
+                if (con === 22) return rangeProps(13, 19);
+                if (con === 23) return rangeProps(14, 20);
+                if (con === 24) return rangeProps(15, 21);
+                if (con >= 25) return rangeProps(16, 22);
+            } else if (charClass === 'elf') {
+                if (con <= 15) return rangeProps(5, 10);
+                if (con === 16) return rangeProps(6, 11);
+                if (con === 17) return rangeProps(7, 12);
+                if (con >= 18) return rangeProps(8, 13);
+            } else if (charClass === 'mage') {
+                if (con <= 15) return rangeProps(3, 6);
+                if (con === 16) return rangeProps(4, 7);
+                if (con === 17) return rangeProps(5, 8);
+                if (con === 18) return rangeProps(6, 9);
+                if (con === 19) return rangeProps(7, 10);
+                if (con === 20) return rangeProps(8, 11);
+                if (con >= 21) return rangeProps(9, 12);
+            } else if (charClass === 'prince') {
+                if (con <= 15) return rangeProps(5, 10);
+                if (con === 16) return rangeProps(6, 11);
+                if (con === 17) return rangeProps(7, 12);
+                if (con === 18) return rangeProps(8, 13);
+                if (con === 19) return rangeProps(9, 14);
+                if (con === 20) return rangeProps(10, 15);
+                if (con >= 21) return rangeProps(11, 16);
+            }
+            return rangeProps(0, 0);
+        }
+
+        function getMpStats(charClass, wis) {
+            if (charClass === 'knight') {
+                if (wis <= 9) return rangeProps(0, 2);
+                if (wis >= 10) return rangeProps(0, 3);
+            } else if (charClass === 'elf') {
+                if (wis <= 11) return calcProps([3, 4]);
+                if (wis >= 12 && wis <= 14) return rangeProps(3, 6);
+                if (wis >= 15 && wis <= 17) return calcProps([4, 6, 7]);
+                if (wis >= 18 && wis <= 20) return calcProps([4, 6, 7, 9]);
+                if (wis >= 21) return calcProps([6, 7, 9, 10]);
+            } else if (charClass === 'mage') {
+                if (wis <= 14) return rangeProps(4, 8);
+                if (wis === 15) return rangeProps(6, 10);
+                if (wis === 16) return rangeProps(6, 11);
+                if (wis === 17) return rangeProps(7, 11);
+                if (wis === 18) return rangeProps(7, 12);
+                if (wis >= 19 && wis <= 20) return rangeProps(6, 12);
+                if (wis >= 21 && wis <= 23) return rangeProps(8, 14);
+                if (wis === 24) return rangeProps(8, 16);
+                if (wis >= 25) return rangeProps(10, 16);
+            } else if (charClass === 'prince') {
+                if (wis <= 10) return rangeProps(2, 3);
+                if (wis >= 11 && wis <= 14) return rangeProps(2, 4);
+                if (wis >= 15 && wis <= 17) return rangeProps(3, 5);
+                if (wis >= 18) return rangeProps(3, 6);
+            }
+            return rangeProps(0, 0);
+        }
+
+        function normalPDF(x, mean, variance) {
+            if (variance <= 0) return 0;
+            const std = Math.sqrt(variance);
+            const exponent = -Math.pow(x - mean, 2) / (2 * variance);
+            return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+        }
+
+        function getPercentile(x, mean, std) {
+            if(std === 0) return x >= mean ? 100 : 0;
+            let z = (x - mean) / std;
+            let t = 1 / (1 + 0.231641898 * Math.abs(z));
+            let d = 0.3989422804 * Math.exp(-z * z / 2);
+            let p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+            if (z > 0) p = 1 - p;
+            return p * 100;
+        }
+
+        function saveInputState() {
+            appData.inputState = {
+                charClass: getSelectedClass(),
+                conStat: document.getElementById('conStat').value,
+                wisStat: document.getElementById('wisStat').value,
+                currentLv: document.getElementById('currentLv').value,
+                currentHp: document.getElementById('currentHp').value,
+                currentMp: document.getElementById('currentMp').value,
+                targetLvNum: document.getElementById('targetLvNum').value
+            };
+            window.triggerSave();
+        }
+
+        function loadInputState() {
+            const state = appData.inputState || {};
+            if (state.charClass) document.querySelector(`input[name="charClass"][value="${state.charClass}"]`).checked = true;
+            if (state.conStat) document.getElementById('conStat').value = state.conStat;
+            if (state.wisStat) document.getElementById('wisStat').value = state.wisStat;
+            if (state.currentLv) document.getElementById('currentLv').value = state.currentLv;
+            if (state.currentHp) document.getElementById('currentHp').value = state.currentHp;
+            if (state.currentMp) document.getElementById('currentMp').value = state.currentMp;
+            if (state.targetLvNum) {
+                document.getElementById('targetLvNum').value = state.targetLvNum;
+                document.getElementById('targetLvRange').value = state.targetLvNum;
+            }
+        }
+
+        window.setLv1Base = function() {
+            const cls = getSelectedClass();
+            document.getElementById('currentLv').value = 1;
+            document.getElementById('currentHp').value = baseStats[cls].hp;
+            document.getElementById('currentMp').value = baseStats[cls].mp;
+            saveInputState();
+            window.handleCurrentLvChange();
+        };
+
+        window.handleCurrentLvChange = function() {
+            window.reactToInput();
+        };
+
+        window.syncTargetLv = function(source) {
+            let range = document.getElementById('targetLvRange');
+            let num = document.getElementById('targetLvNum');
+            
+            if (source === 'range') num.value = range.value;
+            if (source === 'number') {
+                if (parseInt(num.value) < parseInt(range.min)) num.value = range.min;
+                if (parseInt(num.value) > parseInt(range.max)) num.value = range.max;
+                range.value = num.value;
+            }
+            saveInputState();
+            renderTargetGrowth();
+        };
+
+        window.expandMaxLevel = function() {
+            const range = document.getElementById('targetLvRange');
+            const num = document.getElementById('targetLvNum');
+            const label = document.getElementById('rangeMaxLabel');
+            const btn = document.getElementById('expandBtn');
+            
+            range.max = 99;
+            num.max = 99;
+            label.innerText = 'Lv.99';
+            btn.style.display = 'none';
+        };
+
+        window.reactToInput = function() {
+            saveInputState();
+            updateCharts();
+            renderTargetGrowth();
+        };
+
+        function updateCharts() {
+            const charClass = getSelectedClass();
+            const con = parseInt(document.getElementById('conStat').value);
+            const wis = parseInt(document.getElementById('wisStat').value);
+            const clv = parseInt(document.getElementById('currentLv').value);
+            const curHp = parseInt(document.getElementById('currentHp').value);
+            const curMp = parseInt(document.getElementById('currentMp').value);
+
+            const container = document.getElementById('chartContainer');
+            const placeholder = document.getElementById('chartPlaceholder');
+
+            if (clv <= 1) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                placeholder.classList.remove('hidden');
+                return;
+            } else {
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+                placeholder.classList.add('hidden');
+            }
+
+            const hpStats = getHpStats(charClass, con);
+            const mpStats = getMpStats(charClass, wis);
+            
+            const n = clv - 1;
+            const baseHp = baseStats[charClass].hp;
+            const baseMp = baseStats[charClass].mp;
+
+            const expectedHpMean = baseHp + n * hpStats.mean;
+            const hpVar = n * hpStats.variance;
+            const hpStd = Math.sqrt(hpVar);
+
+            const expectedMpMean = baseMp + n * mpStats.mean;
+            const mpVar = n * mpStats.variance;
+            const mpStd = Math.sqrt(mpVar);
+
+            let hpPer = getPercentile(curHp, expectedHpMean, hpStd);
+            let mpPer = getPercentile(curMp, expectedMpMean, mpStd);
+            let avgPer = 100 - ((hpPer + mpPer) / 2); 
+            
+            let diagStr = "";
+            let diagColor = "";
+            if(avgPer <= 15) { diagStr = "🎉 초특급 축캐!"; diagColor = "bg-yellow-100 text-yellow-800 border-yellow-300"; }
+            else if(avgPer <= 35) { diagStr = "👍 훌륭한 축캐"; diagColor = "bg-green-100 text-green-800 border-green-300"; }
+            else if(avgPer <= 65) { diagStr = "😐 평범한 일반캐"; diagColor = "bg-gray-100 text-gray-800 border-gray-300"; }
+            else if(avgPer <= 85) { diagStr = "😥 약간 아쉬운 캐릭"; diagColor = "bg-orange-100 text-orange-800 border-orange-300"; }
+            else { diagStr = "💀 눈물의 망캐..."; diagColor = "bg-red-100 text-red-800 border-red-300"; }
+            
+            const msgEl = document.getElementById('diagnosticMsg');
+            msgEl.textContent = diagStr;
+            msgEl.className = `text-xs px-2 py-1 rounded-full font-bold border ${diagColor}`;
+
+            drawChart('hpChart', expectedHpMean, hpVar, curHp, 'HP 분포', '#ef4444', hpStats.min * n + baseHp, hpStats.max * n + baseHp);
+            drawChart('mpChart', expectedMpMean, mpVar, curMp, 'MP 분포', '#3b82f6', mpStats.min * n + baseMp, mpStats.max * n + baseMp);
+        }
+
+        function drawChart(canvasId, mean, variance, userVal, label, colorHex, absMin, absMax) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const std = Math.max(Math.sqrt(variance), 1); 
+
+            let minX = Math.floor(Math.max(mean - 4 * std, absMin));
+            let maxX = Math.ceil(Math.min(mean + 4 * std, absMax));
+            
+            if (maxX - minX < 10) { minX -= 5; maxX += 5; }
+
+            const labels = [];
+            const data = [];
+            let maxY = 0;
+
+            for (let i = minX; i <= maxX; i++) {
+                labels.push(i);
+                let y = normalPDF(i, mean, variance);
+                data.push(y);
+                if (y > maxY) maxY = y;
+            }
+
+            if (canvasId === 'hpChart' && chartHpInstance) chartHpInstance.destroy();
+            if (canvasId === 'mpChart' && chartMpInstance) chartMpInstance.destroy();
+
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: label,
+                            data: data,
+                            borderColor: colorHex,
+                            backgroundColor: colorHex + '33', 
+                            borderWidth: 2,
+                            fill: true,
+                            pointRadius: 0,
+                            tension: 0.4
+                        },
+                        {
+                            label: '내 위치',
+                            data: labels.map(x => (x === userVal || (userVal < minX && x===minX) || (userVal > maxX && x===maxX)) ? maxY : null),
+                            borderColor: '#111827',
+                            backgroundColor: '#111827',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            type: 'bar', 
+                            barThickness: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: { ticks: { maxTicksLimit: 7, font: { size: 10 } } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 300 }
+                }
+            };
+
+            if (canvasId === 'hpChart') chartHpInstance = new Chart(ctx, chartConfig);
+            if (canvasId === 'mpChart') chartMpInstance = new Chart(ctx, chartConfig);
+        }
+
+        function renderTargetGrowth() {
+            const charClass = getSelectedClass();
+            const con = parseInt(document.getElementById('conStat').value);
+            const wis = parseInt(document.getElementById('wisStat').value);
+            const targetLv = parseInt(document.getElementById('targetLvNum').value);
+
+            const badge = document.getElementById('resClassBadge');
+            badge.textContent = baseStats[charClass].name;
+            badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold mb-1 ${baseStats[charClass].color}`;
+            document.getElementById('resTargetLv').textContent = `Lv.${targetLv}`;
+
+            const levelDiff = targetLv - 1; 
+            if (levelDiff <= 0) return;
+
+            const hpStats = getHpStats(charClass, con);
+            const mpStats = getMpStats(charClass, wis);
+
+            const baseHp = baseStats[charClass].hp;
+            const baseMp = baseStats[charClass].mp;
+
+            const expectedHp = Math.round(baseHp + (hpStats.mean * levelDiff));
+            const expectedMp = Math.round(baseMp + (mpStats.mean * levelDiff));
+            
+            document.getElementById('resExpectedHp').textContent = expectedHp.toLocaleString();
+            document.getElementById('resExpectedMp').textContent = expectedMp.toLocaleString();
+
+            const tbody = document.getElementById('percentileTable');
+            tbody.innerHTML = '';
+
+            const percentiles = [
+                { p: 100, label: "최대치 (기적)", bg: "bg-indigo-50 font-bold" },
+                { p: 10, label: "상위 10% (축캐)", bg: "" },
+                { p: 20, label: "상위 20%", bg: "" },
+                { p: 30, label: "상위 30%", bg: "" },
+                { p: 40, label: "상위 40%", bg: "" },
+                { p: 50, label: "평균치 (50%)", bg: "bg-gray-100 font-bold" },
+                { p: 60, label: "하위 40%", bg: "" },
+                { p: 70, label: "하위 30%", bg: "" },
+                { p: 80, label: "하위 20%", bg: "" },
+                { p: 90, label: "하위 10% (망캐)", bg: "" },
+                { p: 0, label: "최저치 (저주)", bg: "bg-red-50 text-red-800 font-bold" }
+            ];
+
+            const hpStdDev = Math.sqrt(levelDiff * hpStats.variance);
+            const mpStdDev = Math.sqrt(levelDiff * mpStats.variance);
+
+            const getVal = (base, n, mean, std, z, isMax, isMin, minStat, maxStat) => {
+                if (isMax) return base + n * maxStat;
+                if (isMin) return base + n * minStat;
+                let val = Math.round(base + n * mean + z * std);
+                return Math.max(base + n * minStat, Math.min(base + n * maxStat, val));
+            };
+
+            percentiles.forEach(item => {
+                let z = zScores[item.p];
+                let isMax = item.p === 100;
+                let isMin = item.p === 0;
+
+                let hpVal = getVal(baseHp, levelDiff, hpStats.mean, hpStdDev, z, isMax, isMin, hpStats.min, hpStats.max);
+                let mpVal = getVal(baseMp, levelDiff, mpStats.mean, mpStdDev, z, isMax, isMin, mpStats.min, mpStats.max);
+
+                let tr = document.createElement('tr');
+                tr.className = `border-b border-gray-100 ${item.bg}`;
+                tr.innerHTML = `
+                    <td class="py-1.5 border-r border-gray-100">${item.label}</td>
+                    <td class="py-1.5 border-r border-gray-100 text-red-600">${hpVal}</td>
+                    <td class="py-1.5 text-blue-600">${mpVal}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // 🌟 성장 일지 (피/엠 기록장 & 수정) 기능
+        // ==========================================
+        let growthLogs = [];
+
+        window.saveGrowthLog = function() {
+            const lv = parseInt(document.getElementById('logLv').value);
+            const hp = parseInt(document.getElementById('logHp').value);
+            const mp = parseInt(document.getElementById('logMp').value);
+            const memo = document.getElementById('logMemo').value || '';
+
+            if (!lv || !hp || !mp) {
+                alert("레벨, HP, MP를 모두 입력해주세요!");
+                return;
+            }
+
+            const existingIndex = growthLogs.findIndex(log => log.lv === lv);
+            if (existingIndex !== -1) {
+                growthLogs[existingIndex] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() };
+            } else {
+                growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
+            }
+
+            growthLogs.sort((a, b) => a.lv - b.lv);
+            appData.growthDiary = growthLogs;
+            window.triggerSave();
+            
+            document.getElementById('logLv').value = '';
+            document.getElementById('logHp').value = '';
+            document.getElementById('logMp').value = '';
+            document.getElementById('logMemo').value = '';
+            
+            renderGrowthLog();
+        };
+
+        window.editGrowthLog = function(lv) {
+            const log = growthLogs.find(l => l.lv === lv);
+            if (log) {
+                document.getElementById('logLv').value = log.lv;
+                document.getElementById('logHp').value = log.hp;
+                document.getElementById('logMp').value = log.mp;
+                document.getElementById('logMemo').value = log.memo || '';
+                document.getElementById('logLv').focus();
+            }
+        };
+
+        window.deleteGrowthLog = function(lv) {
+            if(!confirm(`Lv.${lv} 기록을 정말 삭제할까요?`)) return;
+            growthLogs = growthLogs.filter(log => log.lv !== lv);
+            appData.growthDiary = growthLogs;
+            window.triggerSave();
+            renderGrowthLog();
+        };
+
+        function renderGrowthLog() {
+            const list = document.getElementById('growthLogList');
+            list.innerHTML = '';
+
+            if (growthLogs.length === 0) {
+                list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.<br>열심히 사냥해서 첫 기록을 남겨보세요!</li>';
+                return;
+            }
+
+            growthLogs.forEach((log, index) => {
+                let hpDiff = 0, mpDiff = 0;
+                let diffHtml = '<span class="text-gray-400">-</span>';
+
+                if (index > 0) {
+                    const prev = growthLogs[index - 1];
+                    hpDiff = log.hp - prev.hp;
+                    mpDiff = log.mp - prev.mp;
+                    
+                    let hpColor = hpDiff >= 12 ? 'text-red-600 font-bold' : (hpDiff <= 6 ? 'text-red-300' : 'text-red-500');
+                    let mpColor = mpDiff >= 6 ? 'text-blue-600 font-bold' : 'text-blue-500';
+
+                    diffHtml = `
+                        <div class="flex justify-center gap-1">
+                            <span class="${hpColor} bg-red-50 px-1 rounded">+${hpDiff}</span>
+                            <span class="${mpColor} bg-blue-50 px-1 rounded">+${mpDiff}</span>
+                        </div>
+                    `;
+                } else {
+                    diffHtml = `<span class="text-xs text-gray-400 font-normal">초기 기록</span>`;
+                }
+
+                const li = document.createElement('li');
+                li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
+                li.innerHTML = `
+                    <div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div>
+                    <div class="col-span-3 font-bold">
+                        <span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span>
+                    </div>
+                    <div class="col-span-2 text-xs font-bold">${diffHtml}</div>
+                    <div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div>
+                    <div class="col-span-2 flex justify-center gap-2">
+                        <button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition" title="수정 (입력칸으로 불러오기)"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition" title="삭제"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+            window.lucide.createIcons();
+        }
+
+        // ==========================================
+        // 🌟 자산, 장비 시뮬레이터, 과금 내역 통합 관리
+        // ==========================================
+        let adenaHistory = [];
+        let cashHistory = [];
+        
+        let editingAdenaIndex = -1;
+        let editingCashIndex = -1;
+        
+        const manualGearSlots = [
+            { id: 'weapon', name: '무기' },
+            { id: 'helm', name: '투구' },
+            { id: 'armor', name: '갑옷' },
+            { id: 'tshirt', name: '티셔츠' },
+            { id: 'cloak', name: '망토' },
+            { id: 'glove', name: '장갑' },
+            { id: 'boots', name: '부츠' },
+            { id: 'shield', name: '방패' },
+            { id: 'necklace', name: '목걸이' },
+            { id: 'belt', name: '벨트' },
+            { id: 'ring1', name: '반지1' },
+            { id: 'ring2', name: '반지2' },
+            { id: 'rare', name: '희귀템' },
+            { id: 'misc', name: '잡템' }
+        ];
+
+        let inventory = {};
+        let equipped = {};
+        let currentAddingSlot = null;
+
+        const standardBuffs = [
+            { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 },
+            { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 },
+            { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 },
+            { id: 'buff_iron', name: '아이언 스킨 (AC -10)', ac: 10 },
+            { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 },
+            { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 }
+        ];
+
+        function renderBuffs() {
+            const container = document.getElementById('buffChecklist');
+            const activeBuffs = appData.activeBuffs || [];
+            const customAc = appData.customBuffAc || 0;
+            
+            document.getElementById('customBuffAc').value = customAc;
+            
+            container.innerHTML = standardBuffs.map(buff => {
+                const isChecked = activeBuffs.includes(buff.id) ? 'checked' : '';
+                return `
+                    <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition">
+                        <input type="checkbox" id="${buff.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${isChecked} onchange="calculateTotalManualGear()">
+                        <span class="text-xs font-bold text-gray-700">${buff.name}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        window.recordAdena = function() {
+            const inputEl = document.getElementById('adenaInput');
+            const amount = parseInt(inputEl.value);
+            if (!amount || amount < 0) return;
+
+            const now = new Date();
+            const timeString = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            if (editingAdenaIndex > -1) {
+                adenaHistory[editingAdenaIndex].amount = amount;
+                editingAdenaIndex = -1;
+                document.getElementById('btnAdenaSave').textContent = '기록';
+            } else {
+                adenaHistory.unshift({ timestamp: timeString, amount: amount });
+            }
+            
+            appData.adenaHistory = adenaHistory;
+            window.triggerSave();
+            inputEl.value = '';
+            renderAdenaLog();
+        };
+        
+        window.editAdenaRecord = function(index) {
+            editingAdenaIndex = index;
+            document.getElementById('adenaInput').value = adenaHistory[index].amount;
+            document.getElementById('btnAdenaSave').textContent = '수정';
+            document.getElementById('adenaInput').focus();
+        };
+
+        window.deleteAdenaRecord = function(index) {
+            if(!confirm('해당 아데나 기록을 삭제하시겠습니까?')) return;
+            adenaHistory.splice(index, 1);
+            appData.adenaHistory = adenaHistory;
+            window.triggerSave();
+
+            if (editingAdenaIndex === index) {
+                editingAdenaIndex = -1;
+                document.getElementById('adenaInput').value = '';
+                document.getElementById('btnAdenaSave').textContent = '기록';
+            }
+            renderAdenaLog();
+        };
+
+        function renderAdenaLog() {
+            const list = document.getElementById('adenaLogList');
+            list.innerHTML = '';
+            if (adenaHistory.length === 0) {
+                list.innerHTML = '<li class="text-center text-gray-400 py-4">아직 기록된 아데나가 없습니다.</li>';
+            } else {
+                adenaHistory.forEach((record, index) => {
+                    let diffHtml = '';
+                    if (index < adenaHistory.length - 1) {
+                        let diff = record.amount - adenaHistory[index + 1].amount;
+                        if (diff > 0) diffHtml = `<span class="text-[10px] text-green-500 ml-1">(+${diff.toLocaleString()})</span>`;
+                        else if (diff < 0) diffHtml = `<span class="text-[10px] text-red-500 ml-1">(${diff.toLocaleString()})</span>`;
+                    }
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center px-2 py-1.5 hover:bg-white rounded border border-transparent hover:border-gray-100 transition";
+                    li.innerHTML = `
+                        <span class="text-gray-500 font-mono text-xs flex-1">${record.timestamp}</span>
+                        <div class="flex items-center justify-end gap-3 flex-1">
+                            <span class="font-bold text-yellow-600">${record.amount.toLocaleString()} <span class="text-xs text-gray-400 font-normal">아데나</span>${diffHtml}</span>
+                            <div class="flex gap-1">
+                                <button onclick="editAdenaRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteAdenaRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+            window.lucide.createIcons();
+            updateTotalAssetSummary();
+        }
+
+        // --- 캐쉬 결제 (과금) 내역 기능 ---
+        window.recordCash = function() {
+            const dateInput = document.getElementById('cashDateInput').value;
+            const descInput = document.getElementById('cashDescInput').value.trim();
+            const amountInput = document.getElementById('cashAmountInput').value.replace(/,/g, '');
+            const amount = parseInt(amountInput);
+            
+            if (!dateInput || !amount || amount <= 0) return;
+
+            if (editingCashIndex > -1) {
+                cashHistory[editingCashIndex].date = dateInput;
+                cashHistory[editingCashIndex].desc = descInput;
+                cashHistory[editingCashIndex].amount = amount;
+                editingCashIndex = -1;
+                document.getElementById('btnCashSave').textContent = '기록';
+            } else {
+                cashHistory.unshift({ date: dateInput, desc: descInput, amount: amount });
+            }
+            
+            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            appData.cashHistory = cashHistory;
+            window.triggerSave();
+
+            document.getElementById('cashAmountInput').value = '';
+            document.getElementById('cashDescInput').value = '';
+            
+            renderCashHistory();
+        };
+        
+        window.editCashRecord = function(index) {
+            editingCashIndex = index;
+            document.getElementById('cashDateInput').value = cashHistory[index].date;
+            document.getElementById('cashDescInput').value = cashHistory[index].desc || '';
+            document.getElementById('cashAmountInput').value = cashHistory[index].amount;
+            window.formatPriceInput(document.getElementById('cashAmountInput'));
+            document.getElementById('btnCashSave').textContent = '수정';
+            document.getElementById('cashDescInput').focus();
+        };
+
+        window.deleteCashRecord = function(index) {
+            if(!confirm('해당 결제 내역을 삭제하시겠습니까?')) return;
+            cashHistory.splice(index, 1);
+            
+            appData.cashHistory = cashHistory;
+            window.triggerSave();
+
+            if (editingCashIndex === index) {
+                editingCashIndex = -1;
+                document.getElementById('cashDateInput').valueAsDate = new Date();
+                document.getElementById('cashDescInput').value = '';
+                document.getElementById('cashAmountInput').value = '';
+                document.getElementById('btnCashSave').textContent = '기록';
+            }
+            renderCashHistory();
+        };
+
+        function renderCashHistory() {
+            const list = document.getElementById('cashLogList');
+            list.innerHTML = '';
+            
+            if (cashHistory.length === 0) {
+                list.innerHTML = '<li class="text-center text-gray-400 py-6">입력된 과금 내역이 없습니다.<br><span class="text-xs text-gray-300">무과금의 길을 걷고 계신가요?</span></li>';
+            } else {
+                cashHistory.forEach((record, index) => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
+                    li.innerHTML = `
+                        <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${record.date}</span>
+                        <span class="text-gray-700 text-xs font-bold w-1/2 truncate px-1" title="${record.desc || ''}">${record.desc || '내용 없음'}</span>
+                        <div class="flex items-center justify-end gap-2 w-1/4">
+                            <span class="font-black text-red-600 whitespace-nowrap">${record.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span>
+                            <div class="flex gap-1">
+                                <button onclick="editCashRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteCashRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+            window.lucide.createIcons();
+            updateTotalAssetSummary();
+        }
+
+        function renderManualArmorTable() {
+            const tbody = document.getElementById('manualArmorTableBody');
+            tbody.innerHTML = '';
+            
+            manualGearSlots.forEach(slot => {
+                const items = inventory[slot.id] || [];
+                const currentEquippedId = equipped[slot.id] || 'none';
+
+                let optionsHtml = `<option value="none" class="text-gray-400">-- 장착 안함 --</option>`;
+                let currentItem = null;
+
+                items.forEach(item => {
+                    const isSelected = item.id === currentEquippedId;
+                    if (isSelected) currentItem = item;
+                    optionsHtml += `<option value="${item.id}" ${isSelected ? 'selected' : ''} class="text-gray-800">${item.name}</option>`;
+                });
+
+                const acDisplay = currentItem ? currentItem.ac : 0;
+                const priceDisplay = currentItem ? currentItem.price.toLocaleString() : '-';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 px-2 border-r bg-gray-50 text-gray-600 font-bold">${slot.name}</td>
+                    <td class="py-1 px-2 border-r flex items-center gap-1 min-w-[200px]">
+                        <select class="flex-1 p-1.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm font-bold text-gray-700 cursor-pointer shadow-sm" onchange="changeEquippedItem('${slot.id}', this.value)">
+                            ${optionsHtml}
+                        </select>
+                        <button onclick="openAddItemModal('${slot.id}')" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition shadow-sm" title="보관함에 새 장비 추가">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                        ${currentItem ? `
+                        <button onclick="deleteItem('${slot.id}', '${currentItem.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition shadow-sm" title="현재 선택된 장비 버리기">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        ` : ''}
+                    </td>
+                    <td class="py-2 px-2 border-r text-indigo-700 font-black bg-indigo-50">${acDisplay > 0 ? '+' + acDisplay : acDisplay}</td>
+                    <td class="py-2 px-2 text-right text-gray-700 font-bold">${priceDisplay}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            window.lucide.createIcons();
+            window.calculateTotalManualGear();
+        }
+
+        window.formatPriceInput = function(inputEl) {
+            let val = inputEl.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+            inputEl.value = val ? Number(val).toLocaleString() : '';
+        };
+
+        window.openAddItemModal = function(slotId) {
+            currentAddingSlot = slotId;
+            const slotName = manualGearSlots.find(s => s.id === slotId).name;
+            document.getElementById('modalSlotName').textContent = slotName;
+            
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemAc').value = '';
+            document.getElementById('newItemPrice').value = '';
+            
+            document.getElementById('gearModal').classList.remove('hidden');
+        };
+
+        window.closeAddItemModal = function() {
+            document.getElementById('gearModal').classList.add('hidden');
+            currentAddingSlot = null;
+        };
+
+        window.saveNewItem = function() {
+            if (!currentAddingSlot) return;
+
+            const name = document.getElementById('newItemName').value.trim();
+            const ac = parseInt(document.getElementById('newItemAc').value) || 0;
+            const price = parseInt(document.getElementById('newItemPrice').value.replace(/,/g, '')) || 0;
+
+            if (!name) {
+                alert('장비 이름을 입력해주세요.');
+                return;
+            }
+
+            if (!inventory[currentAddingSlot]) inventory[currentAddingSlot] = [];
+
+            const newItem = {
+                id: 'item_' + Date.now(),
+                name: name,
+                ac: ac,
+                price: price
+            };
+
+            inventory[currentAddingSlot].push(newItem);
+            equipped[currentAddingSlot] = newItem.id;
+
+            appData.inventory = inventory;
+            appData.equippedItems = equipped;
+            window.triggerSave();
+
+            window.closeAddItemModal();
+            renderManualArmorTable();
+        };
+
+        window.changeEquippedItem = function(slotId, itemId) {
+            equipped[slotId] = itemId;
+            appData.equippedItems = equipped;
+            window.triggerSave();
+            renderManualArmorTable(); 
+        };
+
+        window.deleteItem = function(slotId, itemId) {
+            if (!confirm('이 장비를 보관함에서 삭제하시겠습니까?')) return;
+
+            inventory[slotId] = inventory[slotId].filter(i => i.id !== itemId);
+            
+            if (equipped[slotId] === itemId) {
+                equipped[slotId] = 'none';
+            }
+
+            appData.inventory = inventory;
+            appData.equippedItems = equipped;
+            window.triggerSave();
+            
+            renderManualArmorTable();
+        };
+
+        window.calculateTotalManualGear = function() {
+            let totalAcBonus = 0;
+            let totalCost = 0;
+
+            manualGearSlots.forEach(slot => {
+                const currentEquippedId = equipped[slot.id];
+                if (currentEquippedId && currentEquippedId !== 'none') {
+                    const items = inventory[slot.id] || [];
+                    const item = items.find(i => i.id === currentEquippedId);
+                    if (item) {
+                        totalAcBonus += item.ac;
+                        totalCost += item.price;
+                    }
+                }
+            });
+
+            let buffAcBonus = 0;
+            const activeBuffs = [];
+            standardBuffs.forEach(buff => {
+                const cb = document.getElementById(buff.id);
+                if (cb && cb.checked) {
+                    buffAcBonus += buff.ac;
+                    activeBuffs.push(buff.id);
+                }
+            });
+            const customAc = parseInt(document.getElementById('customBuffAc').value) || 0;
+            buffAcBonus += customAc;
+
+            appData.activeBuffs = activeBuffs;
+            appData.customBuffAc = customAc;
+
+            const finalAc = 10 - totalAcBonus - buffAcBonus;
+            
+            document.getElementById('manualTotalAcDisplay').innerHTML = `AC ${finalAc} <span class="text-sm font-normal text-gray-400 block mt-1">(장비 +${totalAcBonus} / 버프 +${buffAcBonus})</span>`;
+            document.getElementById('manualTotalPriceDisplay').innerHTML = `${totalCost.toLocaleString()} <span class="text-sm text-yellow-600">아데나</span>`;
+
+            const rateInput = document.getElementById('adenaRate');
+            let rate = parseInt(rateInput.value) || 0;
+            appData.adenaRate = rate;
+            window.triggerSave();
+            
+            const cashValue = (totalCost / 10000) * rate;
+            document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor(cashValue).toLocaleString()} <span class="text-sm text-green-600">원</span>`;
+
+            renderStorageTable();
+        };
+
+        function renderStorageTable() {
+            const tbody = document.getElementById('storageTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            
+            let storageTotalCost = 0;
+            let hasItem = false;
+
+            manualGearSlots.forEach(slot => {
+                const items = inventory[slot.id] || [];
+                const currentEquippedId = equipped[slot.id] || 'none';
+
+                items.forEach(item => {
+                    if (item.id !== currentEquippedId) {
+                        hasItem = true;
+                        storageTotalCost += item.price;
+                        
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="py-1.5 px-2 border-r bg-gray-50 text-gray-500 font-bold">${slot.name}</td>
+                            <td class="py-1.5 px-2 border-r text-gray-700 font-bold text-left pl-3">${item.name}</td>
+                            <td class="py-1.5 px-2 border-r text-indigo-500 font-bold">${item.ac > 0 ? '+' + item.ac : item.ac}</td>
+                            <td class="py-1.5 px-2 border-r text-right text-gray-600 font-bold pr-3">${item.price.toLocaleString()}</td>
+                            <td class="py-1.5 px-2">
+                                <button onclick="deleteItem('${slot.id}', '${item.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition shadow-sm" title="보관함에서 영구 삭제">
+                                    <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+            });
+
+            if (!hasItem) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-gray-400 text-center">
+                            미장착 보관함이 비어있습니다.<br>
+                            <span class="text-[10px] text-gray-300">현재 선택 해제된(여분) 장비들이 이곳에 표시됩니다.</span>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('storageTotalPrice').textContent = storageTotalCost.toLocaleString();
+            
+            const rateInput = document.getElementById('adenaRate');
+            let rate = parseInt(rateInput.value) || 0;
+            const storageCashValue = (storageTotalCost / 10000) * rate;
+            document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor(storageCashValue).toLocaleString()} 원)`;
+            
+            window.lucide.createIcons();
+            updateTotalAssetSummary();
+        }
+
+        function updateTotalAssetSummary() {
+            const totalCashSpent = cashHistory.reduce((sum, record) => sum + record.amount, 0);
+            let totalAdena = 0;
+            
+            if (adenaHistory.length > 0) {
+                totalAdena += adenaHistory[0].amount; 
+            }
+
+            manualGearSlots.forEach(slot => {
+                const items = inventory[slot.id] || [];
+                items.forEach(item => {
+                    totalAdena += item.price;
+                });
+            });
+
+            const rateInput = document.getElementById('adenaRate');
+            let rate = parseInt(rateInput.value) || 0;
+            const totalAssetCashValue = (totalAdena / 10000) * rate;
+            const netProfit = totalAssetCashValue - totalCashSpent;
+
+            document.getElementById('summaryTotalCash').textContent = totalCashSpent.toLocaleString();
+            document.getElementById('summaryTotalAssetCash').textContent = Math.floor(totalAssetCashValue).toLocaleString();
+            document.getElementById('summaryTotalAdena').textContent = totalAdena.toLocaleString();
+
+            const netEl = document.getElementById('summaryNetProfit');
+            const memoEl = document.getElementById('summaryMemo');
+
+            if (netProfit > 0) {
+                netEl.textContent = '+' + Math.floor(netProfit).toLocaleString() + ' 원';
+                netEl.className = 'text-3xl font-black text-blue-400 transition-all duration-500';
+                memoEl.textContent = '🎉 와우! 흑자 전환! 이대로 쌀먹 가즈아~!';
+                memoEl.className = 'text-sm mt-3 font-bold py-1.5 px-3 rounded-full inline-block bg-blue-900 text-blue-300 transition-all duration-500';
+            } else if (netProfit < 0) {
+                netEl.textContent = Math.floor(netProfit).toLocaleString() + ' 원';
+                netEl.className = 'text-3xl font-black text-red-400 transition-all duration-500';
+                memoEl.textContent = '😭 린저씨의 눈물... 아직 갈 길이 멉니다.';
+                memoEl.className = 'text-sm mt-3 font-bold py-1.5 px-3 rounded-full inline-block bg-red-900 text-red-300 transition-all duration-500';
+            } else {
+                netEl.textContent = '0 원';
+                netEl.className = 'text-3xl font-black text-gray-300 transition-all duration-500';
+                memoEl.textContent = '😐 본전치기! 무과금의 승리인가요?';
+                memoEl.className = 'text-sm mt-3 font-bold py-1.5 px-3 rounded-full inline-block bg-gray-700 text-yellow-300 transition-all duration-500';
+            }
+        }
+
+        // 전체 초기화 (데이터 준비 후 UI 적용)
+        function initAppUI() {
+            adenaHistory = appData.adenaHistory || [];
+            cashHistory = appData.cashHistory || [];
+            document.getElementById('adenaRate').value = appData.adenaRate || 30;
+            inventory = appData.inventory || {};
+            equipped = appData.equippedItems || {};
+            growthLogs = appData.growthDiary || [];
+            
+            document.getElementById('cashDateInput').valueAsDate = new Date();
+
+            loadInputState();
+            window.handleCurrentLvChange();
+            renderGrowthLog();
+            renderAdenaLog();
+            renderCashHistory();
+            renderBuffs();
+            renderManualArmorTable(); 
+        }
+
+        window.addEventListener('load', () => {
+            window.checkSession(); 
+        });
+    </script>
+</body>
+</html>
