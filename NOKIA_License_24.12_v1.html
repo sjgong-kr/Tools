@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOKIA WS-NOC 24.12 License Calculator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; color: #333; margin: 0; padding: 20px; padding-bottom: 60px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        h1 { color: #124191; border-bottom: 2px solid #124191; padding-bottom: 10px; }
+        h2 { color: #124191; font-size: 1.2em; margin-top: 0; }
+        
+        .section { margin-bottom: 30px; }
+        .radio-group { margin-bottom: 20px; padding: 15px; background: #eef2f5; border-radius: 8px; border-left: 4px solid #124191; }
+        .radio-group label { font-weight: bold; margin-right: 20px; cursor: pointer; }
+        
+        .row-item { display: flex; gap: 20px; margin-bottom: 15px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fafafa; align-items: stretch; transition: all 0.3s ease; }
+        .row-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #124191; }
+        
+        .row-inputs { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+        .input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        
+        .row-results { flex: 1; background-color: #e8f0fe; padding: 15px; border-radius: 6px; border-left: 4px solid #34a853; font-size: 0.95em; display: flex; flex-direction: column; justify-content: center; }
+        .row-results ul { margin: 5px 0 0 0; padding-left: 20px; color: #333; }
+        .row-results li { margin-bottom: 5px; }
+        .row-results .empty-msg { color: #666; font-style: italic; text-align: center; }
+
+        select, input[type="number"], input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; transition: border-color 0.2s; }
+        select:focus, input:focus { border-color: #124191; }
+        
+        button.add-btn { background-color: #124191; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button.add-btn:hover { background-color: #0b2e6b; }
+        button.del-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        button.del-btn:hover { background-color: #c82333; }
+        button.excel-btn { background-color: #207245; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        button.excel-btn:hover { background-color: #165030; }
+
+        .total-summary { margin-top: 40px; border-top: 2px dashed #ccc; padding-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #124191; color: white; font-weight: normal; }
+        td b { color: #d32f2f; font-size: 1.1em; }
+        .highlight { background-color: #fff9e6; }
+
+        /* 워터마크(배너) 스타일 */
+        .footer-banner {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(18, 65, 145, 0.9);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85em;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(5px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>NOKIA WS-NOC R24.12 실시간 라이선스 계산기</h1>
+
+    <div class="section">
+        <div class="radio-group">
+            <span style="font-weight: bold; margin-right: 15px; color: #124191;">1. WS-NOC 서버 라이선스 (STD/PREM):</span>
+            <label><input type="radio" name="serverType" value="STD" checked onchange="calculateTotalLicenses()"> STD (단일 서버, 기본 관리)</label>
+            <label><input type="radio" name="serverType" value="PREM" onchange="calculateTotalLicenses()"> PREM (이중화, 보안, 플래닝 포함)</label>
+        </div>
+    </div>
+
+    <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>2. Generic Card (WS-NOC + Spectrum + Capacity) <span style="font-size: 0.7em; color: #666; font-weight: normal; margin-left: 10px;">(* 표시는 Spectrum 및 Capacity 라이선스 적용 카드)</span></h2>
+            <button class="add-btn" onclick="addGenericRow()">+ 카드 추가</button>
+        </div>
+        <div id="genericContainer"></div>
+    </div>
+
+    <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>3. Alien Wavelength (Spectrum 전용)</h2>
+            <button class="add-btn" onclick="addAlienRow()">+ Alien 신호 추가</button>
+        </div>
+        <div id="alienContainer"></div>
+    </div>
+
+    <!-- 전체 합계 영역 -->
+    <div class="total-summary" id="resultArea">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="color: #34a853;">📊 전체 필요 라이선스 합계 (BOM)</h2>
+            <button class="excel-btn" onclick="exportToExcel()">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/></svg>
+                Excel 다운로드
+            </button>
+        </div>
+        
+        <h3>1. WS-NOC Manage License (100G Base)</h3>
+        <table id="wsNocTable">
+            <tr><th>Part Number</th><th>Description</th><th>Required Qty</th></tr>
+        </table>
+
+        <h3>2. Spectrum License (12.5GHz Base)</h3>
+        <table id="spectrumTable">
+            <tr><th>Part Number</th><th>Description</th><th>Required Qty</th></tr>
+        </table>
+
+        <h3>3. Capacity License</h3>
+        <table id="capacityTable">
+            <tr><th>Part Number (Mode Life)</th><th>Required Qty</th></tr>
+        </table>
+    </div>
+</div>
+
+<!-- 우측 하단 배너 -->
+<div class="footer-banner">
+    2026.03 Create by pokarekong@naver.com
+</div>
+
+<script>
+    // 카드별 지원 Mode 및 해당 Mode의 Uplink Capacity (100G 단위 계산용)
+    const cardData = {
+        "12P120(S)": { "120G": 120 },
+        "8P20(B)": { "20G": 20 },
+        "11QPA4(B)": { "40G": 40 },
+        "S13X100E": { "100G": 100 },
+        "S2AD200H": { "100G": 100, "200G": 200, "REGEN": 0 },
+        "S2AD200R": { "100G": 100, "200G": 200, "REGEN": 0 },
+        "S4X400H": { "100G": 100, "200G": 200, "300G": 300, "400G": 400, "REGEN": 0 },
+        "S4X400L": { "100G": 100, "200G": 200, "300G": 300, "400G": 400, "500G": 500, "REGEN": 0 },
+        "S5AD400H": { "100G": 100, "200G": 200, "300G": 300, "400G": 400, "REGEN": 0 },
+        "S6AD600H": { "200G": 200, "300G": 300, "400G": 400, "500G": 500, "600G": 600 },
+        "D5X500Q": { "100G": 100, "200G": 200, "2X250G": 500, "2X50G": 100, "REGEN": 0 },
+        "D6AD2T4H": { "400G": 400, "500G": 500, "600G": 600, "700G": 700, "800G": 800, "900G": 900, "1000G": 1000, "1100G": 1100, "1200G": 1200 },
+        "D6AD2T4L": { "400G": 400, "500G": 500, "600G": 600, "700G": 700, "800G": 800, "900G": 900, "1000G": 1000, "1100G": 1100, "1200G": 1200 }
+    };
+
+    // Capacity 라이선스 Part Number 매핑 테이블
+    const capacityPnMap = {
+        "ESWL-D5X500Q 100GB CAP 100G MODE LIFE": "3KC70926AAAA",
+        "ESWL-D5X500Q 100GB CAP 200G MODE LIFE": "3KC70927AAAA",
+        "ESWL-D5X500Q 100GB CAP 2X250G MODE LIFE": "3KC70928AAAA",
+        "ESWL-D5X500Q 100GB CAP 2X50G MODE LIFE": "3KC70929AAAA",
+        "ESWL-D5X500Q REGEN MODE LIFE": "3KC70056AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 1000G MODE LIFE": "3KC72130AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 1100G MODE LIFE": "3KC72131AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 1200G MODE LIFE": "3KC72132AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 400G MODE LIFE": "3KC72001AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 500G MODE LIFE": "3KC72002AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 600G MODE LIFE": "3KC72126AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 700G MODE LIFE": "3KC72127AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 800G MODE LIFE": "3KC72128AAAA",
+        "ESWL-D6AD2T4H 100GB CAP 900G MODE LIFE": "3KC72129AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 1000G MODE LIFE": "3KC72805AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 1100G MODE LIFE": "3KC72806AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 1200G MODE LIFE": "3KC72807AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 400G MODE LIFE": "3KC72799AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 500G MODE LIFE": "3KC72800AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 600G MODE LIFE": "3KC72801AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 700G MODE LIFE": "3KC72802AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 800G MODE LIFE": "3KC72803AAAA",
+        "ESWL-D6AD2T4L 100GB CAP 900G MODE LIFE": "3KC72804AAAA",
+        "ESWL-S13X100E 100GB CAP 100G MODE LIFE": "3KC70935AAAA",
+        "ESWL-S2AD200H 100GB CAP 100G MODE LIFE": "3KC70946AAAA",
+        "ESWL-S2AD200H 100GB CAP 200G MODE LIFE": "3KC70947AAAA",
+        "ESWL-S2AD200H REGEN MODE LIFE": "3KC70063AAAA",
+        "ESWL-S2AD200R 100GB CAP 100G MODE LIFE": "3KC70951AAAA",
+        "ESWL-S2AD200R 100GB CAP 200G MODE LIFE": "3KC70952AAAA",
+        "ESWL-S2AD200R REGEN MODE LIFE": "3KC70065AAAA",
+        "ESWL-S4X400H 100GB CAP 100G MODE LIFE": "3KC70969AAAA",
+        "ESWL-S4X400H 100GB CAP 200G MODE LIFE": "3KC70970AAAA",
+        "ESWL-S4X400H 100GB CAP 300G MODE LIFE": "3KC70971AAAA",
+        "ESWL-S4X400H 100GB CAP 400G MODE LIFE": "3KC70972AAAA",
+        "ESWL-S4X400H REGEN MODE LIFE": "3KC70103AAAA",
+        "ESWL-S4X400L 100GB CAP 100G MODE LIFE": "3KC70979AAAA",
+        "ESWL-S4X400L 100GB CAP 200G MODE LIFE": "3KC70980AAAA",
+        "ESWL-S4X400L 100GB CAP 300G MODE LIFE": "3KC70981AAAA",
+        "ESWL-S4X400L 100GB CAP 400G MODE LIFE": "3KC70982AAAA",
+        "ESWL-S4X400L 100GB CAP 500G MODE LIFE": "3KC70983AAAA",
+        "ESWL-S4X400L REGEN MODE LIFE": "3KC70941AAAA",
+        "ESWL-S5AD400H 100GB CAP 100G MODE LIFE": "3KC70990AAAA",
+        "ESWL-S5AD400H 100GB CAP 200G MODE LIFE": "3KC70991AAAA",
+        "ESWL-S5AD400H 100GB CAP 300G MODE LIFE": "3KC70992AAAA",
+        "ESWL-S5AD400H 100GB CAP 400G MODE LIFE": "3KC70993AAAA",
+        "ESWL-S5AD400H REGEN MODE LIFE": "3KC70939AAAA",
+        "ESWL-S6AD600H 100GB CAP 200G MODE LIFE": "3KC71996AAAA",
+        "ESWL-S6AD600H 100GB CAP 300G MODE LIFE": "3KC71997AAAA",
+        "ESWL-S6AD600H 100GB CAP 400G MODE LIFE": "3KC71998AAAA",
+        "ESWL-S6AD600H 100GB CAP 500G MODE LIFE": "3KC71999AAAA",
+        "ESWL-S6AD600H 100GB CAP 600G MODE LIFE": "3KC72000AAAA"
+    };
+
+    function addGenericRow() {
+        const container = document.getElementById('genericContainer');
+        const row = document.createElement('div');
+        row.className = 'row-item generic-row';
+        
+        let cardOptions = '<option value="">-- 카드 종류 선택 --</option>';
+        for (let card in cardData) { 
+            const is10GCard = ["12P120(S)", "8P20(B)", "11QPA4(B)"].includes(card);
+            const displayName = is10GCard ? card : `${card} *`;
+            cardOptions += `<option value="${card}">${displayName}</option>`; 
+        }
+
+        row.innerHTML = `
+            <div class="row-inputs">
+                <div class="input-group">
+                    <select class="card-select" onchange="updateModes(this); updateRowResult(this);">${cardOptions}</select>
+                    <select class="mode-select" onchange="updateRowResult(this);"><option value="">-- 전송 모드 선택 --</option></select>
+                </div>
+                <div class="input-group">
+                    <select class="spectrum-select" onchange="updateRowResult(this);">
+                        <option value="0">0 GHz (스펙트럼 미차감)</option>
+                        <option value="50" selected>50 GHz 점유</option>
+                        <option value="75">75 GHz 점유</option>
+                        <option value="87.5">87.5 GHz 점유</option>
+                        <option value="100">100 GHz 점유</option>
+                        <option value="112.5">112.5 GHz 점유</option>
+                    </select>
+                    <label style="margin-left:10px;">수량:</label>
+                    <input type="number" class="qty-input" min="1" value="1" style="width: 70px;" oninput="updateRowResult(this);">
+                    <button class="del-btn" style="margin-left: auto;" onclick="this.closest('.row-item').remove(); calculateTotalLicenses();">삭제</button>
+                </div>
+            </div>
+            <div class="row-results">
+                <div class="empty-msg">카드를 선택하고 수량을 입력하면<br>필요 라이선스가 실시간으로 표시됩니다.</div>
+            </div>
+        `;
+        container.appendChild(row);
+    }
+
+    function updateModes(selectElement) {
+        const row = selectElement.closest('.row-item');
+        const modeSelect = row.querySelector('.mode-select');
+        const selectedCard = selectElement.value;
+        
+        modeSelect.innerHTML = '<option value="">-- 전송 모드 선택 --</option>';
+        if (selectedCard && cardData[selectedCard]) {
+            for (let mode in cardData[selectedCard]) {
+                modeSelect.innerHTML += `<option value="${mode}">${mode} MODE</option>`;
+            }
+            // 자동으로 첫번째 모드 선택
+            modeSelect.selectedIndex = 1; 
+        }
+    }
+
+    function addAlienRow() {
+        const container = document.getElementById('alienContainer');
+        const row = document.createElement('div');
+        row.className = 'row-item alien-row';
+        row.innerHTML = `
+            <div class="row-inputs">
+                <div class="input-group">
+                    <input type="text" placeholder="신호 명칭 (예: OPSUM 100G)" style="flex:1;">
+                    <select class="spectrum-select" onchange="updateRowResult(this);">
+                        <option value="50">50 GHz 점유</option>
+                        <option value="75">75 GHz 점유</option>
+                        <option value="100">100 GHz 점유</option>
+                    </select>
+                    <label style="margin-left:10px;">수량:</label>
+                    <input type="number" class="qty-input" min="1" value="1" style="width: 70px;" oninput="updateRowResult(this);">
+                    <button class="del-btn" style="margin-left: auto;" onclick="this.closest('.row-item').remove(); calculateTotalLicenses();">삭제</button>
+                </div>
+            </div>
+            <div class="row-results">
+                 <div class="empty-msg">수량을 입력하면 필요 라이선스가 표시됩니다.</div>
+            </div>
+        `;
+        container.appendChild(row);
+        updateRowResult(row.querySelector('.qty-input')); // 초기화면 업데이트
+    }
+
+    // 개별 행의 라이선스 결과를 실시간으로 계산하여 우측에 표시
+    function updateRowResult(element) {
+        const row = element.closest('.row-item');
+        const resultDiv = row.querySelector('.row-results');
+        const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+        
+        if (row.classList.contains('generic-row')) {
+            const card = row.querySelector('.card-select').value;
+            const mode = row.querySelector('.mode-select').value;
+            const spectrum = parseFloat(row.querySelector('.spectrum-select').value);
+
+            if (card && mode && qty > 0) {
+                const uplinkCap = cardData[card][mode];
+                const wsNocQty = (uplinkCap / 100) * qty;
+                
+                const is10GCard = ["12P120(S)", "8P20(B)", "11QPA4(B)"].includes(card);
+                const spectrumQty = is10GCard ? 0 : (spectrum / 12.5) * qty;
+                const isRegen = mode === "REGEN";
+                
+                // Capacity 포인트 계산 (100G당 1포인트, REGEN 등 0G일 경우는 기본 1)
+                const modeMultiplier = uplinkCap > 0 ? (uplinkCap / 100) : 1;
+                const capacityQty = is10GCard ? 0 : (qty * modeMultiplier);
+
+                let capName = "";
+                let spectrumText = is10GCard ? "<span style='color:#d32f2f;'>0 개 (10G 서브카드 면제)</span>" : `${spectrumQty} 개 (Generic)`;
+                
+                if (is10GCard) {
+                    capName = "Capacity 라이선스 불필요 (10G/Sub-100G)";
+                } else {
+                    capName = isRegen ? `ESWL-${card} REGEN MODE LIFE` : `ESWL-${card} 100GB CAP ${mode} MODE LIFE`;
+                }
+
+                resultDiv.innerHTML = `
+                    <strong style="color:#124191;">[현재 행 소요 라이선스]</strong>
+                    <ul>
+                        <li><b>WS-NOC (100G당):</b> ${wsNocQty.toFixed(1)} 개</li>
+                        <li><b>Spectrum (12.5G당):</b> ${spectrumText}</li>
+                        <li><b>Capacity:</b> ${capacityQty} 개 <br><span style="color:#666; font-size:0.85em;">(${capName})</span></li>
+                    </ul>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div class="empty-msg">카드와 모드를 모두 선택해 주세요.</div>`;
+            }
+        } else if (row.classList.contains('alien-row')) {
+            const spectrum = parseFloat(row.querySelector('.spectrum-select').value);
+            if (qty > 0) {
+                const spectrumQty = (spectrum / 12.5) * qty;
+                resultDiv.innerHTML = `
+                    <strong style="color:#124191;">[현재 행 소요 라이선스]</strong>
+                    <ul>
+                        <li><b>Spectrum (12.5G당):</b> ${spectrumQty} 개 (Alien)</li>
+                    </ul>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div class="empty-msg">수량을 입력해 주세요.</div>`;
+            }
+        }
+
+        // 개별 행이 업데이트 될 때마다 전체 합계도 다시 계산
+        calculateTotalLicenses();
+    }
+
+    // 하단의 전체 합계 테이블 실시간 렌더링
+    function calculateTotalLicenses() {
+        let totalWsNoc100g = 0;
+        let totalGenericSpectrum = 0;
+        let totalAlienSpectrum = 0;
+        let capacityLicenses = {};
+
+        // 1. Process Generic Cards
+        document.querySelectorAll('.generic-row').forEach(row => {
+            const card = row.querySelector('.card-select').value;
+            const mode = row.querySelector('.mode-select').value;
+            const spectrum = parseFloat(row.querySelector('.spectrum-select').value);
+            const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+
+            if (card && mode && qty > 0) {
+                const uplinkCap = cardData[card][mode];
+                totalWsNoc100g += (uplinkCap / 100) * qty;
+
+                const is10GCard = ["12P120(S)", "8P20(B)", "11QPA4(B)"].includes(card);
+                
+                if (!is10GCard) {
+                    totalGenericSpectrum += (spectrum / 12.5) * qty; // 10G 카드가 아닐 때만 스펙트럼 합산
+                    const isRegen = mode === "REGEN";
+                    const capString = isRegen ? `ESWL-${card} REGEN MODE LIFE` : `ESWL-${card} 100GB CAP ${mode} MODE LIFE`;
+                    
+                    // Capacity 포인트 계산 (100G당 1포인트, REGEN 등 0G일 경우는 기본 1)
+                    const modeMultiplier = uplinkCap > 0 ? (uplinkCap / 100) : 1;
+                    const capacityQty = qty * modeMultiplier;
+                    
+                    capacityLicenses[capString] = (capacityLicenses[capString] || 0) + capacityQty;
+                }
+            }
+        });
+
+        // 2. Process Alien Wavelengths
+        document.querySelectorAll('.alien-row').forEach(row => {
+            const spectrum = parseFloat(row.querySelector('.spectrum-select').value);
+            const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+            if (qty > 0) {
+                totalAlienSpectrum += (spectrum / 12.5) * qty;
+            }
+        });
+
+        // 3. Render Results
+        const serverType = document.querySelector('input[name="serverType"]:checked').value;
+        const wsNocPn = serverType === "STD" ? "3KC73856AAAA" : "3KC73857AAAA";
+        const wsNocDesc = `ESWL-WS MANAGE ${serverType} SUBSCRIP 100G LP`;
+
+        document.getElementById('wsNocTable').innerHTML = `
+            <tr><th width="20%">Part Number</th><th width="60%">Description</th><th width="20%">Required Qty</th></tr>
+            <tr class="${totalWsNoc100g > 0 ? 'highlight' : ''}">
+                <td>${wsNocPn}</td><td>${wsNocDesc}</td><td><b>${Math.ceil(totalWsNoc100g)}</b></td>
+            </tr>
+        `;
+
+        document.getElementById('spectrumTable').innerHTML = `
+            <tr><th width="20%">Part Number</th><th width="60%">Description</th><th width="20%">Required Qty</th></tr>
+            <tr class="${totalGenericSpectrum > 0 ? 'highlight' : ''}">
+                <td>3KC71012AAAA</td><td>ESWL-GENERIC 12.5GHz LIFE</td><td><b>${totalGenericSpectrum}</b></td>
+            </tr>
+            <tr class="${totalAlienSpectrum > 0 ? 'highlight' : ''}">
+                <td>3KC70100AAAA</td><td>ESWL-ALIEN 12.5GHz LIFE</td><td><b>${totalAlienSpectrum}</b></td>
+            </tr>
+        `;
+
+        let capHtml = '<tr><th width="20%">Part Number</th><th width="60%">Description (Mode Life)</th><th width="20%">Required Qty</th></tr>';
+        for (let [desc, qty] of Object.entries(capacityLicenses)) {
+            const pn = capacityPnMap[desc] || 'TBD';
+            capHtml += `<tr class="highlight"><td>${pn}</td><td>${desc}</td><td><b>${qty}</b></td></tr>`;
+        }
+        if(Object.keys(capacityLicenses).length === 0) capHtml += '<tr><td colspan="3" style="text-align:center; color:#666;">선택된 Generic 카드가 없습니다.</td></tr>';
+        document.getElementById('capacityTable').innerHTML = capHtml;
+    }
+
+    // 엑셀 다운로드 기능
+    function exportToExcel() {
+        let html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>';
+        
+        html += '<h1 style="color:#124191;">NOKIA WS-NOC R24.12 License BOM</h1>';
+        html += '<p>Created by pokarekong@naver.com (2026.03)</p><br>';
+
+        // 1. 입력 항목 (Input Data)
+        html += '<h2>[ 1. 장비 구성 입력 내역 ]</h2>';
+        const serverType = document.querySelector('input[name="serverType"]:checked').value;
+        html += `<p><b>WS-NOC 서버 구성:</b> ${serverType}</p>`;
+
+        // Generic Table
+        html += '<h3>- Generic Cards</h3><table border="1" cellpadding="5" cellspacing="0">';
+        html += '<tr style="background-color:#124191; color:white;"><th>Card</th><th>Mode</th><th>Spectrum (GHz)</th><th>Qty</th></tr>';
+        let hasGeneric = false;
+        document.querySelectorAll('.generic-row').forEach(row => {
+            const selectCard = row.querySelector('.card-select');
+            if(!selectCard.value) return;
+            const card = selectCard.options[selectCard.selectedIndex].text.replace(' *', '');
+            const mode = row.querySelector('.mode-select').value || '-';
+            const selectSpec = row.querySelector('.spectrum-select');
+            const spectrum = selectSpec.options[selectSpec.selectedIndex].text;
+            const qty = row.querySelector('.qty-input').value;
+            if(qty > 0) {
+                html += `<tr><td>${card}</td><td>${mode}</td><td>${spectrum}</td><td>${qty}</td></tr>`;
+                hasGeneric = true;
+            }
+        });
+        if(!hasGeneric) html += '<tr><td colspan="4" align="center">입력 내역 없음</td></tr>';
+        html += '</table>';
+
+        // Alien Table
+        html += '<h3>- Alien Wavelengths</h3><table border="1" cellpadding="5" cellspacing="0">';
+        html += '<tr style="background-color:#124191; color:white;"><th>Name (Signal)</th><th>Spectrum (GHz)</th><th>Qty</th></tr>';
+        let hasAlien = false;
+        document.querySelectorAll('.alien-row').forEach(row => {
+            const name = row.querySelector('input[type="text"]').value || "Unnamed Signal";
+            const selectSpec = row.querySelector('.spectrum-select');
+            const spectrum = selectSpec.options[selectSpec.selectedIndex].text;
+            const qty = row.querySelector('.qty-input').value;
+            if(qty > 0) {
+                html += `<tr><td>${name}</td><td>${spectrum}</td><td>${qty}</td></tr>`;
+                hasAlien = true;
+            }
+        });
+        if(!hasAlien) html += '<tr><td colspan="3" align="center">입력 내역 없음</td></tr>';
+        html += '</table><br><br>';
+
+        // 2. 결과 항목 (Output Data - BOM)
+        html += '<h2>[ 2. 전체 필요 라이선스 합계 (BOM) ]</h2>';
+        
+        html += '<h3>1. WS-NOC Manage License</h3><table border="1" cellpadding="5" cellspacing="0">';
+        html += document.getElementById('wsNocTable').innerHTML.replace(/<th/g, '<th style="background-color:#124191; color:white;"');
+        html += '</table><br>';
+
+        html += '<h3>2. Spectrum License</h3><table border="1" cellpadding="5" cellspacing="0">';
+        html += document.getElementById('spectrumTable').innerHTML.replace(/<th/g, '<th style="background-color:#124191; color:white;"');
+        html += '</table><br>';
+
+        html += '<h3>3. Capacity License</h3><table border="1" cellpadding="5" cellspacing="0">';
+        html += document.getElementById('capacityTable').innerHTML.replace(/<th/g, '<th style="background-color:#124191; color:white;"');
+        html += '</table>';
+
+        html += '</body></html>';
+
+        // UTF-8 BOM 추가하여 한글 깨짐 방지
+        const finalContent = '\uFEFF' + html;
+
+        // ★ EXE 환경(Python 웹뷰)인지, 일반 웹 브라우저인지 판별하여 저장 처리
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.save_excel(finalContent).then(function(response) {
+                if (response === 'Success') {
+                    // 저장 성공 (원한다면 alert('저장 완료'); 추가 가능)
+                } else if (response !== 'Cancelled') {
+                    alert('저장 중 오류가 발생했습니다: ' + response);
+                }
+            });
+        } else {
+            // 일반 웹 브라우저 환경 (기존 다운로드 방식)
+            const blob = new Blob([finalContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Nokia_WS-NOC_License_BOM.xls';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+        }
+    }
+
+    // 초기 실행 시 빈 행 1개씩 추가 (Alien은 사용자가 직접 추가하도록 기본 호출에서 제외)
+    window.onload = function() {
+        addGenericRow();
+        calculateTotalLicenses();
+    };
+</script>
+</body>
+</html>
