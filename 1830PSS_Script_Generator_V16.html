@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1830PSS 점검 스크립트 생성기 (v16)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* 지원 카드 목록 스타일 */
+        .supported-cards-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+        }
+        .card-group {
+            display: flex;
+            align-items: flex-start;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 80px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .badge.amp { background-color: #e74c3c; }
+        .badge.tr { background-color: #3498db; }
+        
+        .card-list {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 500;
+            line-height: 24px;
+        }
+
+        /* 입력 영역 스타일 */
+        .input-box {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .input-box h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #555;
+            border-left: 4px solid #0056b3;
+            padding-left: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #0056b3;
+            background-color: #fff;
+        }
+
+        /* 버튼 스타일 */
+        .btn-area {
+            text-align: center;
+            margin: 25px 0;
+        }
+        button.generate-btn {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        button.generate-btn:hover {
+            background-color: #004494;
+            transform: translateY(-2px);
+        }
+
+        /* 결과 영역 스타일 */
+        .output-area {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .copy-btn {
+            padding: 8px 20px;
+            font-size: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+        #resultScript {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            height: 500px;
+            white-space: pre;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>1830PSS 장비 점검 스크립트 생성기 (v16)</h1>
+    
+    <div class="supported-cards-box">
+        <div class="card-group">
+            <span class="badge amp">AMP</span>
+            <span class="card-list">IRDM20, AHPHG, AHPLG, A2325A</span>
+        </div>
+        <div style="height: 10px;"></div>
+        <div class="card-group">
+            <span class="badge tr">Transponder</span>
+            <span class="card-list">
+                12P120(S), 11DPM12, 11QPA4(B), 8P20(B), 11STAR1A<br>
+                S13X100(R/E), S4X400H, 11STMM10, 43SCX4(E), 130SNX10
+            </span>
+        </div>
+    </div>
+    
+    <div class="input-box">
+        <h3>통합 입력창 (Show Card Inventory & Show Interface Inventory)</h3>
+        <p style="font-size:13px; color:#666; margin-top:-5px;">터미널에서 조회한 내용을 구분 없이 모두 붙여넣으세요.</p>
+        <textarea id="combinedInput" placeholder="예시:
+PSS32# show card inventory *
+1/1       32EC2 ...
+1/2       AHPHG ...
+1/12      S13X100R ...
+
+PSS32# show interface inventory *
+1/2/OSC   SL-16.2O ...
+1/12/L1   XL-64TCW ..."></textarea>
+    </div>
+
+    <div class="btn-area">
+        <button class="generate-btn" onclick="generateScript()">스크립트 생성하기</button>
+    </div>
+
+    <div class="output-area">
+        <div class="output-header">
+            <h3>생성된 점검 Script</h3>
+            <button class="copy-btn" onclick="copyToClipboard()">결과 복사하기</button>
+        </div>
+        <textarea id="resultScript" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    function generateScript() {
+        const combinedText = document.getElementById('combinedInput').value;
+        
+        // 1. 필수 헤더 (요청 사항 반영)
+        let script = `paging status disabled
+show version
+show card inventory *
+show interface inventory *
+config pm clearall
+`;
+
+        // 2. 통합 파싱 로직
+        const interfaceSet = new Set();
+        const cards = [];
+        
+        const lines = combinedText.split('\n');
+        
+        lines.forEach(line => {
+            const trimLine = line.trim();
+            
+            // 2-1. Interface Inventory 인식 정규식 (예: 1/2/OSC, 1/12/C1)
+            // (숫자/숫자/문자열) 패턴이 있으면 Interface로 간주
+            const interfaceMatch = trimLine.match(/^(\d+\/\d+\/[A-Za-z0-9\-\.]+)/);
+            if (interfaceMatch) {
+                interfaceSet.add(interfaceMatch[1]);
+            }
+            
+            // 2-2. Card Inventory 인식 정규식 (예: 1/2  AHPHG)
+            // (숫자/숫자) 공백 (문자열) 패턴. 단, Interface 패턴(1/2/3)과는 달라야 함.
+            const cardMatch = trimLine.match(/^(\d+\/\d+)\s+([A-Za-z0-9\-\.]+)/);
+            if (cardMatch) {
+                // 카드로 인식하기 전에 이것이 Interface 라인인지 한 번 더 체크 (오탐 방지)
+                // Interface 라인은 보통 1/2/L1 처럼 슬래시가 2개임. Card는 1/2 처럼 1개.
+                const slashCount = (cardMatch[1].match(/\//g) || []).length;
+                if (slashCount === 1) {
+                    cards.push({
+                        location: cardMatch[1],
+                        type: cardMatch[2].toUpperCase(),
+                        shelf: parseInt(cardMatch[1].split('/')[0]),
+                        slot: parseInt(cardMatch[1].split('/')[1])
+                    });
+                }
+            }
+        });
+
+        // 3. 카드 정렬 (Shelf -> Slot)
+        cards.sort((a, b) => {
+            if (a.shelf !== b.shelf) return a.shelf - b.shelf;
+            return a.slot - b.slot;
+        });
+
+        // 4. 스크립트 생성 로직
+        cards.forEach(card => {
+            const loc = card.location;
+            const type = card.type;
+
+            // --- Case: AHPHG, AHPLG ---
+            if (type.includes("AHPHG") || type.includes("AHPLG")) {
+                script += `show interface ${type} ${loc}/SIG detail\n`;
+                if (interfaceSet.has(`${loc}/OSC`)) {
+                    script += `show interface ${type} ${loc}/OSC pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/OSC pm opr 0 1\n`;
+                }
+            }
+
+            // --- Case: IRDM20 ---
+            else if (type.includes("IRDM20")) {
+                script += `show interface IRDM20 ${loc}/LINEIN detail\n`;
+                script += `show interface IRDM20 ${loc}/LINEOUT detail\n`;
+                script += `show interface irdm20 ${loc}/oscsfp PM opt 0 1\n`;
+                script += `show interface irdm20 ${loc}/oscsfp PM opr 0 1\n`;
+            }
+
+            // --- Case: A2325A ---
+            else if (type.includes("A2325A")) {
+                script += `show interface ${type} ${loc}/LINEIN detail\n`;
+                script += `show interface ${type} ${loc}/LINEOUT detail\n`;
+                if (interfaceSet.has(`${loc}/OSC`)) {
+                    script += `show interface ${type} ${loc}/OSC pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/OSC pm opr 0 1\n`;
+                }
+            }
+
+            // --- Case: S13X100 (R/E) ---
+            else if (type.includes("S13X100")) {
+                const cmdType = "S13X100";
+                script += `show interface ${cmdType} ${loc}/L1 pm opt 0 1\n`;
+                script += `show interface ${cmdType} ${loc}/L1 pm opr 0 1\n`;
+                for (let i = 1; i <= 10; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${cmdType} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${cmdType} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: S4X400H ---
+            else if (type.includes("S4X400")) {
+                const cmdType = "S4X400";
+                script += `show interface ${cmdType} ${loc}/L1 pm opt 0 1\n`;
+                script += `show interface ${cmdType} ${loc}/L1 pm opr 0 1\n`;
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${cmdType} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${cmdType} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: Multi-Port Transponders (12P120, 11DPM12) ---
+            else if (type.includes("12P120") || type.includes("11DPM12")) {
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/L${i}`)) {
+                        script += `show interface ${type} ${loc}/L${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/L${i} pm opr 0 1\n`;
+                    }
+                }
+                for (let i = 1; i <= 12; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${type} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+                for (let i = 1; i <= 12; i++) {
+                    if (interfaceSet.has(`${loc}/VA${i}`)) {
+                        script += `show interface ${type} ${loc}/VA${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/VA${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: 4-Port Transponders (11QPA4, 11QPA4B) ---
+            else if (type.includes("11QPA4")) {
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/L${i}`)) {
+                        script += `show interface ${type} ${loc}/L${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/L${i} pm opr 0 1\n`;
+                    }
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${type} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/VA${i}`)) {
+                        script += `show interface ${type} ${loc}/VA${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/VA${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: 8P20 / 8P20B ---
+            else if (type.includes("8P20")) {
+                for (let i = 1; i <= 2; i++) {
+                    if (interfaceSet.has(`${loc}/L${i}`)) {
+                        script += `show interface ${type} ${loc}/L${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/L${i} pm opr 0 1\n`;
+                    }
+                }
+                for (let i = 1; i <= 8; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${type} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: 11STAR1A ---
+            else if (type.includes("11STAR1A")) {
+                if (interfaceSet.has(`${loc}/L1`)) {
+                    script += `show interface ${type} ${loc}/L1 pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/L1 pm opr 0 1\n`;
+                }
+                if (interfaceSet.has(`${loc}/C1`)) {
+                    script += `show interface ${type} ${loc}/C1 pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/C1 pm opr 0 1\n`;
+                }
+            }
+
+            // --- Case: 11STMM10 / 130SNX10 ---
+            else if (type.includes("11STMM10") || type.includes("130SNX10")) {
+                if (interfaceSet.has(`${loc}/L1`)) {
+                    script += `show interface ${type} ${loc}/L1 pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/L1 pm opr 0 1\n`;
+                }
+                for (let i = 1; i <= 10; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${type} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+
+            // --- Case: 43SCX4 / 43SCX4E ---
+            else if (type.includes("43SCX4")) {
+                if (interfaceSet.has(`${loc}/L1`)) {
+                    script += `show interface ${type} ${loc}/L1 pm opt 0 1\n`;
+                    script += `show interface ${type} ${loc}/L1 pm opr 0 1\n`;
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (interfaceSet.has(`${loc}/C${i}`)) {
+                        script += `show interface ${type} ${loc}/C${i} pm opt 0 1\n`;
+                        script += `show interface ${type} ${loc}/C${i} pm opr 0 1\n`;
+                    }
+                }
+            }
+        });
+
+        document.getElementById('resultScript').value = script;
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("resultScript");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert("스크립트가 복사되었습니다.");
+        });
+    }
+</script>
+
+</body>
+</html>
