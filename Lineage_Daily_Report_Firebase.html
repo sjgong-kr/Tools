@@ -439,26 +439,26 @@
                 </div>
             </div>
 
-            <!-- 🌟 총 자산 평가 & 과금 내역 -->
-            <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#fff5f5]">
+            <!-- 🌟 총 자산 평가 & 과금 및 판매 내역 -->
+            <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#f8fafc]">
                 <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
-                    <i data-lucide="pie-chart" class="w-6 h-6 text-red-500"></i> 자산 총괄 평가 & 쌀먹 지수
+                    <i data-lucide="pie-chart" class="w-6 h-6 text-indigo-500"></i> 자산 총괄 평가 & 쌀먹 지수
                 </h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
                     <!-- 과금 내역 -->
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col h-full">
                         <h3 class="text-lg font-bold mb-3 flex items-center justify-between text-red-800">
-                            <span>💳 캐쉬 결제 (과금) 내역</span>
+                            <span>💳 결제 (과금) 내역</span>
                         </h3>
                         
                         <div class="flex flex-col gap-2 mb-4">
                             <div class="flex gap-2">
                                 <input type="date" id="cashDateInput" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 text-sm font-bold text-gray-600">
-                                <input type="text" id="cashAmountInput" placeholder="결제 금액 (원)" class="w-1/2 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-right font-bold text-sm" oninput="formatPriceInput(this)">
+                                <input type="text" id="cashDescInput" placeholder="결제 내용 (예: 드다 패키지)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-sm font-bold">
                             </div>
                             <div class="flex gap-2">
-                                <input type="text" id="cashDescInput" placeholder="결제 내용 (예: 드다 패키지)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-sm font-bold">
+                                <input type="text" id="cashAmountInput" placeholder="결제 금액 (원)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-right font-bold text-sm" oninput="formatPriceInput(this)">
                                 <button id="btnCashSave" onclick="recordCash()" class="bg-red-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm whitespace-nowrap">기록</button>
                             </div>
                         </div>
@@ -475,26 +475,58 @@
                         </div>
                     </div>
 
+                    <!-- 🌟 수익 (판매) 내역 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 flex flex-col h-full">
+                        <h3 class="text-lg font-bold mb-3 flex items-center justify-between text-blue-800">
+                            <span>💰 수익 (판매) 내역</span>
+                        </h3>
+                        
+                        <div class="flex flex-col gap-2 mb-4">
+                            <div class="flex gap-2">
+                                <input type="date" id="salesDateInput" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 text-sm font-bold text-gray-600">
+                                <input type="text" id="salesDescInput" placeholder="판매 내용 (예: 다이아 판매)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-bold">
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="salesAmountInput" placeholder="판매 금액(원)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right font-bold text-sm" oninput="formatPriceInput(this)">
+                                <input type="text" id="salesFeeInput" placeholder="수수료(원)" class="w-1/4 p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right font-bold text-sm" oninput="formatPriceInput(this)">
+                                <button id="btnSalesSave" onclick="recordSales()" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm whitespace-nowrap">기록</button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
+                            <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between items-center border-b">
+                                <span class="w-1/4">일자</span>
+                                <span class="w-2/5 text-center">내용</span>
+                                <span class="w-1/3 text-right">최종수익/관리</span>
+                            </div>
+                            <ul id="salesLogList" class="flex-1 overflow-y-auto max-h-[250px] p-2 space-y-1 text-sm">
+                                <!-- 판매 기록 -->
+                            </ul>
+                        </div>
+                    </div>
+
                     <!-- 자산 평가 요약 (손익) -->
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center items-center text-center">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-center items-center text-center">
                         <h3 class="text-lg font-bold mb-5 text-gray-700 w-full text-left border-b pb-2">📊 내 캐릭터의 진짜 가치는?</h3>
 
-                        <div class="grid grid-cols-2 gap-4 w-full mb-6">
-                            <div class="bg-red-50 p-4 rounded-xl border border-red-100 relative overflow-hidden">
-                                <div class="absolute top-0 right-0 opacity-10"><i data-lucide="credit-card" class="w-16 h-16"></i></div>
-                                <span class="block text-xs font-bold text-red-800 mb-1">총 과금액 (투자)</span>
-                                <div class="text-xl font-black text-red-600"><span id="summaryTotalCash">0</span> 원</div>
+                        <div class="grid grid-cols-2 gap-3 w-full mb-6">
+                            <div class="bg-red-50 p-3 rounded-xl border border-red-100 relative text-center shadow-sm">
+                                <span class="block text-[11px] font-bold text-red-800 mb-1">총 과금액 (투자)</span>
+                                <div class="text-lg font-black text-red-600"><span id="summaryTotalCash">0</span> 원</div>
                             </div>
-                            <div class="bg-green-50 p-4 rounded-xl border border-green-100 relative overflow-hidden">
-                                <div class="absolute top-0 right-0 opacity-10"><i data-lucide="coins" class="w-16 h-16"></i></div>
-                                <span class="block text-xs font-bold text-green-800 mb-1">현재 총 자산 환산액</span>
-                                <div class="text-xl font-black text-green-600"><span id="summaryTotalAssetCash">0</span> 원</div>
-                                <div class="text-[10px] text-green-700 mt-1 font-bold">(<span id="summaryTotalAdena">0</span> 아데나)</div>
+                            <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 relative text-center shadow-sm">
+                                <span class="block text-[11px] font-bold text-blue-800 mb-1">총 판매액 (수익)</span>
+                                <div class="text-lg font-black text-blue-600"><span id="summaryTotalSales">0</span> 원</div>
+                            </div>
+                            <div class="col-span-2 bg-green-50 p-4 rounded-xl border border-green-100 relative text-center shadow-sm">
+                                <span class="block text-[11px] font-bold text-green-800 mb-1">현재 총 자산 환산액</span>
+                                <div class="text-2xl font-black text-green-600"><span id="summaryTotalAssetCash">0</span> 원</div>
+                                <div class="text-xs text-green-700 mt-1 font-bold">(<span id="summaryTotalAdena">0</span> 아데나)</div>
                             </div>
                         </div>
 
                         <div class="w-full bg-gray-800 rounded-xl p-5 text-white shadow-lg border-2 border-gray-700 relative">
-                            <span class="block text-sm text-gray-400 mb-2">최종 손익 (총 자산 - 과금액)</span>
+                            <span class="block text-xs text-gray-400 mb-2">최종 손익 (총 자산 + 총 수익 - 총 과금)</span>
                             <div id="summaryNetProfit" class="text-3xl font-black text-gray-300 transition-all duration-500">0 원</div>
                             <div id="summaryMemo" class="text-sm mt-3 font-bold py-1.5 px-3 rounded-full inline-block transition-all duration-500">과금 내역을 입력해보세요!</div>
                         </div>
@@ -532,9 +564,9 @@
 
     <!-- Firebase 기반 클라우드 DB 로직 -->
     <script type="module">
-        // 1. 파이어베이스 라이브러리 불러오기 (Realtime Database 전용)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const ACCOUNTS = {
             "pokarekong": "Root+123",
@@ -542,24 +574,11 @@
         };
         
         let currentUser = null;
+        let db, auth, userAuth;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lineage-diary';
+        const isCloudEnabled = typeof __firebase_config !== 'undefined';
 
-        // 2. 전달해주신 파이어베이스 설정값 적용
-        const firebaseConfig = {
-            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
-            authDomain: "openzeroc.firebaseapp.com",
-            projectId: "openzeroc",
-            storageBucket: "openzeroc.firebasestorage.app",
-            messagingSenderId: "465944510778",
-            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
-            measurementId: "G-M4K79K2XPG",
-            // ★ 대부분의 기본 DB 주소 포맷입니다 (안될 경우 콘솔에서 확인 후 변경)
-            databaseURL: "https://openzeroc-default-rtdb.asia-southeast1.firebasedatabase.app" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // 앱 전체 데이터 객체
+        // 앱 전체 데이터를 통합 관리하는 객체
         let appData = {
             inputState: {},
             growthDiary: [],
@@ -569,12 +588,40 @@
             equippedItems: {},
             activeBuffs: [],
             customBuffAc: 0,
-            cashHistory: []
+            cashHistory: [],
+            salesHistory: []
         };
 
-        // ==========================================
-        // 로컬 스토리지 보조 기능 (오프라인/에러 대비용)
-        // ==========================================
+        // Firebase 초기화 로직 (오직 캔버스 환경에서만 동작)
+        if (isCloudEnabled) {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (u) => {
+                userAuth = u;
+                if (u && currentUser) {
+                    fetchCloudData();
+                }
+            });
+            document.getElementById('cloudStatusIndicator').classList.remove('hidden');
+        } else {
+            // 깃허브 등 외부 환경일 경우 로컬 스토리지 모드 안내 표시
+            const localIndicator = document.getElementById('localStatusIndicator');
+            if(localIndicator) localIndicator.classList.remove('hidden');
+        }
+
+        // 동적 스토리지 키 생성 함수 (계정 분리 - 로컬 저장용)
         function lsSet(key, value) {
             if (!currentUser) return;
             localStorage.setItem('lineage_' + currentUser + '_' + key, value);
@@ -590,6 +637,7 @@
             localStorage.removeItem('lineage_' + currentUser + '_' + key);
         }
 
+        // 구버전(공용) 데이터를 pokarekong 계정으로 이전
         function migrateOldData() {
             const oldKeysMap = {
                 'lineageInputState': 'InputState',
@@ -600,7 +648,8 @@
                 'lineageEquippedItems': 'EquippedItems',
                 'lineageActiveBuffs': 'ActiveBuffs',
                 'lineageCustomBuffAc': 'CustomBuffAc',
-                'lineageCashHistory': 'CashHistory'
+                'lineageCashHistory': 'CashHistory',
+                'lineageSalesHistory': 'SalesHistory'
             };
 
             let migrated = false;
@@ -612,11 +661,11 @@
                     migrated = true;
                 }
             }
-            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 이전되었습니다.");
+            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 마이그레이션 되었습니다.");
         }
 
         // ==========================================
-        // 🚀 파이어베이스 클라우드 동기화 (핵심 로직)
+        // 저장 / 불러오기 로직 (클라우드 & 로컬)
         // ==========================================
         let saveTimeout;
         window.triggerSave = function() {
@@ -630,59 +679,50 @@
             lsSet('ActiveBuffs', JSON.stringify(appData.activeBuffs || []));
             lsSet('CustomBuffAc', appData.customBuffAc || 0);
             lsSet('CashHistory', JSON.stringify(appData.cashHistory || []));
+            lsSet('SalesHistory', JSON.stringify(appData.salesHistory || []));
 
             // 2. 파이어베이스 클라우드에 덮어쓰기 저장
-            if (!currentUser) return;
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
-                const statusIndicator = document.getElementById('cloudStatusIndicator');
-                statusIndicator.classList.remove('hidden');
-                statusIndicator.innerText = "☁️ 동기화 중...";
-                statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-yellow-50 text-yellow-600";
-                
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
                 try {
-                    await set(ref(db, 'lineageAccounts/' + currentUser), appData);
-                    statusIndicator.innerText = "☁️ 클라우드 동기화 완료";
-                    statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600";
+                    await setDoc(docRef, appData, { merge: true });
                 } catch(e) {
                     console.error("Cloud save error:", e);
-                    statusIndicator.innerText = "⚠️ 동기화 실패 (기기에만 저장됨)";
-                    statusIndicator.className = "mt-2 text-[10px] font-bold px-2 py-1 rounded bg-red-50 text-red-600";
                 }
             }, 500);
-        };
+        }
 
-        window.fetchCloudData = async function() {
-            if (!currentUser) return;
+        async function fetchCloudData() {
+            if (!userAuth || !currentUser) return;
             
             document.getElementById('loadingOverlay').classList.remove('hidden');
             
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
             try {
-                const dbRef = ref(db);
-                const snapshot = await get(child(dbRef, 'lineageAccounts/' + currentUser));
-                
-                if (snapshot.exists()) {
-                    console.log("클라우드 데이터 로드 성공!");
-                    const cloudData = snapshot.val();
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    // 클라우드 데이터가 있다면 우선 적용
+                    const cloudData = docSnap.data();
                     appData = { ...appData, ...cloudData };
-                    window.triggerSave(); 
+                    triggerSave(); // 로컬에도 덮어쓰기
                 } else {
-                    console.log("클라우드가 비어있어 로컬 데이터를 업로드합니다.");
-                    window.loadLocalDataToApp();
-                    window.triggerSave(); 
+                    // 클라우드가 비어있다면 로컬 데이터를 올려줌
+                    loadLocalDataToApp();
+                    triggerSave(); 
                 }
                 initAppUI(); 
             } catch(e) {
-                console.error("Cloud fetch error:", e);
-                alert("서버 연결에 실패했습니다! 기존 기기에 저장된 데이터를 불러옵니다.");
-                window.loadLocalDataToApp();
+                console.error(e);
+                alert("클라우드 서버 연결에 실패했습니다. 기기 내 저장 모드로 전환합니다.");
+                loadLocalDataToApp();
                 initAppUI();
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
-        };
+        }
 
-        window.loadLocalDataToApp = function() {
+        function loadLocalDataToApp() {
             appData = {
                 inputState: JSON.parse(lsGet('InputState')) || {},
                 growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
@@ -694,7 +734,7 @@
                 customBuffAc: lsGet('CustomBuffAc') || 0,
                 cashHistory: JSON.parse(lsGet('CashHistory')) || []
             };
-        };
+        }
 
         // ==========================================
         // 🔐 계정 로그인 시스템 
@@ -714,7 +754,13 @@
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
                 
-                window.fetchCloudData(); // 로그인 성공 시 클라우드 연동
+                if (userAuth && isCloudEnabled) {
+                    fetchCloudData();
+                } else {
+                    // 깃허브 등 로컬 환경
+                    loadLocalDataToApp();
+                    initAppUI();
+                }
             } else {
                 errEl.classList.remove('hidden');
             }
@@ -731,7 +777,7 @@
         };
 
         window.checkSession = function() {
-            migrateOldData(); 
+            migrateOldData(); // 앱 시작 시 마이그레이션 확인
 
             const sessionUser = sessionStorage.getItem('lineageSessionUser');
             if (sessionUser && ACCOUNTS[sessionUser]) {
@@ -741,7 +787,12 @@
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
                 
-                window.fetchCloudData(); // 새로고침 시 클라우드 데이터 유지
+                if (userAuth && isCloudEnabled) {
+                    fetchCloudData();
+                } else {
+                    loadLocalDataToApp();
+                    initAppUI();
+                }
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
             }
@@ -764,19 +815,19 @@
         window.importAllData = function(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    appData = { ...appData, ...data };
-                    window.triggerSave(); 
-                    initAppUI();
-                    alert("성공적으로 복원하여 서버에 업로드했습니다!");
-                } catch(err) {
-                    alert("잘못된 JSON 파일입니다. 파일을 다시 확인해주세요.");
-                }
+        window.loadLocalDataToApp = function() {
+            appData = {
+                inputState: JSON.parse(lsGet('InputState')) || {},
+                growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
+                adenaHistory: JSON.parse(lsGet('AdenaHistory')) || [],
+                adenaRate: lsGet('AdenaRate') || '30',
+                inventory: JSON.parse(lsGet('Inventory')) || {},
+                equippedItems: JSON.parse(lsGet('EquippedItems')) || {},
+                activeBuffs: JSON.parse(lsGet('ActiveBuffs')) || [],
+                customBuffAc: lsGet('CustomBuffAc') || 0,
+                cashHistory: JSON.parse(lsGet('CashHistory')) || [],
+                salesHistory: JSON.parse(lsGet('SalesHistory')) || []
             };
-            reader.readAsText(file);
         };
 
         // ==========================================
@@ -909,7 +960,7 @@
                 currentMp: document.getElementById('currentMp').value,
                 targetLvNum: document.getElementById('targetLvNum').value
             };
-            window.triggerSave();
+            triggerSave();
         }
 
         function loadInputState() {
@@ -1194,7 +1245,7 @@
 
             growthLogs.sort((a, b) => a.lv - b.lv);
             appData.growthDiary = growthLogs;
-            window.triggerSave();
+            triggerSave();
             
             document.getElementById('logLv').value = '';
             document.getElementById('logHp').value = '';
@@ -1219,7 +1270,7 @@
             if(!confirm(`Lv.${lv} 기록을 정말 삭제할까요?`)) return;
             growthLogs = growthLogs.filter(log => log.lv !== lv);
             appData.growthDiary = growthLogs;
-            window.triggerSave();
+            triggerSave();
             renderGrowthLog();
         };
 
@@ -1278,9 +1329,11 @@
         // ==========================================
         let adenaHistory = [];
         let cashHistory = [];
+        let salesHistory = [];
         
         let editingAdenaIndex = -1;
         let editingCashIndex = -1;
+        let editingSalesIndex = -1;
         
         const manualGearSlots = [
             { id: 'weapon', name: '무기' },
@@ -1347,7 +1400,7 @@
             }
             
             appData.adenaHistory = adenaHistory;
-            window.triggerSave();
+            triggerSave();
             inputEl.value = '';
             renderAdenaLog();
         };
@@ -1363,7 +1416,7 @@
             if(!confirm('해당 아데나 기록을 삭제하시겠습니까?')) return;
             adenaHistory.splice(index, 1);
             appData.adenaHistory = adenaHistory;
-            window.triggerSave();
+            triggerSave();
 
             if (editingAdenaIndex === index) {
                 editingAdenaIndex = -1;
@@ -1405,81 +1458,94 @@
             updateTotalAssetSummary();
         }
 
-        // --- 캐쉬 결제 (과금) 내역 기능 ---
-        window.recordCash = function() {
-            const dateInput = document.getElementById('cashDateInput').value;
-            const descInput = document.getElementById('cashDescInput').value.trim();
-            const amountInput = document.getElementById('cashAmountInput').value.replace(/,/g, '');
+        // --- 판매(수익) 내역 기능 ---
+        window.recordSales = function() {
+            const dateInput = document.getElementById('salesDateInput').value;
+            const descInput = document.getElementById('salesDescInput').value.trim();
+            const amountInput = document.getElementById('salesAmountInput').value.replace(/,/g, '');
+            const feeInput = document.getElementById('salesFeeInput').value.replace(/,/g, '') || '0';
             const amount = parseInt(amountInput);
+            const fee = parseInt(feeInput);
             
             if (!dateInput || !amount || amount <= 0) return;
 
-            if (editingCashIndex > -1) {
-                cashHistory[editingCashIndex].date = dateInput;
-                cashHistory[editingCashIndex].desc = descInput;
-                cashHistory[editingCashIndex].amount = amount;
-                editingCashIndex = -1;
-                document.getElementById('btnCashSave').textContent = '기록';
+            const finalAmount = amount - fee;
+
+            if (editingSalesIndex > -1) {
+                salesHistory[editingSalesIndex].date = dateInput;
+                salesHistory[editingSalesIndex].desc = descInput;
+                salesHistory[editingSalesIndex].amount = amount;
+                salesHistory[editingSalesIndex].fee = fee;
+                salesHistory[editingSalesIndex].finalAmount = finalAmount;
+                editingSalesIndex = -1;
+                document.getElementById('btnSalesSave').textContent = '기록';
             } else {
-                cashHistory.unshift({ date: dateInput, desc: descInput, amount: amount });
+                salesHistory.unshift({ date: dateInput, desc: descInput, amount: amount, fee: fee, finalAmount: finalAmount });
             }
             
-            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            appData.cashHistory = cashHistory;
+            appData.salesHistory = salesHistory;
             window.triggerSave();
 
-            document.getElementById('cashAmountInput').value = '';
-            document.getElementById('cashDescInput').value = '';
+            document.getElementById('salesAmountInput').value = '';
+            document.getElementById('salesFeeInput').value = '';
+            document.getElementById('salesDescInput').value = '';
             
-            renderCashHistory();
-        };
-        
-        window.editCashRecord = function(index) {
-            editingCashIndex = index;
-            document.getElementById('cashDateInput').value = cashHistory[index].date;
-            document.getElementById('cashDescInput').value = cashHistory[index].desc || '';
-            document.getElementById('cashAmountInput').value = cashHistory[index].amount;
-            window.formatPriceInput(document.getElementById('cashAmountInput'));
-            document.getElementById('btnCashSave').textContent = '수정';
-            document.getElementById('cashDescInput').focus();
+            renderSalesHistory();
         };
 
-        window.deleteCashRecord = function(index) {
-            if(!confirm('해당 결제 내역을 삭제하시겠습니까?')) return;
-            cashHistory.splice(index, 1);
+        window.editSalesRecord = function(index) {
+            editingSalesIndex = index;
+            document.getElementById('salesDateInput').value = salesHistory[index].date;
+            document.getElementById('salesDescInput').value = salesHistory[index].desc || '';
+            document.getElementById('salesAmountInput').value = salesHistory[index].amount;
+            document.getElementById('salesFeeInput').value = salesHistory[index].fee || 0;
+            window.formatPriceInput(document.getElementById('salesAmountInput'));
+            window.formatPriceInput(document.getElementById('salesFeeInput'));
+            document.getElementById('btnSalesSave').textContent = '수정';
+            document.getElementById('salesDescInput').focus();
+        };
+
+        window.deleteSalesRecord = function(index) {
+            if(!confirm('해당 판매 내역을 삭제하시겠습니까?')) return;
+            salesHistory.splice(index, 1);
             
-            appData.cashHistory = cashHistory;
+            appData.salesHistory = salesHistory;
             window.triggerSave();
 
-            if (editingCashIndex === index) {
-                editingCashIndex = -1;
-                document.getElementById('cashDateInput').valueAsDate = new Date();
-                document.getElementById('cashDescInput').value = '';
-                document.getElementById('cashAmountInput').value = '';
-                document.getElementById('btnCashSave').textContent = '기록';
+            if (editingSalesIndex === index) {
+                editingSalesIndex = -1;
+                document.getElementById('salesDateInput').valueAsDate = new Date();
+                document.getElementById('salesDescInput').value = '';
+                document.getElementById('salesAmountInput').value = '';
+                document.getElementById('salesFeeInput').value = '';
+                document.getElementById('btnSalesSave').textContent = '기록';
             }
-            renderCashHistory();
+            renderSalesHistory();
         };
 
-        function renderCashHistory() {
-            const list = document.getElementById('cashLogList');
+        function renderSalesHistory() {
+            const list = document.getElementById('salesLogList');
             list.innerHTML = '';
             
-            if (cashHistory.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-6">입력된 과금 내역이 없습니다.<br><span class="text-xs text-gray-300">무과금의 길을 걷고 계신가요?</span></li>';
+            if (salesHistory.length === 0) {
+                list.innerHTML = '<li class="text-center text-gray-400 py-6">입력된 판매 내역이 없습니다.<br><span class="text-xs text-gray-300">첫 수익을 기대해봅니다!</span></li>';
             } else {
-                cashHistory.forEach((record, index) => {
+                salesHistory.forEach((record, index) => {
                     const li = document.createElement('li');
-                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
+                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-blue-50 rounded border border-gray-100 transition";
                     li.innerHTML = `
                         <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${record.date}</span>
-                        <span class="text-gray-700 text-xs font-bold w-1/2 truncate px-1" title="${record.desc || ''}">${record.desc || '내용 없음'}</span>
-                        <div class="flex items-center justify-end gap-2 w-1/4">
-                            <span class="font-black text-red-600 whitespace-nowrap">${record.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span>
-                            <div class="flex gap-1">
-                                <button onclick="editCashRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteCashRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        <div class="flex flex-col w-2/5 px-1">
+                            <span class="text-gray-700 text-xs font-bold truncate" title="${record.desc || ''}">${record.desc || '내용 없음'}</span>
+                            ${record.fee > 0 ? `<span class="text-[9px] text-gray-400">수수료: -${record.fee.toLocaleString()}원</span>` : ''}
+                        </div>
+                        <div class="flex items-center justify-end gap-1 w-1/3">
+                            <span class="font-black text-blue-600 whitespace-nowrap">${record.finalAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">원</span></span>
+                            <div class="flex gap-1 ml-1">
+                                <button onclick="editSalesRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteSalesRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
                     `;
@@ -1584,7 +1650,7 @@
 
             appData.inventory = inventory;
             appData.equippedItems = equipped;
-            window.triggerSave();
+            triggerSave();
 
             window.closeAddItemModal();
             renderManualArmorTable();
@@ -1593,7 +1659,7 @@
         window.changeEquippedItem = function(slotId, itemId) {
             equipped[slotId] = itemId;
             appData.equippedItems = equipped;
-            window.triggerSave();
+            triggerSave();
             renderManualArmorTable(); 
         };
 
@@ -1608,7 +1674,7 @@
 
             appData.inventory = inventory;
             appData.equippedItems = equipped;
-            window.triggerSave();
+            triggerSave();
             
             renderManualArmorTable();
         };
@@ -1652,7 +1718,7 @@
             const rateInput = document.getElementById('adenaRate');
             let rate = parseInt(rateInput.value) || 0;
             appData.adenaRate = rate;
-            window.triggerSave();
+            triggerSave();
             
             const cashValue = (totalCost / 10000) * rate;
             document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor(cashValue).toLocaleString()} <span class="text-sm text-green-600">원</span>`;
@@ -1718,6 +1784,8 @@
 
         function updateTotalAssetSummary() {
             const totalCashSpent = cashHistory.reduce((sum, record) => sum + record.amount, 0);
+            const totalSalesProfit = salesHistory.reduce((sum, record) => sum + record.finalAmount, 0);
+            
             let totalAdena = 0;
             
             if (adenaHistory.length > 0) {
@@ -1734,9 +1802,12 @@
             const rateInput = document.getElementById('adenaRate');
             let rate = parseInt(rateInput.value) || 0;
             const totalAssetCashValue = (totalAdena / 10000) * rate;
-            const netProfit = totalAssetCashValue - totalCashSpent;
+            
+            // 최종 손익 = 현재 총 자산 + 판매 수익 - 과금액
+            const netProfit = totalAssetCashValue + totalSalesProfit - totalCashSpent;
 
             document.getElementById('summaryTotalCash').textContent = totalCashSpent.toLocaleString();
+            document.getElementById('summaryTotalSales').textContent = totalSalesProfit.toLocaleString();
             document.getElementById('summaryTotalAssetCash').textContent = Math.floor(totalAssetCashValue).toLocaleString();
             document.getElementById('summaryTotalAdena').textContent = totalAdena.toLocaleString();
 
@@ -1765,18 +1836,21 @@
         function initAppUI() {
             adenaHistory = appData.adenaHistory || [];
             cashHistory = appData.cashHistory || [];
+            salesHistory = appData.salesHistory || [];
             document.getElementById('adenaRate').value = appData.adenaRate || 30;
             inventory = appData.inventory || {};
             equipped = appData.equippedItems || {};
             growthLogs = appData.growthDiary || [];
             
             document.getElementById('cashDateInput').valueAsDate = new Date();
+            document.getElementById('salesDateInput').valueAsDate = new Date();
 
             loadInputState();
             window.handleCurrentLvChange();
             renderGrowthLog();
             renderAdenaLog();
             renderCashHistory();
+            renderSalesHistory();
             renderBuffs();
             renderManualArmorTable(); 
         }
