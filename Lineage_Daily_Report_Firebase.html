@@ -55,7 +55,7 @@
         }
     </style>
 </head>
-<body class="text-gray-800 bg-[#f3f4f6] min-h-screen flex flex-col">
+<body class="text-gray-800 bg-[#f3f4f6] min-h-screen flex flex-col relative">
 
     <!-- 🌟 로그인 화면 -->
     <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
@@ -67,8 +67,7 @@
                 </div>
                 <h2 class="text-2xl font-black text-gray-800">비밀 성장 일기장</h2>
                 <p class="text-xs text-gray-500 mt-2">인가된 작가님과 지인만 접근 가능합니다.</p>
-                <div id="cloudStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 hidden">☁️ 클라우드 동기화 서버 연결됨</div>
-                <div id="localStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-600 hidden">💾 기기 내 저장 모드 작동 중 (오프라인)</div>
+                <div id="cloudStatusIndicator" class="mt-2 text-[10px] font-bold px-2 py-1 rounded bg-blue-50 text-blue-600 hidden">☁️ Firestore [Lineage] DB 연결됨</div>
             </div>
             
             <div class="space-y-4 text-left">
@@ -88,14 +87,14 @@
         </div>
     </div>
 
-    <!-- 🌟 메인 앱 화면 (로그인 성공 시 표시) -->
+    <!-- 🌟 메인 앱 화면 -->
     <div id="mainApp" class="hidden flex-1 w-full p-2 md:p-6">
         <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 relative">
             
             <!-- 로딩 오버레이 -->
             <div id="loadingOverlay" class="hidden absolute inset-0 bg-white bg-opacity-90 z-50 flex flex-col items-center justify-center">
                 <i data-lucide="loader" class="w-10 h-10 text-indigo-500 animate-spin mb-3"></i>
-                <p class="font-bold text-indigo-800">클라우드 서버에서 데이터를 불러오는 중...</p>
+                <p class="font-bold text-indigo-800">Firestore 데이터를 동기화 중...</p>
             </div>
 
             <!-- 헤더 영역 -->
@@ -112,17 +111,6 @@
                     <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
                 </h1>
                 <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
-                
-                <!-- 백업/복원 버튼 영역 -->
-                <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
-                    <button onclick="exportAllData()" class="flex-1 bg-white text-indigo-700 hover:bg-gray-100 font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow">
-                        <i data-lucide="download" class="w-4 h-4"></i> 내 데이터 백업 (.json)
-                    </button>
-                    <label class="flex-1 bg-indigo-800 hover:bg-indigo-900 text-white font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow cursor-pointer border border-indigo-500">
-                        <i data-lucide="upload" class="w-4 h-4"></i> 데이터 불러오기
-                        <input type="file" accept=".json" class="hidden" onchange="importAllData(event)">
-                    </label>
-                </div>
             </div>
 
             <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -188,7 +176,7 @@
                         </div>
                     </div>
 
-                    <!-- 내 캐릭터 축/망캐 진단기 (그래프) -->
+                    <!-- 내 캐릭터 진단 (그래프) -->
                     <div id="chartContainer" class="hidden flex-col gap-4 mt-4">
                         <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative">
                             <h3 class="text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
@@ -210,13 +198,11 @@
                     </div>
                 </div>
 
-                <!-- 오른쪽: 성장 목표 및 일기장 영역 -->
+                <!-- 오른쪽: 성장 목표 -->
                 <div class="relative flex flex-col h-full">
                     <h2 class="text-xl font-bold border-b-2 border-indigo-100 pb-2 flex items-center gap-2 mb-4">
                         <i data-lucide="target" class="w-5 h-5 text-indigo-600"></i> 목표 레벨 설정
                     </h2>
-
-                    <!-- 슬라이더 영역 -->
                     <div class="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm mb-6">
                         <div class="flex justify-between items-center mb-4">
                             <label class="font-bold text-gray-700">목표 달성 레벨</label>
@@ -252,7 +238,6 @@
                             </div>
                         </div>
 
-                        <!-- 확률별 상세 표 -->
                         <div class="mt-auto">
                             <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1 border-b pb-1">
                                 <i data-lucide="list" class="w-4 h-4"></i> 운에 따른 확률별 예상치 (10~100%)
@@ -267,7 +252,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="percentileTable" class="bg-white">
-                                        <!-- JS에서 렌더링 -->
+                                        <!-- JS 렌더링 -->
                                     </tbody>
                                 </table>
                             </div>
@@ -282,7 +267,6 @@
                     <i data-lucide="edit-2" class="w-6 h-6 text-indigo-500"></i> 나의 렙업 성장 일지
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- 입력 폼 -->
                     <div class="bg-[#fffdf2] diary-border p-4 rounded-xl shadow-sm">
                         <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">새로운 레벨업 기록</h3>
                         <div class="space-y-3">
@@ -307,7 +291,6 @@
                             <button onclick="saveGrowthLog()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition shadow">기록 / 덮어쓰기</button>
                         </div>
                     </div>
-                    <!-- 기록 리스트 -->
                     <div class="md:col-span-2 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col h-full min-h-[250px]">
                         <div class="bg-gray-200 px-4 py-2 text-xs font-bold text-gray-600 grid grid-cols-12 gap-2 text-center items-center">
                             <div class="col-span-2">레벨</div>
@@ -323,44 +306,37 @@
                 </div>
             </div>
 
-            <!-- 🌟 자산 및 장비 관리 영역 -->
+            <!-- 🌟 장비 및 보유 아데나 관리 영역 -->
             <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#f8fafc]">
                 <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
-                    <i data-lucide="wallet" class="w-6 h-6 text-yellow-500"></i> 자산 관리 & 장비 가치 평가
+                    <i data-lucide="swords" class="w-6 h-6 text-gray-700"></i> 인벤토리 및 장비 가치 평가
                 </h2>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
                     <!-- 아데나 기록장 -->
                     <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
                         <h3 class="text-lg font-bold mb-3 flex items-center justify-between">
                             <span>💰 보유 아데나 기록</span>
                         </h3>
-                        
                         <div class="flex gap-2 mb-4">
                             <input type="number" id="adenaInput" placeholder="보유 아데나 입력" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 text-right font-bold text-sm">
                             <button id="btnAdenaSave" onclick="recordAdena()" class="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm whitespace-nowrap">기록</button>
                         </div>
-
                         <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
                             <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between border-b">
                                 <span>기록 일시</span>
                                 <span>보유 금액 / 관리</span>
                             </div>
                             <ul id="adenaLogList" class="flex-1 overflow-y-auto max-h-[300px] p-2 space-y-1 text-sm custom-scrollbar">
-                                <!-- 아데나 기록 -->
+                                <!-- JS 렌더링 -->
                             </ul>
                         </div>
                     </div>
 
-                    <!-- 수동 장비 셋업 시뮬레이터 -->
+                    <!-- 장비 세팅 시뮬레이터 -->
                     <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
                         <div class="flex justify-between items-end mb-3 border-b pb-2">
                             <div>
-                                <h3 class="text-lg font-bold flex items-center gap-1">
-                                    <i data-lucide="swords" class="w-5 h-5 text-gray-600"></i> 전체 장비 세팅 및 가치 산출
-                                </h3>
-                                <p class="text-xs text-gray-500 mt-1">* 보유하신 장비명, 방어력, 시세를 입력해 내 캐릭터의 가치를 확인하세요.</p>
+                                <h3 class="text-lg font-bold flex items-center gap-1">전체 장비 세팅 및 환산</h3>
                             </div>
                             <div class="text-right bg-green-50 p-2 rounded-lg border border-green-200 shadow-sm">
                                 <label class="text-xs font-bold text-green-800 block mb-1">현재 아데나 시세 (1만당)</label>
@@ -370,43 +346,32 @@
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="overflow-x-auto rounded-xl border border-gray-200 mb-4">
                             <table class="w-full text-xs text-center whitespace-nowrap">
                                 <thead class="bg-gray-100 text-gray-600 font-bold">
                                     <tr>
                                         <th class="py-2 px-2 border-r border-b w-16">부위</th>
-                                        <th class="py-2 px-2 border-r border-b">장착 중인 장비 선택 (인벤토리)</th>
-                                        <th class="py-2 px-2 border-r border-b w-20" title="아이템이 제공하는 방어력(AC)">방어력(+)</th>
+                                        <th class="py-2 px-2 border-r border-b">장착 중인 장비 선택</th>
+                                        <th class="py-2 px-2 border-r border-b w-20">방어력(+)</th>
                                         <th class="py-2 px-2 border-b w-32">시세 (아데나)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="manualArmorTableBody" class="bg-white divide-y divide-gray-100">
-                                    <!-- JS 동적 렌더링 -->
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <!-- 버프 및 추가 AC 영역 -->
                         <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                            <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
-                                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-500"></i> 적용 중인 버프 & 추가 방어력 (다중 선택)
-                            </h4>
-                            <div class="flex flex-wrap gap-2 mb-2" id="buffChecklist">
-                                <!-- JS에서 버프 체크박스 렌더링 -->
-                            </div>
+                            <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">적용 중인 버프 & 추가 방어력</h4>
+                            <div class="flex flex-wrap gap-2 mb-2" id="buffChecklist"></div>
                             <div class="flex items-center gap-2 text-xs border-t border-gray-200 pt-2 mt-2">
-                                <span class="font-bold text-gray-600">스탯/레벨 등 기타 방어력 보너스:</span>
-                                <span class="text-gray-400">+</span>
-                                <input type="number" id="customBuffAc" value="0" class="w-16 p-1 border border-gray-300 rounded text-center outline-none focus:ring-1 focus:ring-indigo-400 font-bold text-indigo-700 bg-white shadow-sm" oninput="calculateTotalManualGear()">
+                                <span class="font-bold text-gray-600">스탯/레벨 등 추가 방어력 보너스: +</span>
+                                <input type="number" id="customBuffAc" value="0" class="w-16 p-1 border border-gray-300 rounded text-center outline-none focus:ring-1 focus:ring-indigo-400 font-bold text-indigo-700 shadow-sm" oninput="calculateTotalManualGear()">
                             </div>
                         </div>
-
-                        <!-- 총합 요약 -->
                         <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center text-white mt-auto">
                             <div>
                                 <span class="text-xs text-gray-400 block mb-1">현재 AC 환산</span>
-                                <div class="text-xl font-black text-indigo-300" id="manualTotalAcDisplay">AC 10 <span class="text-sm font-normal text-gray-400">(방어합 0)</span></div>
+                                <div class="text-xl font-black text-indigo-300" id="manualTotalAcDisplay">AC 10</div>
                             </div>
                             <div class="text-right">
                                 <span class="text-xs text-gray-400 block mb-1">장착 장비 총 가치 (아데나 / 원화)</span>
@@ -416,33 +381,28 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- 미장착 보관함 UI -->
+                        
+                        <!-- 미장착 보관함 -->
                         <div class="mt-6 border-t-2 border-dashed border-gray-200 pt-5">
                             <div class="flex justify-between items-end mb-3">
-                                <h4 class="text-md font-bold text-gray-700 flex items-center gap-1">
-                                    <i data-lucide="box" class="w-5 h-5 text-gray-500"></i> 미장착 보관함 (여분 장비)
-                                </h4>
+                                <h4 class="text-md font-bold text-gray-700 flex items-center gap-1">미장착 보관함 (여분 장비)</h4>
                                 <div class="text-right text-sm">
                                     <span class="text-gray-500 font-bold">보관함 자산:</span> 
                                     <span id="storageTotalPrice" class="font-black text-yellow-600 ml-1">0</span> <span class="text-xs text-yellow-700">아데나</span>
-                                    <span id="storageTotalCash" class="font-bold text-green-600 text-xs ml-1">(≈ 0 원)</span>
                                 </div>
                             </div>
                             <div class="overflow-x-auto rounded-xl border border-gray-200 bg-gray-50">
                                 <table class="w-full text-xs text-center whitespace-nowrap">
                                     <thead class="bg-gray-200 text-gray-600 font-bold">
                                         <tr>
-                                            <th class="py-2 px-2 border-r border-b w-16">부위</th>
-                                            <th class="py-2 px-2 border-r border-b">장비 이름</th>
-                                            <th class="py-2 px-2 border-r border-b w-16">방어력(+)</th>
-                                            <th class="py-2 px-2 border-r border-b w-28">시세 (아데나)</th>
-                                            <th class="py-2 px-2 border-b w-12">관리</th>
+                                            <th class="py-2 border-r border-b w-16">부위</th>
+                                            <th class="py-2 border-r border-b">장비 이름</th>
+                                            <th class="py-2 border-r border-b w-16">방어력(+)</th>
+                                            <th class="py-2 border-r border-b w-28">시세(아데나)</th>
+                                            <th class="py-2 border-b w-12">관리</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="storageTableBody" class="bg-white divide-y divide-gray-100">
-                                        <!-- JS 렌더링 -->
-                                    </tbody>
+                                    <tbody id="storageTableBody" class="bg-white divide-y divide-gray-100"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -450,51 +410,42 @@
                 </div>
             </div>
 
-            <!-- 🌟 총 자산 평가 & 과금 및 판매 내역 -->
+            <!-- 🌟 총 자산 평가 & 과금/판매 (2칸:1칸 레이아웃) -->
             <div class="p-4 md:p-6 border-t-2 border-dashed border-gray-300 bg-[#f8fafc]">
                 <h2 class="text-2xl font-bold pb-4 flex items-center gap-2 text-gray-800">
                     <i data-lucide="pie-chart" class="w-6 h-6 text-indigo-500"></i> 자산 총괄 평가 & 쌀먹 지수
                 </h2>
                 
-                <!-- 🌟 레이아웃 변경: 과금/수익 왼쪽 2칸 위아래 배치, 요약 오른쪽 1칸 -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <!-- 왼쪽 2칸: 과금 및 판매 내역 리스트 -->
+                    <!-- 왼쪽 2칸: 과금 및 수익 리스트 -->
                     <div class="lg:col-span-2 flex flex-col gap-6">
                         
-                        <!-- 과금 내역 -->
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col h-[420px]">
+                        <!-- 결제(과금) 내역 -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 flex flex-col h-[400px]">
                             <h3 class="text-lg font-bold mb-4 flex items-center justify-between text-red-800 shrink-0">
                                 <span>💳 결제 (과금) 내역</span>
                             </h3>
-                            
-                            <!-- 1줄로 넓게 배치된 입력 폼 -->
                             <div class="flex flex-wrap md:flex-nowrap gap-2 mb-4 shrink-0 bg-gray-50 p-3 rounded-xl border border-gray-100">
                                 <input type="date" id="cashDateInput" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 text-sm font-bold text-gray-600 w-full md:w-36 shrink-0">
                                 <input type="text" id="cashDescInput" placeholder="결제 내용 (예: 드다 패키지)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-sm font-bold w-full">
                                 <input type="text" id="cashAmountInput" placeholder="결제 금액 (원)" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-right font-bold text-sm w-full md:w-36 shrink-0" oninput="formatPriceInput(this)">
                                 <button id="btnCashSave" onclick="recordCash()" class="bg-red-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-red-700 transition text-sm whitespace-nowrap w-full md:w-auto shrink-0">기록</button>
                             </div>
-
                             <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
                                 <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between items-center border-b">
                                     <span class="w-1/4">일자</span>
                                     <span class="w-1/2 text-center">내용</span>
                                     <span class="w-1/4 text-right">금액/관리</span>
                                 </div>
-                                <ul id="cashLogList" class="flex-1 overflow-y-auto p-2 space-y-1 text-sm custom-scrollbar">
-                                    <!-- 과금 기록 -->
-                                </ul>
+                                <ul id="cashLogList" class="flex-1 overflow-y-auto p-2 space-y-1 text-sm custom-scrollbar"></ul>
                             </div>
                         </div>
 
-                        <!-- 🌟 수익 (판매) 내역 -->
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 flex flex-col h-[420px]">
+                        <!-- 수익(판매) 내역 -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 flex flex-col h-[400px]">
                             <h3 class="text-lg font-bold mb-4 flex items-center justify-between text-blue-800 shrink-0">
                                 <span>💰 수익 (판매) 내역</span>
                             </h3>
-                            
-                            <!-- 1줄로 넓게 배치된 입력 폼 -->
                             <div class="flex flex-wrap md:flex-nowrap gap-2 mb-4 shrink-0 bg-gray-50 p-3 rounded-xl border border-gray-100">
                                 <input type="date" id="salesDateInput" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 text-sm font-bold text-gray-600 w-full md:w-36 shrink-0">
                                 <input type="text" id="salesDescInput" placeholder="판매 내용 (예: 다이아 판매)" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-bold w-full">
@@ -502,27 +453,23 @@
                                 <input type="text" id="salesFeeInput" placeholder="수수료" class="p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right font-bold text-sm w-full md:w-20 shrink-0" oninput="formatPriceInput(this)">
                                 <button id="btnSalesSave" onclick="recordSales()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition text-sm whitespace-nowrap w-full md:w-auto shrink-0">기록</button>
                             </div>
-
                             <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
                                 <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between items-center border-b">
                                     <span class="w-1/4">일자</span>
                                     <span class="w-2/5 text-center">내용</span>
                                     <span class="w-1/3 text-right">최종수익/관리</span>
                                 </div>
-                                <ul id="salesLogList" class="flex-1 overflow-y-auto p-2 space-y-1 text-sm custom-scrollbar">
-                                    <!-- 판매 기록 -->
-                                </ul>
+                                <ul id="salesLogList" class="flex-1 overflow-y-auto p-2 space-y-1 text-sm custom-scrollbar"></ul>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 오른쪽 1칸: 자산 평가 요약 (손익) -->
+                    <!-- 오른쪽 1칸: 요약 -->
                     <div class="lg:col-span-1 flex flex-col gap-4">
                         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-center items-center text-center sticky top-8">
                             <h3 class="text-lg font-bold mb-5 text-gray-700 w-full text-left border-b pb-2 flex items-center gap-2">
                                 📊 내 캐릭터의 진짜 가치는?
                             </h3>
-
                             <div class="grid grid-cols-2 gap-3 w-full mb-6">
                                 <div class="bg-red-50 p-3 rounded-xl border border-red-100 relative text-center shadow-sm">
                                     <span class="block text-[11px] font-bold text-red-800 mb-1">총 과금액 (투자)</span>
@@ -538,18 +485,29 @@
                                     <div class="text-sm text-green-700 mt-1 font-bold">(<span id="summaryTotalAdena">0</span> 아데나)</div>
                                 </div>
                             </div>
-
                             <div class="w-full bg-gray-800 rounded-xl p-6 text-white shadow-lg border-2 border-gray-700 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-500"></div>
                                 <span class="block text-xs text-gray-400 mb-2">최종 손익 (총 자산 + 총 수익 - 총 과금)</span>
                                 <div id="summaryNetProfit" class="text-4xl font-black text-gray-300 transition-all duration-500 tracking-tight mb-4">0 원</div>
                                 <div id="summaryMemo" class="text-sm font-bold py-2 px-4 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-500">
-                                    <i data-lucide="info" class="w-4 h-4"></i> 과금 내역을 입력해보세요!
+                                    과금 내역을 입력해보세요!
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
+            <!-- 커스텀 삭제 확인 모달 (기본 Alert창 대체용) -->
+            <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+                <div class="bg-white rounded-2xl shadow-xl w-80 p-6 transform transition-all scale-100 text-center">
+                    <i data-lucide="alert-circle" class="w-12 h-12 text-red-500 mx-auto mb-3"></i>
+                    <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-2">삭제하시겠습니까?</h3>
+                    <p id="confirmMessage" class="text-sm text-gray-500 mb-6">이 작업은 되돌릴 수 없습니다.</p>
+                    <div class="flex gap-3 justify-center">
+                        <button id="btnConfirmCancel" class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition">취소</button>
+                        <button id="btnConfirmOk" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition">삭제</button>
+                    </div>
                 </div>
             </div>
 
@@ -557,23 +515,23 @@
             <div id="gearModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-2xl shadow-xl w-80 overflow-hidden border border-gray-200 transform transition-all scale-100">
                     <div class="bg-indigo-600 p-4 text-white font-bold flex justify-between items-center">
-                        <span>새 장비 보관함에 넣기 (<span id="modalSlotName"></span>)</span>
+                        <span>보관함에 추가 (<span id="modalSlotName"></span>)</span>
                         <button onclick="closeAddItemModal()" class="text-white hover:text-indigo-200"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">장비 이름</label>
-                            <input type="text" id="newItemName" placeholder="예: +7 요정족 사슬 갑옷" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-bold text-gray-800">
+                            <input type="text" id="newItemName" class="w-full p-2 border border-gray-300 rounded-lg outline-none text-sm font-bold">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">방어력 보너스 (숫자만, 무기/악세는 0)</label>
-                            <input type="number" id="newItemAc" placeholder="예: 11" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-bold text-indigo-700">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">방어력 보너스</label>
+                            <input type="number" id="newItemAc" class="w-full p-2 border border-gray-300 rounded-lg outline-none text-sm font-bold text-indigo-700">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">현재 시세 (아데나)</label>
-                            <input type="text" id="newItemPrice" placeholder="예: 1,500,000" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-1 focus:ring-yellow-500 text-sm font-bold text-right text-gray-800" oninput="formatPriceInput(this)">
+                            <input type="text" id="newItemPrice" class="w-full p-2 border border-gray-300 rounded-lg outline-none text-sm font-bold text-right" oninput="formatPriceInput(this)">
                         </div>
-                        <button onclick="saveNewItem()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition shadow mt-2">저장 및 즉시 장착하기</button>
+                        <button onclick="saveNewItem()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition shadow mt-2">저장 및 장착</button>
                     </div>
                 </div>
             </div>
@@ -581,37 +539,29 @@
         </div>
     </div>
 
-    <!-- Firebase 기반 클라우드 DB 로직 -->
+    <!-- 단일 Firebase 및 앱 통합 로직 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const ACCOUNTS = {
-            "pokarekong": "Root+123",
-            "nodage07": "Root+123"
-        };
+        // 계정 정보
+        const ACCOUNTS = { "pokarekong": "Root+123", "nodage07": "Root+123" };
         
-        let currentUser = null;
         let db, auth, userAuth;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lineage-diary';
+        let currentUser = sessionStorage.getItem('lineageSessionUser') || null;
+        
         const isCloudEnabled = typeof __firebase_config !== 'undefined';
-
-        // 앱 전체 데이터를 통합 관리하는 객체
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lineage-diary';
+        
+        // 데이터 구조
         let appData = {
-            inputState: {},
-            growthDiary: [],
-            adenaHistory: [],
-            adenaRate: '30',
-            inventory: {},
-            equippedItems: {},
-            activeBuffs: [],
-            customBuffAc: 0,
-            cashHistory: [],
-            salesHistory: []
+            inputState: {}, growthDiary: [], adenaHistory: [], adenaRate: '30',
+            inventory: {}, equippedItems: {}, activeBuffs: [], customBuffAc: 0,
+            cashHistory: [], salesHistory: []
         };
 
-        // Firebase 초기화 로직 (오직 캔버스 환경에서만 동작)
+        // Firebase 초기화
         if (isCloudEnabled) {
             const firebaseConfig = JSON.parse(__firebase_config);
             const app = initializeApp(firebaseConfig);
@@ -629,160 +579,106 @@
 
             onAuthStateChanged(auth, (u) => {
                 userAuth = u;
-                if (u && currentUser) {
-                    fetchCloudData();
-                }
+                if (u && currentUser) fetchCloudData();
             });
             document.getElementById('cloudStatusIndicator').classList.remove('hidden');
-        } else {
-            // 깃허브 등 외부 환경일 경우 로컬 스토리지 모드 안내 표시
-            const localIndicator = document.getElementById('localStatusIndicator');
-            if(localIndicator) localIndicator.classList.remove('hidden');
-        }
-
-        // 동적 스토리지 키 생성 함수 (계정 분리 - 로컬 저장용)
-        function lsSet(key, value) {
-            if (!currentUser) return;
-            localStorage.setItem('lineage_' + currentUser + '_' + key, value);
-        }
-
-        function lsGet(key) {
-            if (!currentUser) return null;
-            return localStorage.getItem('lineage_' + currentUser + '_' + key);
-        }
-
-        function lsRemove(key) {
-            if (!currentUser) return;
-            localStorage.removeItem('lineage_' + currentUser + '_' + key);
-        }
-
-        // 구버전(공용) 데이터를 pokarekong 계정으로 이전
-        function migrateOldData() {
-            const oldKeysMap = {
-                'lineageInputState': 'InputState',
-                'lineageGrowthDiary': 'GrowthDiary',
-                'lineageAdenaHistory': 'AdenaHistory',
-                'lineageAdenaRate': 'AdenaRate',
-                'lineageInventory': 'Inventory',
-                'lineageEquippedItems': 'EquippedItems',
-                'lineageActiveBuffs': 'ActiveBuffs',
-                'lineageCustomBuffAc': 'CustomBuffAc',
-                'lineageCashHistory': 'CashHistory',
-                'lineageSalesHistory': 'SalesHistory'
-            };
-
-            let migrated = false;
-            for (let oldKey in oldKeysMap) {
-                const data = localStorage.getItem(oldKey);
-                if (data) {
-                    localStorage.setItem('lineage_pokarekong_' + oldKeysMap[oldKey], data);
-                    localStorage.removeItem(oldKey);
-                    migrated = true;
-                }
-            }
-            if (migrated) console.log("기존 데이터가 pokarekong 계정으로 마이그레이션 되었습니다.");
         }
 
         // ==========================================
-        // 저장 / 불러오기 로직 (클라우드 & 로컬)
+        // Firestore 저장/불러오기 로직 (LocalStorage 대체)
         // ==========================================
         let saveTimeout;
         window.triggerSave = function() {
-            // 1. 기기 로컬 스토리지에 우선 저장 (보험용)
-            lsSet('InputState', JSON.stringify(appData.inputState || {}));
-            lsSet('GrowthDiary', JSON.stringify(appData.growthDiary || []));
-            lsSet('AdenaHistory', JSON.stringify(appData.adenaHistory || []));
-            lsSet('AdenaRate', appData.adenaRate || '30');
-            lsSet('Inventory', JSON.stringify(appData.inventory || {}));
-            lsSet('EquippedItems', JSON.stringify(appData.equippedItems || {}));
-            lsSet('ActiveBuffs', JSON.stringify(appData.activeBuffs || []));
-            lsSet('CustomBuffAc', appData.customBuffAc || 0);
-            lsSet('CashHistory', JSON.stringify(appData.cashHistory || []));
-            lsSet('SalesHistory', JSON.stringify(appData.salesHistory || []));
-
-            // 2. 파이어베이스 클라우드에 덮어쓰기 저장
+            if (!isCloudEnabled || !userAuth || !currentUser) return;
+            
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
+                // 요구사항 반영: 컬렉션 이름을 'Lineage'로 설정하여 여러 프로그램 데이터 분류 가능
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'Lineage', currentUser);
                 try {
                     await setDoc(docRef, appData, { merge: true });
-                } catch(e) {
-                    console.error("Cloud save error:", e);
-                }
+                } catch(e) { console.error("Cloud save error:", e); }
             }, 500);
         }
 
         async function fetchCloudData() {
             if (!userAuth || !currentUser) return;
-            
             document.getElementById('loadingOverlay').classList.remove('hidden');
             
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'lineageAccounts', currentUser);
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'Lineage', currentUser);
             try {
                 const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    // 클라우드 데이터가 있다면 우선 적용
-                    const cloudData = docSnap.data();
-                    appData = { ...appData, ...cloudData };
-                    triggerSave(); // 로컬에도 덮어쓰기
+                if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
+                    appData = { ...appData, ...docSnap.data() };
                 } else {
-                    // 클라우드가 비어있다면 로컬 데이터를 올려줌
-                    loadLocalDataToApp();
-                    triggerSave(); 
+                    // 클라우드 비어있을 시 이전의 무거운 LocalStorage 데이터 1회 마이그레이션 후 로컬 정리
+                    const oldStr = localStorage.getItem(`lineage_${currentUser}_GrowthDiary`);
+                    if (oldStr) {
+                        appData = {
+                            inputState: JSON.parse(localStorage.getItem(`lineage_${currentUser}_InputState`)) || {},
+                            growthDiary: JSON.parse(localStorage.getItem(`lineage_${currentUser}_GrowthDiary`)) || [],
+                            adenaHistory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_AdenaHistory`)) || [],
+                            adenaRate: localStorage.getItem(`lineage_${currentUser}_AdenaRate`) || '30',
+                            inventory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_Inventory`)) || {},
+                            equippedItems: JSON.parse(localStorage.getItem(`lineage_${currentUser}_EquippedItems`)) || {},
+                            activeBuffs: JSON.parse(localStorage.getItem(`lineage_${currentUser}_ActiveBuffs`)) || [],
+                            customBuffAc: parseInt(localStorage.getItem(`lineage_${currentUser}_CustomBuffAc`)) || 0,
+                            cashHistory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_CashHistory`)) || [],
+                            salesHistory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_SalesHistory`)) || []
+                        };
+                        // 구형 로컬 스토리지 삭제 (요청사항 반영)
+                        ['InputState','GrowthDiary','AdenaHistory','AdenaRate','Inventory','EquippedItems','ActiveBuffs','CustomBuffAc','CashHistory','SalesHistory'].forEach(k => localStorage.removeItem(`lineage_${currentUser}_${k}`));
+                        window.triggerSave();
+                    }
                 }
                 initAppUI(); 
             } catch(e) {
                 console.error(e);
-                alert("클라우드 서버 연결에 실패했습니다. 기기 내 저장 모드로 전환합니다.");
-                loadLocalDataToApp();
-                initAppUI();
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
         }
 
-        function loadLocalDataToApp() {
-            appData = {
-                inputState: JSON.parse(lsGet('InputState')) || {},
-                growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
-                adenaHistory: JSON.parse(lsGet('AdenaHistory')) || [],
-                adenaRate: lsGet('AdenaRate') || '30',
-                inventory: JSON.parse(lsGet('Inventory')) || {},
-                equippedItems: JSON.parse(lsGet('EquippedItems')) || {},
-                activeBuffs: JSON.parse(lsGet('ActiveBuffs')) || [],
-                customBuffAc: lsGet('CustomBuffAc') || 0,
-                cashHistory: JSON.parse(lsGet('CashHistory')) || [],
-                salesHistory: JSON.parse(lsGet('SalesHistory')) || []
+        // ==========================================
+        // 커스텀 Confirm 모달 (경고창 대체)
+        // ==========================================
+        window.showConfirm = function(title, msg, onConfirm) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = msg;
+            const modal = document.getElementById('confirmModal');
+            const btnOk = document.getElementById('btnConfirmOk');
+            const btnCancel = document.getElementById('btnConfirmCancel');
+            
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                btnOk.removeEventListener('click', handleOk);
+                btnCancel.removeEventListener('click', handleCancel);
             };
-        }
+            const handleOk = () => { cleanup(); onConfirm(); };
+            const handleCancel = () => { cleanup(); };
+            
+            btnOk.addEventListener('click', handleOk);
+            btnCancel.addEventListener('click', handleCancel);
+            modal.classList.remove('hidden');
+        };
 
         // ==========================================
-        // 🔐 계정 로그인 시스템 
+        // 로그인 시스템
         // ==========================================
         window.attemptLogin = function() {
             const idInput = document.getElementById('loginId').value.trim();
             const pwInput = document.getElementById('loginPw').value;
-            const errEl = document.getElementById('loginError');
-
             if (ACCOUNTS[idInput] && ACCOUNTS[idInput] === pwInput) {
                 currentUser = idInput;
                 sessionStorage.setItem('lineageSessionUser', currentUser);
-                errEl.classList.add('hidden');
-                
+                document.getElementById('loginError').classList.add('hidden');
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
-                
-                if (userAuth && isCloudEnabled) {
-                    fetchCloudData();
-                } else {
-                    // 깃허브 등 로컬 환경
-                    loadLocalDataToApp();
-                    initAppUI();
-                }
+                if (userAuth) fetchCloudData();
             } else {
-                errEl.classList.remove('hidden');
+                document.getElementById('loginError').classList.remove('hidden');
             }
         };
 
@@ -796,40 +692,13 @@
             document.getElementById('loginScreen').classList.remove('hidden');
         };
 
-        window.checkSession = function() {
-            migrateOldData(); // 앱 시작 시 마이그레이션 확인
-
-            const sessionUser = sessionStorage.getItem('lineageSessionUser');
-            if (sessionUser && ACCOUNTS[sessionUser]) {
-                currentUser = sessionUser;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('flex');
-                document.getElementById('displayUserId').textContent = currentUser;
-                
-                if (userAuth && isCloudEnabled) {
-                    fetchCloudData();
-                } else {
-                    loadLocalDataToApp();
-                    initAppUI();
-                }
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-            }
-        };
-
         window.exportAllData = function() {
             if(!currentUser) return;
             const dataStr = JSON.stringify(appData, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `LineageDiary_${currentUser}_AllData.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const a = document.createElement('a'); a.href = url; a.download = `Lineage_${currentUser}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         };
 
         window.importAllData = function(event) {
@@ -838,39 +707,17 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const importedData = JSON.parse(e.target.result);
-                    appData = importedData;
-                    triggerSave();
-                    initAppUI();
-                    alert("데이터 불러오기가 완료되었습니다!");
-                } catch (err) {
-                    alert("잘못된 파일 형식입니다.");
-                }
+                    appData = JSON.parse(e.target.result);
+                    triggerSave(); initAppUI();
+                } catch (err) { alert("잘못된 파일입니다."); }
             };
             reader.readAsText(file);
         };
 
-        window.loadLocalDataToApp = function() {
-            appData = {
-                inputState: JSON.parse(lsGet('InputState')) || {},
-                growthDiary: JSON.parse(lsGet('GrowthDiary')) || [],
-                adenaHistory: JSON.parse(lsGet('AdenaHistory')) || [],
-                adenaRate: lsGet('AdenaRate') || '30',
-                inventory: JSON.parse(lsGet('Inventory')) || {},
-                equippedItems: JSON.parse(lsGet('EquippedItems')) || {},
-                activeBuffs: JSON.parse(lsGet('ActiveBuffs')) || [],
-                customBuffAc: lsGet('CustomBuffAc') || 0,
-                cashHistory: JSON.parse(lsGet('CashHistory')) || [],
-                salesHistory: JSON.parse(lsGet('SalesHistory')) || []
-            };
-        };
-
         // ==========================================
-        // 📊 기존 차트 및 스탯 관련 로직
+        // 차트 & 스탯 로직
         // ==========================================
-        let chartHpInstance = null;
-        let chartMpInstance = null;
-
+        let chartHpInstance = null, chartMpInstance = null;
         Chart.defaults.font.family = "'Gowun Dodum', sans-serif";
 
         const baseStats = {
@@ -879,1108 +726,269 @@
             mage:   { hp: 12, mp: 4, name: '마법사', color: 'bg-purple-100 text-purple-800' },
             prince: { hp: 14, mp: 2, name: '군주', color: 'bg-yellow-100 text-yellow-800' }
         };
+        const zScores = { 100: Infinity, 10: 1.282, 20: 0.842, 30: 0.524, 40: 0.253, 50: 0.000, 60: -0.253, 70: -0.524, 80: -0.842, 90: -1.282, 0: -Infinity };
 
-        const zScores = {
-            100: Infinity, 10: 1.282, 20: 0.842, 30: 0.524, 40: 0.253, 50: 0.000,
-            60: -0.253, 70: -0.524, 80: -0.842, 90: -1.282, 0: -Infinity
-        };
+        function calcProps(arr) { let mean = arr.reduce((a, b) => a + b, 0)/arr.length; return { min: Math.min(...arr), max: Math.max(...arr), mean, variance: arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0)/arr.length }; }
+        function rangeProps(min, max) { return { min, max, mean: (min+max)/2, variance: (Math.pow(max-min+1, 2)-1)/12 }; }
+        function getSelectedClass() { return document.querySelector('input[name="charClass"]:checked').value; }
 
-        function calcProps(arr) {
-            let min = Math.min(...arr), max = Math.max(...arr);
-            let mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-            let variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
-            return { min, max, mean, variance };
-        }
-        function rangeProps(min, max) {
-            let mean = (min + max) / 2;
-            let variance = (Math.pow(max - min + 1, 2) - 1) / 12;
-            return { min, max, mean, variance };
+        function getHpStats(cls, con) {
+            if(cls==='knight'){ if(con<=15) return rangeProps(6,12); if(con===16) return rangeProps(7,13); if(con===17) return rangeProps(8,14); if(con===18) return rangeProps(9,15); if(con===19) return rangeProps(10,16); if(con===20) return rangeProps(11,17); if(con===21) return rangeProps(12,18); if(con===22) return rangeProps(13,19); if(con===23) return rangeProps(14,20); if(con===24) return rangeProps(15,21); return rangeProps(16,22); }
+            if(cls==='elf'){ if(con<=15) return rangeProps(5,10); if(con===16) return rangeProps(6,11); if(con===17) return rangeProps(7,12); return rangeProps(8,13); }
+            if(cls==='mage'){ if(con<=15) return rangeProps(3,6); if(con===16) return rangeProps(4,7); if(con===17) return rangeProps(5,8); if(con===18) return rangeProps(6,9); if(con===19) return rangeProps(7,10); if(con===20) return rangeProps(8,11); return rangeProps(9,12); }
+            if(cls==='prince'){ if(con<=15) return rangeProps(5,10); if(con===16) return rangeProps(6,11); if(con===17) return rangeProps(7,12); if(con===18) return rangeProps(8,13); if(con===19) return rangeProps(9,14); if(con===20) return rangeProps(10,15); return rangeProps(11,16); }
+            return rangeProps(0,0);
         }
 
-        function getSelectedClass() {
-            return document.querySelector('input[name="charClass"]:checked').value;
+        function getMpStats(cls, wis) {
+            if(cls==='knight'){ return wis<=9 ? rangeProps(0,2) : rangeProps(0,3); }
+            if(cls==='elf'){ if(wis<=11) return calcProps([3,4]); if(wis<=14) return rangeProps(3,6); if(wis<=17) return calcProps([4,6,7]); if(wis<=20) return calcProps([4,6,7,9]); return calcProps([6,7,9,10]); }
+            if(cls==='mage'){ if(wis<=14) return rangeProps(4,8); if(wis===15) return rangeProps(6,10); if(wis===16) return rangeProps(6,11); if(wis===17) return rangeProps(7,11); if(wis===18) return rangeProps(7,12); if(wis<=20) return rangeProps(6,12); if(wis<=23) return rangeProps(8,14); if(wis===24) return rangeProps(8,16); return rangeProps(10,16); }
+            if(cls==='prince'){ if(wis<=10) return rangeProps(2,3); if(wis<=14) return rangeProps(2,4); if(wis<=17) return rangeProps(3,5); return rangeProps(3,6); }
+            return rangeProps(0,0);
         }
 
-        function getHpStats(charClass, con) {
-            if (charClass === 'knight') {
-                if (con <= 15) return rangeProps(6, 12);
-                if (con === 16) return rangeProps(7, 13);
-                if (con === 17) return rangeProps(8, 14);
-                if (con === 18) return rangeProps(9, 15);
-                if (con === 19) return rangeProps(10, 16);
-                if (con === 20) return rangeProps(11, 17);
-                if (con === 21) return rangeProps(12, 18);
-                if (con === 22) return rangeProps(13, 19);
-                if (con === 23) return rangeProps(14, 20);
-                if (con === 24) return rangeProps(15, 21);
-                if (con >= 25) return rangeProps(16, 22);
-            } else if (charClass === 'elf') {
-                if (con <= 15) return rangeProps(5, 10);
-                if (con === 16) return rangeProps(6, 11);
-                if (con === 17) return rangeProps(7, 12);
-                if (con >= 18) return rangeProps(8, 13);
-            } else if (charClass === 'mage') {
-                if (con <= 15) return rangeProps(3, 6);
-                if (con === 16) return rangeProps(4, 7);
-                if (con === 17) return rangeProps(5, 8);
-                if (con === 18) return rangeProps(6, 9);
-                if (con === 19) return rangeProps(7, 10);
-                if (con === 20) return rangeProps(8, 11);
-                if (con >= 21) return rangeProps(9, 12);
-            } else if (charClass === 'prince') {
-                if (con <= 15) return rangeProps(5, 10);
-                if (con === 16) return rangeProps(6, 11);
-                if (con === 17) return rangeProps(7, 12);
-                if (con === 18) return rangeProps(8, 13);
-                if (con === 19) return rangeProps(9, 14);
-                if (con === 20) return rangeProps(10, 15);
-                if (con >= 21) return rangeProps(11, 16);
-            }
-            return rangeProps(0, 0);
-        }
-
-        function getMpStats(charClass, wis) {
-            if (charClass === 'knight') {
-                if (wis <= 9) return rangeProps(0, 2);
-                if (wis >= 10) return rangeProps(0, 3);
-            } else if (charClass === 'elf') {
-                if (wis <= 11) return calcProps([3, 4]);
-                if (wis >= 12 && wis <= 14) return rangeProps(3, 6);
-                if (wis >= 15 && wis <= 17) return calcProps([4, 6, 7]);
-                if (wis >= 18 && wis <= 20) return calcProps([4, 6, 7, 9]);
-                if (wis >= 21) return calcProps([6, 7, 9, 10]);
-            } else if (charClass === 'mage') {
-                if (wis <= 14) return rangeProps(4, 8);
-                if (wis === 15) return rangeProps(6, 10);
-                if (wis === 16) return rangeProps(6, 11);
-                if (wis === 17) return rangeProps(7, 11);
-                if (wis === 18) return rangeProps(7, 12);
-                if (wis >= 19 && wis <= 20) return rangeProps(6, 12);
-                if (wis >= 21 && wis <= 23) return rangeProps(8, 14);
-                if (wis === 24) return rangeProps(8, 16);
-                if (wis >= 25) return rangeProps(10, 16);
-            } else if (charClass === 'prince') {
-                if (wis <= 10) return rangeProps(2, 3);
-                if (wis >= 11 && wis <= 14) return rangeProps(2, 4);
-                if (wis >= 15 && wis <= 17) return rangeProps(3, 5);
-                if (wis >= 18) return rangeProps(3, 6);
-            }
-            return rangeProps(0, 0);
-        }
-
-        function normalPDF(x, mean, variance) {
-            if (variance <= 0) return 0;
-            const std = Math.sqrt(variance);
-            const exponent = -Math.pow(x - mean, 2) / (2 * variance);
-            return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
-        }
-
-        function getPercentile(x, mean, std) {
-            if(std === 0) return x >= mean ? 100 : 0;
-            let z = (x - mean) / std;
-            let t = 1 / (1 + 0.231641898 * Math.abs(z));
-            let d = 0.3989422804 * Math.exp(-z * z / 2);
-            let p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
-            if (z > 0) p = 1 - p;
-            return p * 100;
-        }
+        function normalPDF(x, mean, variance) { if(variance<=0) return 0; const std = Math.sqrt(variance); return (1/(std*Math.sqrt(2*Math.PI))) * Math.exp(-Math.pow(x-mean, 2)/(2*variance)); }
+        function getPercentile(x, mean, std) { if(std===0) return x>=mean ? 100 : 0; let z = (x-mean)/std; let t = 1/(1+0.231641898*Math.abs(z)); let d = 0.3989422804*Math.exp(-z*z/2); let p = d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429)))); return (z>0 ? 1-p : p) * 100; }
 
         function saveInputState() {
             appData.inputState = {
-                charClass: getSelectedClass(),
-                conStat: document.getElementById('conStat').value,
-                wisStat: document.getElementById('wisStat').value,
-                currentLv: document.getElementById('currentLv').value,
-                currentHp: document.getElementById('currentHp').value,
-                currentMp: document.getElementById('currentMp').value,
-                targetLvNum: document.getElementById('targetLvNum').value
+                charClass: getSelectedClass(), conStat: document.getElementById('conStat').value, wisStat: document.getElementById('wisStat').value,
+                currentLv: document.getElementById('currentLv').value, currentHp: document.getElementById('currentHp').value,
+                currentMp: document.getElementById('currentMp').value, targetLvNum: document.getElementById('targetLvNum').value
             };
             triggerSave();
         }
 
         function loadInputState() {
-            const state = appData.inputState || {};
-            if (state.charClass) document.querySelector(`input[name="charClass"][value="${state.charClass}"]`).checked = true;
-            if (state.conStat) document.getElementById('conStat').value = state.conStat;
-            if (state.wisStat) document.getElementById('wisStat').value = state.wisStat;
-            if (state.currentLv) document.getElementById('currentLv').value = state.currentLv;
-            if (state.currentHp) document.getElementById('currentHp').value = state.currentHp;
-            if (state.currentMp) document.getElementById('currentMp').value = state.currentMp;
-            if (state.targetLvNum) {
-                document.getElementById('targetLvNum').value = state.targetLvNum;
-                document.getElementById('targetLvRange').value = state.targetLvNum;
-            }
+            const st = appData.inputState || {};
+            if(st.charClass) document.querySelector(`input[name="charClass"][value="${st.charClass}"]`).checked = true;
+            if(st.conStat) document.getElementById('conStat').value = st.conStat; if(st.wisStat) document.getElementById('wisStat').value = st.wisStat;
+            if(st.currentLv) document.getElementById('currentLv').value = st.currentLv; if(st.currentHp) document.getElementById('currentHp').value = st.currentHp;
+            if(st.currentMp) document.getElementById('currentMp').value = st.currentMp;
+            if(st.targetLvNum) { document.getElementById('targetLvNum').value = st.targetLvNum; document.getElementById('targetLvRange').value = st.targetLvNum; }
         }
 
-        window.setLv1Base = function() {
-            const cls = getSelectedClass();
-            document.getElementById('currentLv').value = 1;
-            document.getElementById('currentHp').value = baseStats[cls].hp;
-            document.getElementById('currentMp').value = baseStats[cls].mp;
-            saveInputState();
-            window.handleCurrentLvChange();
-        };
-
-        window.handleCurrentLvChange = function() {
-            window.reactToInput();
-        };
-
-        window.syncTargetLv = function(source) {
-            let range = document.getElementById('targetLvRange');
-            let num = document.getElementById('targetLvNum');
-            
-            if (source === 'range') num.value = range.value;
-            if (source === 'number') {
-                if (parseInt(num.value) < parseInt(range.min)) num.value = range.min;
-                if (parseInt(num.value) > parseInt(range.max)) num.value = range.max;
-                range.value = num.value;
-            }
-            saveInputState();
-            renderTargetGrowth();
-        };
-
-        window.expandMaxLevel = function() {
-            const range = document.getElementById('targetLvRange');
-            const num = document.getElementById('targetLvNum');
-            const label = document.getElementById('rangeMaxLabel');
-            const btn = document.getElementById('expandBtn');
-            
-            range.max = 99;
-            num.max = 99;
-            label.innerText = 'Lv.99';
-            btn.style.display = 'none';
-        };
-
-        window.reactToInput = function() {
-            saveInputState();
-            updateCharts();
-            renderTargetGrowth();
-        };
+        window.setLv1Base = function() { const cls = getSelectedClass(); document.getElementById('currentLv').value = 1; document.getElementById('currentHp').value = baseStats[cls].hp; document.getElementById('currentMp').value = baseStats[cls].mp; saveInputState(); window.handleCurrentLvChange(); };
+        window.handleCurrentLvChange = function() { window.reactToInput(); };
+        window.syncTargetLv = function(source) { let r = document.getElementById('targetLvRange'), n = document.getElementById('targetLvNum'); if(source==='range') n.value = r.value; if(source==='number') { if(parseInt(n.value)<parseInt(r.min)) n.value=r.min; if(parseInt(n.value)>parseInt(r.max)) n.value=r.max; r.value = n.value; } saveInputState(); renderTargetGrowth(); };
+        window.expandMaxLevel = function() { document.getElementById('targetLvRange').max = 99; document.getElementById('targetLvNum').max = 99; document.getElementById('rangeMaxLabel').innerText = 'Lv.99'; document.getElementById('expandBtn').style.display = 'none'; };
+        window.reactToInput = function() { saveInputState(); updateCharts(); renderTargetGrowth(); };
 
         function updateCharts() {
-            const charClass = getSelectedClass();
-            const con = parseInt(document.getElementById('conStat').value);
-            const wis = parseInt(document.getElementById('wisStat').value);
-            const clv = parseInt(document.getElementById('currentLv').value);
-            const curHp = parseInt(document.getElementById('currentHp').value);
-            const curMp = parseInt(document.getElementById('currentMp').value);
+            const cls = getSelectedClass(), con = parseInt(document.getElementById('conStat').value), wis = parseInt(document.getElementById('wisStat').value);
+            const clv = parseInt(document.getElementById('currentLv').value), curHp = parseInt(document.getElementById('currentHp').value), curMp = parseInt(document.getElementById('currentMp').value);
+            const container = document.getElementById('chartContainer'), placeholder = document.getElementById('chartPlaceholder');
 
-            const container = document.getElementById('chartContainer');
-            const placeholder = document.getElementById('chartPlaceholder');
+            if (clv <= 1) { container.classList.add('hidden'); container.classList.remove('flex'); placeholder.classList.remove('hidden'); return; }
+            else { container.classList.remove('hidden'); container.classList.add('flex'); placeholder.classList.add('hidden'); }
 
-            if (clv <= 1) {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                placeholder.classList.remove('hidden');
-                return;
-            } else {
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-                placeholder.classList.add('hidden');
-            }
+            const hS = getHpStats(cls, con), mS = getMpStats(cls, wis), n = clv - 1;
+            const bHp = baseStats[cls].hp, bMp = baseStats[cls].mp;
+            const expHp = bHp + n*hS.mean, hpVar = n*hS.variance, hpStd = Math.sqrt(hpVar);
+            const expMp = bMp + n*mS.mean, mpVar = n*mS.variance, mpStd = Math.sqrt(mpVar);
 
-            const hpStats = getHpStats(charClass, con);
-            const mpStats = getMpStats(charClass, wis);
+            let hpPer = getPercentile(curHp, expHp, hpStd), mpPer = getPercentile(curMp, expMp, mpStd), avgPer = 100 - ((hpPer + mpPer) / 2); 
             
-            const n = clv - 1;
-            const baseHp = baseStats[charClass].hp;
-            const baseMp = baseStats[charClass].mp;
-
-            const expectedHpMean = baseHp + n * hpStats.mean;
-            const hpVar = n * hpStats.variance;
-            const hpStd = Math.sqrt(hpVar);
-
-            const expectedMpMean = baseMp + n * mpStats.mean;
-            const mpVar = n * mpStats.variance;
-            const mpStd = Math.sqrt(mpVar);
-
-            let hpPer = getPercentile(curHp, expectedHpMean, hpStd);
-            let mpPer = getPercentile(curMp, expectedMpMean, mpStd);
-            let avgPer = 100 - ((hpPer + mpPer) / 2); 
+            let dStr = "", dCol = "";
+            if(avgPer<=15){ dStr="🎉 초특급 축캐!"; dCol="bg-yellow-100 text-yellow-800 border-yellow-300"; } else if(avgPer<=35){ dStr="👍 훌륭한 축캐"; dCol="bg-green-100 text-green-800 border-green-300"; } else if(avgPer<=65){ dStr="😐 평범한 일반캐"; dCol="bg-gray-100 text-gray-800 border-gray-300"; } else if(avgPer<=85){ dStr="😥 약간 아쉬운 캐릭"; dCol="bg-orange-100 text-orange-800 border-orange-300"; } else { dStr="💀 눈물의 망캐..."; dCol="bg-red-100 text-red-800 border-red-300"; }
             
-            let diagStr = "";
-            let diagColor = "";
-            if(avgPer <= 15) { diagStr = "🎉 초특급 축캐!"; diagColor = "bg-yellow-100 text-yellow-800 border-yellow-300"; }
-            else if(avgPer <= 35) { diagStr = "👍 훌륭한 축캐"; diagColor = "bg-green-100 text-green-800 border-green-300"; }
-            else if(avgPer <= 65) { diagStr = "😐 평범한 일반캐"; diagColor = "bg-gray-100 text-gray-800 border-gray-300"; }
-            else if(avgPer <= 85) { diagStr = "😥 약간 아쉬운 캐릭"; diagColor = "bg-orange-100 text-orange-800 border-orange-300"; }
-            else { diagStr = "💀 눈물의 망캐..."; diagColor = "bg-red-100 text-red-800 border-red-300"; }
-            
-            const msgEl = document.getElementById('diagnosticMsg');
-            msgEl.textContent = diagStr;
-            msgEl.className = `text-xs px-2 py-1 rounded-full font-bold border ${diagColor}`;
-
-            drawChart('hpChart', expectedHpMean, hpVar, curHp, 'HP 분포', '#ef4444', hpStats.min * n + baseHp, hpStats.max * n + baseHp);
-            drawChart('mpChart', expectedMpMean, mpVar, curMp, 'MP 분포', '#3b82f6', mpStats.min * n + baseMp, mpStats.max * n + baseMp);
+            const msgEl = document.getElementById('diagnosticMsg'); msgEl.textContent = dStr; msgEl.className = `text-xs px-2 py-1 rounded-full font-bold border ${dCol}`;
+            drawChart('hpChart', expHp, hpVar, curHp, 'HP 분포', '#ef4444', hS.min*n+bHp, hS.max*n+bHp);
+            drawChart('mpChart', expMp, mpVar, curMp, 'MP 분포', '#3b82f6', mS.min*n+bMp, mS.max*n+bMp);
         }
 
-        function drawChart(canvasId, mean, variance, userVal, label, colorHex, absMin, absMax) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const std = Math.max(Math.sqrt(variance), 1); 
-
-            let minX = Math.floor(Math.max(mean - 4 * std, absMin));
-            let maxX = Math.ceil(Math.min(mean + 4 * std, absMax));
-            
+        function drawChart(cid, mean, variance, userVal, label, colorHex, absMin, absMax) {
+            const ctx = document.getElementById(cid).getContext('2d'), std = Math.max(Math.sqrt(variance), 1); 
+            let minX = Math.floor(Math.max(mean - 4*std, absMin)), maxX = Math.ceil(Math.min(mean + 4*std, absMax));
             if (maxX - minX < 10) { minX -= 5; maxX += 5; }
+            const labels = [], data = []; let maxY = 0;
+            for (let i=minX; i<=maxX; i++) { labels.push(i); let y = normalPDF(i, mean, variance); data.push(y); if(y>maxY) maxY=y; }
 
-            const labels = [];
-            const data = [];
-            let maxY = 0;
-
-            for (let i = minX; i <= maxX; i++) {
-                labels.push(i);
-                let y = normalPDF(i, mean, variance);
-                data.push(y);
-                if (y > maxY) maxY = y;
-            }
-
-            if (canvasId === 'hpChart' && chartHpInstance) chartHpInstance.destroy();
-            if (canvasId === 'mpChart' && chartMpInstance) chartMpInstance.destroy();
-
-            const chartConfig = {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: label,
-                            data: data,
-                            borderColor: colorHex,
-                            backgroundColor: colorHex + '33', 
-                            borderWidth: 2,
-                            fill: true,
-                            pointRadius: 0,
-                            tension: 0.4
-                        },
-                        {
-                            label: '내 위치',
-                            data: labels.map(x => (x === userVal || (userVal < minX && x===minX) || (userVal > maxX && x===maxX)) ? maxY : null),
-                            borderColor: '#111827',
-                            backgroundColor: '#111827',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            type: 'bar', 
-                            barThickness: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { enabled: false }
-                    },
-                    scales: {
-                        x: { ticks: { maxTicksLimit: 7, font: { size: 10 } } },
-                        y: { display: false }
-                    },
-                    animation: { duration: 300 }
-                }
-            };
-
-            if (canvasId === 'hpChart') chartHpInstance = new Chart(ctx, chartConfig);
-            if (canvasId === 'mpChart') chartMpInstance = new Chart(ctx, chartConfig);
+            if (cid === 'hpChart' && chartHpInstance) chartHpInstance.destroy(); if (cid === 'mpChart' && chartMpInstance) chartMpInstance.destroy();
+            const config = { type: 'line', data: { labels: labels, datasets: [ { label: label, data: data, borderColor: colorHex, backgroundColor: colorHex+'33', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.4 }, { label: '내 위치', data: labels.map(x => (x===userVal || (userVal<minX && x===minX) || (userVal>maxX && x===maxX)) ? maxY : null), borderColor: '#111827', backgroundColor: '#111827', borderWidth: 2, borderDash: [5, 5], type: 'bar', barThickness: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { ticks: { maxTicksLimit: 7, font: { size: 10 } } }, y: { display: false } }, animation: { duration: 300 } } };
+            if (cid === 'hpChart') chartHpInstance = new Chart(ctx, config); if (cid === 'mpChart') chartMpInstance = new Chart(ctx, config);
         }
 
         function renderTargetGrowth() {
-            const charClass = getSelectedClass();
-            const con = parseInt(document.getElementById('conStat').value);
-            const wis = parseInt(document.getElementById('wisStat').value);
-            const targetLv = parseInt(document.getElementById('targetLvNum').value);
+            const cls = getSelectedClass(), con = parseInt(document.getElementById('conStat').value), wis = parseInt(document.getElementById('wisStat').value), tLv = parseInt(document.getElementById('targetLvNum').value);
+            const badge = document.getElementById('resClassBadge'); badge.textContent = baseStats[cls].name; badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold mb-1 ${baseStats[cls].color}`; document.getElementById('resTargetLv').textContent = `Lv.${tLv}`;
 
-            const badge = document.getElementById('resClassBadge');
-            badge.textContent = baseStats[charClass].name;
-            badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold mb-1 ${baseStats[charClass].color}`;
-            document.getElementById('resTargetLv').textContent = `Lv.${targetLv}`;
+            const n = tLv - 1; if (n <= 0) return;
+            const hS = getHpStats(cls, con), mS = getMpStats(cls, wis), bHp = baseStats[cls].hp, bMp = baseStats[cls].mp;
+            document.getElementById('resExpectedHp').textContent = Math.round(bHp + hS.mean*n).toLocaleString(); document.getElementById('resExpectedMp').textContent = Math.round(bMp + mS.mean*n).toLocaleString();
 
-            const levelDiff = targetLv - 1; 
-            if (levelDiff <= 0) return;
-
-            const hpStats = getHpStats(charClass, con);
-            const mpStats = getMpStats(charClass, wis);
-
-            const baseHp = baseStats[charClass].hp;
-            const baseMp = baseStats[charClass].mp;
-
-            const expectedHp = Math.round(baseHp + (hpStats.mean * levelDiff));
-            const expectedMp = Math.round(baseMp + (mpStats.mean * levelDiff));
-            
-            document.getElementById('resExpectedHp').textContent = expectedHp.toLocaleString();
-            document.getElementById('resExpectedMp').textContent = expectedMp.toLocaleString();
-
-            const tbody = document.getElementById('percentileTable');
-            tbody.innerHTML = '';
-
-            const percentiles = [
-                { p: 100, label: "최대치 (기적)", bg: "bg-indigo-50 font-bold" },
-                { p: 10, label: "상위 10% (축캐)", bg: "" },
-                { p: 20, label: "상위 20%", bg: "" },
-                { p: 30, label: "상위 30%", bg: "" },
-                { p: 40, label: "상위 40%", bg: "" },
-                { p: 50, label: "평균치 (50%)", bg: "bg-gray-100 font-bold" },
-                { p: 60, label: "하위 40%", bg: "" },
-                { p: 70, label: "하위 30%", bg: "" },
-                { p: 80, label: "하위 20%", bg: "" },
-                { p: 90, label: "하위 10% (망캐)", bg: "" },
-                { p: 0, label: "최저치 (저주)", bg: "bg-red-50 text-red-800 font-bold" }
-            ];
-
-            const hpStdDev = Math.sqrt(levelDiff * hpStats.variance);
-            const mpStdDev = Math.sqrt(levelDiff * mpStats.variance);
-
-            const getVal = (base, n, mean, std, z, isMax, isMin, minStat, maxStat) => {
-                if (isMax) return base + n * maxStat;
-                if (isMin) return base + n * minStat;
-                let val = Math.round(base + n * mean + z * std);
-                return Math.max(base + n * minStat, Math.min(base + n * maxStat, val));
-            };
+            const tbody = document.getElementById('percentileTable'); tbody.innerHTML = '';
+            const percentiles = [ { p: 100, label: "최대치 (기적)", bg: "bg-indigo-50 font-bold" }, { p: 10, label: "상위 10%", bg: "" }, { p: 20, label: "상위 20%", bg: "" }, { p: 30, label: "상위 30%", bg: "" }, { p: 40, label: "상위 40%", bg: "" }, { p: 50, label: "평균치 (50%)", bg: "bg-gray-100 font-bold" }, { p: 60, label: "하위 40%", bg: "" }, { p: 70, label: "하위 30%", bg: "" }, { p: 80, label: "하위 20%", bg: "" }, { p: 90, label: "하위 10%", bg: "" }, { p: 0, label: "최저치 (저주)", bg: "bg-red-50 text-red-800 font-bold" } ];
+            const hpStd = Math.sqrt(n*hS.variance), mpStd = Math.sqrt(n*mS.variance);
+            const getVal = (b,n,mean,std,z,isMax,isMin,minS,maxS) => { if(isMax) return b+n*maxS; if(isMin) return b+n*minS; return Math.max(b+n*minS, Math.min(b+n*maxS, Math.round(b+n*mean+z*std))); };
 
             percentiles.forEach(item => {
-                let z = zScores[item.p];
-                let isMax = item.p === 100;
-                let isMin = item.p === 0;
-
-                let hpVal = getVal(baseHp, levelDiff, hpStats.mean, hpStdDev, z, isMax, isMin, hpStats.min, hpStats.max);
-                let mpVal = getVal(baseMp, levelDiff, mpStats.mean, mpStdDev, z, isMax, isMin, mpStats.min, mpStats.max);
-
-                let tr = document.createElement('tr');
-                tr.className = `border-b border-gray-100 ${item.bg}`;
-                tr.innerHTML = `
-                    <td class="py-1.5 border-r border-gray-100">${item.label}</td>
-                    <td class="py-1.5 border-r border-gray-100 text-red-600">${hpVal}</td>
-                    <td class="py-1.5 text-blue-600">${mpVal}</td>
-                `;
-                tbody.appendChild(tr);
+                let z = zScores[item.p], hV = getVal(bHp, n, hS.mean, hpStd, z, item.p===100, item.p===0, hS.min, hS.max), mV = getVal(bMp, n, mS.mean, mpStd, z, item.p===100, item.p===0, mS.min, mS.max);
+                let tr = document.createElement('tr'); tr.className = `border-b border-gray-100 ${item.bg}`;
+                tr.innerHTML = `<td class="py-1.5 border-r border-gray-100">${item.label}</td><td class="py-1.5 border-r border-gray-100 text-red-600">${hV}</td><td class="py-1.5 text-blue-600">${mV}</td>`; tbody.appendChild(tr);
             });
         }
 
         // ==========================================
-        // 🌟 성장 일지 (피/엠 기록장 & 수정) 기능
+        // UI 모듈 변수
         // ==========================================
-        let growthLogs = [];
+        let growthLogs = [], adenaHistory = [], cashHistory = [], salesHistory = [];
+        let editingAdenaIndex = -1, editingCashIndex = -1, editingSalesIndex = -1;
+        
+        const manualGearSlots = [ { id: 'weapon', name: '무기' }, { id: 'helm', name: '투구' }, { id: 'armor', name: '갑옷' }, { id: 'tshirt', name: '티셔츠' }, { id: 'cloak', name: '망토' }, { id: 'glove', name: '장갑' }, { id: 'boots', name: '부츠' }, { id: 'shield', name: '방패' }, { id: 'necklace', name: '목걸이' }, { id: 'belt', name: '벨트' }, { id: 'ring1', name: '반지1' }, { id: 'ring2', name: '반지2' }, { id: 'rare', name: '희귀템' }, { id: 'misc', name: '잡템' } ];
+        let inventory = {}, equipped = {}, currentAddingSlot = null;
+        const standardBuffs = [ { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 }, { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 }, { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 }, { id: 'buff_iron', name: '아이언 스킨 (AC -10)', ac: 10 }, { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 }, { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 } ];
 
+        // 성장 일지
         window.saveGrowthLog = function() {
-            const lv = parseInt(document.getElementById('logLv').value);
-            const hp = parseInt(document.getElementById('logHp').value);
-            const mp = parseInt(document.getElementById('logMp').value);
-            const memo = document.getElementById('logMemo').value || '';
-
-            if (!lv || !hp || !mp) {
-                alert("레벨, HP, MP를 모두 입력해주세요!");
-                return;
-            }
-
-            const existingIndex = growthLogs.findIndex(log => log.lv === lv);
-            if (existingIndex !== -1) {
-                growthLogs[existingIndex] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() };
-            } else {
-                growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
-            }
-
-            growthLogs.sort((a, b) => a.lv - b.lv);
-            appData.growthDiary = growthLogs;
-            triggerSave();
-            
-            document.getElementById('logLv').value = '';
-            document.getElementById('logHp').value = '';
-            document.getElementById('logMp').value = '';
-            document.getElementById('logMemo').value = '';
-            
-            renderGrowthLog();
+            const lv = parseInt(document.getElementById('logLv').value), hp = parseInt(document.getElementById('logHp').value), mp = parseInt(document.getElementById('logMp').value), memo = document.getElementById('logMemo').value || '';
+            if (!lv || !hp || !mp) return;
+            const idx = growthLogs.findIndex(l => l.lv === lv);
+            if (idx !== -1) growthLogs[idx] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() }; else growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
+            growthLogs.sort((a, b) => a.lv - b.lv); appData.growthDiary = growthLogs; triggerSave();
+            document.getElementById('logLv').value = ''; document.getElementById('logHp').value = ''; document.getElementById('logMp').value = ''; document.getElementById('logMemo').value = ''; renderGrowthLog();
         };
-
-        window.editGrowthLog = function(lv) {
-            const log = growthLogs.find(l => l.lv === lv);
-            if (log) {
-                document.getElementById('logLv').value = log.lv;
-                document.getElementById('logHp').value = log.hp;
-                document.getElementById('logMp').value = log.mp;
-                document.getElementById('logMemo').value = log.memo || '';
-                document.getElementById('logLv').focus();
-            }
-        };
-
-        window.deleteGrowthLog = function(lv) {
-            if(!confirm(`Lv.${lv} 기록을 정말 삭제할까요?`)) return;
-            growthLogs = growthLogs.filter(log => log.lv !== lv);
-            appData.growthDiary = growthLogs;
-            triggerSave();
-            renderGrowthLog();
-        };
-
+        window.editGrowthLog = function(lv) { const log = growthLogs.find(l => l.lv === lv); if (log) { document.getElementById('logLv').value = log.lv; document.getElementById('logHp').value = log.hp; document.getElementById('logMp').value = log.mp; document.getElementById('logMemo').value = log.memo || ''; document.getElementById('logLv').focus(); } };
+        window.deleteGrowthLog = function(lv) { window.showConfirm('일지 삭제', `Lv.${lv} 기록을 삭제하시겠습니까?`, () => { growthLogs = growthLogs.filter(l => l.lv !== lv); appData.growthDiary = growthLogs; triggerSave(); renderGrowthLog(); }); };
         function renderGrowthLog() {
-            const list = document.getElementById('growthLogList');
-            list.innerHTML = '';
-
-            if (growthLogs.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.<br>열심히 사냥해서 첫 기록을 남겨보세요!</li>';
-                return;
-            }
-
-            growthLogs.forEach((log, index) => {
-                let hpDiff = 0, mpDiff = 0;
-                let diffHtml = '<span class="text-gray-400">-</span>';
-
-                if (index > 0) {
-                    const prev = growthLogs[index - 1];
-                    hpDiff = log.hp - prev.hp;
-                    mpDiff = log.mp - prev.mp;
-                    
-                    let hpColor = hpDiff >= 12 ? 'text-red-600 font-bold' : (hpDiff <= 6 ? 'text-red-300' : 'text-red-500');
-                    let mpColor = mpDiff >= 6 ? 'text-blue-600 font-bold' : 'text-blue-500';
-
-                    diffHtml = `
-                        <div class="flex justify-center gap-1">
-                            <span class="${hpColor} bg-red-50 px-1 rounded">+${hpDiff}</span>
-                            <span class="${mpColor} bg-blue-50 px-1 rounded">+${mpDiff}</span>
-                        </div>
-                    `;
-                } else {
-                    diffHtml = `<span class="text-xs text-gray-400 font-normal">초기 기록</span>`;
-                }
-
-                const li = document.createElement('li');
-                li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
-                li.innerHTML = `
-                    <div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div>
-                    <div class="col-span-3 font-bold">
-                        <span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span>
-                    </div>
-                    <div class="col-span-2 text-xs font-bold">${diffHtml}</div>
-                    <div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div>
-                    <div class="col-span-2 flex justify-center gap-2">
-                        <button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition" title="수정 (입력칸으로 불러오기)"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition" title="삭제"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
-                list.appendChild(li);
-            });
-            window.lucide.createIcons();
+            const list = document.getElementById('growthLogList'); list.innerHTML = '';
+            if (growthLogs.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.</li>'; return; }
+            growthLogs.forEach((log, i) => {
+                let diffHtml = '<span class="text-xs text-gray-400 font-normal">초기 기록</span>';
+                if (i > 0) { const prev = growthLogs[i - 1]; let hD = log.hp - prev.hp, mD = log.mp - prev.mp; diffHtml = `<div class="flex justify-center gap-1"><span class="${hD>=12?'text-red-600 font-bold':hD<=6?'text-red-300':'text-red-500'} bg-red-50 px-1 rounded">+${hD}</span><span class="${mD>=6?'text-blue-600 font-bold':'text-blue-500'} bg-blue-50 px-1 rounded">+${mD}</span></div>`; }
+                const li = document.createElement('li'); li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
+                li.innerHTML = `<div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div><div class="col-span-3 font-bold"><span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span></div><div class="col-span-2 text-xs font-bold">${diffHtml}</div><div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div><div class="col-span-2 flex justify-center gap-2"><button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`; list.appendChild(li);
+            }); window.lucide.createIcons();
         }
 
-        // ==========================================
-        // 🌟 자산, 장비 시뮬레이터, 과금 내역 통합 관리
-        // ==========================================
-        let adenaHistory = [];
-        let cashHistory = [];
-        let salesHistory = [];
-        
-        let editingAdenaIndex = -1;
-        let editingCashIndex = -1;
-        let editingSalesIndex = -1;
-        
-        const manualGearSlots = [
-            { id: 'weapon', name: '무기' },
-            { id: 'helm', name: '투구' },
-            { id: 'armor', name: '갑옷' },
-            { id: 'tshirt', name: '티셔츠' },
-            { id: 'cloak', name: '망토' },
-            { id: 'glove', name: '장갑' },
-            { id: 'boots', name: '부츠' },
-            { id: 'shield', name: '방패' },
-            { id: 'necklace', name: '목걸이' },
-            { id: 'belt', name: '벨트' },
-            { id: 'ring1', name: '반지1' },
-            { id: 'ring2', name: '반지2' },
-            { id: 'rare', name: '희귀템' },
-            { id: 'misc', name: '잡템' }
-        ];
+        // 유틸: 포맷팅
+        window.formatPriceInput = function(el) { let val = el.value.replace(/,/g, '').replace(/[^0-9]/g, ''); el.value = val ? Number(val).toLocaleString() : ''; };
 
-        let inventory = {};
-        let equipped = {};
-        let currentAddingSlot = null;
-
-        const standardBuffs = [
-            { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 },
-            { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 },
-            { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 },
-            { id: 'buff_iron', name: '아이언 스킨 (AC -10)', ac: 10 },
-            { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 },
-            { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 }
-        ];
-
-        function renderBuffs() {
-            const container = document.getElementById('buffChecklist');
-            const activeBuffs = appData.activeBuffs || [];
-            const customAc = appData.customBuffAc || 0;
-            
-            document.getElementById('customBuffAc').value = customAc;
-            
-            container.innerHTML = standardBuffs.map(buff => {
-                const isChecked = activeBuffs.includes(buff.id) ? 'checked' : '';
-                return `
-                    <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition">
-                        <input type="checkbox" id="${buff.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${isChecked} onchange="calculateTotalManualGear()">
-                        <span class="text-xs font-bold text-gray-700">${buff.name}</span>
-                    </label>
-                `;
-            }).join('');
-        }
-
+        // 아데나 기록
         window.recordAdena = function() {
-            const inputEl = document.getElementById('adenaInput');
-            const amount = parseInt(inputEl.value);
-            if (!amount || amount < 0) return;
-
-            const now = new Date();
-            const timeString = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
-            if (editingAdenaIndex > -1) {
-                adenaHistory[editingAdenaIndex].amount = amount;
-                editingAdenaIndex = -1;
-                document.getElementById('btnAdenaSave').textContent = '기록';
-            } else {
-                adenaHistory.unshift({ timestamp: timeString, amount: amount });
-            }
-            
-            appData.adenaHistory = adenaHistory;
-            triggerSave();
-            inputEl.value = '';
-            renderAdenaLog();
+            const amount = parseInt(document.getElementById('adenaInput').value); if (!amount || amount < 0) return;
+            const now = new Date(), tStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            if (editingAdenaIndex > -1) { adenaHistory[editingAdenaIndex].amount = amount; editingAdenaIndex = -1; document.getElementById('btnAdenaSave').textContent = '기록'; } else { adenaHistory.unshift({ timestamp: tStr, amount: amount }); }
+            appData.adenaHistory = adenaHistory; triggerSave(); document.getElementById('adenaInput').value = ''; renderAdenaLog();
         };
-        
-        window.editAdenaRecord = function(index) {
-            editingAdenaIndex = index;
-            document.getElementById('adenaInput').value = adenaHistory[index].amount;
-            document.getElementById('btnAdenaSave').textContent = '수정';
-            document.getElementById('adenaInput').focus();
-        };
-
-        window.deleteAdenaRecord = function(index) {
-            if(!confirm('해당 아데나 기록을 삭제하시겠습니까?')) return;
-            adenaHistory.splice(index, 1);
-            appData.adenaHistory = adenaHistory;
-            triggerSave();
-
-            if (editingAdenaIndex === index) {
-                editingAdenaIndex = -1;
-                document.getElementById('adenaInput').value = '';
-                document.getElementById('btnAdenaSave').textContent = '기록';
-            }
-            renderAdenaLog();
-        };
-
+        window.editAdenaRecord = function(idx) { editingAdenaIndex = idx; document.getElementById('adenaInput').value = adenaHistory[idx].amount; document.getElementById('btnAdenaSave').textContent = '수정'; document.getElementById('adenaInput').focus(); };
+        window.deleteAdenaRecord = function(idx) { window.showConfirm('기록 삭제', '아데나 기록을 삭제할까요?', () => { adenaHistory.splice(idx, 1); appData.adenaHistory = adenaHistory; triggerSave(); if (editingAdenaIndex === idx) { editingAdenaIndex = -1; document.getElementById('adenaInput').value = ''; document.getElementById('btnAdenaSave').textContent = '기록'; } renderAdenaLog(); }); };
         function renderAdenaLog() {
-            const list = document.getElementById('adenaLogList');
-            list.innerHTML = '';
-            if (adenaHistory.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-4">아직 기록된 아데나가 없습니다.</li>';
-            } else {
-                adenaHistory.forEach((record, index) => {
-                    let diffHtml = '';
-                    if (index < adenaHistory.length - 1) {
-                        let diff = record.amount - adenaHistory[index + 1].amount;
-                        if (diff > 0) diffHtml = `<span class="text-[10px] text-green-500 ml-1">(+${diff.toLocaleString()})</span>`;
-                        else if (diff < 0) diffHtml = `<span class="text-[10px] text-red-500 ml-1">(${diff.toLocaleString()})</span>`;
-                    }
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between items-center px-2 py-1.5 hover:bg-white rounded border border-transparent hover:border-gray-100 transition";
-                    li.innerHTML = `
-                        <span class="text-gray-500 font-mono text-xs flex-1">${record.timestamp}</span>
-                        <div class="flex items-center justify-end gap-3 flex-1">
-                            <span class="font-bold text-yellow-600">${record.amount.toLocaleString()} <span class="text-xs text-gray-400 font-normal">아데나</span>${diffHtml}</span>
-                            <div class="flex gap-1">
-                                <button onclick="editAdenaRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteAdenaRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(li);
+            const list = document.getElementById('adenaLogList'); list.innerHTML = '';
+            if (adenaHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-4">기록된 내역이 없습니다.</li>'; } else {
+                adenaHistory.forEach((r, idx) => {
+                    let dH = ''; if (idx < adenaHistory.length - 1) { let diff = r.amount - adenaHistory[idx + 1].amount; if(diff>0) dH=`<span class="text-[10px] text-green-500 ml-1">(+${diff.toLocaleString()})</span>`; else if(diff<0) dH=`<span class="text-[10px] text-red-500 ml-1">(${diff.toLocaleString()})</span>`; }
+                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-1.5 hover:bg-white rounded border border-transparent hover:border-gray-100 transition";
+                    li.innerHTML = `<span class="text-gray-500 font-mono text-xs flex-1">${r.timestamp}</span><div class="flex items-center justify-end gap-3 flex-1"><span class="font-bold text-yellow-600">${r.amount.toLocaleString()} <span class="text-xs text-gray-400 font-normal">아데나</span>${dH}</span><div class="flex gap-1"><button onclick="editAdenaRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteAdenaRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
                 });
-            }
-            window.lucide.createIcons();
-            updateTotalAssetSummary();
+            } window.lucide.createIcons(); updateTotalAssetSummary();
         }
 
-        // --- 과금(결제) 내역 복구 및 추가 기능 ---
+        // 과금 기록
         window.recordCash = function() {
-            const dateInput = document.getElementById('cashDateInput').value;
-            const descInput = document.getElementById('cashDescInput').value.trim();
-            const amountInput = document.getElementById('cashAmountInput').value.replace(/,/g, '');
-            const amount = parseInt(amountInput);
-            
-            if (!dateInput || !amount || amount <= 0) return;
-
-            if (editingCashIndex > -1) {
-                cashHistory[editingCashIndex].date = dateInput;
-                cashHistory[editingCashIndex].desc = descInput;
-                cashHistory[editingCashIndex].amount = amount;
-                editingCashIndex = -1;
-                document.getElementById('btnCashSave').textContent = '기록';
-            } else {
-                cashHistory.unshift({ date: dateInput, desc: descInput, amount: amount });
-            }
-            
-            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-            appData.cashHistory = cashHistory;
-            window.triggerSave();
-
-            document.getElementById('cashAmountInput').value = '';
-            document.getElementById('cashDescInput').value = '';
-            
-            renderCashHistory();
+            const date = document.getElementById('cashDateInput').value, desc = document.getElementById('cashDescInput').value.trim(), amount = parseInt(document.getElementById('cashAmountInput').value.replace(/,/g, ''));
+            if (!date || !amount || amount <= 0) return;
+            if (editingCashIndex > -1) { cashHistory[editingCashIndex] = { date, desc, amount }; editingCashIndex = -1; document.getElementById('btnCashSave').textContent = '기록'; } else { cashHistory.unshift({ date, desc, amount }); }
+            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); appData.cashHistory = cashHistory; triggerSave();
+            document.getElementById('cashAmountInput').value = ''; document.getElementById('cashDescInput').value = ''; renderCashHistory();
         };
-
-        window.editCashRecord = function(index) {
-            editingCashIndex = index;
-            document.getElementById('cashDateInput').value = cashHistory[index].date;
-            document.getElementById('cashDescInput').value = cashHistory[index].desc || '';
-            document.getElementById('cashAmountInput').value = cashHistory[index].amount;
-            window.formatPriceInput(document.getElementById('cashAmountInput'));
-            document.getElementById('btnCashSave').textContent = '수정';
-            document.getElementById('cashDescInput').focus();
-        };
-
-        window.deleteCashRecord = function(index) {
-            if(!confirm('해당 결제 내역을 삭제하시겠습니까?')) return;
-            cashHistory.splice(index, 1);
-            appData.cashHistory = cashHistory;
-            window.triggerSave();
-
-            if (editingCashIndex === index) {
-                editingCashIndex = -1;
-                document.getElementById('cashDateInput').valueAsDate = new Date();
-                document.getElementById('cashDescInput').value = '';
-                document.getElementById('cashAmountInput').value = '';
-                document.getElementById('btnCashSave').textContent = '기록';
-            }
-            renderCashHistory();
-        };
-
+        window.editCashRecord = function(idx) { editingCashIndex = idx; document.getElementById('cashDateInput').value = cashHistory[idx].date; document.getElementById('cashDescInput').value = cashHistory[idx].desc || ''; document.getElementById('cashAmountInput').value = cashHistory[idx].amount; window.formatPriceInput(document.getElementById('cashAmountInput')); document.getElementById('btnCashSave').textContent = '수정'; document.getElementById('cashDescInput').focus(); };
+        window.deleteCashRecord = function(idx) { window.showConfirm('결제 취소', '과금 내역을 삭제할까요?', () => { cashHistory.splice(idx, 1); appData.cashHistory = cashHistory; triggerSave(); if(editingCashIndex === idx) { editingCashIndex = -1; document.getElementById('btnCashSave').textContent = '기록'; } renderCashHistory(); }); };
         function renderCashHistory() {
-            const list = document.getElementById('cashLogList');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            if (cashHistory.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-6">입력된 과금 내역이 없습니다.<br><span class="text-xs text-gray-300">무과금의 길을 걷고 계신가요?</span></li>';
-            } else {
-                cashHistory.forEach((record, index) => {
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
-                    li.innerHTML = `
-                        <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${record.date}</span>
-                        <div class="flex flex-col w-1/2 px-1 text-center">
-                            <span class="text-gray-700 text-xs font-bold truncate" title="${record.desc || ''}">${record.desc || '내용 없음'}</span>
-                        </div>
-                        <div class="flex items-center justify-end gap-1 w-1/4">
-                            <span class="font-black text-red-500 whitespace-nowrap">${record.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span>
-                            <div class="flex gap-1 ml-1">
-                                <button onclick="editCashRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteCashRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(li);
+            const list = document.getElementById('cashLogList'); list.innerHTML = '';
+            if (cashHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-6">무과금의 길을 걷고 계신가요?</li>'; } else {
+                cashHistory.forEach((r, idx) => {
+                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
+                    li.innerHTML = `<span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span><div class="flex flex-col w-1/2 px-1 text-center"><span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span></div><div class="flex items-center justify-end gap-1 w-1/4"><span class="font-black text-red-500 whitespace-nowrap">${r.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span><div class="flex gap-1 ml-1"><button onclick="editCashRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteCashRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
                 });
-            }
-            window.lucide.createIcons();
-            updateTotalAssetSummary();
+            } window.lucide.createIcons(); updateTotalAssetSummary();
         }
 
-        // --- 판매(수익) 내역 기능 ---
+        // 판매(수익) 기록
         window.recordSales = function() {
-            const dateInput = document.getElementById('salesDateInput').value;
-            const descInput = document.getElementById('salesDescInput').value.trim();
-            const amountInput = document.getElementById('salesAmountInput').value.replace(/,/g, '');
-            const feeInput = document.getElementById('salesFeeInput').value.replace(/,/g, '') || '0';
-            const amount = parseInt(amountInput);
-            const fee = parseInt(feeInput);
-            
-            if (!dateInput || !amount || amount <= 0) return;
-
-            const finalAmount = amount - fee;
-
-            if (editingSalesIndex > -1) {
-                salesHistory[editingSalesIndex].date = dateInput;
-                salesHistory[editingSalesIndex].desc = descInput;
-                salesHistory[editingSalesIndex].amount = amount;
-                salesHistory[editingSalesIndex].fee = fee;
-                salesHistory[editingSalesIndex].finalAmount = finalAmount;
-                editingSalesIndex = -1;
-                document.getElementById('btnSalesSave').textContent = '기록';
-            } else {
-                salesHistory.unshift({ date: dateInput, desc: descInput, amount: amount, fee: fee, finalAmount: finalAmount });
-            }
-            
-            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            appData.salesHistory = salesHistory;
-            window.triggerSave();
-
-            document.getElementById('salesAmountInput').value = '';
-            document.getElementById('salesFeeInput').value = '';
-            document.getElementById('salesDescInput').value = '';
-            
-            renderSalesHistory();
+            const date = document.getElementById('salesDateInput').value, desc = document.getElementById('salesDescInput').value.trim(), amount = parseInt(document.getElementById('salesAmountInput').value.replace(/,/g, '')), fee = parseInt(document.getElementById('salesFeeInput').value.replace(/,/g, '')) || 0;
+            if (!date || !amount || amount <= 0) return; const finalAmount = amount - fee;
+            if (editingSalesIndex > -1) { salesHistory[editingSalesIndex] = { date, desc, amount, fee, finalAmount }; editingSalesIndex = -1; document.getElementById('btnSalesSave').textContent = '기록'; } else { salesHistory.unshift({ date, desc, amount, fee, finalAmount }); }
+            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); appData.salesHistory = salesHistory; triggerSave();
+            document.getElementById('salesAmountInput').value = ''; document.getElementById('salesFeeInput').value = ''; document.getElementById('salesDescInput').value = ''; renderSalesHistory();
         };
-
-        window.editSalesRecord = function(index) {
-            editingSalesIndex = index;
-            document.getElementById('salesDateInput').value = salesHistory[index].date;
-            document.getElementById('salesDescInput').value = salesHistory[index].desc || '';
-            document.getElementById('salesAmountInput').value = salesHistory[index].amount;
-            document.getElementById('salesFeeInput').value = salesHistory[index].fee || 0;
-            window.formatPriceInput(document.getElementById('salesAmountInput'));
-            window.formatPriceInput(document.getElementById('salesFeeInput'));
-            document.getElementById('btnSalesSave').textContent = '수정';
-            document.getElementById('salesDescInput').focus();
-        };
-
-        window.deleteSalesRecord = function(index) {
-            if(!confirm('해당 판매 내역을 삭제하시겠습니까?')) return;
-            salesHistory.splice(index, 1);
-            
-            appData.salesHistory = salesHistory;
-            window.triggerSave();
-
-            if (editingSalesIndex === index) {
-                editingSalesIndex = -1;
-                document.getElementById('salesDateInput').valueAsDate = new Date();
-                document.getElementById('salesDescInput').value = '';
-                document.getElementById('salesAmountInput').value = '';
-                document.getElementById('salesFeeInput').value = '';
-                document.getElementById('btnSalesSave').textContent = '기록';
-            }
-            renderSalesHistory();
-        };
-
+        window.editSalesRecord = function(idx) { editingSalesIndex = idx; document.getElementById('salesDateInput').value = salesHistory[idx].date; document.getElementById('salesDescInput').value = salesHistory[idx].desc || ''; document.getElementById('salesAmountInput').value = salesHistory[idx].amount; document.getElementById('salesFeeInput').value = salesHistory[idx].fee || ''; window.formatPriceInput(document.getElementById('salesAmountInput')); window.formatPriceInput(document.getElementById('salesFeeInput')); document.getElementById('btnSalesSave').textContent = '수정'; document.getElementById('salesDescInput').focus(); };
+        window.deleteSalesRecord = function(idx) { window.showConfirm('판매 취소', '수익 내역을 삭제할까요?', () => { salesHistory.splice(idx, 1); appData.salesHistory = salesHistory; triggerSave(); if(editingSalesIndex === idx) { editingSalesIndex = -1; document.getElementById('btnSalesSave').textContent = '기록'; } renderSalesHistory(); }); };
         function renderSalesHistory() {
-            const list = document.getElementById('salesLogList');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            if (salesHistory.length === 0) {
-                list.innerHTML = '<li class="text-center text-gray-400 py-6">입력된 판매 내역이 없습니다.<br><span class="text-xs text-gray-300">첫 수익을 기대해봅니다!</span></li>';
-            } else {
-                salesHistory.forEach((record, index) => {
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-blue-50 rounded border border-gray-100 transition";
-                    li.innerHTML = `
-                        <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${record.date}</span>
-                        <div class="flex flex-col w-2/5 px-1 text-center">
-                            <span class="text-gray-700 text-xs font-bold truncate" title="${record.desc || ''}">${record.desc || '내용 없음'}</span>
-                            ${record.fee > 0 ? `<span class="text-[9px] text-gray-400">수수료: -${record.fee.toLocaleString()}원</span>` : ''}
-                        </div>
-                        <div class="flex items-center justify-end gap-1 w-1/3">
-                            <span class="font-black text-blue-600 whitespace-nowrap">${record.finalAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">원</span></span>
-                            <div class="flex gap-1 ml-1">
-                                <button onclick="editSalesRecord(${index})" class="text-indigo-300 hover:text-indigo-600" title="수정"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteSalesRecord(${index})" class="text-red-300 hover:text-red-600" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(li);
+            const list = document.getElementById('salesLogList'); list.innerHTML = '';
+            if (salesHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-6">첫 수익을 기대해봅니다!</li>'; } else {
+                salesHistory.forEach((r, idx) => {
+                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-blue-50 rounded border border-gray-100 transition";
+                    li.innerHTML = `<span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span><div class="flex flex-col w-2/5 px-1 text-center"><span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span>${r.fee>0?`<span class="text-[9px] text-gray-400">수수료: -${r.fee.toLocaleString()}원</span>`:''}</div><div class="flex items-center justify-end gap-1 w-1/3"><span class="font-black text-blue-600 whitespace-nowrap">${r.finalAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">원</span></span><div class="flex gap-1 ml-1"><button onclick="editSalesRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteSalesRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
                 });
-            }
-            window.lucide.createIcons();
-            updateTotalAssetSummary();
+            } window.lucide.createIcons(); updateTotalAssetSummary();
         }
 
+        // 장비 & 버프 관리
+        function renderBuffs() {
+            document.getElementById('customBuffAc').value = appData.customBuffAc || 0;
+            document.getElementById('buffChecklist').innerHTML = standardBuffs.map(b => `<label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50"><input type="checkbox" id="${b.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${appData.activeBuffs.includes(b.id)?'checked':''} onchange="calculateTotalManualGear()"><span class="text-xs font-bold text-gray-700">${b.name}</span></label>`).join('');
+        }
         function renderManualArmorTable() {
-            const tbody = document.getElementById('manualArmorTableBody');
-            tbody.innerHTML = '';
-            
+            const tbody = document.getElementById('manualArmorTableBody'); tbody.innerHTML = '';
             manualGearSlots.forEach(slot => {
-                const items = inventory[slot.id] || [];
-                const currentEquippedId = equipped[slot.id] || 'none';
-
-                let optionsHtml = `<option value="none" class="text-gray-400">-- 장착 안함 --</option>`;
-                let currentItem = null;
-
-                items.forEach(item => {
-                    const isSelected = item.id === currentEquippedId;
-                    if (isSelected) currentItem = item;
-                    optionsHtml += `<option value="${item.id}" ${isSelected ? 'selected' : ''} class="text-gray-800">${item.name}</option>`;
-                });
-
-                const acDisplay = currentItem ? currentItem.ac : 0;
-                const priceDisplay = currentItem ? currentItem.price.toLocaleString() : '-';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="py-2 px-2 border-r bg-gray-50 text-gray-600 font-bold">${slot.name}</td>
-                    <td class="py-1 px-2 border-r flex items-center gap-1 min-w-[200px]">
-                        <select class="flex-1 p-1.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm font-bold text-gray-700 cursor-pointer shadow-sm" onchange="changeEquippedItem('${slot.id}', this.value)">
-                            ${optionsHtml}
-                        </select>
-                        <button onclick="openAddItemModal('${slot.id}')" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition shadow-sm" title="보관함에 새 장비 추가">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                        ${currentItem ? `
-                        <button onclick="deleteItem('${slot.id}', '${currentItem.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition shadow-sm" title="현재 선택된 장비 버리기">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                        ` : ''}
-                    </td>
-                    <td class="py-2 px-2 border-r text-indigo-700 font-black bg-indigo-50">${acDisplay > 0 ? '+' + acDisplay : acDisplay}</td>
-                    <td class="py-2 px-2 text-right text-gray-700 font-bold">${priceDisplay}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            
-            window.lucide.createIcons();
-            window.calculateTotalManualGear();
+                const items = inventory[slot.id] || []; const curId = equipped[slot.id] || 'none'; let opts = `<option value="none">-- 장착 안함 --</option>`, curItem = null;
+                items.forEach(i => { if(i.id===curId) curItem=i; opts += `<option value="${i.id}" ${i.id===curId?'selected':''}>${i.name}</option>`; });
+                const tr = document.createElement('tr'); tr.innerHTML = `<td class="py-2 px-2 border-r bg-gray-50 text-gray-600 font-bold">${slot.name}</td><td class="py-1 px-2 border-r flex items-center gap-1 min-w-[200px]"><select class="flex-1 p-1.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm font-bold text-gray-700" onchange="changeEquippedItem('${slot.id}', this.value)">${opts}</select><button onclick="openAddItemModal('${slot.id}')" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></button>${curItem?`<button onclick="deleteItem('${slot.id}', '${curItem.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`:''}</td><td class="py-2 px-2 border-r text-indigo-700 font-black bg-indigo-50">${curItem && curItem.ac>0?'+'+curItem.ac:curItem?curItem.ac:0}</td><td class="py-2 px-2 text-right text-gray-700 font-bold">${curItem?curItem.price.toLocaleString():'-'}</td>`; tbody.appendChild(tr);
+            }); window.lucide.createIcons(); window.calculateTotalManualGear();
         }
 
-        window.formatPriceInput = function(inputEl) {
-            let val = inputEl.value.replace(/,/g, '').replace(/[^0-9]/g, '');
-            inputEl.value = val ? Number(val).toLocaleString() : '';
-        };
-
-        window.openAddItemModal = function(slotId) {
-            currentAddingSlot = slotId;
-            const slotName = manualGearSlots.find(s => s.id === slotId).name;
-            document.getElementById('modalSlotName').textContent = slotName;
-            
-            document.getElementById('newItemName').value = '';
-            document.getElementById('newItemAc').value = '';
-            document.getElementById('newItemPrice').value = '';
-            
-            document.getElementById('gearModal').classList.remove('hidden');
-        };
-
-        window.closeAddItemModal = function() {
-            document.getElementById('gearModal').classList.add('hidden');
-            currentAddingSlot = null;
-        };
-
+        window.openAddItemModal = function(slotId) { currentAddingSlot = slotId; document.getElementById('modalSlotName').textContent = manualGearSlots.find(s=>s.id===slotId).name; ['newItemName','newItemAc','newItemPrice'].forEach(id=>document.getElementById(id).value=''); document.getElementById('gearModal').classList.remove('hidden'); };
+        window.closeAddItemModal = function() { document.getElementById('gearModal').classList.add('hidden'); currentAddingSlot = null; };
         window.saveNewItem = function() {
-            if (!currentAddingSlot) return;
-
-            const name = document.getElementById('newItemName').value.trim();
-            const ac = parseInt(document.getElementById('newItemAc').value) || 0;
-            const price = parseInt(document.getElementById('newItemPrice').value.replace(/,/g, '')) || 0;
-
-            if (!name) {
-                alert('장비 이름을 입력해주세요.');
-                return;
-            }
-
-            if (!inventory[currentAddingSlot]) inventory[currentAddingSlot] = [];
-
-            const newItem = {
-                id: 'item_' + Date.now(),
-                name: name,
-                ac: ac,
-                price: price
-            };
-
-            inventory[currentAddingSlot].push(newItem);
-            equipped[currentAddingSlot] = newItem.id;
-
-            appData.inventory = inventory;
-            appData.equippedItems = equipped;
-            triggerSave();
-
-            window.closeAddItemModal();
-            renderManualArmorTable();
+            if (!currentAddingSlot) return; const name = document.getElementById('newItemName').value.trim(), ac = parseInt(document.getElementById('newItemAc').value) || 0, price = parseInt(document.getElementById('newItemPrice').value.replace(/,/g, '')) || 0;
+            if (!name) return; if (!inventory[currentAddingSlot]) inventory[currentAddingSlot] = [];
+            const nI = { id: 'item_' + Date.now(), name, ac, price }; inventory[currentAddingSlot].push(nI); equipped[currentAddingSlot] = nI.id;
+            appData.inventory = inventory; appData.equippedItems = equipped; triggerSave(); window.closeAddItemModal(); renderManualArmorTable();
         };
-
-        window.changeEquippedItem = function(slotId, itemId) {
-            equipped[slotId] = itemId;
-            appData.equippedItems = equipped;
-            triggerSave();
-            renderManualArmorTable(); 
-        };
-
-        window.deleteItem = function(slotId, itemId) {
-            if (!confirm('이 장비를 보관함에서 삭제하시겠습니까?')) return;
-
-            inventory[slotId] = inventory[slotId].filter(i => i.id !== itemId);
-            
-            if (equipped[slotId] === itemId) {
-                equipped[slotId] = 'none';
-            }
-
-            appData.inventory = inventory;
-            appData.equippedItems = equipped;
-            triggerSave();
-            
-            renderManualArmorTable();
-        };
+        window.changeEquippedItem = function(sId, iId) { equipped[sId] = iId; appData.equippedItems = equipped; triggerSave(); renderManualArmorTable(); };
+        window.deleteItem = function(sId, iId) { window.showConfirm('장비 삭제', '이 장비를 삭제하시겠습니까?', () => { inventory[sId] = inventory[sId].filter(i=>i.id!==iId); if(equipped[sId]===iId) equipped[sId]='none'; appData.inventory=inventory; appData.equippedItems=equipped; triggerSave(); renderManualArmorTable(); }); };
 
         window.calculateTotalManualGear = function() {
-            let totalAcBonus = 0;
-            let totalCost = 0;
-
-            manualGearSlots.forEach(slot => {
-                const currentEquippedId = equipped[slot.id];
-                if (currentEquippedId && currentEquippedId !== 'none') {
-                    const items = inventory[slot.id] || [];
-                    const item = items.find(i => i.id === currentEquippedId);
-                    if (item) {
-                        totalAcBonus += item.ac;
-                        totalCost += item.price;
-                    }
-                }
-            });
-
-            let buffAcBonus = 0;
-            const activeBuffs = [];
-            standardBuffs.forEach(buff => {
-                const cb = document.getElementById(buff.id);
-                if (cb && cb.checked) {
-                    buffAcBonus += buff.ac;
-                    activeBuffs.push(buff.id);
-                }
-            });
-            const customAc = parseInt(document.getElementById('customBuffAc').value) || 0;
-            buffAcBonus += customAc;
-
-            appData.activeBuffs = activeBuffs;
-            appData.customBuffAc = customAc;
-
-            const finalAc = 10 - totalAcBonus - buffAcBonus;
-            
-            document.getElementById('manualTotalAcDisplay').innerHTML = `AC ${finalAc} <span class="text-sm font-normal text-gray-400 block mt-1">(장비 +${totalAcBonus} / 버프 +${buffAcBonus})</span>`;
-            document.getElementById('manualTotalPriceDisplay').innerHTML = `${totalCost.toLocaleString()} <span class="text-sm text-yellow-600">아데나</span>`;
-
-            const rateInput = document.getElementById('adenaRate');
-            let rate = parseInt(rateInput.value) || 0;
-            appData.adenaRate = rate;
-            triggerSave();
-            
-            const cashValue = (totalCost / 10000) * rate;
-            document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor(cashValue).toLocaleString()} <span class="text-sm text-green-600">원</span>`;
-
-            renderStorageTable();
+            let tAc = 0, tCost = 0; manualGearSlots.forEach(s => { const cur = equipped[s.id]; if(cur&&cur!=='none'){ const itm=(inventory[s.id]||[]).find(i=>i.id===cur); if(itm){ tAc+=itm.ac; tCost+=itm.price; } } });
+            let bAc = 0, aBuffs = []; standardBuffs.forEach(b => { const cb = document.getElementById(b.id); if(cb&&cb.checked) { bAc+=b.ac; aBuffs.push(b.id); } });
+            const cAc = parseInt(document.getElementById('customBuffAc').value) || 0; bAc += cAc;
+            appData.activeBuffs = aBuffs; appData.customBuffAc = cAc; const fAc = 10 - tAc - bAc;
+            document.getElementById('manualTotalAcDisplay').innerHTML = `AC ${fAc} <span class="text-sm font-normal text-gray-400 block mt-1">(장비 +${tAc} / 버프 +${bAc})</span>`;
+            document.getElementById('manualTotalPriceDisplay').innerHTML = `${tCost.toLocaleString()} <span class="text-sm text-yellow-600">아데나</span>`;
+            const rate = parseInt(document.getElementById('adenaRate').value) || 0; appData.adenaRate = rate; triggerSave();
+            document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor((tCost/10000)*rate).toLocaleString()} <span class="text-sm text-green-600">원</span>`; renderStorageTable();
         };
-
         function renderStorageTable() {
-            const tbody = document.getElementById('storageTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            
-            let storageTotalCost = 0;
-            let hasItem = false;
-
-            manualGearSlots.forEach(slot => {
-                const items = inventory[slot.id] || [];
-                const currentEquippedId = equipped[slot.id] || 'none';
-
-                items.forEach(item => {
-                    if (item.id !== currentEquippedId) {
-                        hasItem = true;
-                        storageTotalCost += item.price;
-                        
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="py-1.5 px-2 border-r bg-gray-50 text-gray-500 font-bold">${slot.name}</td>
-                            <td class="py-1.5 px-2 border-r text-gray-700 font-bold text-left pl-3">${item.name}</td>
-                            <td class="py-1.5 px-2 border-r text-indigo-500 font-bold">${item.ac > 0 ? '+' + item.ac : item.ac}</td>
-                            <td class="py-1.5 px-2 border-r text-right text-gray-600 font-bold pr-3">${item.price.toLocaleString()}</td>
-                            <td class="py-1.5 px-2">
-                                <button onclick="deleteItem('${slot.id}', '${item.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition shadow-sm" title="보관함에서 영구 삭제">
-                                    <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
-                                </button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    }
-                });
-            });
-
-            if (!hasItem) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-6 text-gray-400 text-center">
-                            미장착 보관함이 비어있습니다.<br>
-                            <span class="text-[10px] text-gray-300">현재 선택 해제된(여분) 장비들이 이곳에 표시됩니다.</span>
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            document.getElementById('storageTotalPrice').textContent = storageTotalCost.toLocaleString();
-            
-            const rateInput = document.getElementById('adenaRate');
-            let rate = parseInt(rateInput.value) || 0;
-            const storageCashValue = (storageTotalCost / 10000) * rate;
-            document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor(storageCashValue).toLocaleString()} 원)`;
-            
-            window.lucide.createIcons();
-            updateTotalAssetSummary();
+            const tbody = document.getElementById('storageTableBody'); tbody.innerHTML = ''; let sCost = 0, hasItm = false;
+            manualGearSlots.forEach(s => { const itms = inventory[s.id] || [], cur = equipped[s.id] || 'none'; itms.forEach(i => { if(i.id!==cur) { hasItm = true; sCost += i.price; const tr = document.createElement('tr'); tr.innerHTML = `<td class="py-1.5 px-2 border-r bg-gray-50 text-gray-500 font-bold">${s.name}</td><td class="py-1.5 px-2 border-r text-gray-700 font-bold text-left pl-3">${i.name}</td><td class="py-1.5 px-2 border-r text-indigo-500 font-bold">${i.ac>0?'+'+i.ac:i.ac}</td><td class="py-1.5 px-2 border-r text-right text-gray-600 font-bold pr-3">${i.price.toLocaleString()}</td><td class="py-1.5 px-2"><button onclick="deleteItem('${s.id}', '${i.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>`; tbody.appendChild(tr); } }); });
+            if(!hasItm) tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-gray-400 text-center">여분 장비가 없습니다.</td></tr>`;
+            document.getElementById('storageTotalPrice').textContent = sCost.toLocaleString(); const rate = parseInt(document.getElementById('adenaRate').value) || 0; document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor((sCost/10000)*rate).toLocaleString()} 원)`; window.lucide.createIcons(); updateTotalAssetSummary();
         }
 
+        // 전체 자산 평가
         function updateTotalAssetSummary() {
-            const totalCashSpent = cashHistory.reduce((sum, record) => sum + record.amount, 0);
-            const totalSalesProfit = salesHistory.reduce((sum, record) => sum + record.finalAmount, 0);
-            
-            let totalAdena = 0;
-            
-            if (adenaHistory.length > 0) {
-                totalAdena += adenaHistory[0].amount; 
-            }
-
-            manualGearSlots.forEach(slot => {
-                const items = inventory[slot.id] || [];
-                items.forEach(item => {
-                    totalAdena += item.price;
-                });
-            });
-
-            const rateInput = document.getElementById('adenaRate');
-            let rate = parseInt(rateInput.value) || 0;
-            const totalAssetCashValue = (totalAdena / 10000) * rate;
-            
-            // 최종 손익 = 현재 총 자산 + 판매 수익 - 과금액
-            const netProfit = totalAssetCashValue + totalSalesProfit - totalCashSpent;
-
-            document.getElementById('summaryTotalCash').textContent = totalCashSpent.toLocaleString();
-            document.getElementById('summaryTotalSales').textContent = totalSalesProfit.toLocaleString();
-            document.getElementById('summaryTotalAssetCash').textContent = Math.floor(totalAssetCashValue).toLocaleString();
-            document.getElementById('summaryTotalAdena').textContent = totalAdena.toLocaleString();
-
-            const netEl = document.getElementById('summaryNetProfit');
-            const memoEl = document.getElementById('summaryMemo');
-
-            if (netProfit > 0) {
-                netEl.textContent = '+' + Math.floor(netProfit).toLocaleString() + ' 원';
-                netEl.className = 'text-4xl font-black text-blue-400 transition-all duration-500 tracking-tight mb-4';
-                memoEl.innerHTML = '<i data-lucide="party-popper" class="w-4 h-4 text-yellow-400"></i> 와우! 흑자 전환! 이대로 쌀먹 가즈아~!';
-                memoEl.className = 'inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-300 rounded-full px-4 py-2 text-sm font-bold transition-all duration-500';
-            } else if (netProfit < 0) {
-                netEl.textContent = Math.floor(netProfit).toLocaleString() + ' 원';
-                netEl.className = 'text-4xl font-black text-red-400 transition-all duration-500 tracking-tight mb-4';
-                memoEl.innerHTML = '<i data-lucide="frown" class="w-4 h-4 text-red-400"></i> 린저씨의 눈물... 아직 갈 길이 멉니다.';
-                memoEl.className = 'inline-flex items-center gap-2 bg-red-600/20 border border-red-500/30 text-red-300 rounded-full px-4 py-2 text-sm font-bold transition-all duration-500';
-            } else {
-                netEl.textContent = '0 원';
-                netEl.className = 'text-4xl font-black text-gray-300 transition-all duration-500 tracking-tight mb-4';
-                memoEl.innerHTML = '<i data-lucide="meh" class="w-4 h-4 text-yellow-400"></i> 본전치기! 무과금의 승리인가요?';
-                memoEl.className = 'inline-flex items-center gap-2 bg-gray-600/20 border border-gray-500/30 text-gray-300 rounded-full px-4 py-2 text-sm font-bold transition-all duration-500';
-            }
-            
-            window.lucide.createIcons();
+            const tCash = cashHistory.reduce((s, r) => s + r.amount, 0), tSales = salesHistory.reduce((s, r) => s + r.finalAmount, 0);
+            let tAdena = adenaHistory.length > 0 ? adenaHistory[0].amount : 0;
+            manualGearSlots.forEach(s => { (inventory[s.id]||[]).forEach(i => tAdena += i.price); });
+            const rate = parseInt(document.getElementById('adenaRate').value) || 0, tAsset = (tAdena/10000)*rate, net = tAsset + tSales - tCash;
+            document.getElementById('summaryTotalCash').textContent = tCash.toLocaleString(); document.getElementById('summaryTotalSales').textContent = tSales.toLocaleString(); document.getElementById('summaryTotalAssetCash').textContent = Math.floor(tAsset).toLocaleString(); document.getElementById('summaryTotalAdena').textContent = tAdena.toLocaleString();
+            const netEl = document.getElementById('summaryNetProfit'), memoEl = document.getElementById('summaryMemo');
+            if(net > 0) { netEl.textContent = '+'+Math.floor(net).toLocaleString()+' 원'; netEl.className = 'text-4xl font-black text-blue-400 tracking-tight mb-4'; memoEl.innerHTML = '<i data-lucide="party-popper" class="w-4 h-4 text-yellow-400"></i> 와우! 흑자 전환!'; memoEl.className = 'inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-300 rounded-full px-4 py-2 text-sm font-bold'; } else if(net < 0) { netEl.textContent = Math.floor(net).toLocaleString()+' 원'; netEl.className = 'text-4xl font-black text-red-400 tracking-tight mb-4'; memoEl.innerHTML = '<i data-lucide="frown" class="w-4 h-4 text-red-400"></i> 갈 길이 멉니다.'; memoEl.className = 'inline-flex items-center gap-2 bg-red-600/20 border border-red-500/30 text-red-300 rounded-full px-4 py-2 text-sm font-bold'; } else { netEl.textContent = '0 원'; netEl.className = 'text-4xl font-black text-gray-300 tracking-tight mb-4'; memoEl.innerHTML = '본전치기!'; memoEl.className = 'inline-flex items-center gap-2 bg-gray-600/20 border border-gray-500/30 text-gray-300 rounded-full px-4 py-2 text-sm font-bold'; } window.lucide.createIcons();
         }
 
-        // 전체 초기화 (데이터 준비 후 UI 적용)
+        // 앱 초기화 UI 트리거
         function initAppUI() {
-            adenaHistory = appData.adenaHistory || [];
-            cashHistory = appData.cashHistory || [];
-            salesHistory = appData.salesHistory || [];
-            document.getElementById('adenaRate').value = appData.adenaRate || 30;
-            inventory = appData.inventory || {};
-            equipped = appData.equippedItems || {};
-            growthLogs = appData.growthDiary || [];
-            
-            document.getElementById('cashDateInput').valueAsDate = new Date();
-            document.getElementById('salesDateInput').valueAsDate = new Date();
-
-            loadInputState();
-            window.handleCurrentLvChange();
-            renderGrowthLog();
-            renderAdenaLog();
-            renderCashHistory();
-            renderSalesHistory();
-            renderBuffs();
-            renderManualArmorTable(); 
+            adenaHistory = appData.adenaHistory || []; cashHistory = appData.cashHistory || []; salesHistory = appData.salesHistory || [];
+            document.getElementById('adenaRate').value = appData.adenaRate || 30; inventory = appData.inventory || {}; equipped = appData.equippedItems || {}; growthLogs = appData.growthDiary || [];
+            document.getElementById('cashDateInput').valueAsDate = new Date(); document.getElementById('salesDateInput').valueAsDate = new Date();
+            loadInputState(); window.handleCurrentLvChange(); renderGrowthLog(); renderAdenaLog(); renderCashHistory(); renderSalesHistory(); renderBuffs(); renderManualArmorTable(); 
         }
 
+        // 부팅 검사
         window.addEventListener('load', () => {
-            window.checkSession(); 
+            if(currentUser && !isCloudEnabled) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('mainApp').classList.add('flex'); document.getElementById('displayUserId').textContent = currentUser; loadLocalDataToApp(); initAppUI(); }
         });
     </script>
 </body>
