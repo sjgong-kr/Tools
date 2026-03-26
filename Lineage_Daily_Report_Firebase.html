@@ -111,6 +111,17 @@
                     <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
                 </h1>
                 <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
+
+                <!-- 백업/복원 버튼 영역 복구 -->
+                <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
+                    <button onclick="exportAllData()" class="flex-1 bg-white text-indigo-700 hover:bg-gray-100 font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow">
+                        <i data-lucide="download" class="w-4 h-4"></i> 내 데이터 백업 (.json)
+                    </button>
+                    <label class="flex-1 bg-indigo-800 hover:bg-indigo-900 text-white font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow cursor-pointer border border-indigo-500">
+                        <i data-lucide="upload" class="w-4 h-4"></i> 데이터 불러오기
+                        <input type="file" accept=".json" class="hidden" onchange="importAllData(event)">
+                    </label>
+                </div>
             </div>
 
             <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -704,8 +715,12 @@
             reader.onload = function(e) {
                 try {
                     appData = JSON.parse(e.target.result);
-                    triggerSave(); initAppUI();
-                } catch (err) { alert("잘못된 파일입니다."); }
+                    triggerSave(); 
+                    initAppUI();
+                    alert("✅ 데이터 복구가 완료되었습니다! (Firestore에 자동 동기화됨)");
+                } catch (err) { 
+                    alert("잘못된 파일입니다."); 
+                }
             };
             reader.readAsText(file);
         };
