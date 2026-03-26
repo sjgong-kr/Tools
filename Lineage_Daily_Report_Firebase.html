@@ -542,17 +542,13 @@
     <!-- 단일 Firebase 및 앱 통합 로직 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // 계정 정보
         const ACCOUNTS = { "pokarekong": "Root+123", "nodage07": "Root+123" };
         
-        let db, auth, userAuth;
         let currentUser = sessionStorage.getItem('lineageSessionUser') || null;
-        
-        const isCloudEnabled = typeof __firebase_config !== 'undefined';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lineage-diary';
         
         // 데이터 구조
         let appData = {
@@ -561,57 +557,57 @@
             cashHistory: [], salesHistory: []
         };
 
+        // 작가님 개인 Firebase 환경 설정 (openzeroc)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+            authDomain: "openzeroc.firebaseapp.com",
+            projectId: "openzeroc",
+            storageBucket: "openzeroc.firebasestorage.app",
+            messagingSenderId: "465944510778",
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+            measurementId: "G-M4K79K2XPG"
+        };
+
         // Firebase 초기화
-        if (isCloudEnabled) {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            };
-            initAuth();
-
-            onAuthStateChanged(auth, (u) => {
-                userAuth = u;
-                if (u && currentUser) fetchCloudData();
-            });
-            document.getElementById('cloudStatusIndicator').classList.remove('hidden');
-        }
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
 
         // ==========================================
-        // Firestore 저장/불러오기 로직 (LocalStorage 대체)
+        // Firestore 저장/불러오기 로직
         // ==========================================
         let saveTimeout;
         window.triggerSave = function() {
-            if (!isCloudEnabled || !userAuth || !currentUser) return;
+            if (!currentUser) return;
             
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
-                // 요구사항 반영: 컬렉션 이름을 'Lineage'로 설정하여 여러 프로그램 데이터 분류 가능
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'Lineage', currentUser);
+                // 작가님 요청 반영: 'Lineage' 루트 컬렉션 하위에 유저 아이디(currentUser)로 저장
+                const docRef = doc(db, 'Lineage', currentUser);
                 try {
                     await setDoc(docRef, appData, { merge: true });
-                } catch(e) { console.error("Cloud save error:", e); }
+                } catch(e) { 
+                    console.error("Cloud save error:", e); 
+                    // 권한 오류 확인용 콘솔
+                    if(e.code === 'permission-denied') {
+                        alert("저장 권한이 없습니다! Firebase 콘솔에서 Firestore Database 규칙(Rules)을 확인해주세요.");
+                    }
+                }
             }, 500);
         }
 
         async function fetchCloudData() {
-            if (!userAuth || !currentUser) return;
+            if (!currentUser) return;
             document.getElementById('loadingOverlay').classList.remove('hidden');
             
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'Lineage', currentUser);
+            // 작가님 요청 반영: 'Lineage' 컬렉션 참조
+            const docRef = doc(db, 'Lineage', currentUser);
             try {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
                     appData = { ...appData, ...docSnap.data() };
                 } else {
-                    // 클라우드 비어있을 시 이전의 무거운 LocalStorage 데이터 1회 마이그레이션 후 로컬 정리
+                    // 클라우드가 비어있을 시, 과거 LocalStorage에 남아있던 데이터가 있다면 1회 마이그레이션
                     const oldStr = localStorage.getItem(`lineage_${currentUser}_GrowthDiary`);
                     if (oldStr) {
                         appData = {
@@ -626,7 +622,6 @@
                             cashHistory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_CashHistory`)) || [],
                             salesHistory: JSON.parse(localStorage.getItem(`lineage_${currentUser}_SalesHistory`)) || []
                         };
-                        // 구형 로컬 스토리지 삭제 (요청사항 반영)
                         ['InputState','GrowthDiary','AdenaHistory','AdenaRate','Inventory','EquippedItems','ActiveBuffs','CustomBuffAc','CashHistory','SalesHistory'].forEach(k => localStorage.removeItem(`lineage_${currentUser}_${k}`));
                         window.triggerSave();
                     }
@@ -676,7 +671,8 @@
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
-                if (userAuth) fetchCloudData();
+                document.getElementById('cloudStatusIndicator').classList.remove('hidden');
+                fetchCloudData();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
@@ -988,7 +984,14 @@
 
         // 부팅 검사
         window.addEventListener('load', () => {
-            if(currentUser && !isCloudEnabled) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('mainApp').classList.add('flex'); document.getElementById('displayUserId').textContent = currentUser; loadLocalDataToApp(); initAppUI(); }
+            if(currentUser) { 
+                document.getElementById('loginScreen').classList.add('hidden'); 
+                document.getElementById('mainApp').classList.remove('hidden'); 
+                document.getElementById('mainApp').classList.add('flex'); 
+                document.getElementById('displayUserId').textContent = currentUser; 
+                document.getElementById('cloudStatusIndicator').classList.remove('hidden');
+                fetchCloudData(); 
+            }
         });
     </script>
 </body>
