@@ -112,7 +112,7 @@
                 </h1>
                 <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
 
-                <!-- 백업/복원 버튼 영역 복구 -->
+                <!-- 백업/복원 버튼 영역 -->
                 <div class="flex flex-wrap justify-center gap-3 bg-indigo-700 p-3 rounded-xl border border-indigo-500 shadow-inner w-full max-w-md">
                     <button onclick="exportAllData()" class="flex-1 bg-white text-indigo-700 hover:bg-gray-100 font-bold text-sm px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow">
                         <i data-lucide="download" class="w-4 h-4"></i> 내 데이터 백업 (.json)
@@ -331,6 +331,7 @@
                         <div class="flex gap-2 mb-4">
                             <input type="number" id="adenaInput" placeholder="보유 아데나 입력" class="flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 text-right font-bold text-sm">
                             <button id="btnAdenaSave" onclick="recordAdena()" class="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm whitespace-nowrap">기록</button>
+                            <button onclick="clearAdenaHistory()" class="bg-red-50 text-red-600 font-bold px-3 py-2 rounded-lg hover:bg-red-100 border border-red-200 transition text-sm whitespace-nowrap" title="전체 기록 초기화"><i data-lucide="refresh-ccw" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col">
                             <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-500 flex justify-between border-b">
@@ -509,7 +510,7 @@
                 </div>
             </div>
 
-            <!-- 커스텀 삭제 확인 모달 (기본 Alert창 대체용) -->
+            <!-- 커스텀 삭제 확인 모달 -->
             <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
                 <div class="bg-white rounded-2xl shadow-xl w-80 p-6 transform transition-all scale-100 text-center">
                     <i data-lucide="alert-circle" class="w-12 h-12 text-red-500 mx-auto mb-3"></i>
@@ -563,9 +564,16 @@
         
         // 데이터 구조
         let appData = {
-            inputState: {}, growthDiary: [], adenaHistory: [], adenaRate: '30',
-            inventory: {}, equippedItems: {}, activeBuffs: [], customBuffAc: 0,
-            cashHistory: [], salesHistory: []
+            inputState: {}, 
+            growthDiary: [], 
+            adenaHistory: [], 
+            adenaRate: '30',
+            inventory: {}, 
+            equippedItems: {}, 
+            activeBuffs: [], 
+            customBuffAc: 0,
+            cashHistory: [], 
+            salesHistory: []
         };
 
         // 작가님 개인 Firebase 환경 설정 (openzeroc)
@@ -593,13 +601,11 @@
             
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
-                // 작가님 요청 반영: 'Lineage' 루트 컬렉션 하위에 유저 아이디(currentUser)로 저장
                 const docRef = doc(db, 'Lineage', currentUser);
                 try {
                     await setDoc(docRef, appData, { merge: true });
                 } catch(e) { 
                     console.error("Cloud save error:", e); 
-                    // 권한 오류 확인용 콘솔
                     if(e.code === 'permission-denied') {
                         alert("저장 권한이 없습니다! Firebase 콘솔에서 Firestore Database 규칙(Rules)을 확인해주세요.");
                     }
@@ -611,14 +617,12 @@
             if (!currentUser) return;
             document.getElementById('loadingOverlay').classList.remove('hidden');
             
-            // 작가님 요청 반영: 'Lineage' 컬렉션 참조
             const docRef = doc(db, 'Lineage', currentUser);
             try {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
                     appData = { ...appData, ...docSnap.data() };
                 } else {
-                    // 클라우드가 비어있을 시, 과거 LocalStorage에 남아있던 데이터가 있다면 1회 마이그레이션
                     const oldStr = localStorage.getItem(`lineage_${currentUser}_GrowthDiary`);
                     if (oldStr) {
                         appData = {
@@ -660,8 +664,15 @@
                 btnOk.removeEventListener('click', handleOk);
                 btnCancel.removeEventListener('click', handleCancel);
             };
-            const handleOk = () => { cleanup(); onConfirm(); };
-            const handleCancel = () => { cleanup(); };
+            
+            const handleOk = () => { 
+                cleanup(); 
+                onConfirm(); 
+            };
+            
+            const handleCancel = () => { 
+                cleanup(); 
+            };
             
             btnOk.addEventListener('click', handleOk);
             btnCancel.addEventListener('click', handleCancel);
@@ -674,15 +685,18 @@
         window.attemptLogin = function() {
             const idInput = document.getElementById('loginId').value.trim();
             const pwInput = document.getElementById('loginPw').value;
+            
             if (ACCOUNTS[idInput] && ACCOUNTS[idInput] === pwInput) {
                 currentUser = idInput;
                 sessionStorage.setItem('lineageSessionUser', currentUser);
+                
                 document.getElementById('loginError').classList.add('hidden');
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
                 document.getElementById('mainApp').classList.add('flex');
                 document.getElementById('displayUserId').textContent = currentUser;
                 document.getElementById('cloudStatusIndicator').classList.remove('hidden');
+                
                 fetchCloudData();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
@@ -692,8 +706,10 @@
         window.logout = function() {
             currentUser = null;
             sessionStorage.removeItem('lineageSessionUser');
+            
             document.getElementById('loginId').value = '';
             document.getElementById('loginPw').value = '';
+            
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('flex');
             document.getElementById('loginScreen').classList.remove('hidden');
@@ -704,13 +720,19 @@
             const dataStr = JSON.stringify(appData, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `Lineage_${currentUser}.json`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `Lineage_${currentUser}.json`;
+            document.body.appendChild(a); 
+            a.click(); 
+            document.body.removeChild(a); 
+            URL.revokeObjectURL(url);
         };
 
         window.importAllData = function(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -728,7 +750,8 @@
         // ==========================================
         // 차트 & 스탯 로직
         // ==========================================
-        let chartHpInstance = null, chartMpInstance = null;
+        let chartHpInstance = null;
+        let chartMpInstance = null;
         Chart.defaults.font.family = "'Gowun Dodum', sans-serif";
 
         const baseStats = {
@@ -737,36 +760,131 @@
             mage:   { hp: 12, mp: 4, name: '마법사', color: 'bg-purple-100 text-purple-800' },
             prince: { hp: 14, mp: 2, name: '군주', color: 'bg-yellow-100 text-yellow-800' }
         };
-        const zScores = { 100: Infinity, 10: 1.282, 20: 0.842, 30: 0.524, 40: 0.253, 50: 0.000, 60: -0.253, 70: -0.524, 80: -0.842, 90: -1.282, 0: -Infinity };
+        
+        const zScores = { 
+            100: Infinity, 10: 1.282, 20: 0.842, 30: 0.524, 40: 0.253, 
+            50: 0.000, 60: -0.253, 70: -0.524, 80: -0.842, 90: -1.282, 0: -Infinity 
+        };
 
-        function calcProps(arr) { let mean = arr.reduce((a, b) => a + b, 0)/arr.length; return { min: Math.min(...arr), max: Math.max(...arr), mean, variance: arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0)/arr.length }; }
-        function rangeProps(min, max) { return { min, max, mean: (min+max)/2, variance: (Math.pow(max-min+1, 2)-1)/12 }; }
-        function getSelectedClass() { return document.querySelector('input[name="charClass"]:checked').value; }
+        function calcProps(arr) { 
+            let mean = arr.reduce((a, b) => a + b, 0) / arr.length; 
+            return { 
+                min: Math.min(...arr), 
+                max: Math.max(...arr), 
+                mean: mean, 
+                variance: arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length 
+            }; 
+        }
+
+        function rangeProps(min, max) { 
+            return { 
+                min: min, 
+                max: max, 
+                mean: (min + max) / 2, 
+                variance: (Math.pow(max - min + 1, 2) - 1) / 12 
+            }; 
+        }
+
+        function getSelectedClass() { 
+            return document.querySelector('input[name="charClass"]:checked').value; 
+        }
 
         function getHpStats(cls, con) {
-            if(cls==='knight'){ if(con<=15) return rangeProps(6,12); if(con===16) return rangeProps(7,13); if(con===17) return rangeProps(8,14); if(con===18) return rangeProps(9,15); if(con===19) return rangeProps(10,16); if(con===20) return rangeProps(11,17); if(con===21) return rangeProps(12,18); if(con===22) return rangeProps(13,19); if(con===23) return rangeProps(14,20); if(con===24) return rangeProps(15,21); return rangeProps(16,22); }
-            if(cls==='elf'){ if(con<=15) return rangeProps(5,10); if(con===16) return rangeProps(6,11); if(con===17) return rangeProps(7,12); return rangeProps(8,13); }
-            if(cls==='mage'){ if(con<=15) return rangeProps(3,6); if(con===16) return rangeProps(4,7); if(con===17) return rangeProps(5,8); if(con===18) return rangeProps(6,9); if(con===19) return rangeProps(7,10); if(con===20) return rangeProps(8,11); return rangeProps(9,12); }
-            if(cls==='prince'){ if(con<=15) return rangeProps(5,10); if(con===16) return rangeProps(6,11); if(con===17) return rangeProps(7,12); if(con===18) return rangeProps(8,13); if(con===19) return rangeProps(9,14); if(con===20) return rangeProps(10,15); return rangeProps(11,16); }
-            return rangeProps(0,0);
+            if(cls === 'knight') { 
+                if(con <= 15) return rangeProps(6, 12); 
+                if(con === 16) return rangeProps(7, 13); 
+                if(con === 17) return rangeProps(8, 14); 
+                if(con === 18) return rangeProps(9, 15); 
+                if(con === 19) return rangeProps(10, 16); 
+                if(con === 20) return rangeProps(11, 17); 
+                if(con === 21) return rangeProps(12, 18); 
+                if(con === 22) return rangeProps(13, 19); 
+                if(con === 23) return rangeProps(14, 20); 
+                if(con === 24) return rangeProps(15, 21); 
+                return rangeProps(16, 22); 
+            }
+            if(cls === 'elf') { 
+                if(con <= 15) return rangeProps(5, 10); 
+                if(con === 16) return rangeProps(6, 11); 
+                if(con === 17) return rangeProps(7, 12); 
+                return rangeProps(8, 13); 
+            }
+            if(cls === 'mage') { 
+                if(con <= 15) return rangeProps(3, 6); 
+                if(con === 16) return rangeProps(4, 7); 
+                if(con === 17) return rangeProps(5, 8); 
+                if(con === 18) return rangeProps(6, 9); 
+                if(con === 19) return rangeProps(7, 10); 
+                if(con === 20) return rangeProps(8, 11); 
+                return rangeProps(9, 12); 
+            }
+            if(cls === 'prince') { 
+                if(con <= 15) return rangeProps(5, 10); 
+                if(con === 16) return rangeProps(6, 11); 
+                if(con === 17) return rangeProps(7, 12); 
+                if(con === 18) return rangeProps(8, 13); 
+                if(con === 19) return rangeProps(9, 14); 
+                if(con === 20) return rangeProps(10, 15); 
+                return rangeProps(11, 16); 
+            }
+            return rangeProps(0, 0);
         }
 
         function getMpStats(cls, wis) {
-            if(cls==='knight'){ return wis<=9 ? rangeProps(0,2) : rangeProps(0,3); }
-            if(cls==='elf'){ if(wis<=11) return calcProps([3,4]); if(wis<=14) return rangeProps(3,6); if(wis<=17) return calcProps([4,6,7]); if(wis<=20) return calcProps([4,6,7,9]); return calcProps([6,7,9,10]); }
-            if(cls==='mage'){ if(wis<=14) return rangeProps(4,8); if(wis===15) return rangeProps(6,10); if(wis===16) return rangeProps(6,11); if(wis===17) return rangeProps(7,11); if(wis===18) return rangeProps(7,12); if(wis<=20) return rangeProps(6,12); if(wis<=23) return rangeProps(8,14); if(wis===24) return rangeProps(8,16); return rangeProps(10,16); }
-            if(cls==='prince'){ if(wis<=10) return rangeProps(2,3); if(wis<=14) return rangeProps(2,4); if(wis<=17) return rangeProps(3,5); return rangeProps(3,6); }
-            return rangeProps(0,0);
+            if(cls === 'knight') { 
+                return wis <= 9 ? rangeProps(0, 2) : rangeProps(0, 3); 
+            }
+            if(cls === 'elf') { 
+                if(wis <= 11) return calcProps([3, 4]); 
+                if(wis <= 14) return rangeProps(3, 6); 
+                if(wis <= 17) return calcProps([4, 6, 7]); 
+                if(wis <= 20) return calcProps([4, 6, 7, 9]); 
+                return calcProps([6, 7, 9, 10]); 
+            }
+            if(cls === 'mage') { 
+                if(wis <= 14) return rangeProps(4, 8); 
+                if(wis === 15) return rangeProps(6, 10); 
+                if(wis === 16) return rangeProps(6, 11); 
+                if(wis === 17) return rangeProps(7, 11); 
+                if(wis === 18) return rangeProps(7, 12); 
+                if(wis <= 20) return rangeProps(6, 12); 
+                if(wis <= 23) return rangeProps(8, 14); 
+                if(wis === 24) return rangeProps(8, 16); 
+                return rangeProps(10, 16); 
+            }
+            if(cls === 'prince') { 
+                if(wis <= 10) return rangeProps(2, 3); 
+                if(wis <= 14) return rangeProps(2, 4); 
+                if(wis <= 17) return rangeProps(3, 5); 
+                return rangeProps(3, 6); 
+            }
+            return rangeProps(0, 0);
         }
 
-        function normalPDF(x, mean, variance) { if(variance<=0) return 0; const std = Math.sqrt(variance); return (1/(std*Math.sqrt(2*Math.PI))) * Math.exp(-Math.pow(x-mean, 2)/(2*variance)); }
-        function getPercentile(x, mean, std) { if(std===0) return x>=mean ? 100 : 0; let z = (x-mean)/std; let t = 1/(1+0.231641898*Math.abs(z)); let d = 0.3989422804*Math.exp(-z*z/2); let p = d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429)))); return (z>0 ? 1-p : p) * 100; }
+        function normalPDF(x, mean, variance) { 
+            if(variance <= 0) return 0; 
+            const std = Math.sqrt(variance); 
+            return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mean, 2) / (2 * variance)); 
+        }
+
+        function getPercentile(x, mean, std) { 
+            if(std === 0) return x >= mean ? 100 : 0; 
+            let z = (x - mean) / std; 
+            let t = 1 / (1 + 0.231641898 * Math.abs(z)); 
+            let d = 0.3989422804 * Math.exp(-z * z / 2); 
+            let p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429)))); 
+            return (z > 0 ? 1 - p : p) * 100; 
+        }
 
         function saveInputState() {
             appData.inputState = {
-                charClass: getSelectedClass(), conStat: document.getElementById('conStat').value, wisStat: document.getElementById('wisStat').value,
-                currentLv: document.getElementById('currentLv').value, currentHp: document.getElementById('currentHp').value,
-                currentMp: document.getElementById('currentMp').value, targetLvNum: document.getElementById('targetLvNum').value
+                charClass: getSelectedClass(), 
+                conStat: document.getElementById('conStat').value, 
+                wisStat: document.getElementById('wisStat').value,
+                currentLv: document.getElementById('currentLv').value, 
+                currentHp: document.getElementById('currentHp').value,
+                currentMp: document.getElementById('currentMp').value, 
+                targetLvNum: document.getElementById('targetLvNum').value
             };
             triggerSave();
         }
@@ -774,227 +892,917 @@
         function loadInputState() {
             const st = appData.inputState || {};
             if(st.charClass) document.querySelector(`input[name="charClass"][value="${st.charClass}"]`).checked = true;
-            if(st.conStat) document.getElementById('conStat').value = st.conStat; if(st.wisStat) document.getElementById('wisStat').value = st.wisStat;
-            if(st.currentLv) document.getElementById('currentLv').value = st.currentLv; if(st.currentHp) document.getElementById('currentHp').value = st.currentHp;
+            if(st.conStat) document.getElementById('conStat').value = st.conStat; 
+            if(st.wisStat) document.getElementById('wisStat').value = st.wisStat;
+            if(st.currentLv) document.getElementById('currentLv').value = st.currentLv; 
+            if(st.currentHp) document.getElementById('currentHp').value = st.currentHp;
             if(st.currentMp) document.getElementById('currentMp').value = st.currentMp;
-            if(st.targetLvNum) { document.getElementById('targetLvNum').value = st.targetLvNum; document.getElementById('targetLvRange').value = st.targetLvNum; }
+            if(st.targetLvNum) { 
+                document.getElementById('targetLvNum').value = st.targetLvNum; 
+                document.getElementById('targetLvRange').value = st.targetLvNum; 
+            }
         }
 
-        window.setLv1Base = function() { const cls = getSelectedClass(); document.getElementById('currentLv').value = 1; document.getElementById('currentHp').value = baseStats[cls].hp; document.getElementById('currentMp').value = baseStats[cls].mp; saveInputState(); window.handleCurrentLvChange(); };
-        window.handleCurrentLvChange = function() { window.reactToInput(); };
-        window.syncTargetLv = function(source) { let r = document.getElementById('targetLvRange'), n = document.getElementById('targetLvNum'); if(source==='range') n.value = r.value; if(source==='number') { if(parseInt(n.value)<parseInt(r.min)) n.value=r.min; if(parseInt(n.value)>parseInt(r.max)) n.value=r.max; r.value = n.value; } saveInputState(); renderTargetGrowth(); };
-        window.expandMaxLevel = function() { document.getElementById('targetLvRange').max = 99; document.getElementById('targetLvNum').max = 99; document.getElementById('rangeMaxLabel').innerText = 'Lv.99'; document.getElementById('expandBtn').style.display = 'none'; };
-        window.reactToInput = function() { saveInputState(); updateCharts(); renderTargetGrowth(); };
+        window.setLv1Base = function() { 
+            const cls = getSelectedClass(); 
+            document.getElementById('currentLv').value = 1; 
+            document.getElementById('currentHp').value = baseStats[cls].hp; 
+            document.getElementById('currentMp').value = baseStats[cls].mp; 
+            saveInputState(); 
+            window.handleCurrentLvChange(); 
+        };
+
+        window.handleCurrentLvChange = function() { 
+            window.reactToInput(); 
+        };
+
+        window.syncTargetLv = function(source) { 
+            let r = document.getElementById('targetLvRange');
+            let n = document.getElementById('targetLvNum'); 
+            
+            if(source === 'range') n.value = r.value; 
+            if(source === 'number') { 
+                if(parseInt(n.value) < parseInt(r.min)) n.value = r.min; 
+                if(parseInt(n.value) > parseInt(r.max)) n.value = r.max; 
+                r.value = n.value; 
+            } 
+            saveInputState(); 
+            renderTargetGrowth(); 
+        };
+
+        window.expandMaxLevel = function() { 
+            document.getElementById('targetLvRange').max = 99; 
+            document.getElementById('targetLvNum').max = 99; 
+            document.getElementById('rangeMaxLabel').innerText = 'Lv.99'; 
+            document.getElementById('expandBtn').style.display = 'none'; 
+        };
+
+        window.reactToInput = function() { 
+            saveInputState(); 
+            updateCharts(); 
+            renderTargetGrowth(); 
+        };
 
         function updateCharts() {
-            const cls = getSelectedClass(), con = parseInt(document.getElementById('conStat').value), wis = parseInt(document.getElementById('wisStat').value);
-            const clv = parseInt(document.getElementById('currentLv').value), curHp = parseInt(document.getElementById('currentHp').value), curMp = parseInt(document.getElementById('currentMp').value);
-            const container = document.getElementById('chartContainer'), placeholder = document.getElementById('chartPlaceholder');
+            const cls = getSelectedClass();
+            const con = parseInt(document.getElementById('conStat').value);
+            const wis = parseInt(document.getElementById('wisStat').value);
+            const clv = parseInt(document.getElementById('currentLv').value);
+            const curHp = parseInt(document.getElementById('currentHp').value);
+            const curMp = parseInt(document.getElementById('currentMp').value);
+            
+            const container = document.getElementById('chartContainer');
+            const placeholder = document.getElementById('chartPlaceholder');
 
-            if (clv <= 1) { container.classList.add('hidden'); container.classList.remove('flex'); placeholder.classList.remove('hidden'); return; }
-            else { container.classList.remove('hidden'); container.classList.add('flex'); placeholder.classList.add('hidden'); }
+            if (clv <= 1) { 
+                container.classList.add('hidden'); 
+                container.classList.remove('flex'); 
+                placeholder.classList.remove('hidden'); 
+                return; 
+            } else { 
+                container.classList.remove('hidden'); 
+                container.classList.add('flex'); 
+                placeholder.classList.add('hidden'); 
+            }
 
-            const hS = getHpStats(cls, con), mS = getMpStats(cls, wis), n = clv - 1;
-            const bHp = baseStats[cls].hp, bMp = baseStats[cls].mp;
-            const expHp = bHp + n*hS.mean, hpVar = n*hS.variance, hpStd = Math.sqrt(hpVar);
-            const expMp = bMp + n*mS.mean, mpVar = n*mS.variance, mpStd = Math.sqrt(mpVar);
+            const hS = getHpStats(cls, con);
+            const mS = getMpStats(cls, wis);
+            const n = clv - 1;
+            const bHp = baseStats[cls].hp;
+            const bMp = baseStats[cls].mp;
+            
+            const expHp = bHp + n * hS.mean;
+            const hpVar = n * hS.variance;
+            const hpStd = Math.sqrt(hpVar);
+            
+            const expMp = bMp + n * mS.mean;
+            const mpVar = n * mS.variance;
+            const mpStd = Math.sqrt(mpVar);
 
-            let hpPer = getPercentile(curHp, expHp, hpStd), mpPer = getPercentile(curMp, expMp, mpStd), avgPer = 100 - ((hpPer + mpPer) / 2); 
+            let hpPer = getPercentile(curHp, expHp, hpStd);
+            let mpPer = getPercentile(curMp, expMp, mpStd);
+            let avgPer = 100 - ((hpPer + mpPer) / 2); 
             
             let dStr = "", dCol = "";
-            if(avgPer<=15){ dStr="🎉 초특급 축캐!"; dCol="bg-yellow-100 text-yellow-800 border-yellow-300"; } else if(avgPer<=35){ dStr="👍 훌륭한 축캐"; dCol="bg-green-100 text-green-800 border-green-300"; } else if(avgPer<=65){ dStr="😐 평범한 일반캐"; dCol="bg-gray-100 text-gray-800 border-gray-300"; } else if(avgPer<=85){ dStr="😥 약간 아쉬운 캐릭"; dCol="bg-orange-100 text-orange-800 border-orange-300"; } else { dStr="💀 눈물의 망캐..."; dCol="bg-red-100 text-red-800 border-red-300"; }
+            if(avgPer <= 15) { dStr = "🎉 초특급 축캐!"; dCol = "bg-yellow-100 text-yellow-800 border-yellow-300"; } 
+            else if(avgPer <= 35) { dStr = "👍 훌륭한 축캐"; dCol = "bg-green-100 text-green-800 border-green-300"; } 
+            else if(avgPer <= 65) { dStr = "😐 평범한 일반캐"; dCol = "bg-gray-100 text-gray-800 border-gray-300"; } 
+            else if(avgPer <= 85) { dStr = "😥 약간 아쉬운 캐릭"; dCol = "bg-orange-100 text-orange-800 border-orange-300"; } 
+            else { dStr = "💀 눈물의 망캐..."; dCol = "bg-red-100 text-red-800 border-red-300"; }
             
-            const msgEl = document.getElementById('diagnosticMsg'); msgEl.textContent = dStr; msgEl.className = `text-xs px-2 py-1 rounded-full font-bold border ${dCol}`;
-            drawChart('hpChart', expHp, hpVar, curHp, 'HP 분포', '#ef4444', hS.min*n+bHp, hS.max*n+bHp);
-            drawChart('mpChart', expMp, mpVar, curMp, 'MP 분포', '#3b82f6', mS.min*n+bMp, mS.max*n+bMp);
+            const msgEl = document.getElementById('diagnosticMsg'); 
+            msgEl.textContent = dStr; 
+            msgEl.className = `text-xs px-2 py-1 rounded-full font-bold border ${dCol}`;
+            
+            drawChart('hpChart', expHp, hpVar, curHp, 'HP 분포', '#ef4444', hS.min * n + bHp, hS.max * n + bHp);
+            drawChart('mpChart', expMp, mpVar, curMp, 'MP 분포', '#3b82f6', mS.min * n + bMp, mS.max * n + bMp);
         }
 
         function drawChart(cid, mean, variance, userVal, label, colorHex, absMin, absMax) {
-            const ctx = document.getElementById(cid).getContext('2d'), std = Math.max(Math.sqrt(variance), 1); 
-            let minX = Math.floor(Math.max(mean - 4*std, absMin)), maxX = Math.ceil(Math.min(mean + 4*std, absMax));
-            if (maxX - minX < 10) { minX -= 5; maxX += 5; }
-            const labels = [], data = []; let maxY = 0;
-            for (let i=minX; i<=maxX; i++) { labels.push(i); let y = normalPDF(i, mean, variance); data.push(y); if(y>maxY) maxY=y; }
+            const ctx = document.getElementById(cid).getContext('2d');
+            const std = Math.max(Math.sqrt(variance), 1); 
+            
+            let minX = Math.floor(Math.max(mean - 4 * std, absMin));
+            let maxX = Math.ceil(Math.min(mean + 4 * std, absMax));
+            
+            if (maxX - minX < 10) { 
+                minX -= 5; 
+                maxX += 5; 
+            }
+            
+            const labels = [];
+            const data = []; 
+            let maxY = 0;
+            
+            for (let i = minX; i <= maxX; i++) { 
+                labels.push(i); 
+                let y = normalPDF(i, mean, variance); 
+                data.push(y); 
+                if(y > maxY) maxY = y; 
+            }
 
-            if (cid === 'hpChart' && chartHpInstance) chartHpInstance.destroy(); if (cid === 'mpChart' && chartMpInstance) chartMpInstance.destroy();
-            const config = { type: 'line', data: { labels: labels, datasets: [ { label: label, data: data, borderColor: colorHex, backgroundColor: colorHex+'33', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.4 }, { label: '내 위치', data: labels.map(x => (x===userVal || (userVal<minX && x===minX) || (userVal>maxX && x===maxX)) ? maxY : null), borderColor: '#111827', backgroundColor: '#111827', borderWidth: 2, borderDash: [5, 5], type: 'bar', barThickness: 2 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { ticks: { maxTicksLimit: 7, font: { size: 10 } } }, y: { display: false } }, animation: { duration: 300 } } };
-            if (cid === 'hpChart') chartHpInstance = new Chart(ctx, config); if (cid === 'mpChart') chartMpInstance = new Chart(ctx, config);
+            if (cid === 'hpChart' && chartHpInstance) chartHpInstance.destroy(); 
+            if (cid === 'mpChart' && chartMpInstance) chartMpInstance.destroy();
+            
+            const config = { 
+                type: 'line', 
+                data: { 
+                    labels: labels, 
+                    datasets: [ 
+                        { 
+                            label: label, 
+                            data: data, 
+                            borderColor: colorHex, 
+                            backgroundColor: colorHex + '33', 
+                            borderWidth: 2, 
+                            fill: true, 
+                            pointRadius: 0, 
+                            tension: 0.4 
+                        }, 
+                        { 
+                            label: '내 위치', 
+                            data: labels.map(x => (x === userVal || (userVal < minX && x === minX) || (userVal > maxX && x === maxX)) ? maxY : null), 
+                            borderColor: '#111827', 
+                            backgroundColor: '#111827', 
+                            borderWidth: 2, 
+                            borderDash: [5, 5], 
+                            type: 'bar', 
+                            barThickness: 2 
+                        } 
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }, 
+                    scales: { x: { ticks: { maxTicksLimit: 7, font: { size: 10 } } }, y: { display: false } }, 
+                    animation: { duration: 300 } 
+                } 
+            };
+            
+            if (cid === 'hpChart') chartHpInstance = new Chart(ctx, config); 
+            if (cid === 'mpChart') chartMpInstance = new Chart(ctx, config);
         }
 
         function renderTargetGrowth() {
-            const cls = getSelectedClass(), con = parseInt(document.getElementById('conStat').value), wis = parseInt(document.getElementById('wisStat').value), tLv = parseInt(document.getElementById('targetLvNum').value);
-            const badge = document.getElementById('resClassBadge'); badge.textContent = baseStats[cls].name; badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold mb-1 ${baseStats[cls].color}`; document.getElementById('resTargetLv').textContent = `Lv.${tLv}`;
+            const cls = getSelectedClass();
+            const con = parseInt(document.getElementById('conStat').value);
+            const wis = parseInt(document.getElementById('wisStat').value);
+            const tLv = parseInt(document.getElementById('targetLvNum').value);
+            
+            const badge = document.getElementById('resClassBadge'); 
+            badge.textContent = baseStats[cls].name; 
+            badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold mb-1 ${baseStats[cls].color}`; 
+            document.getElementById('resTargetLv').textContent = `Lv.${tLv}`;
 
-            const n = tLv - 1; if (n <= 0) return;
-            const hS = getHpStats(cls, con), mS = getMpStats(cls, wis), bHp = baseStats[cls].hp, bMp = baseStats[cls].mp;
-            document.getElementById('resExpectedHp').textContent = Math.round(bHp + hS.mean*n).toLocaleString(); document.getElementById('resExpectedMp').textContent = Math.round(bMp + mS.mean*n).toLocaleString();
+            const n = tLv - 1; 
+            if (n <= 0) return;
+            
+            const hS = getHpStats(cls, con);
+            const mS = getMpStats(cls, wis);
+            const bHp = baseStats[cls].hp;
+            const bMp = baseStats[cls].mp;
+            
+            document.getElementById('resExpectedHp').textContent = Math.round(bHp + hS.mean * n).toLocaleString(); 
+            document.getElementById('resExpectedMp').textContent = Math.round(bMp + mS.mean * n).toLocaleString();
 
-            const tbody = document.getElementById('percentileTable'); tbody.innerHTML = '';
-            const percentiles = [ { p: 100, label: "최대치 (기적)", bg: "bg-indigo-50 font-bold" }, { p: 10, label: "상위 10%", bg: "" }, { p: 20, label: "상위 20%", bg: "" }, { p: 30, label: "상위 30%", bg: "" }, { p: 40, label: "상위 40%", bg: "" }, { p: 50, label: "평균치 (50%)", bg: "bg-gray-100 font-bold" }, { p: 60, label: "하위 40%", bg: "" }, { p: 70, label: "하위 30%", bg: "" }, { p: 80, label: "하위 20%", bg: "" }, { p: 90, label: "하위 10%", bg: "" }, { p: 0, label: "최저치 (저주)", bg: "bg-red-50 text-red-800 font-bold" } ];
-            const hpStd = Math.sqrt(n*hS.variance), mpStd = Math.sqrt(n*mS.variance);
-            const getVal = (b,n,mean,std,z,isMax,isMin,minS,maxS) => { if(isMax) return b+n*maxS; if(isMin) return b+n*minS; return Math.max(b+n*minS, Math.min(b+n*maxS, Math.round(b+n*mean+z*std))); };
+            const tbody = document.getElementById('percentileTable'); 
+            tbody.innerHTML = '';
+            
+            const percentiles = [ 
+                { p: 100, label: "최대치 (기적)", bg: "bg-indigo-50 font-bold" }, 
+                { p: 10, label: "상위 10%", bg: "" }, 
+                { p: 20, label: "상위 20%", bg: "" }, 
+                { p: 30, label: "상위 30%", bg: "" }, 
+                { p: 40, label: "상위 40%", bg: "" }, 
+                { p: 50, label: "평균치 (50%)", bg: "bg-gray-100 font-bold" }, 
+                { p: 60, label: "하위 40%", bg: "" }, 
+                { p: 70, label: "하위 30%", bg: "" }, 
+                { p: 80, label: "하위 20%", bg: "" }, 
+                { p: 90, label: "하위 10%", bg: "" }, 
+                { p: 0, label: "최저치 (저주)", bg: "bg-red-50 text-red-800 font-bold" } 
+            ];
+            
+            const hpStd = Math.sqrt(n * hS.variance);
+            const mpStd = Math.sqrt(n * mS.variance);
+            
+            const getVal = (b, n, mean, std, z, isMax, isMin, minS, maxS) => { 
+                if(isMax) return b + n * maxS; 
+                if(isMin) return b + n * minS; 
+                return Math.max(b + n * minS, Math.min(b + n * maxS, Math.round(b + n * mean + z * std))); 
+            };
 
             percentiles.forEach(item => {
-                let z = zScores[item.p], hV = getVal(bHp, n, hS.mean, hpStd, z, item.p===100, item.p===0, hS.min, hS.max), mV = getVal(bMp, n, mS.mean, mpStd, z, item.p===100, item.p===0, mS.min, mS.max);
-                let tr = document.createElement('tr'); tr.className = `border-b border-gray-100 ${item.bg}`;
-                tr.innerHTML = `<td class="py-1.5 border-r border-gray-100">${item.label}</td><td class="py-1.5 border-r border-gray-100 text-red-600">${hV}</td><td class="py-1.5 text-blue-600">${mV}</td>`; tbody.appendChild(tr);
+                let z = zScores[item.p];
+                let hV = getVal(bHp, n, hS.mean, hpStd, z, item.p === 100, item.p === 0, hS.min, hS.max);
+                let mV = getVal(bMp, n, mS.mean, mpStd, z, item.p === 100, item.p === 0, mS.min, mS.max);
+                
+                let tr = document.createElement('tr'); 
+                tr.className = `border-b border-gray-100 ${item.bg}`;
+                tr.innerHTML = `<td class="py-1.5 border-r border-gray-100">${item.label}</td><td class="py-1.5 border-r border-gray-100 text-red-600">${hV}</td><td class="py-1.5 text-blue-600">${mV}</td>`; 
+                tbody.appendChild(tr);
             });
         }
 
         // ==========================================
         // UI 모듈 변수
         // ==========================================
-        let growthLogs = [], adenaHistory = [], cashHistory = [], salesHistory = [];
-        let editingAdenaIndex = -1, editingCashIndex = -1, editingSalesIndex = -1;
+        let growthLogs = [];
+        let adenaHistory = [];
+        let cashHistory = [];
+        let salesHistory = [];
+        let editingAdenaIndex = -1;
+        let editingCashIndex = -1;
+        let editingSalesIndex = -1;
         
-        const manualGearSlots = [ { id: 'weapon', name: '무기' }, { id: 'helm', name: '투구' }, { id: 'armor', name: '갑옷' }, { id: 'tshirt', name: '티셔츠' }, { id: 'cloak', name: '망토' }, { id: 'glove', name: '장갑' }, { id: 'boots', name: '부츠' }, { id: 'shield', name: '방패' }, { id: 'necklace', name: '목걸이' }, { id: 'belt', name: '벨트' }, { id: 'ring1', name: '반지1' }, { id: 'ring2', name: '반지2' }, { id: 'rare', name: '희귀템' }, { id: 'misc', name: '잡템' } ];
-        let inventory = {}, equipped = {}, currentAddingSlot = null;
-        const standardBuffs = [ { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 }, { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 }, { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 }, { id: 'buff_iron', name: '아이언 스킨 (AC -10)', ac: 10 }, { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 }, { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 } ];
+        const manualGearSlots = [ 
+            { id: 'weapon', name: '무기' }, { id: 'helm', name: '투구' }, { id: 'armor', name: '갑옷' }, 
+            { id: 'tshirt', name: '티셔츠' }, { id: 'cloak', name: '망토' }, { id: 'glove', name: '장갑' }, 
+            { id: 'boots', name: '부츠' }, { id: 'shield', name: '방패' }, { id: 'necklace', name: '목걸이' }, 
+            { id: 'belt', name: '벨트' }, { id: 'ring1', name: '반지1' }, { id: 'ring2', name: '반지2' }, 
+            { id: 'rare', name: '희귀템' }, { id: 'misc', name: '잡템' } 
+        ];
+        
+        let inventory = {};
+        let equipped = {};
+        let currentAddingSlot = null;
+        
+        const standardBuffs = [ 
+            { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 }, 
+            { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 }, 
+            { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 }, 
+            { id: 'buff_iron', name: '아이언 스킨 (AC -10)', ac: 10 }, 
+            { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 }, 
+            { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 } 
+        ];
 
+        // ==========================================
         // 성장 일지
+        // ==========================================
         window.saveGrowthLog = function() {
-            const lv = parseInt(document.getElementById('logLv').value), hp = parseInt(document.getElementById('logHp').value), mp = parseInt(document.getElementById('logMp').value), memo = document.getElementById('logMemo').value || '';
+            const lv = parseInt(document.getElementById('logLv').value);
+            const hp = parseInt(document.getElementById('logHp').value);
+            const mp = parseInt(document.getElementById('logMp').value);
+            const memo = document.getElementById('logMemo').value || '';
+            
             if (!lv || !hp || !mp) return;
+            
             const idx = growthLogs.findIndex(l => l.lv === lv);
-            if (idx !== -1) growthLogs[idx] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() }; else growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
-            growthLogs.sort((a, b) => a.lv - b.lv); appData.growthDiary = growthLogs; triggerSave();
-            document.getElementById('logLv').value = ''; document.getElementById('logHp').value = ''; document.getElementById('logMp').value = ''; document.getElementById('logMemo').value = ''; renderGrowthLog();
+            if (idx !== -1) {
+                growthLogs[idx] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() }; 
+            } else {
+                growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
+            }
+            
+            growthLogs.sort((a, b) => a.lv - b.lv); 
+            appData.growthDiary = growthLogs; 
+            triggerSave();
+            
+            document.getElementById('logLv').value = ''; 
+            document.getElementById('logHp').value = ''; 
+            document.getElementById('logMp').value = ''; 
+            document.getElementById('logMemo').value = ''; 
+            
+            renderGrowthLog();
         };
-        window.editGrowthLog = function(lv) { const log = growthLogs.find(l => l.lv === lv); if (log) { document.getElementById('logLv').value = log.lv; document.getElementById('logHp').value = log.hp; document.getElementById('logMp').value = log.mp; document.getElementById('logMemo').value = log.memo || ''; document.getElementById('logLv').focus(); } };
-        window.deleteGrowthLog = function(lv) { window.showConfirm('일지 삭제', `Lv.${lv} 기록을 삭제하시겠습니까?`, () => { growthLogs = growthLogs.filter(l => l.lv !== lv); appData.growthDiary = growthLogs; triggerSave(); renderGrowthLog(); }); };
+
+        window.editGrowthLog = function(lv) { 
+            const log = growthLogs.find(l => l.lv === lv); 
+            if (log) { 
+                document.getElementById('logLv').value = log.lv; 
+                document.getElementById('logHp').value = log.hp; 
+                document.getElementById('logMp').value = log.mp; 
+                document.getElementById('logMemo').value = log.memo || ''; 
+                document.getElementById('logLv').focus(); 
+            } 
+        };
+
+        window.deleteGrowthLog = function(lv) { 
+            window.showConfirm('일지 삭제', `Lv.${lv} 기록을 삭제하시겠습니까?`, () => { 
+                growthLogs = growthLogs.filter(l => l.lv !== lv); 
+                appData.growthDiary = growthLogs; 
+                triggerSave(); 
+                renderGrowthLog(); 
+            }); 
+        };
+
         function renderGrowthLog() {
-            const list = document.getElementById('growthLogList'); list.innerHTML = '';
-            if (growthLogs.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.</li>'; return; }
+            const list = document.getElementById('growthLogList'); 
+            list.innerHTML = '';
+            
+            if (growthLogs.length === 0) { 
+                list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.</li>'; 
+                return; 
+            }
+            
             growthLogs.forEach((log, i) => {
                 let diffHtml = '<span class="text-xs text-gray-400 font-normal">초기 기록</span>';
-                if (i > 0) { const prev = growthLogs[i - 1]; let hD = log.hp - prev.hp, mD = log.mp - prev.mp; diffHtml = `<div class="flex justify-center gap-1"><span class="${hD>=12?'text-red-600 font-bold':hD<=6?'text-red-300':'text-red-500'} bg-red-50 px-1 rounded">+${hD}</span><span class="${mD>=6?'text-blue-600 font-bold':'text-blue-500'} bg-blue-50 px-1 rounded">+${mD}</span></div>`; }
-                const li = document.createElement('li'); li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
-                li.innerHTML = `<div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div><div class="col-span-3 font-bold"><span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span></div><div class="col-span-2 text-xs font-bold">${diffHtml}</div><div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div><div class="col-span-2 flex justify-center gap-2"><button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`; list.appendChild(li);
-            }); window.lucide.createIcons();
+                if (i > 0) { 
+                    const prev = growthLogs[i - 1]; 
+                    let hD = log.hp - prev.hp;
+                    let mD = log.mp - prev.mp; 
+                    
+                    let hDClass = hD >= 12 ? 'text-red-600 font-bold' : hD <= 6 ? 'text-red-300' : 'text-red-500';
+                    let mDClass = mD >= 6 ? 'text-blue-600 font-bold' : 'text-blue-500';
+                    
+                    diffHtml = `<div class="flex justify-center gap-1"><span class="${hDClass} bg-red-50 px-1 rounded">+${hD}</span><span class="${mDClass} bg-blue-50 px-1 rounded">+${mD}</span></div>`; 
+                }
+                
+                const li = document.createElement('li'); 
+                li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
+                li.innerHTML = `
+                    <div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div>
+                    <div class="col-span-3 font-bold">
+                        <span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span>
+                    </div>
+                    <div class="col-span-2 text-xs font-bold">${diffHtml}</div>
+                    <div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div>
+                    <div class="col-span-2 flex justify-center gap-2">
+                        <button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>`; 
+                list.appendChild(li);
+            }); 
+            window.lucide.createIcons();
         }
 
-        // 유틸: 포맷팅
-        window.formatPriceInput = function(el) { let val = el.value.replace(/,/g, '').replace(/[^0-9]/g, ''); el.value = val ? Number(val).toLocaleString() : ''; };
+        // ==========================================
+        // 유틸: 가격 포맷팅 및 날짜 파싱
+        // ==========================================
+        window.formatPriceInput = function(el) { 
+            let val = el.value.replace(/,/g, '').replace(/[^0-9]/g, ''); 
+            el.value = val ? Number(val).toLocaleString() : ''; 
+        };
 
+        function parseDateFromStr(str) {
+            const parts = str.split(' ');
+            if (parts.length !== 2) return new Date();
+            const d = parts[0].split('.');
+            const t = parts[1].split(':');
+            return new Date(d[0], d[1]-1, d[2], t[0], t[1]);
+        }
+
+        function formatElapsedTime(diffMs) {
+            const diffMins = Math.floor(Math.abs(diffMs) / (1000 * 60));
+            if (diffMins === 0) return '방금 전';
+            
+            const d = Math.floor(diffMins / (60 * 24));
+            const h = Math.floor((diffMins % (60 * 24)) / 60);
+            const m = diffMins % 60;
+            
+            let res = [];
+            if (d > 0) res.push(`${d}일`);
+            if (h > 0) res.push(`${h}시간`);
+            if (m > 0) res.push(`${m}분`);
+            
+            return res.join(' ') + ' 동안';
+        }
+
+        // ==========================================
         // 아데나 기록
+        // ==========================================
         window.recordAdena = function() {
-            const amount = parseInt(document.getElementById('adenaInput').value); if (!amount || amount < 0) return;
-            const now = new Date(), tStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            if (editingAdenaIndex > -1) { adenaHistory[editingAdenaIndex].amount = amount; editingAdenaIndex = -1; document.getElementById('btnAdenaSave').textContent = '기록'; } else { adenaHistory.unshift({ timestamp: tStr, amount: amount }); }
-            appData.adenaHistory = adenaHistory; triggerSave(); document.getElementById('adenaInput').value = ''; renderAdenaLog();
+            const amount = parseInt(document.getElementById('adenaInput').value); 
+            if (!amount || amount < 0) return;
+            
+            const now = new Date();
+            const tStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            if (editingAdenaIndex > -1) { 
+                adenaHistory[editingAdenaIndex].amount = amount; 
+                editingAdenaIndex = -1; 
+                document.getElementById('btnAdenaSave').textContent = '기록'; 
+            } else { 
+                adenaHistory.unshift({ timestamp: tStr, isoDate: now.toISOString(), amount: amount }); 
+            }
+            
+            appData.adenaHistory = adenaHistory; 
+            triggerSave(); 
+            document.getElementById('adenaInput').value = ''; 
+            renderAdenaLog();
         };
-        window.editAdenaRecord = function(idx) { editingAdenaIndex = idx; document.getElementById('adenaInput').value = adenaHistory[idx].amount; document.getElementById('btnAdenaSave').textContent = '수정'; document.getElementById('adenaInput').focus(); };
-        window.deleteAdenaRecord = function(idx) { window.showConfirm('기록 삭제', '아데나 기록을 삭제할까요?', () => { adenaHistory.splice(idx, 1); appData.adenaHistory = adenaHistory; triggerSave(); if (editingAdenaIndex === idx) { editingAdenaIndex = -1; document.getElementById('adenaInput').value = ''; document.getElementById('btnAdenaSave').textContent = '기록'; } renderAdenaLog(); }); };
+
+        window.editAdenaRecord = function(idx) { 
+            editingAdenaIndex = idx; 
+            document.getElementById('adenaInput').value = adenaHistory[idx].amount; 
+            document.getElementById('btnAdenaSave').textContent = '수정'; 
+            document.getElementById('adenaInput').focus(); 
+        };
+
+        window.deleteAdenaRecord = function(idx) { 
+            window.showConfirm('기록 삭제', '아데나 기록을 삭제할까요?', () => { 
+                adenaHistory.splice(idx, 1); 
+                appData.adenaHistory = adenaHistory; 
+                triggerSave(); 
+                
+                if (editingAdenaIndex === idx) { 
+                    editingAdenaIndex = -1; 
+                    document.getElementById('adenaInput').value = ''; 
+                    document.getElementById('btnAdenaSave').textContent = '기록'; 
+                } 
+                renderAdenaLog(); 
+            }); 
+        };
+
+        window.clearAdenaHistory = function() { 
+            window.showConfirm('전체 초기화', '모든 아데나 기록을 완전히 지우시겠습니까?', () => { 
+                adenaHistory = []; 
+                appData.adenaHistory = adenaHistory; 
+                triggerSave(); 
+                renderAdenaLog(); 
+            }); 
+        };
+        
         function renderAdenaLog() {
-            const list = document.getElementById('adenaLogList'); list.innerHTML = '';
-            if (adenaHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-4">기록된 내역이 없습니다.</li>'; } else {
+            const list = document.getElementById('adenaLogList'); 
+            list.innerHTML = '';
+            
+            if (adenaHistory.length === 0) { 
+                list.innerHTML = '<li class="text-center text-gray-400 py-6 text-sm">기록된 내역이 없습니다.<br>오늘의 아데나를 기록해보세요!</li>'; 
+            } else {
                 adenaHistory.forEach((r, idx) => {
-                    let dH = ''; if (idx < adenaHistory.length - 1) { let diff = r.amount - adenaHistory[idx + 1].amount; if(diff>0) dH=`<span class="text-[10px] text-green-500 ml-1">(+${diff.toLocaleString()})</span>`; else if(diff<0) dH=`<span class="text-[10px] text-red-500 ml-1">(${diff.toLocaleString()})</span>`; }
-                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-1.5 hover:bg-white rounded border border-transparent hover:border-gray-100 transition";
-                    li.innerHTML = `<span class="text-gray-500 font-mono text-xs flex-1">${r.timestamp}</span><div class="flex items-center justify-end gap-3 flex-1"><span class="font-bold text-yellow-600">${r.amount.toLocaleString()} <span class="text-xs text-gray-400 font-normal">아데나</span>${dH}</span><div class="flex gap-1"><button onclick="editAdenaRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteAdenaRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
+                    let dH = ''; 
+                    if (idx < adenaHistory.length - 1) { 
+                        const prev = adenaHistory[idx + 1];
+                        let diff = r.amount - prev.amount; 
+                        
+                        const d1 = r.isoDate ? new Date(r.isoDate) : parseDateFromStr(r.timestamp);
+                        const d2 = prev.isoDate ? new Date(prev.isoDate) : parseDateFromStr(prev.timestamp);
+                        const elapsedStr = formatElapsedTime(d1.getTime() - d2.getTime());
+
+                        if(diff > 0) {
+                            dH = `<div class="text-[10px] text-green-600 font-bold mt-1 text-right">${elapsedStr} <span class="bg-green-100 px-1.5 py-0.5 rounded ml-1">▲ ${diff.toLocaleString()}</span></div>`; 
+                        } else if(diff < 0) {
+                            dH = `<div class="text-[10px] text-red-500 font-bold mt-1 text-right">${elapsedStr} <span class="bg-red-50 px-1.5 py-0.5 rounded ml-1">▼ ${Math.abs(diff).toLocaleString()}</span></div>`; 
+                        } else {
+                            dH = `<div class="text-[10px] text-gray-400 font-bold mt-1 text-right">${elapsedStr} 변동 없음</div>`;
+                        }
+                    }
+                    
+                    const li = document.createElement('li'); 
+                    li.className = "flex justify-between items-center px-3 py-2 mb-1.5 bg-white rounded-lg border border-gray-100 hover:border-yellow-100 transition shadow-sm";
+                    li.innerHTML = `
+                        <div class="flex flex-col flex-1">
+                            <span class="text-gray-400 font-mono text-[10px] font-bold">${r.timestamp}</span>
+                            <span class="font-black text-yellow-600 text-sm mt-0.5">${r.amount.toLocaleString()} <span class="text-[10px] text-gray-400 font-normal">아데나</span></span>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-1">
+                            ${dH}
+                            <div class="flex gap-1 mt-1">
+                                <button onclick="editAdenaRecord(${idx})" class="text-indigo-400 hover:text-indigo-600 bg-indigo-50 p-1 rounded" title="수정"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                <button onclick="deleteAdenaRecord(${idx})" class="text-red-400 hover:text-red-600 bg-red-50 p-1 rounded" title="삭제"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                            </div>
+                        </div>
+                    `; 
+                    list.appendChild(li);
                 });
-            } window.lucide.createIcons(); updateTotalAssetSummary();
+            } 
+            window.lucide.createIcons(); 
+            updateTotalAssetSummary();
         }
 
+        // ==========================================
         // 과금 기록
+        // ==========================================
         window.recordCash = function() {
-            const date = document.getElementById('cashDateInput').value, desc = document.getElementById('cashDescInput').value.trim(), amount = parseInt(document.getElementById('cashAmountInput').value.replace(/,/g, ''));
+            const date = document.getElementById('cashDateInput').value;
+            const desc = document.getElementById('cashDescInput').value.trim();
+            const amount = parseInt(document.getElementById('cashAmountInput').value.replace(/,/g, ''));
+            
             if (!date || !amount || amount <= 0) return;
-            if (editingCashIndex > -1) { cashHistory[editingCashIndex] = { date, desc, amount }; editingCashIndex = -1; document.getElementById('btnCashSave').textContent = '기록'; } else { cashHistory.unshift({ date, desc, amount }); }
-            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); appData.cashHistory = cashHistory; triggerSave();
-            document.getElementById('cashAmountInput').value = ''; document.getElementById('cashDescInput').value = ''; renderCashHistory();
+            
+            if (editingCashIndex > -1) { 
+                cashHistory[editingCashIndex] = { date, desc, amount }; 
+                editingCashIndex = -1; 
+                document.getElementById('btnCashSave').textContent = '기록'; 
+            } else { 
+                cashHistory.unshift({ date, desc, amount }); 
+            }
+            
+            cashHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); 
+            appData.cashHistory = cashHistory; 
+            triggerSave();
+            
+            document.getElementById('cashAmountInput').value = ''; 
+            document.getElementById('cashDescInput').value = ''; 
+            renderCashHistory();
         };
-        window.editCashRecord = function(idx) { editingCashIndex = idx; document.getElementById('cashDateInput').value = cashHistory[idx].date; document.getElementById('cashDescInput').value = cashHistory[idx].desc || ''; document.getElementById('cashAmountInput').value = cashHistory[idx].amount; window.formatPriceInput(document.getElementById('cashAmountInput')); document.getElementById('btnCashSave').textContent = '수정'; document.getElementById('cashDescInput').focus(); };
-        window.deleteCashRecord = function(idx) { window.showConfirm('결제 취소', '과금 내역을 삭제할까요?', () => { cashHistory.splice(idx, 1); appData.cashHistory = cashHistory; triggerSave(); if(editingCashIndex === idx) { editingCashIndex = -1; document.getElementById('btnCashSave').textContent = '기록'; } renderCashHistory(); }); };
+
+        window.editCashRecord = function(idx) { 
+            editingCashIndex = idx; 
+            document.getElementById('cashDateInput').value = cashHistory[idx].date; 
+            document.getElementById('cashDescInput').value = cashHistory[idx].desc || ''; 
+            document.getElementById('cashAmountInput').value = cashHistory[idx].amount; 
+            
+            window.formatPriceInput(document.getElementById('cashAmountInput')); 
+            document.getElementById('btnCashSave').textContent = '수정'; 
+            document.getElementById('cashDescInput').focus(); 
+        };
+
+        window.deleteCashRecord = function(idx) { 
+            window.showConfirm('결제 취소', '과금 내역을 삭제할까요?', () => { 
+                cashHistory.splice(idx, 1); 
+                appData.cashHistory = cashHistory; 
+                triggerSave(); 
+                
+                if(editingCashIndex === idx) { 
+                    editingCashIndex = -1; 
+                    document.getElementById('btnCashSave').textContent = '기록'; 
+                } 
+                renderCashHistory(); 
+            }); 
+        };
+
         function renderCashHistory() {
-            const list = document.getElementById('cashLogList'); list.innerHTML = '';
-            if (cashHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-6">무과금의 길을 걷고 계신가요?</li>'; } else {
+            const list = document.getElementById('cashLogList'); 
+            list.innerHTML = '';
+            
+            if (cashHistory.length === 0) { 
+                list.innerHTML = '<li class="text-center text-gray-400 py-6">무과금의 길을 걷고 계신가요?</li>'; 
+            } else {
                 cashHistory.forEach((r, idx) => {
-                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
-                    li.innerHTML = `<span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span><div class="flex flex-col w-1/2 px-1 text-center"><span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span></div><div class="flex items-center justify-end gap-1 w-1/4"><span class="font-black text-red-500 whitespace-nowrap">${r.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span><div class="flex gap-1 ml-1"><button onclick="editCashRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteCashRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
+                    const li = document.createElement('li'); 
+                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-red-50 rounded border border-gray-100 transition";
+                    li.innerHTML = `
+                        <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span>
+                        <div class="flex flex-col w-1/2 px-1 text-center">
+                            <span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 w-1/4">
+                            <span class="font-black text-red-500 whitespace-nowrap">${r.amount.toLocaleString()} <span class="text-[10px] text-red-400 font-normal">원</span></span>
+                            <div class="flex gap-1 ml-1">
+                                <button onclick="editCashRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteCashRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                    `; 
+                    list.appendChild(li);
                 });
-            } window.lucide.createIcons(); updateTotalAssetSummary();
+            } 
+            window.lucide.createIcons(); 
+            updateTotalAssetSummary();
         }
 
+        // ==========================================
         // 판매(수익) 기록
+        // ==========================================
         window.recordSales = function() {
-            const date = document.getElementById('salesDateInput').value, desc = document.getElementById('salesDescInput').value.trim(), amount = parseInt(document.getElementById('salesAmountInput').value.replace(/,/g, '')), fee = parseInt(document.getElementById('salesFeeInput').value.replace(/,/g, '')) || 0;
-            if (!date || !amount || amount <= 0) return; const finalAmount = amount - fee;
-            if (editingSalesIndex > -1) { salesHistory[editingSalesIndex] = { date, desc, amount, fee, finalAmount }; editingSalesIndex = -1; document.getElementById('btnSalesSave').textContent = '기록'; } else { salesHistory.unshift({ date, desc, amount, fee, finalAmount }); }
-            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); appData.salesHistory = salesHistory; triggerSave();
-            document.getElementById('salesAmountInput').value = ''; document.getElementById('salesFeeInput').value = ''; document.getElementById('salesDescInput').value = ''; renderSalesHistory();
+            const date = document.getElementById('salesDateInput').value;
+            const desc = document.getElementById('salesDescInput').value.trim();
+            const amount = parseInt(document.getElementById('salesAmountInput').value.replace(/,/g, ''));
+            const fee = parseInt(document.getElementById('salesFeeInput').value.replace(/,/g, '')) || 0;
+            
+            if (!date || !amount || amount <= 0) return; 
+            
+            const finalAmount = amount - fee;
+            
+            if (editingSalesIndex > -1) { 
+                salesHistory[editingSalesIndex] = { date, desc, amount, fee, finalAmount }; 
+                editingSalesIndex = -1; 
+                document.getElementById('btnSalesSave').textContent = '기록'; 
+            } else { 
+                salesHistory.unshift({ date, desc, amount, fee, finalAmount }); 
+            }
+            
+            salesHistory.sort((a, b) => new Date(b.date) - new Date(a.date)); 
+            appData.salesHistory = salesHistory; 
+            triggerSave();
+            
+            document.getElementById('salesAmountInput').value = ''; 
+            document.getElementById('salesFeeInput').value = ''; 
+            document.getElementById('salesDescInput').value = ''; 
+            renderSalesHistory();
         };
-        window.editSalesRecord = function(idx) { editingSalesIndex = idx; document.getElementById('salesDateInput').value = salesHistory[idx].date; document.getElementById('salesDescInput').value = salesHistory[idx].desc || ''; document.getElementById('salesAmountInput').value = salesHistory[idx].amount; document.getElementById('salesFeeInput').value = salesHistory[idx].fee || ''; window.formatPriceInput(document.getElementById('salesAmountInput')); window.formatPriceInput(document.getElementById('salesFeeInput')); document.getElementById('btnSalesSave').textContent = '수정'; document.getElementById('salesDescInput').focus(); };
-        window.deleteSalesRecord = function(idx) { window.showConfirm('판매 취소', '수익 내역을 삭제할까요?', () => { salesHistory.splice(idx, 1); appData.salesHistory = salesHistory; triggerSave(); if(editingSalesIndex === idx) { editingSalesIndex = -1; document.getElementById('btnSalesSave').textContent = '기록'; } renderSalesHistory(); }); };
+
+        window.editSalesRecord = function(idx) { 
+            editingSalesIndex = idx; 
+            document.getElementById('salesDateInput').value = salesHistory[idx].date; 
+            document.getElementById('salesDescInput').value = salesHistory[idx].desc || ''; 
+            document.getElementById('salesAmountInput').value = salesHistory[idx].amount; 
+            document.getElementById('salesFeeInput').value = salesHistory[idx].fee || ''; 
+            
+            window.formatPriceInput(document.getElementById('salesAmountInput')); 
+            window.formatPriceInput(document.getElementById('salesFeeInput')); 
+            document.getElementById('btnSalesSave').textContent = '수정'; 
+            document.getElementById('salesDescInput').focus(); 
+        };
+
+        window.deleteSalesRecord = function(idx) { 
+            window.showConfirm('판매 취소', '수익 내역을 삭제할까요?', () => { 
+                salesHistory.splice(idx, 1); 
+                appData.salesHistory = salesHistory; 
+                triggerSave(); 
+                
+                if(editingSalesIndex === idx) { 
+                    editingSalesIndex = -1; 
+                    document.getElementById('btnSalesSave').textContent = '기록'; 
+                } 
+                renderSalesHistory(); 
+            }); 
+        };
+
         function renderSalesHistory() {
-            const list = document.getElementById('salesLogList'); list.innerHTML = '';
-            if (salesHistory.length === 0) { list.innerHTML = '<li class="text-center text-gray-400 py-6">첫 수익을 기대해봅니다!</li>'; } else {
+            const list = document.getElementById('salesLogList'); 
+            list.innerHTML = '';
+            
+            if (salesHistory.length === 0) { 
+                list.innerHTML = '<li class="text-center text-gray-400 py-6">첫 수익을 기대해봅니다!</li>'; 
+            } else {
                 salesHistory.forEach((r, idx) => {
-                    const li = document.createElement('li'); li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-blue-50 rounded border border-gray-100 transition";
-                    li.innerHTML = `<span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span><div class="flex flex-col w-2/5 px-1 text-center"><span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span>${r.fee>0?`<span class="text-[9px] text-gray-400">수수료: -${r.fee.toLocaleString()}원</span>`:''}</div><div class="flex items-center justify-end gap-1 w-1/3"><span class="font-black text-blue-600 whitespace-nowrap">${r.finalAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">원</span></span><div class="flex gap-1 ml-1"><button onclick="editSalesRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button><button onclick="deleteSalesRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`; list.appendChild(li);
+                    const li = document.createElement('li'); 
+                    li.className = "flex justify-between items-center px-2 py-2 bg-white hover:bg-blue-50 rounded border border-gray-100 transition";
+                    li.innerHTML = `
+                        <span class="text-gray-600 font-mono text-[11px] font-bold w-1/4">${r.date}</span>
+                        <div class="flex flex-col w-2/5 px-1 text-center">
+                            <span class="text-gray-700 text-xs font-bold truncate" title="${r.desc}">${r.desc || '-'}</span>
+                            ${r.fee > 0 ? `<span class="text-[9px] text-gray-400">수수료: -${r.fee.toLocaleString()}원</span>` : ''}
+                        </div>
+                        <div class="flex items-center justify-end gap-1 w-1/3">
+                            <span class="font-black text-blue-600 whitespace-nowrap">${r.finalAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">원</span></span>
+                            <div class="flex gap-1 ml-1">
+                                <button onclick="editSalesRecord(${idx})" class="text-indigo-300 hover:text-indigo-600"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteSalesRecord(${idx})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+                    `; 
+                    list.appendChild(li);
                 });
-            } window.lucide.createIcons(); updateTotalAssetSummary();
+            } 
+            window.lucide.createIcons(); 
+            updateTotalAssetSummary();
         }
 
+        // ==========================================
         // 장비 & 버프 관리
+        // ==========================================
         function renderBuffs() {
             document.getElementById('customBuffAc').value = appData.customBuffAc || 0;
-            document.getElementById('buffChecklist').innerHTML = standardBuffs.map(b => `<label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50"><input type="checkbox" id="${b.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${appData.activeBuffs.includes(b.id)?'checked':''} onchange="calculateTotalManualGear()"><span class="text-xs font-bold text-gray-700">${b.name}</span></label>`).join('');
-        }
-        function renderManualArmorTable() {
-            const tbody = document.getElementById('manualArmorTableBody'); tbody.innerHTML = '';
-            manualGearSlots.forEach(slot => {
-                const items = inventory[slot.id] || []; const curId = equipped[slot.id] || 'none'; let opts = `<option value="none">-- 장착 안함 --</option>`, curItem = null;
-                items.forEach(i => { if(i.id===curId) curItem=i; opts += `<option value="${i.id}" ${i.id===curId?'selected':''}>${i.name}</option>`; });
-                const tr = document.createElement('tr'); tr.innerHTML = `<td class="py-2 px-2 border-r bg-gray-50 text-gray-600 font-bold">${slot.name}</td><td class="py-1 px-2 border-r flex items-center gap-1 min-w-[200px]"><select class="flex-1 p-1.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm font-bold text-gray-700" onchange="changeEquippedItem('${slot.id}', this.value)">${opts}</select><button onclick="openAddItemModal('${slot.id}')" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></button>${curItem?`<button onclick="deleteItem('${slot.id}', '${curItem.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`:''}</td><td class="py-2 px-2 border-r text-indigo-700 font-black bg-indigo-50">${curItem && curItem.ac>0?'+'+curItem.ac:curItem?curItem.ac:0}</td><td class="py-2 px-2 text-right text-gray-700 font-bold">${curItem?curItem.price.toLocaleString():'-'}</td>`; tbody.appendChild(tr);
-            }); window.lucide.createIcons(); window.calculateTotalManualGear();
+            document.getElementById('buffChecklist').innerHTML = standardBuffs.map(b => `
+                <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
+                    <input type="checkbox" id="${b.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${appData.activeBuffs.includes(b.id) ? 'checked' : ''} onchange="calculateTotalManualGear()">
+                    <span class="text-xs font-bold text-gray-700">${b.name}</span>
+                </label>
+            `).join('');
         }
 
-        window.openAddItemModal = function(slotId) { currentAddingSlot = slotId; document.getElementById('modalSlotName').textContent = manualGearSlots.find(s=>s.id===slotId).name; ['newItemName','newItemAc','newItemPrice'].forEach(id=>document.getElementById(id).value=''); document.getElementById('gearModal').classList.remove('hidden'); };
-        window.closeAddItemModal = function() { document.getElementById('gearModal').classList.add('hidden'); currentAddingSlot = null; };
-        window.saveNewItem = function() {
-            if (!currentAddingSlot) return; const name = document.getElementById('newItemName').value.trim(), ac = parseInt(document.getElementById('newItemAc').value) || 0, price = parseInt(document.getElementById('newItemPrice').value.replace(/,/g, '')) || 0;
-            if (!name) return; if (!inventory[currentAddingSlot]) inventory[currentAddingSlot] = [];
-            const nI = { id: 'item_' + Date.now(), name, ac, price }; inventory[currentAddingSlot].push(nI); equipped[currentAddingSlot] = nI.id;
-            appData.inventory = inventory; appData.equippedItems = equipped; triggerSave(); window.closeAddItemModal(); renderManualArmorTable();
+        function renderManualArmorTable() {
+            const tbody = document.getElementById('manualArmorTableBody'); 
+            tbody.innerHTML = '';
+            
+            manualGearSlots.forEach(slot => {
+                const items = inventory[slot.id] || []; 
+                const curId = equipped[slot.id] || 'none'; 
+                let opts = `<option value="none">-- 장착 안함 --</option>`;
+                let curItem = null;
+                
+                items.forEach(i => { 
+                    if(i.id === curId) curItem = i; 
+                    opts += `<option value="${i.id}" ${i.id === curId ? 'selected' : ''}>${i.name}</option>`; 
+                });
+                
+                const tr = document.createElement('tr'); 
+                tr.innerHTML = `
+                    <td class="py-2 px-2 border-r bg-gray-50 text-gray-600 font-bold">${slot.name}</td>
+                    <td class="py-1 px-2 border-r flex items-center gap-1 min-w-[200px]">
+                        <select class="flex-1 p-1.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm font-bold text-gray-700" onchange="changeEquippedItem('${slot.id}', this.value)">
+                            ${opts}
+                        </select>
+                        <button onclick="openAddItemModal('${slot.id}')" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                        ${curItem ? `
+                        <button onclick="deleteItem('${slot.id}', '${curItem.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>` : ''}
+                    </td>
+                    <td class="py-2 px-2 border-r text-indigo-700 font-black bg-indigo-50">${curItem && curItem.ac > 0 ? '+' + curItem.ac : curItem ? curItem.ac : 0}</td>
+                    <td class="py-2 px-2 text-right text-gray-700 font-bold">${curItem ? curItem.price.toLocaleString() : '-'}</td>
+                `; 
+                tbody.appendChild(tr);
+            }); 
+            
+            window.lucide.createIcons(); 
+            window.calculateTotalManualGear();
+        }
+
+        window.openAddItemModal = function(slotId) { 
+            currentAddingSlot = slotId; 
+            document.getElementById('modalSlotName').textContent = manualGearSlots.find(s => s.id === slotId).name; 
+            ['newItemName', 'newItemAc', 'newItemPrice'].forEach(id => document.getElementById(id).value = ''); 
+            document.getElementById('gearModal').classList.remove('hidden'); 
         };
-        window.changeEquippedItem = function(sId, iId) { equipped[sId] = iId; appData.equippedItems = equipped; triggerSave(); renderManualArmorTable(); };
-        window.deleteItem = function(sId, iId) { window.showConfirm('장비 삭제', '이 장비를 삭제하시겠습니까?', () => { inventory[sId] = inventory[sId].filter(i=>i.id!==iId); if(equipped[sId]===iId) equipped[sId]='none'; appData.inventory=inventory; appData.equippedItems=equipped; triggerSave(); renderManualArmorTable(); }); };
+
+        window.closeAddItemModal = function() { 
+            document.getElementById('gearModal').classList.add('hidden'); 
+            currentAddingSlot = null; 
+        };
+
+        window.saveNewItem = function() {
+            if (!currentAddingSlot) return; 
+            const name = document.getElementById('newItemName').value.trim();
+            const ac = parseInt(document.getElementById('newItemAc').value) || 0;
+            const price = parseInt(document.getElementById('newItemPrice').value.replace(/,/g, '')) || 0;
+            
+            if (!name) return; 
+            if (!inventory[currentAddingSlot]) inventory[currentAddingSlot] = [];
+            
+            const nI = { id: 'item_' + Date.now(), name, ac, price }; 
+            inventory[currentAddingSlot].push(nI); 
+            equipped[currentAddingSlot] = nI.id;
+            
+            appData.inventory = inventory; 
+            appData.equippedItems = equipped; 
+            triggerSave(); 
+            window.closeAddItemModal(); 
+            renderManualArmorTable();
+        };
+
+        window.changeEquippedItem = function(sId, iId) { 
+            equipped[sId] = iId; 
+            appData.equippedItems = equipped; 
+            triggerSave(); 
+            renderManualArmorTable(); 
+        };
+
+        window.deleteItem = function(sId, iId) { 
+            window.showConfirm('장비 삭제', '이 장비를 삭제하시겠습니까?', () => { 
+                inventory[sId] = inventory[sId].filter(i => i.id !== iId); 
+                if(equipped[sId] === iId) equipped[sId] = 'none'; 
+                
+                appData.inventory = inventory; 
+                appData.equippedItems = equipped; 
+                triggerSave(); 
+                renderManualArmorTable(); 
+            }); 
+        };
 
         window.calculateTotalManualGear = function() {
-            let tAc = 0, tCost = 0; manualGearSlots.forEach(s => { const cur = equipped[s.id]; if(cur&&cur!=='none'){ const itm=(inventory[s.id]||[]).find(i=>i.id===cur); if(itm){ tAc+=itm.ac; tCost+=itm.price; } } });
-            let bAc = 0, aBuffs = []; standardBuffs.forEach(b => { const cb = document.getElementById(b.id); if(cb&&cb.checked) { bAc+=b.ac; aBuffs.push(b.id); } });
-            const cAc = parseInt(document.getElementById('customBuffAc').value) || 0; bAc += cAc;
-            appData.activeBuffs = aBuffs; appData.customBuffAc = cAc; const fAc = 10 - tAc - bAc;
+            let tAc = 0, tCost = 0; 
+            
+            manualGearSlots.forEach(s => { 
+                const cur = equipped[s.id]; 
+                if(cur && cur !== 'none'){ 
+                    const itm = (inventory[s.id] || []).find(i => i.id === cur); 
+                    if(itm){ tAc += itm.ac; tCost += itm.price; } 
+                } 
+            });
+            
+            let bAc = 0, aBuffs = []; 
+            standardBuffs.forEach(b => { 
+                const cb = document.getElementById(b.id); 
+                if(cb && cb.checked) { bAc += b.ac; aBuffs.push(b.id); } 
+            });
+            
+            const cAc = parseInt(document.getElementById('customBuffAc').value) || 0; 
+            bAc += cAc;
+            
+            appData.activeBuffs = aBuffs; 
+            appData.customBuffAc = cAc; 
+            const fAc = 10 - tAc - bAc;
+            
             document.getElementById('manualTotalAcDisplay').innerHTML = `AC ${fAc} <span class="text-sm font-normal text-gray-400 block mt-1">(장비 +${tAc} / 버프 +${bAc})</span>`;
             document.getElementById('manualTotalPriceDisplay').innerHTML = `${tCost.toLocaleString()} <span class="text-sm text-yellow-600">아데나</span>`;
-            const rate = parseInt(document.getElementById('adenaRate').value) || 0; appData.adenaRate = rate; triggerSave();
-            document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor((tCost/10000)*rate).toLocaleString()} <span class="text-sm text-green-600">원</span>`; renderStorageTable();
+            
+            const rate = parseInt(document.getElementById('adenaRate').value) || 0; 
+            appData.adenaRate = rate; 
+            triggerSave();
+            
+            document.getElementById('manualTotalCashDisplay').innerHTML = `≈ ${Math.floor((tCost / 10000) * rate).toLocaleString()} <span class="text-sm text-green-600">원</span>`; 
+            renderStorageTable();
         };
+
         function renderStorageTable() {
-            const tbody = document.getElementById('storageTableBody'); tbody.innerHTML = ''; let sCost = 0, hasItm = false;
-            manualGearSlots.forEach(s => { const itms = inventory[s.id] || [], cur = equipped[s.id] || 'none'; itms.forEach(i => { if(i.id!==cur) { hasItm = true; sCost += i.price; const tr = document.createElement('tr'); tr.innerHTML = `<td class="py-1.5 px-2 border-r bg-gray-50 text-gray-500 font-bold">${s.name}</td><td class="py-1.5 px-2 border-r text-gray-700 font-bold text-left pl-3">${i.name}</td><td class="py-1.5 px-2 border-r text-indigo-500 font-bold">${i.ac>0?'+'+i.ac:i.ac}</td><td class="py-1.5 px-2 border-r text-right text-gray-600 font-bold pr-3">${i.price.toLocaleString()}</td><td class="py-1.5 px-2"><button onclick="deleteItem('${s.id}', '${i.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td>`; tbody.appendChild(tr); } }); });
-            if(!hasItm) tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-gray-400 text-center">여분 장비가 없습니다.</td></tr>`;
-            document.getElementById('storageTotalPrice').textContent = sCost.toLocaleString(); const rate = parseInt(document.getElementById('adenaRate').value) || 0; document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor((sCost/10000)*rate).toLocaleString()} 원)`; window.lucide.createIcons(); updateTotalAssetSummary();
+            const tbody = document.getElementById('storageTableBody'); 
+            tbody.innerHTML = ''; 
+            let sCost = 0, hasItm = false;
+            
+            manualGearSlots.forEach(s => { 
+                const itms = inventory[s.id] || [];
+                const cur = equipped[s.id] || 'none'; 
+                
+                itms.forEach(i => { 
+                    if(i.id !== cur) { 
+                        hasItm = true; 
+                        sCost += i.price; 
+                        
+                        const tr = document.createElement('tr'); 
+                        tr.innerHTML = `
+                            <td class="py-1.5 px-2 border-r bg-gray-50 text-gray-500 font-bold">${s.name}</td>
+                            <td class="py-1.5 px-2 border-r text-gray-700 font-bold text-left pl-3">${i.name}</td>
+                            <td class="py-1.5 px-2 border-r text-indigo-500 font-bold">${i.ac > 0 ? '+' + i.ac : i.ac}</td>
+                            <td class="py-1.5 px-2 border-r text-right text-gray-600 font-bold pr-3">${i.price.toLocaleString()}</td>
+                            <td class="py-1.5 px-2">
+                                <button onclick="deleteItem('${s.id}', '${i.id}')" class="bg-red-50 text-red-500 p-1.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
+                                </button>
+                            </td>
+                        `; 
+                        tbody.appendChild(tr); 
+                    } 
+                }); 
+            });
+            
+            if(!hasItm) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-gray-400 text-center">여분 장비가 없습니다.</td></tr>`;
+            }
+            
+            document.getElementById('storageTotalPrice').textContent = sCost.toLocaleString(); 
+            const rate = parseInt(document.getElementById('adenaRate').value) || 0; 
+            document.getElementById('storageTotalCash').textContent = `(≈ ${Math.floor((sCost / 10000) * rate).toLocaleString()} 원)`; 
+            
+            window.lucide.createIcons(); 
+            updateTotalAssetSummary();
         }
 
+        // ==========================================
         // 전체 자산 평가
+        // ==========================================
         function updateTotalAssetSummary() {
-            const tCash = cashHistory.reduce((s, r) => s + r.amount, 0), tSales = salesHistory.reduce((s, r) => s + r.finalAmount, 0);
+            const tCash = cashHistory.reduce((s, r) => s + r.amount, 0);
+            const tSales = salesHistory.reduce((s, r) => s + r.finalAmount, 0);
+            
             let tAdena = adenaHistory.length > 0 ? adenaHistory[0].amount : 0;
-            manualGearSlots.forEach(s => { (inventory[s.id]||[]).forEach(i => tAdena += i.price); });
-            const rate = parseInt(document.getElementById('adenaRate').value) || 0, tAsset = (tAdena/10000)*rate, net = tAsset + tSales - tCash;
-            document.getElementById('summaryTotalCash').textContent = tCash.toLocaleString(); document.getElementById('summaryTotalSales').textContent = tSales.toLocaleString(); document.getElementById('summaryTotalAssetCash').textContent = Math.floor(tAsset).toLocaleString(); document.getElementById('summaryTotalAdena').textContent = tAdena.toLocaleString();
-            const netEl = document.getElementById('summaryNetProfit'), memoEl = document.getElementById('summaryMemo');
-            if(net > 0) { netEl.textContent = '+'+Math.floor(net).toLocaleString()+' 원'; netEl.className = 'text-4xl font-black text-blue-400 tracking-tight mb-4'; memoEl.innerHTML = '<i data-lucide="party-popper" class="w-4 h-4 text-yellow-400"></i> 와우! 흑자 전환!'; memoEl.className = 'inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-300 rounded-full px-4 py-2 text-sm font-bold'; } else if(net < 0) { netEl.textContent = Math.floor(net).toLocaleString()+' 원'; netEl.className = 'text-4xl font-black text-red-400 tracking-tight mb-4'; memoEl.innerHTML = '<i data-lucide="frown" class="w-4 h-4 text-red-400"></i> 갈 길이 멉니다.'; memoEl.className = 'inline-flex items-center gap-2 bg-red-600/20 border border-red-500/30 text-red-300 rounded-full px-4 py-2 text-sm font-bold'; } else { netEl.textContent = '0 원'; netEl.className = 'text-4xl font-black text-gray-300 tracking-tight mb-4'; memoEl.innerHTML = '본전치기!'; memoEl.className = 'inline-flex items-center gap-2 bg-gray-600/20 border border-gray-500/30 text-gray-300 rounded-full px-4 py-2 text-sm font-bold'; } window.lucide.createIcons();
+            
+            manualGearSlots.forEach(s => { 
+                (inventory[s.id] || []).forEach(i => tAdena += i.price); 
+            });
+            
+            const rate = parseInt(document.getElementById('adenaRate').value) || 0;
+            const tAsset = (tAdena / 10000) * rate;
+            const net = tAsset + tSales - tCash;
+            
+            document.getElementById('summaryTotalCash').textContent = tCash.toLocaleString(); 
+            document.getElementById('summaryTotalSales').textContent = tSales.toLocaleString(); 
+            document.getElementById('summaryTotalAssetCash').textContent = Math.floor(tAsset).toLocaleString(); 
+            document.getElementById('summaryTotalAdena').textContent = tAdena.toLocaleString();
+            
+            const netEl = document.getElementById('summaryNetProfit');
+            const memoEl = document.getElementById('summaryMemo');
+            
+            if(net > 0) { 
+                netEl.textContent = '+' + Math.floor(net).toLocaleString() + ' 원'; 
+                netEl.className = 'text-4xl font-black text-blue-400 tracking-tight mb-4'; 
+                memoEl.innerHTML = '<i data-lucide="party-popper" class="w-4 h-4 text-yellow-400"></i> 와우! 흑자 전환!'; 
+                memoEl.className = 'inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-300 rounded-full px-4 py-2 text-sm font-bold'; 
+            } else if(net < 0) { 
+                netEl.textContent = Math.floor(net).toLocaleString() + ' 원'; 
+                netEl.className = 'text-4xl font-black text-red-400 tracking-tight mb-4'; 
+                memoEl.innerHTML = '<i data-lucide="frown" class="w-4 h-4 text-red-400"></i> 갈 길이 멉니다.'; 
+                memoEl.className = 'inline-flex items-center gap-2 bg-red-600/20 border border-red-500/30 text-red-300 rounded-full px-4 py-2 text-sm font-bold'; 
+            } else { 
+                netEl.textContent = '0 원'; 
+                netEl.className = 'text-4xl font-black text-gray-300 tracking-tight mb-4'; 
+                memoEl.innerHTML = '본전치기!'; 
+                memoEl.className = 'inline-flex items-center gap-2 bg-gray-600/20 border border-gray-500/30 text-gray-300 rounded-full px-4 py-2 text-sm font-bold'; 
+            } 
+            
+            window.lucide.createIcons();
         }
 
+        // ==========================================
         // 앱 초기화 UI 트리거
+        // ==========================================
         function initAppUI() {
-            adenaHistory = appData.adenaHistory || []; cashHistory = appData.cashHistory || []; salesHistory = appData.salesHistory || [];
-            document.getElementById('adenaRate').value = appData.adenaRate || 30; inventory = appData.inventory || {}; equipped = appData.equippedItems || {}; growthLogs = appData.growthDiary || [];
-            document.getElementById('cashDateInput').valueAsDate = new Date(); document.getElementById('salesDateInput').valueAsDate = new Date();
-            loadInputState(); window.handleCurrentLvChange(); renderGrowthLog(); renderAdenaLog(); renderCashHistory(); renderSalesHistory(); renderBuffs(); renderManualArmorTable(); 
+            adenaHistory = appData.adenaHistory || []; 
+            cashHistory = appData.cashHistory || []; 
+            salesHistory = appData.salesHistory || [];
+            
+            document.getElementById('adenaRate').value = appData.adenaRate || 30; 
+            inventory = appData.inventory || {}; 
+            equipped = appData.equippedItems || {}; 
+            growthLogs = appData.growthDiary || [];
+            
+            document.getElementById('cashDateInput').valueAsDate = new Date(); 
+            document.getElementById('salesDateInput').valueAsDate = new Date();
+            
+            loadInputState(); 
+            window.handleCurrentLvChange(); 
+            renderGrowthLog(); 
+            renderAdenaLog(); 
+            renderCashHistory(); 
+            renderSalesHistory(); 
+            renderBuffs(); 
+            renderManualArmorTable(); 
         }
 
         // 부팅 검사
