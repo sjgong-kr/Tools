@@ -391,7 +391,8 @@
     <!-- Firebase SDK (ES Modules) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. 유틸리티 및 기본 설정 ---
@@ -474,7 +475,7 @@
         let currentUser = null;
         let tasksUnsub = null;
         let catsUnsub = null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'webtoon-manager-local';
+        const appId = 'openzeroc_webtoon'; // 프로젝트 식별자 고정
 
         let pendingConfirmAction = null; 
 
@@ -484,17 +485,25 @@
             updateAllUI(); // 빈 상태로 우선 렌더링
             
             try {
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                // 작가님의 Firebase 환경 설정 반영
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+                    authDomain: "openzeroc.firebaseapp.com",
+                    projectId: "openzeroc",
+                    storageBucket: "openzeroc.firebasestorage.app",
+                    messagingSenderId: "465944510778",
+                    appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+                    measurementId: "G-M4K79K2XPG"
+                };
+                
                 const app = initializeApp(firebaseConfig);
+                const analytics = getAnalytics(app);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
+                // GitHub Pages 호스팅용 익명 로그인 강제 실행
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    await signInAnonymously(auth);
                 };
                 await initAuth();
 
