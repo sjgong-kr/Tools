@@ -271,7 +271,7 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // Firestore 보안 규칙에 완벽히 일치하는 경로 설정
+    // 시스템 안정성 정책을 따르면서, 작가님의 3번 규칙에 완벽히 호환되는 경로
     const APP_ID = 'webtoon_app';
     const COLLECTION_NAME = 'Webtoon_Estimate_Data'; 
     const DOC_ID = 'main_doc';
@@ -285,11 +285,10 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
           return true;
         } catch(e) {
           console.error("Firebase Save Error:", e);
-          return false; // 에러 화면 표시는 수동저장/자동저장 함수 쪽에서 처리합니다.
+          return false;
         }
       },
       load: async () => {
-        // 내부에서 try-catch를 뺌으로써, 권한 에러 발생 시 startAppCloud()에서 감지해 화면에 출력하도록 함
         const ref = doc(db, 'artifacts', APP_ID, 'users', window.FirebaseAPI.uid, COLLECTION_NAME, DOC_ID);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -299,11 +298,16 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
       }
     };
 
-    // Firebase 모듈 로딩 및 준비 완료를 메인 스크립트에 알림
-    window.dispatchEvent(new Event('firebase-ready'));
+    // 타이밍 이슈(무한로딩) 완전 해결: 신호를 기다리지 않고 준비되는 즉시 앱 실행!
+    if(window.startAppCloud) {
+      window.startAppCloud();
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        if(window.startAppCloud) window.startAppCloud();
+      });
+    }
 
   } catch (err) {
-    // 모듈 임포트나 초기화 자체에서 발생한 에러를 화면에 출력
     const loadingEl = document.getElementById('ol-loading');
     if(loadingEl) loadingEl.innerHTML = `❌ 파이어베이스 초기화 에러!<br><span style="color:#c62828;font-size:12px;">${err.message}</span>`;
   }
@@ -472,23 +476,12 @@ function newData() {
   closeStoragePanel();
 }
 
-async function clearAllData() {
-  if (!confirm('⚠️ 클라우드 서버에 저장된 모든 데이터를 삭제하고 처음부터 새로 시작합니다. 진행하시겠습니까?')) return;
-  
-  if (window.FirebaseAPI) {
-    await window.FirebaseAPI.save({});
-  }
-  D = null;
-  closeStoragePanel();
-  location.reload(); 
-}
-
-// Firebase가 준비되면 호출되는 실제 시작 함수
+// ================= Firebase 통신 메인 로직 ================= //
 window.startAppCloud = async function() {
   const loadingEl = document.getElementById('ol-loading');
   const actionsEl = document.getElementById('ol-actions');
   
-  loadingEl.textContent = '☁️ 클라우드 서버에서 데이터를 불러오고 있습니다...';
+  loadingEl.innerHTML = '☁️ 클라우드 서버에서 데이터를 확인하고 있습니다...';
   
   try {
     const cloudData = await window.FirebaseAPI.load();
@@ -496,39 +489,29 @@ window.startAppCloud = async function() {
     if (cloudData && cloudData.materials) {
       loadDataToMemory(cloudData);
       hideOverlay();
-      toast('☁️ 클라우드에서 데이터를 성공적으로 불러왔습니다.', 'ok', 4000);
+      toast('☁️ 클라우드 서버 연결 및 데이터 로드 완료!', 'ok', 4000);
     } else {
-      // 서버에 데이터가 비어있을 경우 (최초 시작)
+      // 서버에 저장된 내용이 없을 경우
       loadingEl.style.display = 'none';
       actionsEl.style.display = 'flex';
     }
   } catch (err) {
-    // getDoc 등 통신 중 에러가 발생한 경우 무한 로딩을 멈추고 에러 내용을 화면에 명확히 표출!
     console.error("Firebase Load Exception:", err);
     loadingEl.innerHTML = `❌ 클라우드 서버 통신 실패!<br>
       <span style="color:#c62828;font-size:12px;">${err.message}</span><br><br>
-      <span style="font-weight:normal;font-size:11px;">Firestore 규칙(Rules) 설정이나 인터넷 연결 상태를 확인해주세요.</span>`;
+      <span style="font-weight:normal;font-size:11px;">Firebase 콘솔에 규칙(Rules)이 정상적으로 등록되었는지 확인해주세요.</span>`;
   }
 };
 
-// DOM이 모두 로드되었을 때 안전망 (Fallback) 세팅
+// 타임아웃 7초 후에도 로딩창이면 에러 출력 (안전망)
 window.addEventListener('DOMContentLoaded', () => {
-  // 모듈 로딩이나 네트워크 실패 시 7초 뒤 무한 로딩 화면을 에러 화면으로 바꿈
-  const fbTimeout = setTimeout(() => {
-    if (!window.FirebaseAPI) {
-      const loadingEl = document.getElementById('ol-loading');
-      if (loadingEl && loadingEl.style.display !== 'none') {
-        loadingEl.innerHTML = `❌ 클라우드 서버 로딩 지연.<br>
-          <span style="font-weight:normal;font-size:12px;color:var(--gray5);">인터넷 연결을 확인하시거나, 광고 차단기(AdBlock) 설정에서 이 사이트를 예외로 추가해주세요.</span>`;
-      }
+  setTimeout(() => {
+    const loadingEl = document.getElementById('ol-loading');
+    if (loadingEl && loadingEl.style.display !== 'none' && loadingEl.textContent.includes('확인하고 있습니다')) {
+      loadingEl.innerHTML = `❌ 클라우드 서버 응답 지연.<br>
+        <span style="font-weight:normal;font-size:12px;color:var(--gray5);">인터넷 연결 상태나 광고 차단기(AdBlock) 설정을 확인해 주세요.</span>`;
     }
   }, 7000);
-
-  // Firebase 통합 모듈 스크립트에서 준비가 완료되었다는 신호를 보내면 타이머를 취소하고 앱 시작
-  window.addEventListener('firebase-ready', () => {
-    clearTimeout(fbTimeout);
-    if (window.startAppCloud) window.startAppCloud();
-  });
 });
 
 // ═══════════════════════════════════════════════════════
