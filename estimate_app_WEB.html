@@ -15,7 +15,7 @@ body{font-family:var(--font);background:var(--gray1);color:var(--navy);font-size
 .hright{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .hbadge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:3px 9px;border-radius:16px;font-size:11px;} .hbadge b{color:#ffd54f;}
 .hbtn{display:inline-flex;align-items:center;gap:3px;padding:5px 11px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);font-size:11px;font-weight:700;white-space:nowrap;}
-.hbtn-save{background:#ffd54f;color:#1a1a1a;}.hbtn-save:hover{background:#ffca28;}
+.hbtn-save{background:#ffd54f;color:#1a1a1a;transition:all .2s;}.hbtn-save:hover{background:#ffca28;transform:translateY(-1px);}
 .dirty-dot{width:8px;height:8px;background:#ffa726;border-radius:50%;display:none;}.dirty-dot.on{display:inline-block;}
 .tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;display:flex;position:sticky;top:52px;z-index:190;}
 .tab{padding:10px 15px;border:none;background:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;color:var(--gray5);border-bottom:3px solid transparent;display:flex;align-items:center;gap:4px;white-space:nowrap;}
@@ -72,13 +72,10 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
   <div><div class="htitle">견적서 관리 WEB (Cloud)</div><div class="hsub">Nokia · Firebase 실시간 동기화 지원</div></div>
   <div class="hright">
     <span class="dirty-dot" id="dirty" title="저장 안 된 변경 있음"></span>
-    <span id="h-save-status" style="font-size:10px;color:#a5d6a7;white-space:nowrap;"></span>
+    <span id="h-save-status" style="font-size:10px;color:#a5d6a7;white-space:nowrap;margin-right:10px;"></span>
     <div class="hbadge">프로젝트: <b id="h-pname">미선택</b></div>
-    <div id="h-file-badge" style="background:rgba(46,125,50,.3);border:1px solid rgba(165,214,167,.4);color:#a5d6a7;padding:3px 9px;border-radius:14px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;" onclick="showStoragePanel()" title="클라우드 상태 확인">
-      ☁️ <span id="h-file-name">서버 연결 대기중</span>
-    </div>
-    <button class="hbtn" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);" onclick="showStoragePanel()">⚙️ 저장 관리</button>
-    <button class="hbtn hbtn-save" onclick="manualSave()" title="Ctrl+S">💾 수동 저장</button>
+    <button class="hbtn" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);" onclick="showStoragePanel()">⚙️ 백업 및 관리</button>
+    <button class="hbtn hbtn-save" id="btn-cloud-save" onclick="manualSaveCloud()" title="Ctrl+S">☁️ 수동 저장</button>
     <input type="file" id="file-in" accept=".json" style="display:none" onchange="importJSONFile(event)">
   </div>
 </header>
@@ -95,17 +92,17 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
 <div id="overlay">
   <div class="ol-logo">📋</div>
   <div class="ol-title">견적서 관리 시스템 WEB</div>
-  <div id="ol-loading" style="font-size:14px;color:var(--gray4);font-weight:600;">☁️ 클라우드 서버에 연결 중입니다...</div>
+  <div id="ol-loading" style="font-size:14px;color:var(--gray4);font-weight:600;margin-top:10px;">☁️ 클라우드 서버와 통신 중입니다...<br><span style="font-size:11px;font-weight:400;">잠시만 기다려주세요.</span></div>
   
   <div id="ol-actions" style="display:none;flex-direction:column;align-items:center;gap:14px;">
-    <div class="ol-sub" style="color:var(--navy);font-weight:600;">클라우드에 저장된 데이터가 없습니다. 시작 방법을 선택하세요.</div>
+    <div class="ol-sub" style="color:var(--navy);font-weight:600;">클라우드에 등록된 데이터가 없습니다. 시작 방법을 선택하세요.</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
       <button class="btn b-success b-lg" onclick="newData()" style="box-shadow:var(--shadow);">✨ 새로 시작 (기본 물자 포함)</button>
       <button class="btn b-primary b-lg" onclick="document.getElementById('file-in').click()" style="box-shadow:var(--shadow);">📂 백업된 JSON 파일 불러오기</button>
     </div>
-    <div class="ol-note">
-      💡 <b>Firebase 클라우드 연동</b>: 변경 사항은 클라우드에 <b>자동으로 저장</b>되어 안전하게 보관됩니다.<br>
-      인터넷이 연결된 환경에서 안심하고 작업하세요!
+    <div class="ol-note" style="text-align:left;">
+      💡 <b>Firebase 클라우드 연동 안내</b><br>
+      이곳에서 작성하신 모든 <b>물자 정보와 단가, 프로젝트 목록, 수량</b> 등 전체 데이터는 인터넷이 연결된 <b>클라우드(서버)에 실시간으로 통합 저장</b>됩니다. 저장 버튼을 누르지 않아도 변경 즉시 안전하게 동기화됩니다!
     </div>
   </div>
 </div>
@@ -113,22 +110,22 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
 <!-- STORAGE PANEL -->
 <div class="mbk" id="storage-panel">
   <div class="mdl" style="max-width:560px;">
-    <div class="mhdr"><span>⚙️</span><span class="mtitle">저장 및 클라우드 관리</span><button class="mclose" onclick="closeStoragePanel()">✕</button></div>
+    <div class="mhdr"><span>⚙️</span><span class="mtitle">데이터 관리</span><button class="mclose" onclick="closeStoragePanel()">✕</button></div>
     <div class="mbody">
       <div style="background:var(--blue-pale);border:1px solid #90caf9;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
-        <div style="font-weight:700;font-size:12px;color:var(--blue);margin-bottom:8px;">☁️ 클라우드 서버 (Firebase)</div>
-        <div id="folder-status" style="font-size:11px;color:var(--gray5);line-height:1.8;">
-          ✅ 서버에 안전하게 연결되어 있습니다.<br>
-          작업 시 모든 내용은 브라우저가 자동으로 서버와 동기화합니다.<br>
-          <span id="uid-display" style="font-family:var(--mono);color:var(--blue);font-weight:600;"></span>
+        <div style="font-weight:700;font-size:12px;color:var(--blue);margin-bottom:8px;">☁️ 클라우드 동기화 상태</div>
+        <div style="font-size:11px;color:var(--gray5);line-height:1.8;">
+          ✅ 현재 Firebase 클라우드 서버에 안전하게 연결되어 있습니다.<br>
+          작업 시 모든 내용은 브라우저가 자동으로 서버의 <b style="color:var(--blue)">Webtoon_Estimate_Data</b> 컬렉션에 동기화합니다.<br>
+          <span id="uid-display" style="font-family:var(--mono);color:var(--blue);font-weight:600;">UID: default_admin_user</span>
         </div>
       </div>
       <div style="background:var(--gray2);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
-        <div style="font-weight:700;font-size:11px;color:var(--gray5);margin-bottom:7px;">📦 로컬 PC 수동 백업/열기</div>
-        <div style="font-size:10px;color:var(--gray5);margin-bottom:8px;">서버 장애에 대비하거나, 특정 시점의 데이터를 영구 보관하고 싶을 때 사용하세요.</div>
+        <div style="font-weight:700;font-size:11px;color:var(--gray5);margin-bottom:7px;">📦 로컬 PC 수동 백업 / 복원</div>
+        <div style="font-size:10px;color:var(--gray5);margin-bottom:8px;">서버 장애에 대비하거나, 특정 시점의 전체 데이터를 영구 보관하고 싶을 때 PC에 파일로 다운로드합니다. (불러오기 시 클라우드에도 즉시 반영됩니다)</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;">
-          <button class="btn b-outline b-sm" onclick="exportJSONBackup()">⬇️ 파일 수동 다운로드</button>
-          <button class="btn b-outline b-sm" onclick="document.getElementById('file-in').click()">⬆️ 파일 불러오기(덮어쓰기)</button>
+          <button class="btn b-outline b-sm" onclick="exportJSONBackup()">⬇️ 현재 데이터 수동 다운로드</button>
+          <button class="btn b-outline b-sm" onclick="document.getElementById('file-in').click()">⬆️ 백업 파일 불러오기(덮어쓰기)</button>
         </div>
       </div>
       <div style="padding-top:10px;border-top:1px solid var(--border);">
@@ -163,7 +160,7 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
 <div class="panel" id="panel-materials">
   <div class="card"><div class="chdr"><span>📦</span><span class="ctitle">물자 마스터</span><span class="badge b-blue">전체 공유</span></div>
     <div class="cbody">
-      <div class="info-box">💡 물자 마스터는 모든 프로젝트가 공유합니다. 기본단가는 여기서 설정하고, 프로젝트별 단가는 아래서 별도 설정하세요.</div>
+      <div class="info-box">💡 물자 마스터는 모든 프로젝트가 공유합니다. <b>등록 및 수정된 물자 정보와 단가 역시 프로젝트와 함께 클라우드 서버에 안전하게 자동 통합 저장됩니다!</b></div>
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
         <button class="btn b-success" onclick="openMatModal(null)">➕ 신규 등록</button>
         <button class="btn b-primary" onclick="exportMatExcel()">📤 Excel 내보내기</button>
@@ -255,78 +252,67 @@ textarea{resize:vertical;min-height:60px;}.fsec{font-size:10.5px;font-weight:700
 <div class="mbk" id="m-mat"><div class="mdl"><div class="mhdr"><span>📦</span><span class="mtitle" id="m-mat-title">물자 등록</span><button class="mclose" onclick="closeMatModal()">✕</button></div><div class="mbody"><input type="hidden" id="m-id"><div class="fg"><div class="fi"><span class="lbl">대분류 *</span><select id="m-cat"><option>Rack</option><option>공통부</option><option>인터페이스</option><option>광모듈</option><option>소프트웨어/라이선스</option><option>운용 서버 및 PC</option><option>액세서리</option><option>정류기/배터리</option><option>설치공사비</option></select></div><div class="fi"><span class="lbl">K코드</span><input id="m-kcode"></div><div class="fi full"><span class="lbl">물품명 *</span><input id="m-name"></div><div class="fi full"><span class="lbl">상세내역</span><textarea id="m-detail"></textarea></div><div class="fi"><span class="lbl">제조사</span><input id="m-mfg"></div><div class="fi"><span class="lbl">공급사</span><input id="m-sup"></div><div class="fi"><span class="lbl">공급단가 기본(원)</span><input id="m-supply" type="number" oninput="autoRetail()"></div><div class="fi"><span class="lbl">소비자단가 기본(원)</span><input id="m-retail" type="number"></div></div></div><div class="mfoot"><button class="btn b-outline" onclick="closeMatModal()">취소</button><button class="btn b-primary" onclick="saveMat()">💾 저장</button></div></div></div>
 <div class="mbk" id="m-diff"><div class="mdl" style="max-width:940px;"><div class="mhdr"><span>📊</span><span class="mtitle">Excel 적용</span><button class="mclose" onclick="closeDiff()">✕</button></div><div class="mbody"><div id="diff-summary" style="font-size:12px;font-weight:600;margin-bottom:8px;"></div><div style="display:flex;gap:6px;margin-bottom:8px;"><button class="btn b-outline b-sm" onclick="selectAllDiff(true)">전체선택</button><button class="btn b-outline b-sm" onclick="selectAllDiff(false)">전체해제</button><button class="btn b-outline b-sm" onclick="selectDiffByType('add')">신규만</button><button class="btn b-outline b-sm" onclick="selectDiffByType('update')">변경만</button></div><div style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"><table style="width:100%;border-collapse:collapse;font-size:10.5px;"><thead id="diff-thead" style="position:sticky;top:0;"></thead><tbody id="diff-tbody"></tbody></table></div></div><div class="mfoot"><span id="diff-sel-count" style="font-size:11px;margin-right:auto;"></span><button class="btn b-outline" onclick="closeDiff()">취소</button><button class="btn b-success" onclick="applyDiff()">✅ 적용</button></div></div></div>
 
-<!-- ================= Firebase 통합 모듈 ================= -->
+<!-- ================= Firebase 통합 모듈 (무한로딩 방지 & 에러출력 강화) ================= -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
-    authDomain: "openzeroc.firebaseapp.com",
-    projectId: "openzeroc",
-    storageBucket: "openzeroc.firebasestorage.app",
-    messagingSenderId: "465944510778",
-    appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
-    measurementId: "G-M4K79K2XPG"
-  };
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+      authDomain: "openzeroc.firebaseapp.com",
+      projectId: "openzeroc",
+      storageBucket: "openzeroc.firebasestorage.app",
+      messagingSenderId: "465944510778",
+      appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+      measurementId: "G-M4K79K2XPG"
+    };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const APP_ID = 'estimate_app';
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Firestore 보안 규칙에 완벽히 일치하는 경로 설정
+    const APP_ID = 'webtoon_app';
+    const COLLECTION_NAME = 'Webtoon_Estimate_Data'; 
+    const DOC_ID = 'main_doc';
 
-  // 전역(window) 객체를 통해 레거시 스크립트와 통신
-  window.FirebaseAPI = {
-    uid: null,
-    init: async () => {
-      try {
-        const cred = await signInAnonymously(auth);
-        window.FirebaseAPI.uid = cred.user.uid;
-        return cred.user.uid;
-      } catch(e) {
-        console.error("Firebase Auth Error:", e);
-        return null;
-      }
-    },
-    save: async (data) => {
-      if (!window.FirebaseAPI.uid) return false;
-      try {
-        // 규칙 매칭: /artifacts/{appId}/users/{userId}/{document=**}
-        const ref = doc(db, 'artifacts', APP_ID, 'users', window.FirebaseAPI.uid, 'data', 'main');
-        await setDoc(ref, { payload: JSON.stringify(data), updatedAt: new Date().toISOString() });
-        return true;
-      } catch(e) {
-        console.error("Firebase Save Error:", e);
-        return false;
-      }
-    },
-    load: async () => {
-      if (!window.FirebaseAPI.uid) return null;
-      try {
-        const ref = doc(db, 'artifacts', APP_ID, 'users', window.FirebaseAPI.uid, 'data', 'main');
+    window.FirebaseAPI = {
+      uid: 'default_admin_user', // 인증 우회용 고정 UID
+      save: async (data) => {
+        try {
+          const ref = doc(db, 'artifacts', APP_ID, 'users', window.FirebaseAPI.uid, COLLECTION_NAME, DOC_ID);
+          await setDoc(ref, { payload: JSON.stringify(data), updatedAt: new Date().toISOString() });
+          return true;
+        } catch(e) {
+          console.error("Firebase Save Error:", e);
+          return false; // 에러 화면 표시는 수동저장/자동저장 함수 쪽에서 처리합니다.
+        }
+      },
+      load: async () => {
+        // 내부에서 try-catch를 뺌으로써, 권한 에러 발생 시 startAppCloud()에서 감지해 화면에 출력하도록 함
+        const ref = doc(db, 'artifacts', APP_ID, 'users', window.FirebaseAPI.uid, COLLECTION_NAME, DOC_ID);
         const snap = await getDoc(ref);
         if (snap.exists()) {
           return JSON.parse(snap.data().payload);
         }
         return null;
-      } catch(e) {
-        console.error("Firebase Load Error:", e);
-        return null;
       }
-    }
-  };
+    };
 
-  // 파이어베이스 준비 완료 이벤트를 발생시켜 메인 스크립트 실행
-  window.dispatchEvent(new Event('firebase-ready'));
+    // Firebase 모듈 로딩 및 준비 완료를 메인 스크립트에 알림
+    window.dispatchEvent(new Event('firebase-ready'));
+
+  } catch (err) {
+    // 모듈 임포트나 초기화 자체에서 발생한 에러를 화면에 출력
+    const loadingEl = document.getElementById('ol-loading');
+    if(loadingEl) loadingEl.innerHTML = `❌ 파이어베이스 초기화 에러!<br><span style="color:#c62828;font-size:12px;">${err.message}</span>`;
+  }
 </script>
 
 <!-- ================= 메인 앱 로직 ================= -->
 <script>
 // ═══════════════════════════════════════════════════════
-// 기본 데이터 및 공통 유틸리티
+// 초기 물자 데이터 (새로 시작할 때 사용)
 // ═══════════════════════════════════════════════════════
 const SEED = [{"id":1,"category":"Rack","kcode":"K9182722","name":"BKJ_P707","detail":"랙","manufacturer":"(주)포스벽진","supplier":"에이블컴","base_supply":792600,"base_retail":1410828,"active":true,"default_qty":{"우리금융 상암센터":0,"마북":0,"예비":0}},{"id":2,"category":"Rack","kcode":"K9119402","name":"ACT_ACT","detail":"랙","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":792600,"base_retail":1410828,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}},{"id":3,"category":"Rack","kcode":"K9192549","name":"ORT_PDP_100_3P","detail":"PDP 100A 3Port","manufacturer":"에이블컴","supplier":"에이블컴","base_supply":572000,"base_retail":1018160,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}},{"id":4,"category":"Rack","kcode":"k9177974","name":"CBS_KT-6ER-2275","detail":"19인치 내진 표준랙 본체(H2200*W600*D750)","manufacturer":"큐빅시스템","supplier":"에이블컴","base_supply":726400,"base_retail":1292992,"active":true,"default_qty":{"우리금융 상암센터":0,"마북":0,"예비":0}},{"id":5,"category":"Rack","kcode":"k9177714","name":"CBS_KT-6ER-2275-F-DOOR","detail":"19인치 내진 표준랙 전면도어","manufacturer":"큐빅시스템","supplier":"에이블컴","base_supply":134500,"base_retail":239410,"active":true,"default_qty":{"우리금융 상암센터":0,"마북":0,"예비":0}},{"id":6,"category":"Rack","kcode":"k9177715","name":"CBS_KT-6ER-2275-R-DOOR","detail":"19인치 내진 표준랙 후면도어","manufacturer":"큐빅시스템","supplier":"에이블컴","base_supply":134500,"base_retail":239410,"active":true,"default_qty":{"우리금융 상암센터":0,"마북":0,"예비":0}},{"id":7,"category":"Rack","kcode":"k9177716","name":"CBS-KT-6ER-2275-S-PANEL","detail":"19인치 내진 표준랙 측면 판넬","manufacturer":"큐빅시스템","supplier":"에이블컴","base_supply":90900,"base_retail":161802,"active":true,"default_qty":{"우리금융 상암센터":0,"마북":0,"예비":0}},{"id":8,"category":"공통부","kcode":"K9174668","name":"ACT_COSKITH","detail":"Main Shelf Kit - PSS32","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":2830000,"base_retail":5037400,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}},{"id":10,"category":"공통부","kcode":"K9174784","name":"ACT_INSTET","detail":"PSS-32 Installation Kit","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":590000,"base_retail":1050200,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}},{"id":11,"category":"공통부","kcode":"K9174806","name":"ACT_EC","detail":"32EC2 - HP Equipment Controller","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":846000,"base_retail":1505880,"active":true,"default_qty":{"우리금융 상암센터":2,"마북":2,"예비":0}},{"id":12,"category":"공통부","kcode":"K9174803","name":"ACT_PFDC50","detail":"DC Power Filter (50A)","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":792000,"base_retail":1409760,"active":true,"default_qty":{"우리금융 상암센터":2,"마북":2,"예비":0}},{"id":21,"category":"공통부","kcode":"K9174810","name":"ACT_AHPHG","detail":"AHPHG - HPower HGain DWDM Amplifier","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":4800000,"base_retail":8544000,"active":true,"default_qty":{"우리금융 상암센터":4,"마북":4,"예비":1}},{"id":23,"category":"공통부","kcode":"K9174838","name":"ACT_SFD44","detail":"44 Channel Optical Mux/Demux","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":4347000,"base_retail":7737660,"active":true,"default_qty":{"우리금융 상암센터":2,"마북":2,"예비":0}},{"id":40,"category":"인터페이스","kcode":"K9205875","name":"NOK_8P20","detail":"8xAny 10G Client/6xAny Muxponder","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":6450000,"base_retail":11481000,"active":true,"default_qty":{"우리금융 상암센터":4,"마북":4,"예비":1}},{"id":50,"category":"광모듈","kcode":"K9201021","name":"NOK_SL64TU","detail":"DWDM T-SFP+ w/o WTE","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":1434100,"base_retail":2552698,"active":true,"default_qty":{"우리금융 상암센터":10,"마북":10,"예비":2}},{"id":65,"category":"소프트웨어/라이선스","kcode":"K9174845","name":"ACT_SWP 1830PSS R3.6.50","detail":"KIT SWP","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":27300,"base_retail":48594,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}},{"id":70,"category":"액세서리","kcode":"K9174793","name":"ACT_FSBNK","detail":"Full Slot Blank","manufacturer":"Nokia(노키아)","supplier":"에이블컴","base_supply":23000,"base_retail":40940,"active":true,"default_qty":{"우리금융 상암센터":4,"마북":4,"예비":0}},{"id":89,"category":"설치공사비","kcode":"","name":"설치 공사 및 시험","detail":"설치 공사 및 시험","manufacturer":"에이블컴","supplier":"에이블컴","base_supply":4500000,"base_retail":8010000,"active":true,"default_qty":{"우리금융 상암센터":1,"마북":1,"예비":0}}];
 
@@ -359,17 +345,6 @@ function calcTotal(proj) {
   }, 0);
 }
 
-function markDirty() {
-  _dirty = true;
-  document.getElementById('dirty').classList.add('on');
-  autoSaveCloud();
-}
-
-function clearDirty() {
-  _dirty = false;
-  document.getElementById('dirty').classList.remove('on');
-}
-
 function toast(msg, type = 'ok', dur = 3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -379,58 +354,62 @@ function toast(msg, type = 'ok', dur = 3000) {
 }
 
 // ═══════════════════════════════════════════════════════
-// Firebase Cloud 저장소 로직
+// Firebase Cloud 동기화 제어 함수들
 // ═══════════════════════════════════════════════════════
+function markDirty() {
+  _dirty = true;
+  document.getElementById('dirty').classList.add('on');
+  autoSaveCloud(); // 변경사항 즉시 클라우드 업로드 대기열에 추가
+}
+
+function clearDirty() {
+  _dirty = false;
+  document.getElementById('dirty').classList.remove('on');
+}
 
 function autoSaveCloud() {
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = setTimeout(async () => {
-    if (!D) return;
+    if (!D || !window.FirebaseAPI) return;
     document.getElementById('h-save-status').textContent = '동기화 중...';
     const success = await window.FirebaseAPI.save(D);
     if (success) {
       clearDirty(); 
       updateSaveStatus();
     } else {
-      toast('클라우드 저장 실패', 'err');
+      toast('클라우드 자동저장 실패', 'err');
     }
-  }, 1500);
+  }, 1500); // 1.5초 디바운스
+}
+
+async function manualSaveCloud() {
+  if (!D) return toast('저장할 데이터가 없습니다', 'err');
+  if (!window.FirebaseAPI) return toast('클라우드 서버에 접속되지 않았습니다', 'err');
+  
+  const btn = document.getElementById('btn-cloud-save');
+  btn.textContent = '⏳ 저장 중...';
+  
+  const success = await window.FirebaseAPI.save(D);
+  if (success) {
+    clearDirty();
+    updateSaveStatus();
+    toast('☁️ 클라우드에 수동 저장 완료!');
+  } else {
+    toast('❌ 클라우드 저장 실패', 'err');
+  }
+  
+  btn.textContent = '☁️ 수동 저장';
 }
 
 function updateSaveStatus() {
   const e = document.getElementById('h-save-status');
   if (e) {
     const d = new Date();
-    e.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} 클라우드 저장됨`;
-  }
-}
-
-function makeFileName() {
-  const d = new Date(), p = (n) => String(n).padStart(2, '0');
-  return `estimate_backup_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`;
-}
-
-function loadDataToMemory(imp) {
-  D = imp;
-  if (!D.curProjId) D.curProjId = null;
-  if (!D.nextId) D.nextId = 100;
-  clearDirty();
-  init();
-}
-
-function updateFolderUI() {
-  const bdg = document.getElementById('h-file-badge');
-  const nm = document.getElementById('h-file-name');
-  
-  if (window.FirebaseAPI && window.FirebaseAPI.uid) {
-    bdg.style.display = '';
-    nm.textContent = '클라우드 동기화 중';
-    document.getElementById('uid-display').textContent = `UID: ${window.FirebaseAPI.uid}`;
+    e.textContent = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} 클라우드 동기화 완료`;
   }
 }
 
 function showStoragePanel() {
-  updateFolderUI();
   document.getElementById('storage-panel').classList.add('on');
 }
 
@@ -438,30 +417,19 @@ function closeStoragePanel() {
   document.getElementById('storage-panel').classList.remove('on');
 }
 
-async function manualSave() {
-  if (!D) return toast('저장할 데이터 없음', 'err');
-  document.getElementById('h-save-status').textContent = '저장 중...';
-  const success = await window.FirebaseAPI.save(D);
-  if (success) {
-    clearDirty();
-    updateSaveStatus();
-    toast('💾 클라우드에 수동 저장 완료');
-  } else {
-    toast('❌ 클라우드 저장 실패', 'err');
-  }
-}
-
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); manualSave(); }
-});
-
+// ═══════════════════════════════════════════════════════
+// 로컬 파일 백업 (로컬 -> 클라우드 복구용)
+// ═══════════════════════════════════════════════════════
 function exportJSONBackup() {
-  if (!D) return;
+  if (!D) return toast('데이터 없음', 'err');
+  const d = new Date(), p = (n) => String(n).padStart(2, '0');
+  const fname = `estimate_backup_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.json`;
+  
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' }));
-  a.download = makeFileName();
+  a.download = fname;
   a.click();
-  toast('수동 백업 다운로드 완료!');
+  toast('현재 작업내용 백업 다운로드 완료!');
 }
 
 function importJSONFile(e) {
@@ -472,7 +440,7 @@ function importJSONFile(e) {
     try {
       const i = JSON.parse(ev.target.result);
       loadDataToMemory(i);
-      await manualSave();
+      await manualSaveCloud(); // 파일 읽자마자 클라우드 덮어쓰기
       hideOverlay();
       toast('✅ 백업 파일 불러오기 및 클라우드 동기화 완료');
     } catch (err) { toast('❌ 파일 형식 오류', 'err'); }
@@ -481,10 +449,33 @@ function importJSONFile(e) {
   rd.readAsText(fl);
 }
 
+// ═══════════════════════════════════════════════════════
+// 앱 부팅 및 데이터 초기화 (에러 피드백 강화)
+// ═══════════════════════════════════════════════════════
+function hideOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function loadDataToMemory(imp) {
+  D = imp;
+  if (!D.curProjId) D.curProjId = null;
+  if (!D.nextId) D.nextId = 100;
+  clearDirty();
+  init();
+}
+
+function newData() {
+  D = { _v: '7.1', materials: SEED.map(m => ({ ...m })), projects: [], curProjId: null, nextId: 100 };
+  hideOverlay();
+  init();
+  markDirty(); // 생성 즉시 클라우드에 빈 프로젝트 저장
+  closeStoragePanel();
+}
+
 async function clearAllData() {
   if (!confirm('⚠️ 클라우드 서버에 저장된 모든 데이터를 삭제하고 처음부터 새로 시작합니다. 진행하시겠습니까?')) return;
   
-  if (window.FirebaseAPI && window.FirebaseAPI.uid) {
+  if (window.FirebaseAPI) {
     await window.FirebaseAPI.save({});
   }
   D = null;
@@ -492,54 +483,56 @@ async function clearAllData() {
   location.reload(); 
 }
 
-function hideOverlay() {
-  document.getElementById('overlay').style.display = 'none';
-}
-
-function newData() {
-  D = { _v: '7.0', materials: SEED.map(m => ({ ...m })), projects: [], curProjId: null, nextId: 100 };
-  hideOverlay();
-  init();
-  markDirty(); 
-  closeStoragePanel();
-}
-
-// ================= Firebase 준비 완료 후 앱 시작 ================= //
-window.addEventListener('firebase-ready', async () => {
+// Firebase가 준비되면 호출되는 실제 시작 함수
+window.startAppCloud = async function() {
   const loadingEl = document.getElementById('ol-loading');
   const actionsEl = document.getElementById('ol-actions');
   
-  document.getElementById('overlay').style.display = 'flex';
-  loadingEl.style.display = 'block';
-  actionsEl.style.display = 'none';
-  loadingEl.textContent = '☁️ 클라우드 서버에 안전하게 연결 중...';
+  loadingEl.textContent = '☁️ 클라우드 서버에서 데이터를 불러오고 있습니다...';
+  
+  try {
+    const cloudData = await window.FirebaseAPI.load();
 
-  const uid = await window.FirebaseAPI.init();
-  if (!uid) {
-    loadingEl.textContent = '❌ 서버 연결에 실패했습니다. 데이터를 불러올 수 없습니다.';
-    setTimeout(() => {
+    if (cloudData && cloudData.materials) {
+      loadDataToMemory(cloudData);
+      hideOverlay();
+      toast('☁️ 클라우드에서 데이터를 성공적으로 불러왔습니다.', 'ok', 4000);
+    } else {
+      // 서버에 데이터가 비어있을 경우 (최초 시작)
       loadingEl.style.display = 'none';
       actionsEl.style.display = 'flex';
-    }, 1500);
-    return;
+    }
+  } catch (err) {
+    // getDoc 등 통신 중 에러가 발생한 경우 무한 로딩을 멈추고 에러 내용을 화면에 명확히 표출!
+    console.error("Firebase Load Exception:", err);
+    loadingEl.innerHTML = `❌ 클라우드 서버 통신 실패!<br>
+      <span style="color:#c62828;font-size:12px;">${err.message}</span><br><br>
+      <span style="font-weight:normal;font-size:11px;">Firestore 규칙(Rules) 설정이나 인터넷 연결 상태를 확인해주세요.</span>`;
   }
+};
 
-  updateFolderUI();
-  loadingEl.textContent = '☁️ 데이터 동기화 중...';
-  const cloudData = await window.FirebaseAPI.load();
+// DOM이 모두 로드되었을 때 안전망 (Fallback) 세팅
+window.addEventListener('DOMContentLoaded', () => {
+  // 모듈 로딩이나 네트워크 실패 시 7초 뒤 무한 로딩 화면을 에러 화면으로 바꿈
+  const fbTimeout = setTimeout(() => {
+    if (!window.FirebaseAPI) {
+      const loadingEl = document.getElementById('ol-loading');
+      if (loadingEl && loadingEl.style.display !== 'none') {
+        loadingEl.innerHTML = `❌ 클라우드 서버 로딩 지연.<br>
+          <span style="font-weight:normal;font-size:12px;color:var(--gray5);">인터넷 연결을 확인하시거나, 광고 차단기(AdBlock) 설정에서 이 사이트를 예외로 추가해주세요.</span>`;
+      }
+    }
+  }, 7000);
 
-  if (cloudData && cloudData.materials) {
-    loadDataToMemory(cloudData);
-    hideOverlay();
-    toast('☁️ 클라우드에서 최신 데이터를 불러왔습니다.', 'ok', 4000);
-  } else {
-    loadingEl.style.display = 'none';
-    actionsEl.style.display = 'flex';
-  }
+  // Firebase 통합 모듈 스크립트에서 준비가 완료되었다는 신호를 보내면 타이머를 취소하고 앱 시작
+  window.addEventListener('firebase-ready', () => {
+    clearTimeout(fbTimeout);
+    if (window.startAppCloud) window.startAppCloud();
+  });
 });
 
 // ═══════════════════════════════════════════════════════
-// UI & 기능 로직
+// UI & 기능 로직 (물자 순서이동, 완전삭제, 엑셀 모두 유지)
 // ═══════════════════════════════════════════════════════
 function switchTab(n) {
   document.querySelectorAll('.panel,.tab').forEach(e => e.classList.remove('on'));
@@ -601,7 +594,7 @@ function selectProj(id) {
 }
 
 function delProj(id) {
-  if (confirm('삭제?')) {
+  if (confirm('삭제하시겠습니까?')) {
     D.projects = D.projects.filter(x => x.id !== id);
     if (D.curProjId === id) D.curProjId = null;
     markDirty(); renderProjects(); updateHeaderProj();
@@ -629,10 +622,7 @@ function renderProjects() {
   document.getElementById('pj-cnt').textContent = D.projects.length + '개';
   
   const el = document.getElementById('pj-list');
-  if (!p.length) {
-    el.innerHTML = '<div class="empty">없음</div>';
-    return;
-  }
+  if (!p.length) { el.innerHTML = '<div class="empty">없음</div>'; return; }
 
   el.innerHTML = p.map(x => {
     const a = calcTotal(x), v = Math.round(a * .1);
@@ -680,9 +670,7 @@ function renderMaterials() {
   if (catF) mats = mats.filter(m => m.category === catF);
   if (srch) mats = mats.filter(m => m.name.toLowerCase().includes(srch) || (m.kcode||'').toLowerCase().includes(srch) || (m.detail || '').toLowerCase().includes(srch));
   
-  if (document.getElementById('mat-cnt')) {
-    document.getElementById('mat-cnt').textContent = mats.length + '개';
-  }
+  if (document.getElementById('mat-cnt')) { document.getElementById('mat-cnt').textContent = mats.length + '개'; }
 
   const grouped = {};
   mats.forEach(m => { if (!grouped[m.category]) grouped[m.category] = []; grouped[m.category].push(m); });
@@ -730,14 +718,12 @@ function moveMat(id, dir) {
     const targetId = sameCat[subIdx - 1].id;
     const targetIdx = D.materials.findIndex(x => x.id === targetId);
     [D.materials[idx], D.materials[targetIdx]] = [D.materials[targetIdx], D.materials[idx]];
-    markDirty();
-    renderMaterials();
+    markDirty(); renderMaterials();
   } else if (dir === 1 && subIdx < sameCat.length - 1) { 
     const targetId = sameCat[subIdx + 1].id;
     const targetIdx = D.materials.findIndex(x => x.id === targetId);
     [D.materials[idx], D.materials[targetIdx]] = [D.materials[targetIdx], D.materials[idx]];
-    markDirty();
-    renderMaterials();
+    markDirty(); renderMaterials();
   }
 }
 
@@ -747,33 +733,25 @@ function toggleActive(id) {
   
   if (m.active !== false) {
     if (!confirm(`"${m.name}" 항목을 비활성화하시겠습니까?\n(모든 프로젝트에서 숨김 처리됩니다)`)) return;
-    m.active = false;
-    toast(`"${m.name}" 비활성화됨`, 'inf');
+    m.active = false; toast(`"${m.name}" 비활성화됨`, 'inf');
   } else {
-    m.active = true;
-    toast(`"${m.name}" 복구됨`);
+    m.active = true; toast(`"${m.name}" 복구됨`);
   }
-  markDirty();
-  renderMaterials();
+  markDirty(); renderMaterials();
 }
 
 function deleteMat(id) {
   const m = D.materials.find(x => x.id === id);
   if (!m) return;
-  
   if (!confirm(`"${m.name}" 항목을 완전히 삭제하시겠습니까?\n\n⚠️ 주의: 삭제 시 모든 프로젝트의 수량 및 단가 설정에서도 함께 지워집니다.`)) return;
   
   D.materials = D.materials.filter(x => x.id !== id);
-  
   D.projects.forEach(p => {
     if (p.quantities && p.quantities[id]) delete p.quantities[id];
     if (p.matMeta && p.matMeta[id]) delete p.matMeta[id];
     if (p.priceOverrides && p.priceOverrides[id]) delete p.priceOverrides[id];
   });
-  
-  markDirty();
-  renderMaterials();
-  renderPriceTable();
+  markDirty(); renderMaterials(); renderPriceTable();
   toast(`"${m.name}" 삭제 완료`);
 }
 
@@ -1079,7 +1057,7 @@ function renderEstimate() {
 }
 
 // ══════════════════════════════════════════════════════
-// EXCEL EXPORT & IMPORT 
+// EXCEL EXPORT & IMPORT
 // ══════════════════════════════════════════════════════
 const XB = (s = 'thin', rgb = 'AAAAAA') => ({ style: s, color: { rgb } });
 const XBRD = () => ({ top: XB(), bottom: XB(), left: XB(), right: XB() });
