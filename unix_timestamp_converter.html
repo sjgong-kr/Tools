@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unix 타임스탬프 변환기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .datetime-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .datetime-inputs input {
+            padding: 10px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .result-item strong {
+            color: #333;
+            display: inline-block;
+            min-width: 180px;
+        }
+        
+        .result-item span {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #1565C0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕐 Unix 타임스탬프 변환기</h1>
+        
+        <div class="section">
+            <h2>📅 타임스탬프 → 날짜/시간</h2>
+            <div class="info">
+                초(seconds), 밀리초(milliseconds), 마이크로초(microseconds), 나노초(nanoseconds)를 지원합니다.
+            </div>
+            <div class="input-group">
+                <label for="timestamp">타임스탬프 입력</label>
+                <input type="text" id="timestamp" placeholder="예: 1766475022">
+            </div>
+            <button onclick="convertTimestamp()">변환하기</button>
+            <div id="timestampResult"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🔄 날짜/시간 → 타임스탬프</h2>
+            <div class="datetime-inputs">
+                <div class="input-group">
+                    <label>년</label>
+                    <input type="number" id="year" placeholder="2025">
+                </div>
+                <div class="input-group">
+                    <label>월</label>
+                    <input type="number" id="month" placeholder="12" min="1" max="12">
+                </div>
+                <div class="input-group">
+                    <label>일</label>
+                    <input type="number" id="day" placeholder="23" min="1" max="31">
+                </div>
+                <div class="input-group">
+                    <label>시</label>
+                    <input type="number" id="hour" placeholder="7" min="0" max="23">
+                </div>
+                <div class="input-group">
+                    <label>분</label>
+                    <input type="number" id="minute" placeholder="30" min="0" max="59">
+                </div>
+                <div class="input-group">
+                    <label>초</label>
+                    <input type="number" id="second" placeholder="22" min="0" max="59">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>타임존</label>
+                <select id="timezone">
+                    <option value="UTC">GMT (UTC)</option>
+                    <option value="Asia/Seoul" selected>한국 시간 (GMT+09:00)</option>
+                    <option value="America/New_York">뉴욕 (EST/EDT)</option>
+                    <option value="America/Los_Angeles">로스앤젤레스 (PST/PDT)</option>
+                    <option value="Europe/London">런던 (GMT/BST)</option>
+                    <option value="Asia/Tokyo">도쿄 (JST)</option>
+                </select>
+            </div>
+            <button onclick="convertDateTime()">변환하기</button>
+            <div id="datetimeResult"></div>
+        </div>
+    </div>
+
+    <script>
+        function detectTimestampUnit(timestamp) {
+            const ts = timestamp.toString().replace(/\s/g, '');
+            const len = ts.length;
+            
+            if (len <= 10) return { value: parseInt(ts), unit: 'seconds' };
+            if (len <= 13) return { value: parseInt(ts), unit: 'milliseconds' };
+            if (len <= 16) return { value: parseInt(ts), unit: 'microseconds' };
+            return { value: parseInt(ts), unit: 'nanoseconds' };
+        }
+
+        function convertTimestamp() {
+            const input = document.getElementById('timestamp').value.trim();
+            if (!input) {
+                alert('타임스탬프를 입력해주세요.');
+                return;
+            }
+
+            const { value, unit } = detectTimestampUnit(input);
+            let timestampMs;
+
+            switch(unit) {
+                case 'seconds':
+                    timestampMs = value * 1000;
+                    break;
+                case 'milliseconds':
+                    timestampMs = value;
+                    break;
+                case 'microseconds':
+                    timestampMs = value / 1000;
+                    break;
+                case 'nanoseconds':
+                    timestampMs = value / 1000000;
+                    break;
+            }
+
+            const date = new Date(timestampMs);
+            
+            const gmtStr = date.toUTCString();
+            const localStr = date.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+            const isoStr = date.toISOString();
+            
+            const now = Date.now();
+            const diff = now - timestampMs;
+            const relative = getRelativeTime(diff);
+
+            const unitNames = {
+                'seconds': '초',
+                'milliseconds': '밀리초',
+                'microseconds': '마이크로초',
+                'nanoseconds': '나노초'
+            };
+
+            document.getElementById('timestampResult').innerHTML = `
+                <div class="result">
+                    <div class="result-item"><strong>입력 단위:</strong> <span>${unitNames[unit]}</span></div>
+                    <div class="result-item"><strong>Epoch 타임스탬프:</strong> <span>${Math.floor(timestampMs / 1000)}</span></div>
+                    <div class="result-item"><strong>밀리초:</strong> <span>${Math.floor(timestampMs)}</span></div>
+                    <div class="result-item"><strong>GMT:</strong> <span>${gmtStr}</span></div>
+                    <div class="result-item"><strong>한국 시간:</strong> <span>${localStr}</span></div>
+                    <div class="result-item"><strong>ISO 8601:</strong> <span>${isoStr}</span></div>
+                    <div class="result-item"><strong>상대 시간:</strong> <span>${relative}</span></div>
+                </div>
+            `;
+        }
+
+        function convertDateTime() {
+            const year = parseInt(document.getElementById('year').value);
+            const month = parseInt(document.getElementById('month').value);
+            const day = parseInt(document.getElementById('day').value);
+            const hour = parseInt(document.getElementById('hour').value) || 0;
+            const minute = parseInt(document.getElementById('minute').value) || 0;
+            const second = parseInt(document.getElementById('second').value) || 0;
+            const timezone = document.getElementById('timezone').value;
+
+            if (!year || !month || !day) {
+                alert('년, 월, 일을 모두 입력해주세요.');
+                return;
+            }
+
+            let date;
+            if (timezone === 'UTC') {
+                date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+            } else {
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+                date = new Date(dateStr);
+            }
+
+            const timestampSeconds = Math.floor(date.getTime() / 1000);
+            const timestampMs = date.getTime();
+            const timestampMicro = timestampMs * 1000;
+            const timestampNano = timestampMs * 1000000;
+
+            document.getElementById('datetimeResult').innerHTML = `
+                <div class="result">
+                    <div class="result-item"><strong>Epoch 타임스탬프:</strong> <span>${timestampSeconds}</span></div>
+                    <div class="result-item"><strong>밀리초:</strong> <span>${timestampMs}</span></div>
+                    <div class="result-item"><strong>마이크로초:</strong> <span>${timestampMicro}</span></div>
+                    <div class="result-item"><strong>나노초:</strong> <span>${timestampNano}</span></div>
+                    <div class="result-item"><strong>GMT:</strong> <span>${date.toUTCString()}</span></div>
+                    <div class="result-item"><strong>한국 시간:</strong> <span>${date.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</span></div>
+                    <div class="result-item"><strong>ISO 8601:</strong> <span>${date.toISOString()}</span></div>
+                </div>
+            `;
+        }
+
+        function getRelativeTime(diff) {
+            const absDiff = Math.abs(diff);
+            const seconds = Math.floor(absDiff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (seconds < 60) return seconds + '초 ' + (diff < 0 ? '후' : '전');
+            if (minutes < 60) return minutes + '분 ' + (diff < 0 ? '후' : '전');
+            if (hours < 24) return hours + '시간 ' + (diff < 0 ? '후' : '전');
+            return days + '일 ' + (diff < 0 ? '후' : '전');
+        }
+
+        // 현재 시간으로 초기화
+        const now = new Date();
+        document.getElementById('year').value = now.getFullYear();
+        document.getElementById('month').value = now.getMonth() + 1;
+        document.getElementById('day').value = now.getDate();
+        document.getElementById('hour').value = now.getHours();
+        document.getElementById('minute').value = now.getMinutes();
+        document.getElementById('second').value = now.getSeconds();
+    </script>
+</body>
+</html>
