@@ -4,16 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>작가님의 일일 업무 관리</title>
-    
-    <!-- Tailwind & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- 🔥 모듈 방식 폐기! 가장 안정적인 호환(Compat) 버전의 파이어베이스 스크립트로 교체 -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
         body {
@@ -49,7 +41,8 @@
             <h2 class="text-2xl font-extrabold text-center text-gray-800 mb-1">Studio 로그</h2>
             <p class="text-center text-sm text-gray-500 mb-8 font-medium">웹툰 작가님의 일일 업무 관리</p>
             
-            <form id="login-form" class="space-y-5" onsubmit="handleLoginSubmit(event)">
+            <!-- 🚨 HTML 내부의 onsubmit 속성을 모두 제거하여 충돌 방지 -->
+            <form id="login-form" class="space-y-5">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">이메일 계정</label>
                     <div class="relative">
@@ -71,7 +64,7 @@
                 
                 <p id="login-error" class="text-red-500 text-sm text-center hidden font-bold bg-red-50 py-2 rounded-lg"></p>
                 
-                <button type="submit" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold mt-2 shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5">
+                <button type="submit" id="login-submit-btn" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold mt-2 shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5">
                     <span id="login-btn-text">로그인하여 시작하기</span>
                     <div id="login-loader" class="loader !w-5 !h-5 !border-[2.5px] hidden border-t-white border-white/30"></div>
                 </button>
@@ -91,20 +84,20 @@
                     <span id="sync-status" class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span> 
                     <span id="sync-text" class="truncate">연결 대기중...</span>
                 </p>
-                <button onclick="handleLogout()" class="mt-1.5 text-[11px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors w-fit px-1.5 py-0.5 rounded hover:bg-red-50 cursor-pointer">
+                <button onclick="window.handleLogout()" class="mt-1.5 text-[11px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors w-fit px-1.5 py-0.5 rounded hover:bg-red-50 cursor-pointer">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> 계정 로그아웃
                 </button>
             </div>
         </div>
         
         <nav class="flex-1 p-4 space-y-2">
-            <a href="#" onclick="switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-medium transition-colors">
+            <a href="#" onclick="window.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-medium transition-colors">
                 <i class="fa-solid fa-calendar-day"></i> 오늘 일정
             </a>
-            <a href="#" onclick="switchView('all-tasks')" id="nav-all-tasks" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
+            <a href="#" onclick="window.switchView('all-tasks')" id="nav-all-tasks" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
                 <i class="fa-solid fa-list-check"></i> 전체 업무
             </a>
-            <a href="#" onclick="switchView('statistics')" id="nav-statistics" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
+            <a href="#" onclick="window.switchView('statistics')" id="nav-statistics" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
                 <i class="fa-solid fa-chart-pie"></i> 작업 통계
             </a>
         </nav>
@@ -120,22 +113,22 @@
     <main class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50/50 relative">
         <header class="bg-white p-6 border-b border-gray-200 flex justify-between items-center z-10 shadow-sm shrink-0">
             <div class="flex items-center gap-4">
-                <button onclick="openMonthPicker()" class="flex items-center gap-2 text-lg font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-4 py-1.5 hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+                <button onclick="window.openMonthPicker()" class="flex items-center gap-2 text-lg font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-4 py-1.5 hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
                     <span id="header-month-display">2026년 3월</span>
                     <i class="fa-solid fa-caret-down text-sm text-gray-400"></i>
                 </button>
                 
                 <div class="flex gap-1">
-                    <button onclick="changeMonth(-1)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="이전 달"><i class="fa-solid fa-chevron-left"></i></button>
-                    <button onclick="resetToToday()" class="px-3 py-1.5 text-sm font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200 bg-indigo-50/50 shadow-sm">오늘</button>
-                    <button onclick="changeMonth(1)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
+                    <button onclick="window.changeMonth(-1)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="이전 달"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="window.resetToToday()" class="px-3 py-1.5 text-sm font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200 bg-indigo-50/50 shadow-sm">오늘</button>
+                    <button onclick="window.changeMonth(1)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
             <div class="flex gap-3">
-                <button onclick="openCategoryManager()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                <button onclick="window.openCategoryManager()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-tags"></i> 분류 관리
                 </button>
-                <button onclick="openTaskModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
+                <button onclick="window.openTaskModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> 업무 추가
                 </button>
             </div>
@@ -153,15 +146,15 @@
 
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-1 min-h-[250px] flex flex-col">
                     <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
-                        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2 cursor-pointer hover:text-indigo-600 transition-colors group" onclick="openWeekPicker()">
+                        <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2 cursor-pointer hover:text-indigo-600 transition-colors group" onclick="window.openWeekPicker()">
                             <i class="fa-solid fa-calendar-week text-indigo-500"></i>
                             <span id="weekly-week-number">2026년 14주차</span>
                             <i class="fa-solid fa-caret-down text-sm text-gray-400 group-hover:text-indigo-600 ml-0.5"></i>
                         </h3>
                         <div class="flex items-center gap-2">
-                            <button onclick="changeWeek(-1)" class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button onclick="window.changeWeek(-1)" class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                             <span class="text-sm font-medium text-gray-600 min-w-[90px] text-center" id="weekly-range-text">3.31 ~ 4.6</span>
-                            <button onclick="changeWeek(1)" class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                            <button onclick="window.changeWeek(1)" class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                         </div>
                     </div>
                     <div id="weekly-container" class="space-y-3 overflow-y-auto pr-2 flex-1"></div>
@@ -193,17 +186,17 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                         <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-list-check mr-2 text-indigo-500"></i>업무 내역</h3>
                         <div class="flex bg-gray-200/60 p-1 rounded-lg w-fit">
-                            <button id="tab-alltasks-week" onclick="setAllTasksMode('week')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">주간</button>
-                            <button id="tab-alltasks-month" onclick="setAllTasksMode('month')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all bg-white shadow-sm text-indigo-600">월간</button>
-                            <button id="tab-alltasks-year" onclick="setAllTasksMode('year')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">연간</button>
+                            <button id="tab-alltasks-week" onclick="window.setAllTasksMode('week')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">주간</button>
+                            <button id="tab-alltasks-month" onclick="window.setAllTasksMode('month')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all bg-white shadow-sm text-indigo-600">월간</button>
+                            <button id="tab-alltasks-year" onclick="window.setAllTasksMode('year')" class="px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200">연간</button>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
                         <div class="flex items-center gap-2">
-                            <button onclick="changeAllTasksPeriod(-1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button onclick="window.changeAllTasksPeriod(-1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                             <span class="text-base font-bold text-gray-700 min-w-[130px] text-center" id="all-tasks-period-display">2026년 3월</span>
-                            <button onclick="changeAllTasksPeriod(1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                            <button onclick="window.changeAllTasksPeriod(1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                         </div>
                         <div class="hidden sm:block w-px h-6 bg-gray-300"></div>
                         <span class="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200" id="all-tasks-count">총 0건</span>
@@ -268,11 +261,12 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in-up">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="font-bold text-lg" id="task-modal-title">새 업무 기록하기</h3>
-                <button onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-600">
+                <button onclick="window.closeTaskModal()" class="text-gray-400 hover:text-gray-600">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            <form id="add-task-form" class="p-6 space-y-5" onsubmit="handleTaskFormSubmit(event)">
+            <!-- 🚨 HTML 내부 속성 제거 -->
+            <form id="add-task-form" class="p-6 space-y-5">
                 <input type="hidden" id="edit-task-id">
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -305,17 +299,17 @@
                     </div>
                     
                     <div class="flex gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100 overflow-x-auto scrollbar-hide">
-                        <button type="button" onclick="setStartTimeToNow()" class="shrink-0 px-2.5 py-1 text-xs bg-white text-gray-700 rounded shadow-sm hover:bg-gray-100 border border-gray-200 font-medium whitespace-nowrap"><i class="fa-solid fa-clock mr-1"></i>시작: 지금</button>
+                        <button type="button" onclick="window.setStartTimeToNow()" class="shrink-0 px-2.5 py-1 text-xs bg-white text-gray-700 rounded shadow-sm hover:bg-gray-100 border border-gray-200 font-medium whitespace-nowrap"><i class="fa-solid fa-clock mr-1"></i>시작: 지금</button>
                         <div class="w-px h-5 bg-gray-300 mx-0.5 mt-0.5 shrink-0"></div>
-                        <button type="button" onclick="addTimeToEnd(30)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+30분</button>
-                        <button type="button" onclick="addTimeToEnd(60)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+1시간</button>
-                        <button type="button" onclick="addTimeToEnd(120)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+2시간</button>
-                        <button type="button" onclick="addTimeToEnd(240)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">반나절(4h)</button>
+                        <button type="button" onclick="window.addTimeToEnd(30)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+30분</button>
+                        <button type="button" onclick="window.addTimeToEnd(60)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+1시간</button>
+                        <button type="button" onclick="window.addTimeToEnd(120)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">+2시간</button>
+                        <button type="button" onclick="window.addTimeToEnd(240)" class="shrink-0 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 font-medium whitespace-nowrap">반나절(4h)</button>
                     </div>
                 </div>
 
                 <div class="pt-2 flex gap-3">
-                    <button type="button" onclick="closeTaskModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">취소</button>
+                    <button type="button" onclick="window.closeTaskModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">취소</button>
                     <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center gap-2 transition-colors">
                         <span id="task-submit-text">저장하기</span>
                         <div id="task-submit-loader" class="loader !w-4 !h-4 !border-[2px] hidden border-t-white border-white/30"></div>
@@ -329,13 +323,13 @@
     <div id="month-picker-modal" class="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center hidden backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 animate-fade-in-up">
             <div class="flex justify-between items-center mb-6">
-                <button onclick="changePickerYear(-1, 'month')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="window.changePickerYear(-1, 'month')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
                 <h4 class="font-bold text-xl text-gray-800" id="picker-year-text">2026년</h4>
-                <button onclick="changePickerYear(1, 'month')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="window.changePickerYear(1, 'month')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <div class="grid grid-cols-4 gap-3" id="picker-month-grid"></div>
             <div class="mt-6 flex justify-end">
-                <button onclick="closeMonthPicker()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors w-full">닫기</button>
+                <button onclick="window.closeMonthPicker()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors w-full">닫기</button>
             </div>
         </div>
     </div>
@@ -344,13 +338,13 @@
     <div id="week-picker-modal" class="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center hidden backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 animate-fade-in-up">
             <div class="flex justify-between items-center mb-6">
-                <button onclick="changePickerYear(-1, 'week')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="window.changePickerYear(-1, 'week')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
                 <h4 class="font-bold text-xl text-gray-800" id="picker-week-year-text">2026년</h4>
-                <button onclick="changePickerYear(1, 'week')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="window.changePickerYear(1, 'week')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <div class="grid grid-cols-7 gap-2 gap-y-3" id="picker-week-grid"></div>
             <div class="mt-6 flex justify-end">
-                <button onclick="closeWeekPicker()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors w-full">닫기</button>
+                <button onclick="window.closeWeekPicker()" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors w-full">닫기</button>
             </div>
         </div>
     </div>
@@ -360,7 +354,7 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                 <h3 class="font-bold text-lg"><i class="fa-solid fa-tags mr-2 text-indigo-500"></i>작업 분류 관리</h3>
-                <button onclick="closeCategoryManager()" class="text-gray-400 hover:text-gray-600">
+                <button onclick="window.closeCategoryManager()" class="text-gray-400 hover:text-gray-600">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
@@ -368,7 +362,8 @@
                 <div id="category-list" class="space-y-3 mb-6"></div>
                 <div class="border-t border-gray-200 pt-5 mt-5">
                     <h4 class="font-bold text-gray-700 mb-3 text-sm" id="category-form-title">새 분류 추가</h4>
-                    <form id="category-form" class="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100" onsubmit="handleCategoryFormSubmit(event)">
+                    <!-- 🚨 HTML 내부 속성 제거 -->
+                    <form id="category-form" class="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <input type="hidden" id="edit-cat-id" value="">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">분류명</label>
@@ -380,7 +375,7 @@
                             <input type="hidden" id="cat-color" required>
                         </div>
                         <div class="flex gap-2 pt-2">
-                            <button type="button" id="cat-cancel-btn" onclick="resetCategoryForm()" class="hidden flex-1 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium">취소</button>
+                            <button type="button" id="cat-cancel-btn" onclick="window.resetCategoryForm()" class="hidden flex-1 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium">취소</button>
                             <button type="submit" class="flex-1 px-3 py-1.5 bg-gray-800 text-white rounded-md hover:bg-gray-900 text-sm font-medium flex items-center justify-center gap-2">
                                 <span id="cat-submit-text">추가하기</span>
                                 <div id="cat-submit-loader" class="loader !w-3 !h-3 !border-[2px] hidden border-t-white border-white/30"></div>
@@ -401,15 +396,40 @@
             <h3 class="font-bold text-lg text-gray-800 mb-2" id="confirm-title">알림</h3>
             <p class="text-sm text-gray-500 mb-6" id="confirm-desc">내용</p>
             <div class="flex gap-3" id="confirm-btn-group">
-                <button id="confirm-cancel-btn" onclick="closeConfirmModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium hidden">취소</button>
-                <button id="confirm-ok-btn" onclick="executeConfirmAction()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">확인</button>
+                <button id="confirm-cancel-btn" onclick="window.closeConfirmModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium hidden">취소</button>
+                <button id="confirm-ok-btn" onclick="window.executeConfirmAction()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">확인</button>
             </div>
         </div>
     </div>
 
-    <!-- 스크립트 메인 로직 -->
-    <script>
-        // --- 1. 유틸리티 및 기본 설정 ---
+    <!-- 🔥 Firebase 연결 스크립트 (가장 안전한 구조로 재작성) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 1. 파이어베이스 즉시 초기화 (기다림 없이 무조건 1순위 실행)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+            authDomain: "openzeroc.firebaseapp.com",
+            projectId: "openzeroc",
+            storageBucket: "openzeroc.firebasestorage.app",
+            messagingSenderId: "465944510778",
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003"
+            // measurementId 생략 (오류 유발 차단)
+        };
+
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (error) {
+            console.error("Firebase 초기화 치명적 에러:", error);
+            alert("서버 연결 초기화에 실패했습니다. 페이지를 새로고침 해주세요.");
+        }
+
+        // --- 유틸리티 및 전역 상태 ---
         const colorPalette = {
             'blue': { base: 'blue', color: 'bg-blue-100 text-blue-800 border-blue-200', dot: 'bg-blue-500', hex: '#3b82f6' },
             'orange': { base: 'orange', color: 'bg-orange-100 text-orange-800 border-orange-200', dot: 'bg-orange-500', hex: '#f97316' },
@@ -469,7 +489,6 @@
             return duration / 60; 
         }
 
-        // --- 2. 전역 상태 ---
         let currentDate = new Date(); 
         let selectedDate = new Date(); 
         let weeklyBrowseDate = new Date(); 
@@ -483,14 +502,11 @@
         let tasks = [];
         let publicHolidaysCache = {}; 
         
-        let db;
-        let auth;
         let currentUser = null;
         let tasksUnsub = null;
         let catsUnsub = null;
         let pendingConfirmAction = null; 
 
-        // --- 3. Firebase 동기화 (Compat SDK 방식) ---
         async function fetchKoreanHolidays(year) {
             if (publicHolidaysCache[year]) return; 
             try {
@@ -502,33 +518,12 @@
             } catch (err) {}
         }
 
-        // 즉시 실행되도록 변경
-        window.onload = async function() {
-            initColorPicker();
-            
-            // 파이어베이스 설정 정보
-            const firebaseConfig = {
-                apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
-                authDomain: "openzeroc.firebaseapp.com",
-                projectId: "openzeroc",
-                storageBucket: "openzeroc.firebasestorage.app",
-                messagingSenderId: "465944510778",
-                appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
-                measurementId: "G-M4K79K2XPG"
-            };
-
-            // Firebase 싱글톤 초기화
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-
-            auth = firebase.auth();
-            db = firebase.firestore();
-
-            auth.onAuthStateChanged(async (user) => {
+        // 2. 상태 감지 리스너 (즉시 연결)
+        if (auth) {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     if (user.isAnonymous) {
-                        await auth.signOut();
+                        await signOut(auth);
                         return; 
                     }
                     currentUser = user;
@@ -543,75 +538,31 @@
                     document.getElementById('sync-status').classList.replace('bg-green-500', 'bg-red-500');
                     document.getElementById('sync-status').classList.replace('bg-gray-300', 'bg-red-500');
                     document.getElementById('sync-text').textContent = '로그아웃 됨';
-                    if(tasksUnsub) tasksUnsub();
-                    if(catsUnsub) catsUnsub();
+                    if(tasksUnsub) { tasksUnsub(); tasksUnsub = null; }
+                    if(catsUnsub) { catsUnsub(); catsUnsub = null; }
+                    
                     tasks = [];
                     categories = {};
                     updateAllUI();
                 }
             });
-
-            await fetchKoreanHolidays(currentDate.getFullYear());
-            updateAllUI();
-        };
-
-        // --- 로그인 & 로그아웃 ---
-        async function handleLoginSubmit(e) {
-            e.preventDefault(); 
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            const btnText = document.getElementById('login-btn-text');
-            const loader = document.getElementById('login-loader');
-
-            if (!auth) {
-                errorEl.textContent = '서버 통신을 준비하는 중입니다. (새로고침 후 다시 시도해주세요)';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            errorEl.classList.add('hidden');
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                let errorMsg = '로그인 실패: 다시 시도해주세요.';
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    errorMsg = '이메일 또는 비밀번호가 올바르지 않습니다.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    errorMsg = '시도 횟수가 너무 많습니다. 잠시 후 다시 시도해주세요.';
-                } else {
-                    errorMsg = '에러: ' + error.message;
-                }
-                errorEl.textContent = errorMsg;
-                errorEl.classList.remove('hidden');
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-            }
         }
 
-        async function handleLogout() {
-            try { await auth.signOut(); } catch(e) { console.error(e); }
-        }
-
-        // --- 4. Firestore 리스너 ---
         function setupFirestoreListeners() {
             if (!currentUser) return;
 
-            const tasksRef = db.collection('daily_work').doc(currentUser.uid).collection('daily');
-            tasksUnsub = tasksRef.onSnapshot((snapshot) => {
+            const tasksRef = collection(db, 'daily_work', currentUser.uid, 'daily');
+            tasksUnsub = onSnapshot(tasksRef, (snapshot) => {
                 tasks = snapshot.docs.map(doc => doc.data());
                 updateAllUI();
             });
 
-            const catsRef = db.collection('daily_work').doc(currentUser.uid).collection('categories');
-            catsUnsub = catsRef.onSnapshot((snapshot) => {
+            const catsRef = collection(db, 'daily_work', currentUser.uid, 'categories');
+            catsUnsub = onSnapshot(catsRef, (snapshot) => {
                 if (snapshot.empty && Object.keys(categories).length === 0) {
                     Object.values(defaultCategories).forEach(cat => {
-                        catsRef.doc(cat.id).set(cat);
+                        const catRef = doc(db, 'daily_work', currentUser.uid, 'categories', cat.id);
+                        setDoc(catRef, cat);
                     });
                 } else {
                     categories = {};
@@ -623,8 +574,124 @@
             });
         }
 
-        // --- 5. Custom Modal ---
-        function showCustomAlert(title, desc, type='info') {
+        // 3. 화면 렌더링 완료 후 이벤트 바인딩
+        document.addEventListener('DOMContentLoaded', async () => {
+            initColorPicker();
+            updateAllUI();
+            
+            // 로그인 폼 이벤트
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); 
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const errorEl = document.getElementById('login-error');
+                const btnText = document.getElementById('login-btn-text');
+                const loader = document.getElementById('login-loader');
+
+                if (!auth) {
+                    errorEl.textContent = '서버 연결에 문제가 있습니다. 새로고침 해주세요.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                btnText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                errorEl.classList.add('hidden');
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    let errorMsg = '로그인 실패: 다시 시도해주세요.';
+                    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                        errorMsg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMsg = '시도 횟수가 너무 많습니다. 잠시 후 다시 시도해주세요.';
+                    } else {
+                        errorMsg = '에러: ' + error.message;
+                    }
+                    errorEl.textContent = errorMsg;
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    btnText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                }
+            });
+
+            // 업무 폼 이벤트
+            document.getElementById('add-task-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUser) return;
+
+                document.getElementById('task-submit-text').classList.add('hidden');
+                document.getElementById('task-submit-loader').classList.remove('hidden');
+
+                const id = document.getElementById('edit-task-id').value;
+                const taskData = {
+                    title: document.getElementById('task-title').value,
+                    date: document.getElementById('task-date').value,
+                    startTime: document.getElementById('task-start').value,
+                    endTime: document.getElementById('task-end').value,
+                    category: document.getElementById('task-category').value,
+                };
+
+                const docId = id ? id : Date.now().toString();
+                const taskRef = doc(db, 'daily_work', currentUser.uid, 'daily', docId);
+
+                try {
+                    if (id) await setDoc(taskRef, taskData, { merge: true });
+                    else await setDoc(taskRef, { id: docId, completed: false, ...taskData });
+                    
+                    window.selectDay(taskData.date); 
+                    window.closeTaskModal();
+                } catch (err) {
+                    console.error("Task 저장 에러", err);
+                    window.showCustomAlert('저장 에러', '보안 규칙 또는 서버 연결을 확인해주세요.', 'error');
+                } finally {
+                    document.getElementById('task-submit-text').classList.remove('hidden');
+                    document.getElementById('task-submit-loader').classList.add('hidden');
+                }
+            });
+
+            // 카테고리 폼 이벤트
+            document.getElementById('category-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUser) return;
+
+                document.getElementById('cat-submit-text').classList.add('hidden');
+                document.getElementById('cat-submit-loader').classList.remove('hidden');
+
+                const id = document.getElementById('edit-cat-id').value;
+                const name = document.getElementById('cat-name').value;
+                const colorBase = document.getElementById('cat-color').value;
+                const icons = ['fa-tag', 'fa-bookmark', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-check'];
+                const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+
+                const docId = id ? id : 'cat_' + Date.now();
+                const catRef = doc(db, 'daily_work', currentUser.uid, 'categories', docId);
+
+                try {
+                    if (id) await setDoc(catRef, { name, colorBase }, { merge: true });
+                    else await setDoc(catRef, { id: docId, name, colorBase, icon: randomIcon });
+                    
+                    window.resetCategoryForm();
+                } catch (err) {
+                    console.error("카테고리 저장 에러", err);
+                } finally {
+                    document.getElementById('cat-submit-text').classList.remove('hidden');
+                    document.getElementById('cat-submit-loader').classList.add('hidden');
+                }
+            });
+
+            await fetchKoreanHolidays(currentDate.getFullYear());
+            updateAllUI();
+        });
+
+        // --- 각종 UI 조작 함수들을 Window 객체에 명시적 바인딩 ---
+        window.handleLogout = async function() {
+            try { await signOut(auth); } catch(e) {}
+        };
+
+        window.showCustomAlert = function(title, desc, type='info') {
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-desc').textContent = desc;
             const iconBox = document.getElementById('confirm-icon-box');
@@ -644,9 +711,9 @@
                 okBtn.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium';
             }
             document.getElementById('confirm-modal').classList.remove('hidden');
-        }
+        };
 
-        function promptDelete(type, id) {
+        window.promptDelete = function(type, id) {
             const isTask = type === 'task';
             document.getElementById('confirm-title').textContent = isTask ? '일정을 삭제하시겠습니까?' : `'${categories[id]?.name}' 분류를 삭제하시겠습니까?`;
             document.getElementById('confirm-desc').textContent = isTask ? '삭제된 일정은 복구할 수 없습니다.' : '(기존 일정은 유지되나, 색상이 초기화됩니다)';
@@ -664,29 +731,28 @@
                 if(!currentUser) return;
                 try {
                     if (type === 'task') {
-                        await db.collection('daily_work').doc(currentUser.uid).collection('daily').doc(id.toString()).delete();
+                        await deleteDoc(doc(db, 'daily_work', currentUser.uid, 'daily', id.toString()));
                     } else if (type === 'category') {
-                        await db.collection('daily_work').doc(currentUser.uid).collection('categories').doc(id.toString()).delete();
+                        await deleteDoc(doc(db, 'daily_work', currentUser.uid, 'categories', id.toString()));
                     }
                 } catch (err) {} finally {
-                    closeConfirmModal();
+                    window.closeConfirmModal();
                 }
             };
             document.getElementById('confirm-modal').classList.remove('hidden');
-        }
+        };
 
-        function closeConfirmModal() {
+        window.closeConfirmModal = function() {
             document.getElementById('confirm-modal').classList.add('hidden');
             pendingConfirmAction = null;
-        }
+        };
 
-        function executeConfirmAction() {
+        window.executeConfirmAction = function() {
             if (pendingConfirmAction) pendingConfirmAction();
-            else closeConfirmModal();
-        }
+            else window.closeConfirmModal();
+        };
 
-        // --- 6. UI ---
-        function switchView(viewId) {
+        window.switchView = function(viewId) {
             currentView = viewId;
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-flex', 'active-block'));
             ['dashboard', 'all-tasks', 'statistics'].forEach(nav => {
@@ -701,6 +767,202 @@
             updateAllUI();
         }
 
+        window.changeMonth = async function(offset) {
+            currentDate.setMonth(currentDate.getMonth() + offset);
+            await fetchKoreanHolidays(currentDate.getFullYear()); 
+            updateAllUI();
+        };
+
+        window.resetToToday = async function() {
+            currentDate = new Date();
+            selectedDate = new Date();
+            weeklyBrowseDate = new Date();
+            allTasksDate = new Date();
+            await fetchKoreanHolidays(currentDate.getFullYear());
+            updateAllUI();
+        };
+
+        window.selectDay = function(dateString) {
+            selectedDate = new Date(dateString);
+            weeklyBrowseDate = new Date(dateString);
+            if (currentView !== 'dashboard') window.switchView('dashboard');
+            else updateAllUI();
+        };
+
+        window.changeWeek = function(offset) {
+            weeklyBrowseDate.setDate(weeklyBrowseDate.getDate() + (offset * 7));
+            renderWeekly();
+        }
+
+        window.openMonthPicker = function() {
+            pickingMonthYear = currentDate.getFullYear();
+            renderMonthPickerGrid();
+            document.getElementById('month-picker-modal').classList.remove('hidden');
+        };
+        window.closeMonthPicker = function() { document.getElementById('month-picker-modal').classList.add('hidden'); };
+        
+        window.selectMonthFromPicker = async function(monthIndex) {
+            currentDate = new Date(pickingMonthYear, monthIndex, 1);
+            await fetchKoreanHolidays(currentDate.getFullYear());
+            updateAllUI();
+            window.closeMonthPicker();
+        };
+
+        window.openWeekPicker = function() {
+            const start = new Date(weeklyBrowseDate);
+            start.setDate(start.getDate() - start.getDay());
+            const weekInfo = getWeekNumber(start);
+            pickingWeekYear = weekInfo.year;
+            renderWeekPickerGrid();
+            document.getElementById('week-picker-modal').classList.remove('hidden');
+        };
+        window.closeWeekPicker = function() { document.getElementById('week-picker-modal').classList.add('hidden'); };
+
+        window.selectWeekFromPicker = function(week) {
+            weeklyBrowseDate = getDateOfISOWeek(week, pickingWeekYear);
+            if (currentView !== 'dashboard') window.switchView('dashboard');
+            else renderWeekly();
+            window.closeWeekPicker();
+        };
+
+        window.changePickerYear = function(offset, type) {
+            if(type === 'month') { pickingMonthYear += offset; renderMonthPickerGrid(); }
+            if(type === 'week') { pickingWeekYear += offset; renderWeekPickerGrid(); }
+        };
+
+        window.setAllTasksMode = function(mode) {
+            allTasksMode = mode;
+            ['week', 'month', 'year'].forEach(m => {
+                const btn = document.getElementById(`tab-alltasks-${m}`);
+                if(m === mode) btn.className = 'px-4 py-1.5 rounded-md text-sm font-bold transition-all bg-white shadow-sm text-indigo-600';
+                else btn.className = 'px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200';
+            });
+            renderAllTasks();
+        };
+
+        window.changeAllTasksPeriod = function(offset) {
+            if (allTasksMode === 'year') allTasksDate.setFullYear(allTasksDate.getFullYear() + offset);
+            else if (allTasksMode === 'month') allTasksDate.setMonth(allTasksDate.getMonth() + offset);
+            else if (allTasksMode === 'week') allTasksDate.setDate(allTasksDate.getDate() + (offset * 7));
+            renderAllTasks();
+        };
+
+        window.setStartTimeToNow = function() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('task-start').value = `${h}:${m}`;
+            document.getElementById('task-end').value = ''; 
+        };
+
+        window.addTimeToEnd = function(mins) {
+            const startVal = document.getElementById('task-start').value;
+            if (!startVal) {
+                window.setStartTimeToNow();
+                setTimeout(() => window.addTimeToEnd(mins), 50);
+                return;
+            }
+            const [h, m] = startVal.split(':').map(Number);
+            const end = new Date();
+            end.setHours(h, m + mins, 0, 0);
+            const eh = String(end.getHours()).padStart(2, '0');
+            const em = String(end.getMinutes()).padStart(2, '0');
+            document.getElementById('task-end').value = `${eh}:${em}`;
+        };
+
+        window.openTaskModal = function() {
+            if(!currentUser) {
+                window.showCustomAlert('로그인 필요', '로그인을 하셔야 일정을 저장할 수 있습니다.', 'error');
+                return;
+            }
+            document.getElementById('add-task-form').reset();
+            document.getElementById('edit-task-id').value = '';
+            document.getElementById('task-modal-title').textContent = '새 업무 기록하기';
+            document.getElementById('task-date').value = formatDateString(selectedDate);
+            
+            renderCategoryDropdown();
+            document.getElementById('task-modal').classList.remove('hidden');
+        };
+        window.closeTaskModal = function() { document.getElementById('task-modal').classList.add('hidden'); };
+
+        window.editTask = function(id) {
+            const task = tasks.find(t => t.id === id);
+            if(!task) return;
+            document.getElementById('edit-task-id').value = task.id;
+            document.getElementById('task-modal-title').textContent = '업무 수정하기';
+            document.getElementById('task-date').value = task.date;
+            document.getElementById('task-title').value = task.title;
+            document.getElementById('task-start').value = task.startTime;
+            document.getElementById('task-end').value = task.endTime;
+            renderCategoryDropdown();
+            document.getElementById('task-category').value = task.category;
+            document.getElementById('task-modal').classList.remove('hidden');
+        };
+
+        window.toggleTask = async function(id) {
+            if(!currentUser) return;
+            const task = tasks.find(t => t.id === id);
+            if(task) {
+                await setDoc(doc(db, 'daily_work', currentUser.uid, 'daily', id.toString()), { completed: !task.completed }, { merge: true });
+            }
+        };
+
+        window.openCategoryManager = function() {
+            if(!currentUser) {
+                window.showCustomAlert('접근 불가', '로그인이 필요합니다.', 'error');
+                return;
+            }
+            renderCategoryManagerList();
+            window.resetCategoryForm();
+            document.getElementById('category-modal').classList.remove('hidden');
+        };
+        window.closeCategoryManager = function() {
+            document.getElementById('category-modal').classList.add('hidden');
+            renderCategoryDropdown();
+        };
+
+        window.resetCategoryForm = function() {
+            document.getElementById('category-form').reset();
+            document.getElementById('edit-cat-id').value = '';
+            document.getElementById('category-form-title').textContent = '새 분류 추가';
+            document.getElementById('cat-submit-btn').textContent = '추가하기';
+            document.getElementById('cat-cancel-btn').classList.add('hidden');
+            const firstColorBtn = document.getElementById('color-picker').firstChild;
+            if(firstColorBtn) window.selectColor(firstColorBtn, Object.keys(colorPalette)[0]);
+        };
+
+        window.editCategory = function(key) {
+            const cat = categories[key];
+            if(!cat) return;
+            document.getElementById('edit-cat-id').value = key;
+            document.getElementById('cat-name').value = cat.name;
+            document.getElementById('category-form-title').textContent = '분류 수정하기';
+            document.getElementById('cat-submit-btn').textContent = '수정 완료';
+            document.getElementById('cat-cancel-btn').classList.remove('hidden');
+            const colorIndex = Object.keys(colorPalette).indexOf(cat.colorBase);
+            if(colorIndex > -1) window.selectColor(document.getElementById('color-picker').children[colorIndex], cat.colorBase);
+        };
+
+        window.selectColor = function(btnElement, colorKey) {
+            const buttons = document.getElementById('color-picker').children;
+            for(let btn of buttons) btn.classList.remove('ring-2', 'ring-offset-2', 'ring-gray-400', 'scale-110');
+            btnElement.classList.add('ring-2', 'ring-offset-2', 'ring-gray-400', 'scale-110');
+            document.getElementById('cat-color').value = colorKey;
+        };
+
+        window.selectCategory = function(btnElement, categoryKey) {
+            if(!btnElement) return;
+            const buttons = document.getElementById('category-selector').children;
+            for(let btn of buttons) {
+                btn.classList.remove('opacity-100', 'ring-2', 'ring-offset-1', 'ring-indigo-500');
+                btn.classList.add('opacity-60');
+            }
+            btnElement.classList.remove('opacity-60');
+            btnElement.classList.add('opacity-100', 'ring-2', 'ring-offset-1', 'ring-indigo-500');
+            document.getElementById('task-category').value = categoryKey;
+        };
+
+        // --- 내부 렌더링 로직 (전역 바인딩 불필요) ---
         function updateAllUI() {
             renderHeader();
             if(currentView === 'dashboard') {
@@ -718,39 +980,14 @@
             const y = currentDate.getFullYear();
             const m = currentDate.getMonth() + 1;
             document.getElementById('header-month-display').textContent = `${y}년 ${m}월`;
-            
             const selOptions = { month: 'long', day: 'numeric', weekday: 'short' };
             let dateDisplay = selectedDate.toLocaleDateString('ko-KR', selOptions);
-            
             if (formatDateString(selectedDate) === formatDateString(new Date())) {
                 dateDisplay = `<span class="text-indigo-600 font-extrabold mr-1">오늘</span> ` + dateDisplay;
             }
             document.getElementById('selected-date-display').innerHTML = dateDisplay + ' 타임라인';
         }
 
-        async function changeMonth(offset) {
-            currentDate.setMonth(currentDate.getMonth() + offset);
-            await fetchKoreanHolidays(currentDate.getFullYear()); 
-            updateAllUI();
-        }
-
-        async function resetToToday() {
-            currentDate = new Date();
-            selectedDate = new Date();
-            weeklyBrowseDate = new Date();
-            allTasksDate = new Date();
-            await fetchKoreanHolidays(currentDate.getFullYear());
-            updateAllUI();
-        }
-
-        function selectDay(dateString) {
-            selectedDate = new Date(dateString);
-            weeklyBrowseDate = new Date(dateString);
-            if (currentView !== 'dashboard') switchView('dashboard');
-            else updateAllUI();
-        }
-
-        // --- 달력 ---
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
@@ -761,15 +998,12 @@
             const todayStr = formatDateString(new Date());
             const selectedStr = formatDateString(selectedDate);
 
-            for (let i = 0; i < firstDay; i++) {
-                grid.innerHTML += `<div class="p-2 border border-transparent"></div>`;
-            }
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="p-2 border border-transparent"></div>`; }
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const currentCellDate = new Date(year, month, day);
                 const dateStr = formatDateString(currentCellDate);
                 const dayOfWeek = currentCellDate.getDay();
-                
                 let textColor = 'text-gray-700';
                 let isHoliday = false;
                 let holidayName = '';
@@ -784,7 +1018,6 @@
 
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedStr;
-                
                 const dayTasks = tasks.filter(t => t.date === dateStr);
                 let taskDots = '';
                 dayTasks.slice(0, 3).forEach(t => {
@@ -800,7 +1033,7 @@
                 const holidayLabel = isHoliday ? `<span class="text-[10px] text-red-500 font-bold truncate block w-full leading-none mt-0.5">${holidayName}</span>` : '';
 
                 grid.innerHTML += `
-                    <div onclick="selectDay('${dateStr}')" class="p-1 md:p-2 cursor-pointer transition-colors border rounded-xl relative flex flex-col h-full min-h-[50px] md:min-h-[60px] ${bgClass}">
+                    <div onclick="window.selectDay('${dateStr}')" class="p-1 md:p-2 cursor-pointer transition-colors border rounded-xl relative flex flex-col h-full min-h-[50px] md:min-h-[60px] ${bgClass}">
                         ${todayBadge}
                         <span class="text-sm font-semibold mb-0.5 ${textColor}">${day}</span>
                         ${holidayLabel}
@@ -810,12 +1043,6 @@
                     </div>
                 `;
             }
-        }
-
-        // --- 주간 ---
-        function changeWeek(offset) {
-            weeklyBrowseDate.setDate(weeklyBrowseDate.getDate() + (offset * 7));
-            renderWeekly();
         }
 
         function renderWeekly() {
@@ -857,7 +1084,7 @@
                 }
 
                 container.innerHTML += `
-                    <div class="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer" onclick="selectDay('${task.date}')">
+                    <div class="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer" onclick="window.selectDay('${task.date}')">
                         <div class="w-2 h-2 rounded-full ${cColors.dot}"></div>
                         <div class="flex-1 min-w-0">
                             <h4 class="text-sm font-bold text-gray-800 truncate ${task.completed ? 'line-through text-gray-400' : ''}">${task.title}</h4>
@@ -871,14 +1098,6 @@
             });
         }
 
-        // --- 픽커 ---
-        function openMonthPicker() {
-            pickingMonthYear = currentDate.getFullYear();
-            renderMonthPickerGrid();
-            document.getElementById('month-picker-modal').classList.remove('hidden');
-        }
-        function closeMonthPicker() { document.getElementById('month-picker-modal').classList.add('hidden'); }
-        
         function renderMonthPickerGrid() {
             document.getElementById('picker-year-text').textContent = `${pickingMonthYear}년`;
             const grid = document.getElementById('picker-month-grid');
@@ -886,25 +1105,9 @@
             for(let i=1; i<=12; i++) {
                 const isCurrent = (pickingMonthYear === currentDate.getFullYear() && i-1 === currentDate.getMonth());
                 const bgClass = isCurrent ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600';
-                grid.innerHTML += `<button onclick="selectMonthFromPicker(${i-1})" class="py-3.5 rounded-xl font-bold transition-all text-sm md:text-base ${bgClass}">${i}월</button>`;
+                grid.innerHTML += `<button onclick="window.selectMonthFromPicker(${i-1})" class="py-3.5 rounded-xl font-bold transition-all text-sm md:text-base ${bgClass}">${i}월</button>`;
             }
         }
-        async function selectMonthFromPicker(monthIndex) {
-            currentDate = new Date(pickingMonthYear, monthIndex, 1);
-            await fetchKoreanHolidays(currentDate.getFullYear());
-            updateAllUI();
-            closeMonthPicker();
-        }
-
-        function openWeekPicker() {
-            const start = new Date(weeklyBrowseDate);
-            start.setDate(start.getDate() - start.getDay());
-            const weekInfo = getWeekNumber(start);
-            pickingWeekYear = weekInfo.year;
-            renderWeekPickerGrid();
-            document.getElementById('week-picker-modal').classList.remove('hidden');
-        }
-        function closeWeekPicker() { document.getElementById('week-picker-modal').classList.add('hidden'); }
 
         function renderWeekPickerGrid() {
             document.getElementById('picker-week-year-text').textContent = `${pickingWeekYear}년`;
@@ -922,22 +1125,10 @@
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekEnd.getDate() + 6);
                 const titleRange = `${weekStart.getMonth()+1}월 ${weekStart.getDate()}일 ~ ${weekEnd.getMonth()+1}월 ${weekEnd.getDate()}일`;
-                grid.innerHTML += `<button onclick="selectWeekFromPicker(${i})" title="${titleRange}" class="w-10 h-10 md:w-11 md:h-11 mx-auto rounded-full font-bold transition-all flex items-center justify-center text-sm md:text-base ${bgClass}">${i}</button>`;
+                grid.innerHTML += `<button onclick="window.selectWeekFromPicker(${i})" title="${titleRange}" class="w-10 h-10 md:w-11 md:h-11 mx-auto rounded-full font-bold transition-all flex items-center justify-center text-sm md:text-base ${bgClass}">${i}</button>`;
             }
         }
-        function selectWeekFromPicker(week) {
-            weeklyBrowseDate = getDateOfISOWeek(week, pickingWeekYear);
-            if (currentView !== 'dashboard') switchView('dashboard');
-            else renderWeekly();
-            closeWeekPicker();
-        }
 
-        function changePickerYear(offset, type) {
-            if(type === 'month') { pickingMonthYear += offset; renderMonthPickerGrid(); }
-            if(type === 'week') { pickingWeekYear += offset; renderWeekPickerGrid(); }
-        }
-
-        // --- 타임라인 ---
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
             container.innerHTML = '';
@@ -960,10 +1151,9 @@
                 
                 const itemHtml = `
                     <div class="relative flex items-start gap-4 group transition-all duration-300 pl-1 ${isDone ? 'opacity-60' : ''}">
-                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-[3px] border-white ${cColors.color} shrink-0 shadow-sm z-10 mt-1 cursor-pointer hover:scale-110 transition-transform" onclick="toggleTask('${task.id}')">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-[3px] border-white ${cColors.color} shrink-0 shadow-sm z-10 mt-1 cursor-pointer hover:scale-110 transition-transform" onclick="window.toggleTask('${task.id}')">
                             <i class="fa-solid ${isDone ? 'fa-check text-green-600' : cat.icon} text-xs"></i>
                         </div>
-                        
                         <div class="flex-1 p-3.5 rounded-xl border ${cColors.color} bg-white shadow-sm flex flex-col gap-1.5 hover:shadow-md transition-shadow">
                             <div class="flex justify-between items-start">
                                 <div>
@@ -971,8 +1161,8 @@
                                     <h4 class="font-bold text-gray-800 text-[15px] leading-tight ${isDone ? 'line-through text-gray-500' : ''}">${task.title}</h4>
                                 </div>
                                 <div class="flex gap-1">
-                                    <button onclick="editTask('${task.id}')" class="text-gray-300 hover:text-indigo-500 transition-colors p-1"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="promptDelete('task', '${task.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-1"><i class="fa-solid fa-trash-can"></i></button>
+                                    <button onclick="window.editTask('${task.id}')" class="text-gray-300 hover:text-indigo-500 transition-colors p-1"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="window.promptDelete('task', '${task.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-1"><i class="fa-solid fa-trash-can"></i></button>
                                 </div>
                             </div>
                             <div class="flex items-center text-xs text-gray-500 font-medium">
@@ -985,46 +1175,19 @@
             });
         }
 
-        // --- 전체 업무 ---
-        function setAllTasksMode(mode) {
-            allTasksMode = mode;
-            ['week', 'month', 'year'].forEach(m => {
-                const btn = document.getElementById(`tab-alltasks-${m}`);
-                if(m === mode) btn.className = 'px-4 py-1.5 rounded-md text-sm font-bold transition-all bg-white shadow-sm text-indigo-600';
-                else btn.className = 'px-4 py-1.5 rounded-md text-sm font-bold transition-all text-gray-500 hover:text-gray-700 hover:bg-gray-200';
-            });
-            renderAllTasks();
-        }
-
-        function changeAllTasksPeriod(offset) {
-            if (allTasksMode === 'year') allTasksDate.setFullYear(allTasksDate.getFullYear() + offset);
-            else if (allTasksMode === 'month') allTasksDate.setMonth(allTasksDate.getMonth() + offset);
-            else if (allTasksMode === 'week') allTasksDate.setDate(allTasksDate.getDate() + (offset * 7));
-            renderAllTasks();
-        }
-
         function renderAllTasks() {
             let startStr, endStr, displayTitle;
             if (allTasksMode === 'year') {
                 const y = allTasksDate.getFullYear();
-                startStr = `${y}-01-01`;
-                endStr = `${y}-12-31`;
-                displayTitle = `${y}년`;
+                startStr = `${y}-01-01`; endStr = `${y}-12-31`; displayTitle = `${y}년`;
             } else if (allTasksMode === 'month') {
-                const y = allTasksDate.getFullYear();
-                const m = allTasksDate.getMonth();
-                startStr = formatDateString(new Date(y, m, 1));
-                endStr = formatDateString(new Date(y, m + 1, 0));
-                displayTitle = `${y}년 ${m + 1}월`;
+                const y = allTasksDate.getFullYear(); const m = allTasksDate.getMonth();
+                startStr = formatDateString(new Date(y, m, 1)); endStr = formatDateString(new Date(y, m + 1, 0)); displayTitle = `${y}년 ${m + 1}월`;
             } else if (allTasksMode === 'week') {
-                const start = new Date(allTasksDate);
-                start.setDate(start.getDate() - start.getDay());
-                const end = new Date(start);
-                end.setDate(end.getDate() + 6);
-                startStr = formatDateString(start);
-                endStr = formatDateString(end);
-                const weekInfo = getWeekNumber(start);
-                displayTitle = `${weekInfo.year}년 ${weekInfo.week}주차`;
+                const start = new Date(allTasksDate); start.setDate(start.getDate() - start.getDay());
+                const end = new Date(start); end.setDate(end.getDate() + 6);
+                startStr = formatDateString(start); endStr = formatDateString(end);
+                const weekInfo = getWeekNumber(start); displayTitle = `${weekInfo.year}년 ${weekInfo.week}주차`;
             }
 
             document.getElementById('all-tasks-period-display').textContent = displayTitle;
@@ -1049,7 +1212,7 @@
                     : '<span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">진행중</span>';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer group" onclick="selectDay('${task.date}')">
+                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer group" onclick="window.selectDay('${task.date}')">
                         <td class="p-4 text-gray-600 font-medium">${task.date}</td>
                         <td class="p-4 text-gray-500 text-xs"><i class="fa-regular fa-clock mr-1"></i>${task.startTime} - ${task.endTime}</td>
                         <td class="p-4">
@@ -1058,17 +1221,16 @@
                             </span>
                         </td>
                         <td class="p-4 font-bold text-gray-800 ${task.completed ? 'line-through text-gray-400' : ''}">${task.title}</td>
-                        <td class="p-4 text-center" onclick="event.stopPropagation(); toggleTask('${task.id}')">${statusHtml}</td>
+                        <td class="p-4 text-center" onclick="event.stopPropagation(); window.toggleTask('${task.id}')">${statusHtml}</td>
                         <td class="p-4 text-right">
-                            <button onclick="event.stopPropagation(); editTask('${task.id}')" class="text-gray-400 hover:text-indigo-600 p-1 mx-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="event.stopPropagation(); promptDelete('task', '${task.id}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="event.stopPropagation(); window.editTask('${task.id}')" class="text-gray-400 hover:text-indigo-600 p-1 mx-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="event.stopPropagation(); window.promptDelete('task', '${task.id}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        // --- 작업 통계 ---
         function renderStatistics() {
             const totalTasks = tasks.length;
             const completedTasks = tasks.filter(t => t.completed).length;
@@ -1123,127 +1285,12 @@
             if (totalTasks === 0) container.innerHTML = '<div class="col-span-2 text-center text-gray-400 py-10">데이터가 부족합니다. 업무를 추가해주세요.</div>';
         }
 
-        // --- 시간 퀵 버튼 ---
-        function setStartTimeToNow() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('task-start').value = `${h}:${m}`;
-            document.getElementById('task-end').value = ''; 
-        }
-
-        function addTimeToEnd(mins) {
-            const startVal = document.getElementById('task-start').value;
-            if (!startVal) {
-                setStartTimeToNow();
-                setTimeout(() => addTimeToEnd(mins), 50);
-                return;
-            }
-            const [h, m] = startVal.split(':').map(Number);
-            const end = new Date();
-            end.setHours(h, m + mins, 0, 0);
-            
-            const eh = String(end.getHours()).padStart(2, '0');
-            const em = String(end.getMinutes()).padStart(2, '0');
-            document.getElementById('task-end').value = `${eh}:${em}`;
-        }
-
-        // --- CRUD ---
         function renderCategoryDropdown() {
             const selector = document.getElementById('task-category');
             selector.innerHTML = '';
             for (const [key, cat] of Object.entries(categories)) {
                 selector.innerHTML += `<option value="${key}">${cat.name}</option>`;
             }
-        }
-
-        function openTaskModal() {
-            if(!currentUser) {
-                showCustomAlert('로그인 필요', '로그인을 하셔야 일정을 저장할 수 있습니다.', 'error');
-                return;
-            }
-            document.getElementById('add-task-form').reset();
-            document.getElementById('edit-task-id').value = '';
-            document.getElementById('task-modal-title').textContent = '새 업무 기록하기';
-            document.getElementById('task-date').value = formatDateString(selectedDate);
-            
-            renderCategoryDropdown();
-            document.getElementById('task-modal').classList.remove('hidden');
-        }
-        
-        function closeTaskModal() { document.getElementById('task-modal').classList.add('hidden'); }
-
-        function editTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if(!task) return;
-            document.getElementById('edit-task-id').value = task.id;
-            document.getElementById('task-modal-title').textContent = '업무 수정하기';
-            document.getElementById('task-date').value = task.date;
-            document.getElementById('task-title').value = task.title;
-            document.getElementById('task-start').value = task.startTime;
-            document.getElementById('task-end').value = task.endTime;
-            
-            renderCategoryDropdown();
-            document.getElementById('task-category').value = task.category;
-            
-            document.getElementById('task-modal').classList.remove('hidden');
-        }
-
-        async function handleTaskFormSubmit(e) {
-            e.preventDefault();
-            if(!currentUser) return;
-
-            document.getElementById('task-submit-text').classList.add('hidden');
-            document.getElementById('task-submit-loader').classList.remove('hidden');
-
-            const id = document.getElementById('edit-task-id').value;
-            const taskData = {
-                title: document.getElementById('task-title').value,
-                date: document.getElementById('task-date').value,
-                startTime: document.getElementById('task-start').value,
-                endTime: document.getElementById('task-end').value,
-                category: document.getElementById('task-category').value,
-            };
-
-            const docId = id ? id : Date.now().toString();
-
-            try {
-                const taskRef = db.collection('daily_work').doc(currentUser.uid).collection('daily').doc(docId);
-                if (id) await taskRef.set(taskData, { merge: true });
-                else await taskRef.set({ id: docId, completed: false, ...taskData });
-                
-                selectDay(taskData.date); 
-                closeTaskModal();
-            } catch (err) {
-                console.error("Task 저장 에러", err);
-                showCustomAlert('저장 에러', '보안 규칙 또는 서버 연결을 확인해주세요.', 'error');
-            } finally {
-                document.getElementById('task-submit-text').classList.remove('hidden');
-                document.getElementById('task-submit-loader').classList.add('hidden');
-            }
-        }
-
-        async function toggleTask(id) {
-            if(!currentUser) return;
-            const task = tasks.find(t => t.id === id);
-            if(task) {
-                await db.collection('daily_work').doc(currentUser.uid).collection('daily').doc(id.toString()).set({ completed: !task.completed }, { merge: true });
-            }
-        }
-
-        // --- 카테고리 관리 ---
-        function openCategoryManager() {
-            if(!currentUser) {
-                showCustomAlert('접근 불가', '로그인이 필요합니다.', 'error');
-                return;
-            }
-            renderCategoryManagerList();
-            resetCategoryForm();
-            document.getElementById('category-modal').classList.remove('hidden');
-        }
-        function closeCategoryManager() {
-            document.getElementById('category-modal').classList.add('hidden');
-            renderCategoryDropdown();
         }
 
         function renderCategoryManagerList() {
@@ -1258,63 +1305,24 @@
                             <span class="font-bold text-gray-700 text-sm">${cat.name}</span>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="editCategory('${key}')" class="text-gray-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen text-sm"></i></button>
-                            <button onclick="promptDelete('category', '${key}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                            <button onclick="window.editCategory('${key}')" class="text-gray-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen text-sm"></i></button>
+                            <button onclick="window.promptDelete('category', '${key}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
                         </div>
                     </div>
                 `;
             }
         }
 
-        function resetCategoryForm() {
-            document.getElementById('category-form').reset();
-            document.getElementById('edit-cat-id').value = '';
-            document.getElementById('category-form-title').textContent = '새 분류 추가';
-            document.getElementById('cat-submit-btn').textContent = '추가하기';
-            document.getElementById('cat-cancel-btn').classList.add('hidden');
-            const firstColorBtn = document.getElementById('color-picker').firstChild;
-            if(firstColorBtn) selectColor(firstColorBtn, Object.keys(colorPalette)[0]);
-        }
-
-        function editCategory(key) {
-            const cat = categories[key];
-            if(!cat) return;
-            document.getElementById('edit-cat-id').value = key;
-            document.getElementById('cat-name').value = cat.name;
-            document.getElementById('category-form-title').textContent = '분류 수정하기';
-            document.getElementById('cat-submit-btn').textContent = '수정 완료';
-            document.getElementById('cat-cancel-btn').classList.remove('hidden');
-            
-            const colorIndex = Object.keys(colorPalette).indexOf(cat.colorBase);
-            if(colorIndex > -1) selectColor(document.getElementById('color-picker').children[colorIndex], cat.colorBase);
-        }
-
-        async function handleCategoryFormSubmit(e) {
-            e.preventDefault();
-            if(!currentUser) return;
-
-            document.getElementById('cat-submit-text').classList.add('hidden');
-            document.getElementById('cat-submit-loader').classList.remove('hidden');
-
-            const id = document.getElementById('edit-cat-id').value;
-            const name = document.getElementById('cat-name').value;
-            const colorBase = document.getElementById('cat-color').value;
-            const icons = ['fa-tag', 'fa-bookmark', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-check'];
-            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
-
-            const docId = id ? id : 'cat_' + Date.now();
-            const catRef = db.collection('daily_work').doc(currentUser.uid).collection('categories').doc(docId);
-
-            try {
-                if (id) await catRef.set({ name, colorBase }, { merge: true });
-                else await catRef.set({ id: docId, name, colorBase, icon: randomIcon });
-                
-                resetCategoryForm();
-            } catch (err) {
-                console.error("카테고리 저장 에러", err);
-            } finally {
-                document.getElementById('cat-submit-text').classList.remove('hidden');
-                document.getElementById('cat-submit-loader').classList.add('hidden');
+        function initColorPicker() {
+            const container = document.getElementById('color-picker');
+            container.innerHTML = '';
+            for (const [key, val] of Object.entries(colorPalette)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `w-6 h-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform hover:scale-110`;
+                btn.style.backgroundColor = val.hex;
+                btn.onclick = () => window.selectColor(btn, key);
+                container.appendChild(btn);
             }
         }
     </script>
