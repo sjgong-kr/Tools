@@ -37,8 +37,8 @@
 </head>
 <body class="h-screen flex overflow-hidden text-gray-800 relative">
 
-    <!-- 로그인 오버레이 화면 (가장 위에 덮임) -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-50 z-[100] flex flex-col items-center justify-center hidden">
+    <!-- 로그인 오버레이 화면 (가장 위에 덮임 - hidden 클래스 제거됨) -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-50 z-[100] flex flex-col items-center justify-center">
         <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-gray-100 animate-fade-in-up">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5 shadow-inner">
                 <i class="fa-solid fa-pen-nib"></i>
@@ -546,8 +546,15 @@
                 db = getFirestore(app);
 
                 // 로그인 상태 감지 리스너
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
+                        // [버그 수정 핵심]: 브라우저에 이전에 테스트했던 "익명" 접속 기록이 남아있다면 
+                        // 강제로 로그아웃 시켜서 이메일 로그인 창을 띄우게 만듭니다.
+                        if (user.isAnonymous) {
+                            await signOut(auth);
+                            return; 
+                        }
+
                         currentUser = user;
                         // 로그인 성공 시 로그인 화면 숨기기
                         document.getElementById('login-screen').classList.add('hidden');
@@ -557,9 +564,10 @@
                         setupFirestoreListeners();
                     } else {
                         currentUser = null;
-                        // 로그인 안 되어있으면 화면 덮기
+                        // 로그인 안 되어있으면 화면 덮기 (hidden 제거)
                         document.getElementById('login-screen').classList.remove('hidden');
                         document.getElementById('sync-status').classList.replace('bg-green-500', 'bg-red-500');
+                        document.getElementById('sync-status').classList.replace('bg-gray-300', 'bg-red-500');
                         document.getElementById('sync-text').textContent = '로그아웃 됨';
                         if(tasksUnsub) tasksUnsub();
                         if(catsUnsub) catsUnsub();
@@ -616,11 +624,11 @@
             }
         };
 
-        // --- 4. Firestore 실시간 리스너 연결 (새로운 컬렉션 경로 반영) ---
+        // --- 4. Firestore 실시간 리스너 연결 ---
         function setupFirestoreListeners() {
             if (!currentUser) return;
 
-            // [수정사항] daily_work -> uid -> daily 경로로 이관
+            // daily_work -> uid -> daily 경로
             const tasksRef = collection(db, 'daily_work', currentUser.uid, 'daily');
             tasksUnsub = onSnapshot(tasksRef, (snapshot) => {
                 tasks = snapshot.docs.map(doc => doc.data());
@@ -629,7 +637,7 @@
                 console.error("Task 로드 에러:", error);
             });
 
-            // [수정사항] daily_work -> uid -> categories 경로로 이관
+            // daily_work -> uid -> categories 경로
             const catsRef = collection(db, 'daily_work', currentUser.uid, 'categories');
             catsUnsub = onSnapshot(catsRef, (snapshot) => {
                 if (snapshot.empty && Object.keys(categories).length === 0) {
@@ -1251,7 +1259,7 @@
             };
 
             const docId = id ? id : Date.now().toString();
-            // [수정사항] 새로운 daily_work 경로 적용
+            // 새로운 daily_work 경로 적용
             const taskRef = doc(db, 'daily_work', currentUser.uid, 'daily', docId);
 
             try {
@@ -1275,7 +1283,7 @@
             if(!currentUser) return;
             const task = tasks.find(t => t.id === id);
             if(task) {
-                // [수정사항] 새로운 daily_work 경로 적용
+                // 새로운 daily_work 경로 적용
                 const taskRef = doc(db, 'daily_work', currentUser.uid, 'daily', id.toString());
                 await setDoc(taskRef, { completed: !task.completed }, { merge: true });
             }
