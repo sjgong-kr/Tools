@@ -46,7 +46,6 @@
             <h2 class="text-2xl font-extrabold text-center text-gray-800 mb-1">Studio 로그</h2>
             <p class="text-center text-sm text-gray-500 mb-8 font-medium">웹툰 작가님의 일일 업무 관리</p>
             
-            <!-- 새로고침 버그 방지를 위해 onsubmit 직접 할당 -->
             <form id="login-form" class="space-y-5" onsubmit="window.handleLoginSubmit(event)">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">이메일 계정</label>
@@ -510,11 +509,10 @@
         let pickingWeekYear = new Date().getFullYear();
         let currentView = 'dashboard';
         
-        let categories = {}; // 오직 Firebase에서만 받아옴
-        let tasks = [];      // 오직 Firebase에서만 받아옴
+        let categories = {};
+        let tasks = [];
         let publicHolidaysCache = {}; 
         
-        // Firebase 상태
         let db;
         let auth;
         let currentUser = null;
@@ -522,13 +520,12 @@
         let catsUnsub = null;
         let pendingConfirmAction = null; 
 
-        // --- 3. 초기화 및 이메일 로그인 연동 ---
+        // --- 🔥 3. 즉시 실행 초기화 (DOM 대기 제거로 버그 완벽 차단) ---
         async function initApp() {
             initColorPicker();
             updateAllUI(); 
             
             try {
-                // 작가님의 Firebase 환경 설정
                 const firebaseConfig = {
                     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
                     authDomain: "openzeroc.firebaseapp.com",
@@ -539,21 +536,17 @@
                     measurementId: "G-M4K79K2XPG"
                 };
                 
-                // 중복 초기화 방지 및 안전한 연결
                 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
                 try { getAnalytics(app); } catch(e) {} 
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // 로그인 상태 감지 리스너
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // 이전에 접속했던 임시 익명계정이 남아있다면 강제 로그아웃 (새로고침 버그 방지)
                         if (user.isAnonymous) {
                             await signOut(auth);
                             return; 
                         }
-
                         currentUser = user;
                         document.getElementById('login-screen').classList.add('hidden');
                         document.getElementById('sync-status').classList.replace('bg-gray-300', 'bg-green-500');
@@ -587,14 +580,14 @@
             updateAllUI();
         }
 
-        // 🚨 버그 해결의 핵심: DOM 로드 상태를 확인하여 초기화 코드가 무조건 실행되게 보장
+        // 스크립트가 로딩되자마자 실행 보장
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initApp);
         } else {
             initApp();
         }
 
-        // --- 이메일 로그인 & 로그아웃 함수 (onsubmit 직접 할당) ---
+        // --- 로그인 & 로그아웃 ---
         window.handleLoginSubmit = async function(e) {
             e.preventDefault(); 
             const email = document.getElementById('login-email').value;
@@ -603,9 +596,8 @@
             const btnText = document.getElementById('login-btn-text');
             const loader = document.getElementById('login-loader');
 
-            // 서버 세팅이 완료되지 않았을 때의 방어 코드
             if (!auth) {
-                errorEl.textContent = '서버 연결을 준비 중입니다. 잠시 후 다시 시도하거나 새로고침 해주세요.';
+                errorEl.textContent = '서버 통신을 준비하는 중입니다. (새로고침 후 다시 시도해주세요)';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -627,7 +619,6 @@
                 }
                 errorEl.textContent = errorMsg;
                 errorEl.classList.remove('hidden');
-                console.error("Login Error:", error);
             } finally {
                 btnText.classList.remove('hidden');
                 loader.classList.add('hidden');
