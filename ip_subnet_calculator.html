@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP 서브넷 계산기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 IP 서브넷 계산기</h1>
+        
+        <div class="input-group">
+            <div class="input-wrapper">
+                <label for="ipAddress">IP 주소</label>
+                <input type="text" id="ipAddress" placeholder="예: 100.100.100.35" value="100.100.100.35">
+            </div>
+            <div class="input-wrapper" style="max-width: 120px;">
+                <label for="cidr">CIDR</label>
+                <input type="number" id="cidr" placeholder="27" min="0" max="32" value="27">
+            </div>
+        </div>
+
+        <button onclick="calculate()">계산하기</button>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-item">
+                <span class="result-label">IP/CIDR:</span>
+                <span class="result-value" id="ipCidr"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Subnet Mask:</span>
+                <span class="result-value" id="subnetMask"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Network Address:</span>
+                <span class="result-value" id="networkAddress"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Broadcast:</span>
+                <span class="result-value" id="broadcast"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Address Range:</span>
+                <span class="result-value" id="addressRange"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Maximum Hosts:</span>
+                <span class="result-value" id="maxHosts"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Wildcard Mask:</span>
+                <span class="result-value" id="wildcardMask"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const ipInput = document.getElementById('ipAddress').value.trim();
+            const cidrInput = parseInt(document.getElementById('cidr').value);
+            const errorDiv = document.getElementById('error');
+            const resultDiv = document.getElementById('result');
+
+            errorDiv.classList.remove('show');
+            resultDiv.classList.remove('show');
+
+            // 입력 검증
+            if (!ipInput || isNaN(cidrInput)) {
+                showError('IP 주소와 CIDR 값을 입력해주세요.');
+                return;
+            }
+
+            if (cidrInput < 0 || cidrInput > 32) {
+                showError('CIDR 값은 0에서 32 사이여야 합니다.');
+                return;
+            }
+
+            const ipParts = ipInput.split('.');
+            if (ipParts.length !== 4) {
+                showError('올바른 IP 주소 형식이 아닙니다.');
+                return;
+            }
+
+            for (let part of ipParts) {
+                const num = parseInt(part);
+                if (isNaN(num) || num < 0 || num > 255) {
+                    showError('IP 주소의 각 옥텟은 0에서 255 사이여야 합니다.');
+                    return;
+                }
+            }
+
+            // IP를 32비트 정수로 변환
+            const ipInt = ipParts.reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+
+            // 서브넷 마스크 계산
+            const subnetMaskInt = (0xFFFFFFFF << (32 - cidrInput)) >>> 0;
+            const subnetMask = intToIp(subnetMaskInt);
+
+            // 네트워크 주소 계산
+            const networkInt = (ipInt & subnetMaskInt) >>> 0;
+            const networkAddress = intToIp(networkInt);
+
+            // 브로드캐스트 주소 계산
+            const wildcardMaskInt = (~subnetMaskInt) >>> 0;
+            const broadcastInt = (networkInt | wildcardMaskInt) >>> 0;
+            const broadcast = intToIp(broadcastInt);
+
+            // 사용 가능한 주소 범위
+            const firstHostInt = networkInt + 1;
+            const lastHostInt = broadcastInt - 1;
+            const firstHost = intToIp(firstHostInt);
+            const lastHost = intToIp(lastHostInt);
+
+            // 최대 호스트 수
+            const maxHosts = Math.pow(2, 32 - cidrInput) - 2;
+
+            // 와일드카드 마스크
+            const wildcardMask = intToIp(wildcardMaskInt);
+
+            // 결과 표시
+            document.getElementById('ipCidr').textContent = `${ipInput}/${cidrInput}`;
+            document.getElementById('subnetMask').textContent = subnetMask;
+            document.getElementById('networkAddress').textContent = networkAddress;
+            document.getElementById('broadcast').textContent = broadcast;
+            document.getElementById('addressRange').textContent = `${firstHost} - ${lastHost}`;
+            document.getElementById('maxHosts').textContent = maxHosts;
+            document.getElementById('wildcardMask').textContent = wildcardMask;
+
+            resultDiv.classList.add('show');
+        }
+
+        function intToIp(int) {
+            return [
+                (int >>> 24) & 0xFF,
+                (int >>> 16) & 0xFF,
+                (int >>> 8) & 0xFF,
+                int & 0xFF
+            ].join('.');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        // Enter 키로 계산 실행
+        document.getElementById('ipAddress').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculate();
+        });
+        document.getElementById('cidr').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculate();
+        });
+
+        // 페이지 로드 시 자동 계산
+        window.onload = function() {
+            calculate();
+        };
+    </script>
+</body>
+</html>
