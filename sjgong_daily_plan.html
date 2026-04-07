@@ -525,6 +525,12 @@
 
         // --- 3. 초기화 및 이메일 로그인 연동 ---
         document.addEventListener('DOMContentLoaded', async () => {
+            // 🚨 버그 수정 핵심: 외부 API(휴일 정보 등) 로딩(await) 때문에 이벤트 연결이 지연되어 
+            // 로그인 버튼을 누르면 페이지가 새로고침되는 버그를 막기 위해 리스너를 최상단으로 올립니다.
+            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+            document.getElementById('add-task-form').addEventListener('submit', handleTaskFormSubmit);
+            document.getElementById('category-form').addEventListener('submit', handleCategoryFormSubmit);
+
             initColorPicker();
             updateAllUI(); // 빈 상태로 렌더링
             
@@ -583,11 +589,6 @@
 
             await fetchKoreanHolidays(currentDate.getFullYear());
             updateAllUI();
-
-            // 폼 리스너 설정
-            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-            document.getElementById('add-task-form').addEventListener('submit', handleTaskFormSubmit);
-            document.getElementById('category-form').addEventListener('submit', handleCategoryFormSubmit);
         });
 
         // --- 이메일 로그인 & 로그아웃 함수 ---
@@ -607,7 +608,16 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 // 로그인 성공 시 onAuthStateChanged 가 트리거되어 화면이 전환됨
             } catch (error) {
-                errorEl.textContent = '로그인 실패: 이메일이나 비밀번호를 다시 확인해주세요.';
+                // 에러 메시지 세분화 (사용자에게 원인 명확히 안내)
+                let errorMsg = '로그인 실패: 다시 시도해주세요.';
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    errorMsg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMsg = '시도 횟수가 너무 많습니다. 잠시 후 다시 시도해주세요.';
+                } else {
+                    errorMsg = '에러: ' + error.message;
+                }
+                errorEl.textContent = errorMsg;
                 errorEl.classList.remove('hidden');
                 console.error("Login Error:", error);
             } finally {
