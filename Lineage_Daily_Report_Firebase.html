@@ -435,7 +435,7 @@
 
     <!-- Firebase SDK (ES Modules) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -523,7 +523,7 @@
         let pendingConfirmAction = null; 
 
         // --- 3. 초기화 및 이메일 로그인 연동 ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function initApp() {
             initColorPicker();
             updateAllUI(); 
             
@@ -539,7 +539,8 @@
                     measurementId: "G-M4K79K2XPG"
                 };
                 
-                const app = initializeApp(firebaseConfig);
+                // 중복 초기화 방지 및 안전한 연결
+                const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
                 try { getAnalytics(app); } catch(e) {} 
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -575,11 +576,23 @@
                 });
             } catch (err) {
                 console.error("Firebase 초기화 에러:", err);
+                const errorEl = document.getElementById('login-error');
+                if (errorEl) {
+                    errorEl.textContent = '서버 연결 초기화에 실패했습니다. 페이지를 새로고침 해주세요.';
+                    errorEl.classList.remove('hidden');
+                }
             }
 
             await fetchKoreanHolidays(currentDate.getFullYear());
             updateAllUI();
-        });
+        }
+
+        // 🚨 버그 해결의 핵심: DOM 로드 상태를 확인하여 초기화 코드가 무조건 실행되게 보장
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
 
         // --- 이메일 로그인 & 로그아웃 함수 (onsubmit 직접 할당) ---
         window.handleLoginSubmit = async function(e) {
@@ -589,6 +602,13 @@
             const errorEl = document.getElementById('login-error');
             const btnText = document.getElementById('login-btn-text');
             const loader = document.getElementById('login-loader');
+
+            // 서버 세팅이 완료되지 않았을 때의 방어 코드
+            if (!auth) {
+                errorEl.textContent = '서버 연결을 준비 중입니다. 잠시 후 다시 시도하거나 새로고침 해주세요.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
 
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
