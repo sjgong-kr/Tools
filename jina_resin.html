@@ -332,20 +332,32 @@
         <!-- [탭 5] 통계 분석 -->
         <div id="tab-stats" class="tab-content hidden space-y-12 pb-20">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
-                    <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
-                        <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
-                    </h2>
+                <div class="bg-white p-8 sm:p-10 rounded-[3rem] shadow-xl border border-slate-100">
+                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4 mb-8">
+                        <h2 class="text-2xl font-black flex items-center gap-3">
+                            <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
+                        </h2>
+                        <div class="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100 text-right shrink-0">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                            <p id="stats-total-channel" class="text-2xl font-black text-indigo-600">0원</p>
+                        </div>
+                    </div>
                     <div id="stats-empty-state" class="text-center py-20 text-slate-300">
                         <i class="fas fa-chart-pie text-6xl mb-4 opacity-30"></i>
                         <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
                     </div>
                     <div id="stats-container" class="space-y-8"></div>
                 </div>
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
-                    <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
-                        <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
-                    </h2>
+                <div class="bg-white p-8 sm:p-10 rounded-[3rem] shadow-xl border border-slate-100">
+                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4 mb-8">
+                        <h2 class="text-2xl font-black flex items-center gap-3">
+                            <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
+                        </h2>
+                        <div class="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100 text-right shrink-0">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                            <p id="stats-total-product" class="text-2xl font-black text-pink-600">0원</p>
+                        </div>
+                    </div>
                     <div id="product-stats-empty-state" class="text-center py-20 text-slate-300">
                         <i class="fas fa-chart-bar text-6xl mb-4 opacity-30"></i>
                         <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
@@ -353,10 +365,16 @@
                     <div id="product-stats-container" class="space-y-8"></div>
                 </div>
             </div>
-            <div class="bg-slate-950 p-10 rounded-[3rem] shadow-2xl text-white">
-                <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
-                    <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
-                </h2>
+            <div class="bg-slate-950 p-8 sm:p-10 rounded-[3rem] shadow-2xl text-white">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+                    <h2 class="text-2xl font-black flex items-center gap-3">
+                        <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
+                    </h2>
+                    <div class="bg-white/10 px-5 py-3 rounded-2xl border border-white/10 text-right shrink-0">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Spending</p>
+                        <p id="stats-total-vendor" class="text-2xl font-black text-white">0원</p>
+                    </div>
+                </div>
                 <div id="vendor-stats-empty-state" class="text-center py-20 text-slate-500">
                     <i class="fas fa-boxes text-6xl mb-4 opacity-30"></i>
                     <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
@@ -588,6 +606,14 @@
                 document.getElementById('dash-income').innerText = formatMoney(inc);
                 document.getElementById('dash-expense').innerText = formatMoney(exp);
                 document.getElementById('dash-net').innerText = formatMoney(inc - exp);
+
+                // 🌟 추가: 통계 탭의 Total 금액 업데이트 로직
+                const elTotalChan = document.getElementById('stats-total-channel');
+                if (elTotalChan) elTotalChan.innerText = formatMoney(inc);
+                const elTotalProd = document.getElementById('stats-total-product');
+                if (elTotalProd) elTotalProd.innerText = formatMoney(inc);
+                const elTotalVen = document.getElementById('stats-total-vendor');
+                if (elTotalVen) elTotalVen.innerText = formatMoney(exp);
 
                 renderStatUI(cS, inc, 'stats-container', 'stats-empty-state', 'bg-gradient-to-r from-blue-400 to-indigo-600');
                 renderStatUI(pS, inc, 'product-stats-container', 'product-stats-empty-state', 'bg-gradient-to-r from-pink-400 to-purple-600');
