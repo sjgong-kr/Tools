@@ -209,16 +209,16 @@
                             <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
                             
                             <div class="flex items-center gap-3 flex-wrap">
-                                <!-- 🌟 추가: 엑셀 다운로드 버튼 -->
+                                <!-- 🌟 엑셀 다운로드 버튼 -->
                                 <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-[1.2rem] font-black text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
                                     <i class="fas fa-file-excel text-lg"></i> 엑셀 다운로드
                                 </button>
                                 
-                                <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-[1.2rem] border border-slate-100">
-                                    <input type="date" id="filter-start" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
+                                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-[1.2rem] border border-slate-100">
+                                    <input type="date" id="filter-start" class="bg-transparent border-none text-sm font-black text-slate-700 focus:ring-0 w-36">
                                     <span class="text-slate-300 font-black">~</span>
-                                    <input type="date" id="filter-end" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
-                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-10 h-10 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md">
+                                    <input type="date" id="filter-end" class="bg-transparent border-none text-sm font-black text-slate-700 focus:ring-0 w-36">
+                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-11 h-11 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
@@ -547,15 +547,15 @@
                             <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-xl">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
-                            <div class="space-y-1.5">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-slate-50 px-2 py-0.5 rounded-md">${x.type==='income'?'판매':'지출'}</span>
+                            <div>
+                                <div class="flex items-center gap-2 mb-2.5">
+                                    <span class="text-[11px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg">${x.type==='income'?'판매':'지출'}</span>
                                     <h4 class="font-black text-slate-900 text-lg">${x.name}</h4>
                                 </div>
-                                <div class="flex items-center gap-3 text-sm text-slate-600 font-bold">
-                                    <span class="text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
-                                    <span class="bg-slate-50 border border-slate-100 text-slate-500 px-2 py-1 rounded-lg text-xs"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span class="bg-slate-50 border border-slate-100 text-slate-500 px-2 py-1 rounded-lg text-xs"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-sm font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
+                                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-sm"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-sm"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -754,54 +754,103 @@
 
             const wb = XLSX.utils.book_new();
 
-            // 1. 거래 내역 시트
+            // --- 1. 거래 내역 시트 (고급 포맷) ---
             if (filtered.length > 0) {
                 // 날짜 오름차순(과거->최신)으로 정렬
                 filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
 
-                const excelData = filtered.map(x => ({
-                    '거래일자': x.date || '',
-                    '구분': x.type === 'income' ? '판매 수익' : '재료 지출',
-                    '항목명 (제품/재료)': x.name || '',
-                    '단가': x.unitPrice || 0,
-                    '수량': x.quantity || 1,
-                    '총금액': x.amount || 0,
-                    '관련처 (판매처/구매처)': x.channel || x.vendor || '',
-                    '메모': x.memo || ''
-                }));
+                let totalInc = 0;
+                let totalExp = 0;
 
-                const wsEntries = XLSX.utils.json_to_sheet(excelData);
-                // 엑셀 열(Column) 너비 깔끔하게 지정
-                wsEntries['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 35 }, { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 25 }, { wch: 40 }];
+                // 셀 배열 생성 (제목, 공백, 헤더)
+                const aoa = [
+                    [`📊 JINA ART 거래 내역 (${s || '전체'} ~ ${e || '현재'})`],
+                    [], 
+                    ['거래일자', '구분', '항목명 (제품/재료)', '단가', '수량', '총금액', '관련처', '메모']
+                ];
+
+                filtered.forEach(x => {
+                    const amt = Number(x.amount) || 0;
+                    const price = Number(x.unitPrice) || 0;
+                    if(x.type === 'income') totalInc += amt;
+                    else totalExp += amt;
+
+                    aoa.push([
+                        x.date || '',
+                        x.type === 'income' ? '🔵 판매 수익' : '🔴 재료 지출',
+                        x.name || '',
+                        price,
+                        Number(x.quantity) || 1,
+                        amt,
+                        x.channel || x.vendor || '',
+                        x.memo || ''
+                    ]);
+                });
+
+                // 하단 합계 요약 섹션 추가
+                aoa.push([]); // 빈 줄
+                aoa.push(['', '', '', '', '🔵 총 판매 수익:', totalInc, '', '']);
+                aoa.push(['', '', '', '', '🔴 총 재료 지출:', totalExp, '', '']);
+                aoa.push(['', '', '', '', '✨ 순수익:', totalInc - totalExp, '', '']);
+
+                const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
+
+                // 1행 타이틀 칸 병합
+                wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+
+                // 숫자 서식 지정 (통화 및 수량 포맷)
+                const range = XLSX.utils.decode_range(wsEntries['!ref']);
+                for (let R = 3; R <= range.e.r; ++R) {
+                    for (let C = 3; C <= 5; ++C) { // 단가(D), 수량(E), 총금액(F)
+                        const cell = wsEntries[XLSX.utils.encode_cell({c: C, r: R})];
+                        if (cell && typeof cell.v === 'number') {
+                            if (C === 4) cell.z = '#,##0"개"';
+                            else cell.z = '"₩"#,##0';
+                        }
+                    }
+                }
+
+                // 열 너비 지정
+                wsEntries['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 10 }, { wch: 18 }, { wch: 25 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
-            // 2. 등록 제품 시트
+            // --- 2. 등록 제품 시트 ---
             if (allProducts.length > 0) {
-                const productData = allProducts.map(p => ({
-                    '제품코드': p.code || '',
-                    '제품명': p.name || '',
-                    '기본 단가 (원)': p.price || 0
-                }));
-                const wsProducts = XLSX.utils.json_to_sheet(productData);
+                const aoa = [['💎 JINA ART 등록 제품 목록'], [], ['제품코드', '제품명', '기본 단가']];
+                allProducts.forEach(p => aoa.push([p.code || '', p.name || '', Number(p.price) || 0]));
+                
+                const wsProducts = XLSX.utils.aoa_to_sheet(aoa);
+                wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+                
+                const range = XLSX.utils.decode_range(wsProducts['!ref']);
+                for (let R = 3; R <= range.e.r; ++R) {
+                    const cell = wsProducts[XLSX.utils.encode_cell({c: 2, r: R})];
+                    if (cell && typeof cell.v === 'number') cell.z = '"₩"#,##0';
+                }
+                
                 wsProducts['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
-                XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
+                XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품");
             }
 
-            // 3. 판매처 시트
+            // --- 3. 판매처 시트 ---
             if (allChannels.length > 0) {
-                const channelData = allChannels.map(c => ({ '판매처명': c.name || '' }));
-                const wsChannels = XLSX.utils.json_to_sheet(channelData);
+                const aoa = [['🏪 등록된 판매처 목록'], [], ['판매처명']];
+                allChannels.forEach(c => aoa.push([c.name || '']));
+                const wsChannels = XLSX.utils.aoa_to_sheet(aoa);
+                wsChannels['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 0 } }];
                 wsChannels['!cols'] = [{ wch: 30 }];
-                XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
+                XLSX.utils.book_append_sheet(wb, wsChannels, "판매처");
             }
 
-            // 4. 구매처 시트
+            // --- 4. 구매처 시트 ---
             if (allVendors.length > 0) {
-                const vendorData = allVendors.map(v => ({ '구매처명': v.name || '' }));
-                const wsVendors = XLSX.utils.json_to_sheet(vendorData);
+                const aoa = [['🛒 등록된 구매처 목록'], [], ['구매처명']];
+                allVendors.forEach(v => aoa.push([v.name || '']));
+                const wsVendors = XLSX.utils.aoa_to_sheet(aoa);
+                wsVendors['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 0 } }];
                 wsVendors['!cols'] = [{ wch: 30 }];
-                XLSX.utils.book_append_sheet(wb, wsVendors, "구매처_목록");
+                XLSX.utils.book_append_sheet(wb, wsVendors, "구매처");
             }
 
             // 파일명에 오늘 날짜 추가
