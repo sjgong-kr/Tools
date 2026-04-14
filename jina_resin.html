@@ -54,7 +54,7 @@
         <p class="text-slate-500 font-bold text-xl tracking-tight">데이터 동기화 중...</p>
     </div>
 
-    <!-- 범용 모달 (알림/삭제확인) -->
+    <!-- 범용 모달 -->
     <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
             <div id="modal-icon" class="text-purple-500 text-6xl mb-6"><i class="fas fa-check-circle"></i></div>
@@ -73,7 +73,7 @@
             </h2>
             <form id="edit-form" class="space-y-5">
                 <div id="edit-fields-container" class="space-y-4">
-                    <!-- 필드가 동적으로 생성됨 -->
+                    <!-- 필드 동적 생성 -->
                 </div>
                 <div class="flex gap-3 pt-4">
                     <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black py-4 rounded-2xl transition-all">취소</button>
@@ -86,7 +86,6 @@
     <!-- 메인 대시보드 -->
     <div id="app-container" class="hidden max-w-7xl mx-auto p-4 md:p-8">
         
-        <!-- 헤더 섹션 -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-8 rounded-[2.5rem] shadow-xl border border-white/50 glass-card">
             <div class="flex items-center gap-6">
                 <div class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-5 rounded-[1.8rem] text-white shadow-2xl rotate-3">
@@ -100,16 +99,13 @@
                 </div>
             </div>
             <div class="mt-6 md:mt-0 flex items-center gap-4">
-                <div class="px-6 py-3 bg-slate-900 text-white rounded-[1.2rem] text-sm font-black shadow-lg">
-                    jina 님
-                </div>
+                <div class="px-6 py-3 bg-slate-900 text-white rounded-[1.2rem] text-sm font-black shadow-lg">jina 님</div>
                 <button onclick="handleLogout()" class="w-12 h-12 flex items-center justify-center bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-[1.2rem] transition-all group" title="로그아웃">
                     <i class="fas fa-power-off group-hover:rotate-180 transition-all duration-500"></i>
                 </button>
             </div>
         </header>
 
-        <!-- 모바일 친화적 네비게이션 -->
         <nav class="flex gap-6 mb-10 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar font-black text-lg tracking-tight">
             <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="pb-4 px-2 whitespace-nowrap tab-active transition-all">내역 관리</button>
             <button onclick="switchTab('products')" id="tab-btn-products" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">제품 관리</button>
@@ -120,7 +116,6 @@
 
         <!-- [탭 1] 내역 관리 -->
         <div id="tab-dashboard" class="tab-content space-y-10">
-            <!-- 핵심 지표 카드 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border-l-[12px] border-blue-500 flex flex-col justify-between">
                     <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Total Revenue</p>
@@ -137,7 +132,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-10">
-                <!-- 입력 양식 -->
                 <div class="lg:col-span-2">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
                         <h2 class="text-2xl font-black mb-8 text-slate-900">새 거래 등록</h2>
@@ -200,7 +194,7 @@
                             </div>
 
                             <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-[1.5rem] transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3">
-                                <i class="fas fa-check"></i> 저장 완료하기
+                                <i class="fas fa-check"></i> 거래 저장하기
                             </button>
                         </form>
                     </div>
@@ -223,7 +217,8 @@
                         <div id="entries-container" class="space-y-5">
                             <div id="empty-state" class="text-center py-32 text-slate-300">
                                 <i class="fas fa-receipt text-7xl mb-6 opacity-20"></i>
-                                <p class="font-black text-xl">기록된 데이터가 없습니다.</p>
+                                <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
+                                <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
                             </div>
                         </div>
                     </div>
@@ -252,7 +247,7 @@
                             <table class="w-full text-left">
                                 <tbody id="products-table-body" class="divide-y divide-slate-50"></tbody>
                             </table>
-                            <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">제품을 등록해주세요.</div>
+                            <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 제품이 없습니다.</div>
                         </div>
                     </div>
                 </div>
@@ -275,7 +270,7 @@
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
                         <h2 class="text-xl font-black mb-8">전체 판매처</h2>
                         <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                        <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black">판매처가 없습니다.</div>
+                        <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 판매처가 없습니다.</div>
                     </div>
                 </div>
             </div>
@@ -297,7 +292,7 @@
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
                         <h2 class="text-xl font-black mb-8">전체 구매처</h2>
                         <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                        <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black">구매처가 없습니다.</div>
+                        <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 구매처가 없습니다.</div>
                     </div>
                 </div>
             </div>
@@ -312,7 +307,10 @@
                         <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
                     </h2>
                     <div id="stats-container" class="space-y-8"></div>
-                    <div id="stats-empty-state" class="text-center py-20 text-slate-300 font-black">데이터 부족</div>
+                    <div id="stats-empty-state" class="text-center py-20 text-slate-300">
+                        <i class="fas fa-chart-pie text-6xl mb-4 opacity-30"></i>
+                        <p class="font-black text-lg">해당 기간의 매출 내역이 없습니다.</p>
+                    </div>
                 </div>
                 <!-- 제품 통계 -->
                 <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
@@ -320,7 +318,10 @@
                         <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
                     </h2>
                     <div id="product-stats-container" class="space-y-8"></div>
-                    <div id="product-stats-empty-state" class="text-center py-20 text-slate-300 font-black">데이터 부족</div>
+                    <div id="product-stats-empty-state" class="text-center py-20 text-slate-300">
+                        <i class="fas fa-chart-bar text-6xl mb-4 opacity-30"></i>
+                        <p class="font-black text-lg">해당 기간의 매출 내역이 없습니다.</p>
+                    </div>
                 </div>
             </div>
             <!-- 구매처 통계 -->
@@ -329,7 +330,10 @@
                     <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
                 </h2>
                 <div id="vendor-stats-container" class="space-y-8"></div>
-                <div id="vendor-stats-empty-state" class="text-center py-20 text-slate-500 font-black">데이터 부족</div>
+                <div id="vendor-stats-empty-state" class="text-center py-20 text-slate-500">
+                    <i class="fas fa-boxes text-6xl mb-4 opacity-30"></i>
+                    <p class="font-black text-lg">해당 기간의 매입 내역이 없습니다.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -359,29 +363,19 @@
         let unsubs = [];
         let currentEditInfo = null;
 
-        const formatMoney = (n) => new Intl.NumberFormat('ko-KR').format(n) + '원';
+        const formatMoney = (n) => new Intl.NumberFormat('ko-KR').format(n || 0) + '원';
         
-        // 커스텀 모달 노출
         window.showModal = (msg, isConfirm = false, onConfirm = null) => {
             const modal = document.getElementById('custom-modal');
-            const text = document.getElementById('custom-modal-text');
-            const btnGroup = document.getElementById('modal-buttons');
-            const icon = document.getElementById('modal-icon');
-
-            text.innerText = msg;
+            document.getElementById('custom-modal-text').innerText = msg;
+            document.getElementById('modal-icon').innerHTML = isConfirm ? '<i class="fas fa-question-circle text-amber-500"></i>' : '<i class="fas fa-check-circle text-purple-500"></i>';
+            document.getElementById('modal-buttons').innerHTML = isConfirm ? 
+                `<button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black">취소</button>
+                 <button id="modal-real-btn" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-black shadow-lg">삭제</button>` : 
+                `<button onclick="closeModal()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black">확인</button>`;
+            
+            if(isConfirm) document.getElementById('modal-real-btn').onclick = () => { onConfirm(); closeModal(); };
             modal.classList.remove('hidden');
-
-            if (isConfirm) {
-                icon.innerHTML = '<i class="fas fa-question-circle text-amber-500"></i>';
-                btnGroup.innerHTML = `
-                    <button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black">취소</button>
-                    <button id="modal-real-btn" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-black shadow-lg">삭제</button>
-                `;
-                document.getElementById('modal-real-btn').onclick = () => { onConfirm(); closeModal(); };
-            } else {
-                icon.innerHTML = '<i class="fas fa-check-circle text-purple-500"></i>';
-                btnGroup.innerHTML = `<button onclick="closeModal()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black">확인</button>`;
-            }
         };
         window.closeModal = () => document.getElementById('custom-modal').classList.add('hidden');
 
@@ -405,12 +399,16 @@
             const pw = document.getElementById('login-pw').value;
             if (id === 'jina' && pw === 'jadu6486') {
                 document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-screen').classList.add('flex');
                 const email = `${id}@resin.app`;
                 try {
                     await signInWithEmailAndPassword(auth, email, pw);
                 } catch (err) {
-                    try { await createUserWithEmailAndPassword(auth, email, pw); } catch(ce) { showModal("서버 오류"); }
-                } finally { document.getElementById('loading-screen').classList.add('hidden'); }
+                    try { await createUserWithEmailAndPassword(auth, email, pw); } catch(ce) { showModal("서버 연결 실패"); }
+                } finally { 
+                    document.getElementById('loading-screen').classList.add('hidden'); 
+                    document.getElementById('loading-screen').classList.remove('flex');
+                }
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
             }
@@ -418,7 +416,7 @@
 
         window.handleLogout = () => { showModal("로그아웃 하시겠습니까?", true, () => signOut(auth)); };
 
-        // 데이터 구독
+        // 데이터 실시간 구독
         function subscribeData() {
             if (!currentUser) return;
             unsubs.forEach(u => u());
@@ -444,7 +442,7 @@
             ];
         }
 
-        // 타입 설정 (판매/지출)
+        // 타입 설정
         window.setType = (type) => {
             document.getElementById('input-type').value = type;
             const isInc = type === 'income';
@@ -473,30 +471,41 @@
             e.preventDefault();
             const type = document.getElementById('input-type').value;
             let name = (type === 'income') ? allProducts.find(x => x.id === document.getElementById('input-product').value)?.name : document.getElementById('input-expense-name').value;
-            if(!name) return showModal("항목을 선택/입력하세요.");
+            if(!name) return showModal("항목을 선택하거나 입력하세요.");
 
             try {
                 await addDoc(collection(db, 'jina_resin', currentUser.uid, 'entries'), {
-                    type, name, date: document.getElementById('input-date').value,
+                    type, name, 
+                    date: document.getElementById('input-date').value,
                     channel: document.getElementById('input-channel').value || null,
                     vendor: document.getElementById('input-vendor').value || null,
-                    unitPrice: Number(document.getElementById('input-unit-price').value),
-                    quantity: Number(document.getElementById('input-quantity').value),
-                    amount: Number(document.getElementById('input-amount').value),
+                    unitPrice: Number(document.getElementById('input-unit-price').value) || 0,
+                    quantity: Number(document.getElementById('input-quantity').value) || 1,
+                    amount: Number(document.getElementById('input-amount').value) || 0,
                     createdAt: Date.now()
                 });
-                document.getElementById('entry-form').reset();
-                document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+                
+                // 등록 성공시 일부 초기화
+                document.getElementById('input-unit-price').value = '';
+                document.getElementById('input-amount').value = '';
+                document.getElementById('input-expense-name').value = '';
+                document.getElementById('input-memo').value = '';
                 showModal("거래가 성공적으로 등록되었습니다.");
             } catch(e) { showModal("등록 실패"); }
         };
 
-        // 메인 리스트 및 통계 렌더링
+        // 메인 렌더링 (대시보드 + 통계)
         window.renderApp = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
-            let filtered = allEntries.filter(x => (!s || x.date >= s) && (!e || x.date <= e));
-            filtered.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+            
+            // 날짜 기반 안전한 필터링 (날짜 데이터가 없으면 일단 포함시킴)
+            let filtered = allEntries.filter(x => {
+                const isAfterStart = !s || !x.date || x.date >= s;
+                const isBeforeEnd = !e || !x.date || x.date <= e;
+                return isAfterStart && isBeforeEnd;
+            });
+            filtered.sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
 
             let inc = 0, exp = 0;
             const cS = {}, vS = {}, pS = {};
@@ -505,13 +514,16 @@
             container.innerHTML = '';
 
             filtered.forEach(x => {
+                // Number 강제 캐스팅으로 NaN 버그 원천 차단
+                const amt = Number(x.amount) || 0;
+                
                 if(x.type === 'income') { 
-                    inc += x.amount; 
-                    if(x.channel) cS[x.channel] = (cS[x.channel]||0) + x.amount;
-                    pS[x.name] = (pS[x.name]||0) + x.amount;
+                    inc += amt; 
+                    if(x.channel) cS[x.channel] = (cS[x.channel] || 0) + amt;
+                    if(x.name) pS[x.name] = (pS[x.name] || 0) + amt;
                 } else { 
-                    exp += x.amount; 
-                    if(x.vendor) vS[x.vendor] = (vS[x.vendor]||0) + x.amount;
+                    exp += amt; 
+                    if(x.vendor) vS[x.vendor] = (vS[x.vendor] || 0) + amt;
                 }
 
                 const div = document.createElement('div');
@@ -527,15 +539,15 @@
                                 <h4 class="font-black text-slate-900">${x.name}</h4>
                             </div>
                             <div class="flex items-center gap-3 text-[11px] text-slate-400 font-bold">
-                                <span><i class="far fa-calendar-alt mr-1"></i>${x.date}</span>
-                                <span><i class="fas fa-layer-group mr-1"></i>${x.quantity}개</span>
+                                <span><i class="far fa-calendar-alt mr-1"></i>${x.date || '날짜없음'}</span>
+                                <span><i class="fas fa-layer-group mr-1"></i>${x.quantity || 1}개</span>
                                 ${x.channel || x.vendor ? `<span><i class="fas fa-tag mr-1"></i>${x.channel || x.vendor}</span>` : ''}
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div class="text-right">
-                            <p class="text-lg font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(x.amount)}</p>
+                            <p class="text-lg font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
                             <p class="text-[10px] text-slate-300 font-bold">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                         </div>
                         <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-300 hover:text-rose-600 transition-all">
@@ -551,7 +563,7 @@
             document.getElementById('dash-expense').innerText = formatMoney(exp);
             document.getElementById('dash-net').innerText = formatMoney(inc - exp);
 
-            // 통계 그리기
+            // 통계 UI 렌더링
             renderStatUI(cS, inc, 'stats-container', 'stats-empty-state', 'bg-gradient-to-r from-blue-400 to-indigo-600');
             renderStatUI(pS, inc, 'product-stats-container', 'product-stats-empty-state', 'bg-gradient-to-r from-pink-400 to-purple-600');
             renderStatUI(vS, exp, 'vendor-stats-container', 'vendor-stats-empty-state', 'bg-gradient-to-r from-rose-400 to-amber-500');
@@ -561,16 +573,23 @@
             const container = document.getElementById(cId);
             container.innerHTML = '';
             const keys = Object.keys(data).sort((a,b) => data[b] - data[a]);
-            if(!keys.length || total === 0) return document.getElementById(eId).classList.remove('hidden');
+            
+            // 데이터가 없거나, 총 금액이 0이면 통계 박스를 숨기고 Empty State 표시
+            if(keys.length === 0 || total === 0) {
+                document.getElementById(eId).classList.remove('hidden');
+                return;
+            }
+            
             document.getElementById(eId).classList.add('hidden');
             
             keys.forEach(k => {
-                const per = Math.round((data[k]/total)*100);
+                const amt = Number(data[k]) || 0;
+                const per = Math.round((amt / total) * 100);
                 container.innerHTML += `
                     <div class="space-y-2">
                         <div class="flex justify-between items-end font-black">
                             <span class="text-sm">${k}</span>
-                            <span class="text-xs opacity-60">${formatMoney(data[k])} (${per}%)</span>
+                            <span class="text-xs opacity-60">${formatMoney(amt)} (${per}%)</span>
                         </div>
                         <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
                             <div class="${colorClass} h-full transition-all duration-1000" style="width:${per}%"></div>
@@ -580,7 +599,7 @@
             });
         };
 
-        // 수정 기능 (ID 기반으로 안정화)
+        // 안전한 수정 폼 렌더링
         window.openEditModal = (type, id) => {
             currentEditInfo = { type, id };
             const container = document.getElementById('edit-fields-container');
@@ -589,14 +608,16 @@
             let item;
             if(type === 'product') {
                 item = allProducts.find(x => x.id === id);
+                if(!item) return;
                 container.innerHTML = `
-                    <input type="text" id="edit-p-code" value="${item.code}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100">
-                    <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100">
-                    <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100">
+                    <input type="text" id="edit-p-code" value="${item.code}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                 `;
             } else {
                 item = (type === 'channel' ? allChannels : allVendors).find(x => x.id === id);
-                container.innerHTML = `<input type="text" id="edit-common-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100">`;
+                if(!item) return;
+                container.innerHTML = `<input type="text" id="edit-common-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">`;
             }
             document.getElementById('edit-modal').classList.remove('hidden');
         };
@@ -618,7 +639,7 @@
             try {
                 await updateDoc(ref, data);
                 closeEditModal();
-                showModal("성공적으로 수정되었습니다.");
+                showModal("수정 완료되었습니다.");
             } catch(e) { showModal("수정 실패"); }
         };
 
@@ -628,7 +649,7 @@
         window.handleDeleteChannel = id => showModal("판매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)));
         window.handleDeleteVendor = id => showModal("구매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)));
 
-        // 제품/처 등록 공통
+        // 기본 등록 공통 함수
         const saveAdd = async (col, data, fId) => {
             try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); }
         };
@@ -636,7 +657,7 @@
         document.getElementById('channel-form').onsubmit = e => { e.preventDefault(); saveAdd('channels', {name: document.getElementById('chan-name').value}, 'channel-form'); };
         document.getElementById('vendor-form').onsubmit = e => { e.preventDefault(); saveAdd('vendors', {name: document.getElementById('ven-name').value}, 'vendor-form'); };
 
-        // 리스트 렌더링 함수들
+        // 설정 탭 렌더링
         window.renderProducts = () => {
             const body = document.getElementById('products-table-body');
             body.innerHTML = allProducts.map(p => `
@@ -687,10 +708,19 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        const today = new Date();
-        document.getElementById('input-date').value = today.toISOString().split('T')[0];
-        document.getElementById('filter-start').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-        document.getElementById('filter-end').value = today.toISOString().split('T')[0];
+        // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 계산식
+        const getLocalDateStr = (d) => {
+            const date = new Date(d);
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+            return date.toISOString().split('T')[0];
+        };
+        
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        document.getElementById('input-date').value = getLocalDateStr(now);
+        document.getElementById('filter-start').value = getLocalDateStr(firstDay);
+        document.getElementById('filter-end').value = getLocalDateStr(now);
     </script>
 </body>
 </html>
