@@ -28,12 +28,15 @@
             animation: fadeInTab 0.3s ease-out forwards;
         }
 
-        /* 🌟 수정: A4 용지에 21개(3x7)가 완벽히 들어가도록 규격 최적화 */
+        /* 🌟 수정: 인쇄 화면(Print) 최적화 및 충돌 해결 */
         @media print {
             body { background-color: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body * { visibility: hidden; } /* 앱의 UI는 모두 숨김 */
-            #print-area, #print-area * { visibility: visible; } /* 인쇄 영역만 표시 */
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            
+            /* 앱 UI 화면들은 인쇄 시 확실하게 제거 */
+            #login-screen, #loading-screen, #custom-modal, #edit-modal, #print-modal, #app-container { display: none !important; }
+            
+            /* 인쇄 영역 노출 (JS와 연동) */
+            #print-area { display: block !important; width: 100%; padding: 0; }
             
             @page { size: A4; margin: 10mm; }
             
@@ -115,7 +118,7 @@
         </div>
     </div>
 
-    <!-- 🌟 수정: 다중 가격표 인쇄 모달 (이미지 업로드 + 제품 목록에서 수량 지정) -->
+    <!-- 다중 가격표 인쇄 모달 -->
     <div id="print-modal" class="fixed inset-0 bg-slate-900/60 z-[160] hidden flex items-center justify-center backdrop-blur-sm px-4 font-semibold">
         <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col">
             <h2 class="text-2xl font-black mb-6 text-slate-900 flex items-center gap-2 shrink-0">
@@ -150,7 +153,7 @@
         </div>
     </div>
 
-    <!-- 실제 인쇄될 숨김 영역 -->
+    <!-- 🌟 실제 인쇄될 숨김 영역 (기본적으로는 숨김, 인쇄 직전에만 노출) -->
     <div id="print-area" class="hidden"></div>
 
     <!-- 메인 대시보드 -->
@@ -312,7 +315,7 @@
             </div>
         </div>
 
-        <!-- [탭 2] 제품 관리 (🌟 일괄 인쇄 버튼 추가) -->
+        <!-- [탭 2] 제품 관리 -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
                 <div class="md:col-span-2">
@@ -328,7 +331,6 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <!-- 🌟 일괄 가격표 인쇄 버튼 -->
                         <div class="flex justify-between items-center mb-8">
                             <h2 class="text-xl font-black">내 제품 목록</h2>
                             <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-md active:scale-95 flex items-center gap-2">
@@ -952,7 +954,6 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 🌟 다중 가격표 일괄 인쇄 로직 (이미지 및 수량 제어)
         let uploadedLogoBase64 = '';
 
         document.getElementById('print-logo-upload').addEventListener('change', function(e) {
@@ -999,6 +1000,7 @@
             document.getElementById('print-modal').classList.add('hidden');
         };
 
+        // 🌟 수정: 인쇄 시 빈 화면이 나타나는 버그 해결을 위해 강제 노출 및 딜레이(0.1초) 적용
         window.executePrint = () => {
             const inputs = document.querySelectorAll('.print-qty-input');
             let tagsHtml = '';
@@ -1038,9 +1040,13 @@
 
             const printArea = document.getElementById('print-area');
             printArea.innerHTML = `<div class="print-grid">${tagsHtml}</div>`;
+            printArea.classList.remove('hidden'); 
             
-            window.print();
-            closePrintModal();
+            setTimeout(() => {
+                window.print();
+                printArea.classList.add('hidden'); 
+                closePrintModal();
+            }, 100);
         };
 
         window.setFilterQuick = (rangeType) => {
@@ -1066,7 +1072,6 @@
             renderApp();
         };
 
-        // 🌟 수정: 엑셀 서식을 노키아 보고서 형식(F1F5F9 바탕 + 검정 글씨)으로 완벽 롤백
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
