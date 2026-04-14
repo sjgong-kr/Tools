@@ -20,7 +20,6 @@
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
         .tab-active { color: #8b5cf6; border-bottom: 3px solid #8b5cf6; }
         
-        /* 🌟 추가: 탭 전환 시 부드러운 페이드인 애니메이션 */
         @keyframes fadeInTab {
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
@@ -29,36 +28,29 @@
             animation: fadeInTab 0.3s ease-out forwards;
         }
 
-        /* 🌟 추가: 가격표 인쇄 전용 스타일 (@media print) */
+        /* 🌟 수정: A4 용지에 21개(3x7)가 완벽히 들어가도록 규격 최적화 */
         @media print {
-            /* 브라우저 기본 여백/배경 제거 */
             body { background-color: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            /* 인쇄 시 앱 UI는 모두 숨김 */
-            #login-screen, #loading-screen, #custom-modal, #edit-modal, #print-modal, #app-container { display: none !important; }
+            body * { visibility: hidden; } /* 앱의 UI는 모두 숨김 */
+            #print-area, #print-area * { visibility: visible; } /* 인쇄 영역만 표시 */
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
             
-            /* 인쇄 전용 영역만 표시 */
-            #print-area { display: block !important; width: 100%; padding: 0; }
-            
-            /* A4 용지 세팅 (상하좌우 여백 10mm) */
             @page { size: A4; margin: 10mm; }
             
-            /* 한 줄에 3개씩 들어가는 그리드 */
-            .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; width: 100%; }
+            /* 1줄에 3개, 높이는 약 38mm로 설정하면 A4 기준 7줄(21개)이 완벽히 들어갑니다 */
+            .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 38mm; gap: 4mm; width: 100%; }
             
-            /* 개별 가격표 디자인 */
             .price-tag {
-                border: 2px dashed #CBD5E1; /* 자르기 쉬운 점선 */
+                border: 1.5px dashed #94A3B8; 
                 border-radius: 12px; 
-                padding: 5mm; 
+                padding: 4mm; 
                 text-align: center;
-                height: 33mm; /* A4에 8줄이 딱 들어가는 세로 사이즈 */
                 display: flex; flex-direction: column; justify-content: center; align-items: center;
                 break-inside: avoid; page-break-inside: avoid; box-sizing: border-box;
             }
         }
     </style>
 </head>
-<!-- 🌟 수정: 스크롤바가 생기고 사라질 때 화면이 좌우로 밀리지 않도록 overflow-y-scroll 고정 -->
 <body class="text-slate-800 antialiased overflow-y-scroll">
 
     <!-- 로그인 화면 -->
@@ -123,33 +115,42 @@
         </div>
     </div>
 
-    <!-- 🌟 추가: 가격표 인쇄 설정 모달 -->
+    <!-- 🌟 수정: 다중 가격표 인쇄 모달 (이미지 업로드 + 제품 목록에서 수량 지정) -->
     <div id="print-modal" class="fixed inset-0 bg-slate-900/60 z-[160] hidden flex items-center justify-center backdrop-blur-sm px-4 font-semibold">
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full">
-            <h2 class="text-2xl font-black mb-6 text-slate-900 flex items-center gap-2">
-                <i class="fas fa-print text-emerald-500"></i> 가격표 인쇄
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col">
+            <h2 class="text-2xl font-black mb-6 text-slate-900 flex items-center gap-2 shrink-0">
+                <i class="fas fa-print text-emerald-500"></i> 제품 가격표 일괄 인쇄
             </h2>
-            <div class="space-y-5">
-                <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100 flex flex-col items-center text-center">
-                    <p class="text-xs text-emerald-600 font-bold mb-1 uppercase tracking-widest">선택된 제품</p>
-                    <p id="print-target-name" class="text-xl font-black text-slate-900 mb-1"></p>
-                    <p id="print-target-price" class="text-lg font-black text-emerald-600"></p>
+            <div class="space-y-4 overflow-y-auto flex-1 hide-scrollbar pr-2 pb-2">
+                
+                <div class="space-y-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <label class="text-[11px] font-black text-slate-500"><i class="fas fa-image mr-1"></i> 로고 이미지 첨부 (선택)</label>
+                    <input type="file" id="print-logo-upload" accept="image/*" class="w-full text-sm bg-white p-2 rounded-xl border border-slate-200 focus:outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">파일을 첨부하면 planet_jina 텍스트 왼쪽에 들어갑니다.</p>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 ml-1">인쇄 수량 (A4 1장에 24개 권장)</label>
-                    <input type="number" id="print-quantity" value="24" min="1" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-emerald-400 text-center text-lg">
+
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-black text-slate-700">인쇄할 제품별 수량 입력</span>
+                        <span id="print-total-qty" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">총 0개</span>
+                    </div>
+                    <div id="print-product-list" class="space-y-2 max-h-[30vh] overflow-y-auto hide-scrollbar">
+                        <!-- JS로 제품 리스트 렌더링 -->
+                    </div>
                 </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closePrintModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black py-4 rounded-2xl transition-all">취소</button>
-                    <button type="button" onclick="executePrint()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fas fa-print"></i> 인쇄 시작
-                    </button>
-                </div>
+                <p class="text-[11px] text-slate-400 text-center font-bold"><i class="fas fa-info-circle"></i> A4 1장에 최대 21개(3x7)가 가장 알맞게 들어갑니다.</p>
+            </div>
+            
+            <div class="flex gap-3 pt-4 shrink-0 mt-4 border-t border-slate-100">
+                <button type="button" onclick="closePrintModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black py-4 rounded-2xl transition-all">취소</button>
+                <button type="button" onclick="executePrint()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-print"></i> 인쇄 시작
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 🌟 추가: 실제 인쇄될 숨김 영역 -->
+    <!-- 실제 인쇄될 숨김 영역 -->
     <div id="print-area" class="hidden"></div>
 
     <!-- 메인 대시보드 -->
@@ -269,7 +270,6 @@
                     </div>
                 </div>
 
-                <!-- 상세 장부 영역 -->
                 <div class="lg:col-span-3">
                     <div class="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[600px]">
                         <div class="flex flex-col gap-6 mb-8 border-b border-slate-100 pb-8">
@@ -280,7 +280,6 @@
                                 </button>
                             </div>
                             
-                            <!-- 🌟 추가/수정: 빠른 기간 필터 버튼 및 큼직한 날짜 선택 UI -->
                             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-[1.5rem] border border-slate-200 shadow-inner">
                                 <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
                                     <button onclick="setFilterQuick('today')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">오늘</button>
@@ -304,7 +303,6 @@
                             <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
                             <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
                         </div>
-                        <!-- 🌟 리스트 간격을 좁혀서 더 많이 보이도록 조정 (space-y-4 -> space-y-3) -->
                         <div id="entries-container" class="space-y-3 sm:space-y-3.5">
                             <!-- 리스트 공간 -->
                         </div>
@@ -314,7 +312,7 @@
             </div>
         </div>
 
-        <!-- [탭 2] 제품 관리 -->
+        <!-- [탭 2] 제품 관리 (🌟 일괄 인쇄 버튼 추가) -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
                 <div class="md:col-span-2">
@@ -330,7 +328,14 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <h2 class="text-xl font-black mb-8">내 제품 목록</h2>
+                        <!-- 🌟 일괄 가격표 인쇄 버튼 -->
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-xl font-black">내 제품 목록</h2>
+                            <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-md active:scale-95 flex items-center gap-2">
+                                <i class="fas fa-print"></i> 가격표 일괄 인쇄
+                            </button>
+                        </div>
+                        
                         <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 제품이 없습니다.</div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
@@ -369,7 +374,7 @@
             </div>
         </div>
 
-        <!-- [탭 4] 구매처 관리 (🌟 기타 메모 항목 추가) -->
+        <!-- [탭 4] 구매처 관리 -->
         <div id="tab-vendors" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
                 <div class="md:col-span-2">
@@ -381,7 +386,6 @@
                             <input type="text" id="ven-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="text" id="ven-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="text" id="ven-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <!-- 🌟 기타 메모 입력 추가 -->
                             <textarea id="ven-memo" placeholder="기타 항목 / 메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
                             <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">구매처 추가하기</button>
                         </form>
@@ -602,7 +606,6 @@
             } catch(e) { showModal("등록 실패"); }
         };
 
-        // 🌟 수정: 대시보드 리스트의 폰트와 크기를 더 크고 가독성 좋게, 여백 넓게 디자인 개선
         window.renderApp = () => {
             try {
                 const s = document.getElementById('filter-start').value;
@@ -633,7 +636,6 @@
                     }
 
                     const div = document.createElement('div');
-                    // 🌟 카드 상하 여백 및 둥글기를 줄여 한 화면에 여러 개가 보이도록 슬림하게 압축
                     div.className = "p-4 sm:p-5 bg-white border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-md hover:-translate-y-0.5";
                     div.innerHTML = `
                         <div class="flex items-center gap-4 flex-1 min-w-0">
@@ -657,7 +659,6 @@
                                 <p class="text-xl sm:text-2xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
                                 <p class="text-[10px] sm:text-xs text-slate-400 font-bold mt-0.5 sm:mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
-                            <!-- 🌟 상세 내역 전용 수정 버튼 추가 -->
                             <div class="flex gap-1.5">
                                 <button onclick="openEditModal('entry', '${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all text-base shrink-0 border border-slate-100 shadow-sm">
                                     <i class="fas fa-pen"></i>
@@ -678,7 +679,6 @@
                 document.getElementById('dash-expense').innerText = formatMoney(exp);
                 document.getElementById('dash-net').innerText = formatMoney(inc - exp);
 
-                // 🌟 추가: 통계 탭의 Total 금액 업데이트 로직
                 const elTotalChan = document.getElementById('stats-total-channel');
                 if (elTotalChan) elTotalChan.innerText = formatMoney(inc);
                 const elTotalProd = document.getElementById('stats-total-product');
@@ -726,13 +726,12 @@
             });
         };
 
-        // 🌟 수정: 상세 내역(entry) 수정 폼 지원 로직 추가
         window.openEditModal = (type, id) => {
+            currentEditInfo = { type, id };
             const container = document.getElementById('edit-fields-container');
             let item;
             
             if(type === 'product') {
-                currentEditInfo = { type, id };
                 item = allProducts.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -741,7 +740,6 @@
                     <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                 `;
             } else if(type === 'channel') {
-                currentEditInfo = { type, id };
                 item = allChannels.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -753,7 +751,6 @@
                     <textarea id="edit-c-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
                 `;
             } else if(type === 'vendor') {
-                currentEditInfo = { type, id };
                 item = allVendors.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -765,10 +762,9 @@
                     <textarea id="edit-v-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
                 `;
             } else if(type === 'entry') {
-                // 🌟 상세 장부 내역 수정을 위한 모달 필드 구성
                 item = allEntries.find(x => x.id === id);
                 if(!item) return;
-                currentEditInfo = { type, id, originalType: item.type }; // income, expense 구분값 보존
+                currentEditInfo = { type, id, originalType: item.type }; 
                 
                 container.innerHTML = `
                     <div class="space-y-1">
@@ -811,7 +807,6 @@
         document.getElementById('edit-form').onsubmit = async e => {
             e.preventDefault();
             const { type, id } = currentEditInfo;
-            // 컬렉션명 판별
             const colName = type === 'product' ? 'products' : type === 'channel' ? 'channels' : type === 'vendor' ? 'vendors' : 'entries';
             const ref = doc(db, 'jina_resin', currentUser.uid, colName, id);
             
@@ -837,7 +832,6 @@
                     memo: document.getElementById('edit-v-memo').value
                 };
             } else if (type === 'entry') {
-                // 🌟 상세 장부 수정 데이터 추출
                 data = {
                     date: document.getElementById('edit-e-date').value,
                     name: document.getElementById('edit-e-name').value,
@@ -877,7 +871,6 @@
             }, 'channel-form'); 
         };
         
-        // 🌟 수정: 구매처 신규 등록 폼 제출 시 메모(memo) 필드 함께 저장
         document.getElementById('vendor-form').onsubmit = e => { 
             e.preventDefault(); 
             saveAdd('vendors', {
@@ -886,21 +879,19 @@
                 contact: document.getElementById('ven-contact').value,
                 link: document.getElementById('ven-link').value,
                 address: document.getElementById('ven-address').value,
-                memo: document.getElementById('ven-memo').value // 추가
+                memo: document.getElementById('ven-memo').value
             }, 'vendor-form'); 
         };
 
         window.renderProducts = () => {
             document.getElementById('products-table-body').innerHTML = allProducts.map(p => `
-                <tr class="hover:bg-slate-50 transition-all font-bold">
+                <tr class="hover:bg-slate-50 transition-all font-bold group">
                     <td class="p-5 text-xs text-slate-400 font-mono">${p.code}</td>
                     <td class="p-5 text-slate-900">${p.name}</td>
                     <td class="p-5 text-blue-600">${formatMoney(p.price)}</td>
-                    <td class="p-5 text-right flex gap-2 justify-end">
-                        <!-- 🌟 제품 목록에 가격표 인쇄 버튼 추가 -->
-                        <button onclick="openPrintModal('${p.id}')" class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 hover:text-white hover:bg-emerald-500 transition-all flex items-center justify-center shadow-sm border border-emerald-100" title="가격표 인쇄"><i class="fas fa-print"></i></button>
-                        <button onclick="openEditModal('product', '${p.id}')" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all flex items-center justify-center shadow-sm border border-slate-100"><i class="fas fa-pen-nib"></i></button>
-                        <button onclick="handleDeleteProduct('${p.id}')" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center justify-center shadow-sm border border-slate-100"><i class="fas fa-trash-alt"></i></button>
+                    <td class="p-5 text-right flex gap-1.5 justify-end">
+                        <button onclick="openEditModal('product', '${p.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all flex items-center justify-center border border-slate-100 shadow-sm"><i class="fas fa-pen-nib"></i></button>
+                        <button onclick="handleDeleteProduct('${p.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center border border-rose-50 shadow-sm"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -929,7 +920,6 @@
             document.getElementById('chan-empty-state').classList.toggle('hidden', allChannels.length > 0);
         };
 
-        // 🌟 수정: 구매처 리스트에도 기타 메모(memo) 항목 표시되도록 추가
         window.renderVendors = () => {
             document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `
                 <div class="p-6 bg-slate-50 rounded-[1.5rem] flex flex-col gap-3 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
@@ -962,56 +952,97 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 🌟 추가: 가격표 인쇄 전용 로직
-        let currentPrintItem = null;
+        // 🌟 다중 가격표 일괄 인쇄 로직 (이미지 및 수량 제어)
+        let uploadedLogoBase64 = '';
 
-        window.openPrintModal = (id) => {
-            const item = allProducts.find(x => x.id === id);
-            if(!item) return;
-            currentPrintItem = item;
-            document.getElementById('print-target-name').innerText = item.name;
-            document.getElementById('print-target-price').innerText = formatMoney(item.price);
-            document.getElementById('print-quantity').value = 24; // 기본 권장 수량
+        document.getElementById('print-logo-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { uploadedLogoBase64 = e.target.result; }
+                reader.readAsDataURL(file);
+            } else {
+                uploadedLogoBase64 = '';
+            }
+        });
+
+        window.openPrintModal = () => {
+            if (allProducts.length === 0) {
+                showModal("등록된 제품이 없습니다.");
+                return;
+            }
+            const container = document.getElementById('print-product-list');
+            container.innerHTML = allProducts.map(p => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex-1 min-w-0 pr-3">
+                        <p class="text-sm font-black text-slate-800 truncate">${p.name}</p>
+                        <p class="text-[11px] font-bold text-slate-400 mt-0.5">${formatMoney(p.price)}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400 font-bold">수량</span>
+                        <input type="number" min="0" value="0" data-name="${p.name}" data-price="${p.price}" class="print-qty-input w-16 bg-slate-50 border border-slate-200 rounded-xl text-center text-sm font-black py-2 focus:ring-2 focus:ring-emerald-400 outline-none transition-all" oninput="updatePrintTotal()">
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('print-total-qty').innerText = '총 0개';
             document.getElementById('print-modal').classList.remove('hidden');
+        };
+
+        window.updatePrintTotal = () => {
+            const inputs = document.querySelectorAll('.print-qty-input');
+            let total = 0;
+            inputs.forEach(input => total += (Number(input.value) || 0));
+            document.getElementById('print-total-qty').innerText = `총 ${total}개`;
         };
 
         window.closePrintModal = () => {
             document.getElementById('print-modal').classList.add('hidden');
-            currentPrintItem = null;
         };
 
         window.executePrint = () => {
-            if(!currentPrintItem) return;
-            const qty = Number(document.getElementById('print-quantity').value) || 24;
-            const printArea = document.getElementById('print-area');
-            
-            // 인쇄될 가격표 태그들을 HTML로 조립 (가위로 자르기 좋은 점선 디자인 적용)
+            const inputs = document.querySelectorAll('.print-qty-input');
             let tagsHtml = '';
-            for(let i=0; i<qty; i++) {
-                tagsHtml += `
-                    <div class="price-tag">
-                        <div style="font-size: 11px; color: #64748B; margin-bottom: 4px; font-weight: 800; letter-spacing: 1px;">
-                            <i class="fas fa-gem" style="color: #A855F7;"></i> planet_jina
-                        </div>
-                        <div style="font-size: 16px; font-weight: 900; color: #0F172A; margin-bottom: 6px; word-break: keep-all; line-height: 1.2;">
-                            ${currentPrintItem.name}
-                        </div>
-                        <div style="font-size: 20px; font-weight: 900; color: #4338CA;">
-                            ${formatMoney(currentPrintItem.price)}
-                        </div>
-                    </div>
-                `;
+            
+            inputs.forEach(input => {
+                const qty = Number(input.value) || 0;
+                if (qty > 0) {
+                    const name = input.getAttribute('data-name');
+                    const price = Number(input.getAttribute('data-price'));
+                    
+                    for(let i=0; i<qty; i++) {
+                        const logoHtml = uploadedLogoBase64 
+                            ? `<img src="${uploadedLogoBase64}" style="height: 16px; object-fit: contain; margin-right: 5px;">` 
+                            : `<i class="fas fa-gem" style="color: #A855F7; margin-right: 4px;"></i>`;
+                            
+                        tagsHtml += `
+                            <div class="price-tag">
+                                <div style="display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748B; margin-bottom: 5px; font-weight: 800; letter-spacing: 0.5px;">
+                                    ${logoHtml} <span>planet_jina</span>
+                                </div>
+                                <div style="font-size: 16px; font-weight: 900; color: #0F172A; margin-bottom: 6px; word-break: keep-all; line-height: 1.2;">
+                                    ${name}
+                                </div>
+                                <div style="font-size: 18px; font-weight: 900; color: #4338CA;">
+                                    ${formatMoney(price)}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            if (tagsHtml === '') {
+                showModal("인쇄할 제품의 수량을 1개 이상 입력해주세요.");
+                return;
             }
 
+            const printArea = document.getElementById('print-area');
             printArea.innerHTML = `<div class="print-grid">${tagsHtml}</div>`;
             
-            // 브라우저 기본 인쇄창 호출 (여기서 @media print CSS가 발동함)
             window.print();
-            
             closePrintModal();
         };
 
-        // 🌟 추가: 일자별/기간별 빠른 필터링 기능
         window.setFilterQuick = (rangeType) => {
             const today = new Date();
             let startDate = new Date();
@@ -1020,13 +1051,10 @@
             if (rangeType === 'today') {
                 // start와 end 모두 오늘 날짜로 유지
             } else if (rangeType === 'week') {
-                // 1주일 전으로 시작일 세팅
                 startDate.setDate(today.getDate() - 6); 
             } else if (rangeType === 'month') {
-                // 이번달 1일로 시작일 세팅
                 startDate = new Date(today.getFullYear(), today.getMonth(), 1);
             } else if (rangeType === 'all') {
-                // 입력창을 아예 비우면 전체 데이터가 조회됨
                 document.getElementById('filter-start').value = '';
                 document.getElementById('filter-end').value = '';
                 renderApp();
@@ -1038,7 +1066,7 @@
             renderApp();
         };
 
-        // 🌟 완벽한 실무형 엑셀 Export 세팅 (노키아 보고서 스타일 & 하단 요약 복구)
+        // 🌟 수정: 엑셀 서식을 노키아 보고서 형식(F1F5F9 바탕 + 검정 글씨)으로 완벽 롤백
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -1056,11 +1084,9 @@
 
             const wb = XLSX.utils.book_new();
 
-            // --- 엑셀 공통 프리미엄 서식 (단정하고 프로페셔널한 회색 톤) ---
-            const borderThin = { style: "thin", color: { rgb: "BFBFBF" } }; // 부드러운 회색 테두리
+            const borderThin = { style: "thin", color: { rgb: "BFBFBF" } }; 
             const borderAll = { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin };
 
-            // 헤더: 연한 회색 배경, 진한 글씨, 가운데 정렬, 모든 테두리
             const headerStyle = {
                 fill: { fgColor: { rgb: "F1F5F9" } },
                 font: { bold: true, color: { rgb: "334155" }, sz: 11 },
@@ -1079,7 +1105,6 @@
             const now = new Date();
             const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            // --- 1. 거래 내역 시트 ---
             if (filtered.length > 0) {
                 filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
 
@@ -1116,8 +1141,7 @@
                     ]);
                 });
 
-                // 🌟 하단 요약 (Total) 복구 및 스타일링
-                aoa.push([]); // 빈 줄
+                aoa.push([]); 
                 const sumHeaderStyle = { font: { bold: true, color: { rgb: "334155" } }, alignment: { horizontal: "right" } };
                 const sumIncomeStyle = { font: { bold: true, color: { rgb: "2563EB" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
                 const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
@@ -1133,7 +1157,6 @@
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
-            // --- 2. 등록 제품 시트 ---
             if (allProducts.length > 0) {
                 const aoa = [];
                 aoa.push([
@@ -1157,7 +1180,6 @@
                 XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
             }
 
-            // --- 3. 판매처 시트 ---
             if (allChannels.length > 0) {
                 const aoa = [
                     [{ v: `🏪 판매처 상세 목록`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
@@ -1179,7 +1201,6 @@
                 XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
             }
 
-            // --- 4. 구매처 시트 ---
             if (allVendors.length > 0) {
                 const aoa = [
                     [{ v: `🛒 구매처 상세 목록`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
