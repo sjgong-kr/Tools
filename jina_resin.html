@@ -19,27 +19,27 @@
 
     <!-- 로그인 화면 -->
     <div id="login-screen" class="fixed inset-0 bg-gray-100 z-[60] flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm mx-4 border border-gray-100">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm mx-4 border border-gray-100">
             <div class="text-center mb-8">
-                <div class="bg-gradient-to-tr from-purple-400 to-blue-400 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md text-white">
-                    <i class="fas fa-gem text-3xl"></i>
+                <div class="bg-gradient-to-tr from-purple-400 to-indigo-500 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg text-white">
+                    <i class="fas fa-gem text-4xl"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">JINA 레진 아트</h2>
-                <p class="text-sm text-gray-500 mt-1">관리자 로그인이 필요합니다</p>
+                <p class="text-sm text-gray-500 mt-1 font-medium">관리자 전용 로그인</p>
             </div>
-            <form id="login-form" class="space-y-5">
+            <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 pl-1">아이디</label>
-                    <input type="text" id="login-id" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50" placeholder="아이디를 입력하세요">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1 ml-1">ID</label>
+                    <input type="text" id="login-id" class="w-full border-none rounded-2xl px-4 py-3.5 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-100 font-medium" placeholder="jina">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 pl-1">비밀번호</label>
-                    <input type="password" id="login-pw" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50" placeholder="비밀번호를 입력하세요">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1 ml-1">Password</label>
+                    <input type="password" id="login-pw" class="w-full border-none rounded-2xl px-4 py-3.5 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-100 font-medium" placeholder="••••••••">
                 </div>
-                <div id="login-error" class="hidden bg-red-50 text-red-500 text-sm p-3 rounded-lg flex items-center gap-2">
-                    <i class="fas fa-exclamation-circle"></i> 아이디 또는 비밀번호가 일치하지 않습니다.
+                <div id="login-error" class="hidden bg-red-50 text-red-500 text-xs p-3 rounded-xl flex items-center gap-2 border border-red-100">
+                    <i class="fas fa-exclamation-circle text-sm"></i> 아이디 또는 비밀번호가 틀렸습니다.
                 </div>
-                <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md mt-2">
+                <button type="submit" id="login-btn" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95 mt-4">
                     로그인
                 </button>
             </form>
@@ -47,17 +47,17 @@
     </div>
 
     <!-- 앱 로딩 화면 -->
-    <div id="loading-screen" class="fixed inset-0 bg-white z-50 hidden flex-col items-center justify-center">
+    <div id="loading-screen" class="fixed inset-0 bg-white z-50 hidden flex flex-col items-center justify-center">
         <div class="loader mb-4"></div>
-        <p class="text-gray-500 font-medium text-lg">데이터베이스에 동기화 중입니다...</p>
+        <p class="text-gray-500 font-medium text-lg tracking-tight">데이터 동기화 중...</p>
     </div>
 
-    <!-- 커스텀 알림창 (모달) -->
-    <div id="custom-modal" class="fixed inset-0 bg-black/50 z-[70] hidden flex items-center justify-center backdrop-blur-sm px-4">
-        <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center transform transition-all">
-            <div class="text-purple-500 text-4xl mb-4"><i class="fas fa-info-circle"></i></div>
-            <p id="custom-modal-text" class="text-gray-800 font-medium mb-6 text-lg"></p>
-            <button onclick="closeModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition-colors">확인</button>
+    <!-- 커스텀 모달 -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-xs w-full text-center">
+            <div class="text-purple-500 text-5xl mb-4"><i class="fas fa-check-circle"></i></div>
+            <p id="custom-modal-text" class="text-gray-800 font-semibold mb-6 text-lg leading-snug"></p>
+            <button onclick="closeModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-2xl font-bold transition-all shadow-md">확인</button>
         </div>
     </div>
 
@@ -65,153 +65,136 @@
     <div id="app-container" class="hidden max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
         
         <!-- 헤더 -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-tr from-purple-400 to-blue-400 p-3 rounded-xl text-white shadow-md">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-tr from-purple-400 to-blue-400 p-3.5 rounded-2xl text-white shadow-md">
                     <i class="fas fa-gem text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">JINA 레진 아트 관리자</h1>
-                    <p class="text-sm text-gray-500">수익과 재료비를 스마트하게 관리하세요</p>
+                    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">JINA 레진 아트</h1>
+                    <p class="text-sm text-gray-400 font-medium">통합 관리 대시보드</p>
                 </div>
             </div>
-            <div class="mt-4 md:mt-0 text-right">
-                <div class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-green-500"></div> 관리자 계정 연동됨
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
+                <div class="px-4 py-2 bg-purple-50 text-purple-600 rounded-2xl text-xs font-bold border border-purple-100">
+                    <i class="fas fa-user-circle mr-1"></i> jina 님 접속중
                 </div>
+                <button onclick="handleLogout()" class="p-2.5 bg-gray-100 hover:bg-red-50 hover:text-red-500 text-gray-400 rounded-2xl transition-all" title="로그아웃">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
         </header>
 
         <!-- 탭 네비게이션 -->
-        <nav class="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto hide-scrollbar">
-            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="px-5 py-3 font-bold text-purple-600 border-b-2 border-purple-600 transition-colors whitespace-nowrap">내역 관리</button>
-            <button onclick="switchTab('products')" id="tab-btn-products" class="px-5 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-purple-500 transition-colors whitespace-nowrap">제품 관리</button>
-            <button onclick="switchTab('channels')" id="tab-btn-channels" class="px-5 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-purple-500 transition-colors whitespace-nowrap">판매처 관리</button>
-            <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="px-5 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-purple-500 transition-colors whitespace-nowrap">구매처 관리</button>
-            <button onclick="switchTab('stats')" id="tab-btn-stats" class="px-5 py-3 font-bold text-gray-500 border-b-2 border-transparent hover:text-purple-500 transition-colors whitespace-nowrap">통계 분석</button>
+        <nav class="flex gap-2 mb-8 border-b border-gray-100 overflow-x-auto hide-scrollbar pb-1">
+            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="px-6 py-3 font-bold text-purple-600 border-b-4 border-purple-600 transition-all whitespace-nowrap">내역 관리</button>
+            <button onclick="switchTab('products')" id="tab-btn-products" class="px-6 py-3 font-bold text-gray-400 border-b-4 border-transparent hover:text-purple-400 transition-all whitespace-nowrap">제품 관리</button>
+            <button onclick="switchTab('channels')" id="tab-btn-channels" class="px-6 py-3 font-bold text-gray-400 border-b-4 border-transparent hover:text-purple-400 transition-all whitespace-nowrap">판매처 관리</button>
+            <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="px-6 py-3 font-bold text-gray-400 border-b-4 border-transparent hover:text-purple-400 transition-all whitespace-nowrap">구매처 관리</button>
+            <button onclick="switchTab('stats')" id="tab-btn-stats" class="px-6 py-3 font-bold text-gray-400 border-b-4 border-transparent hover:text-purple-400 transition-all whitespace-nowrap">통계 분석</button>
         </nav>
 
-        <!-- [탭 1] 내역 관리 (대시보드) -->
+        <!-- [탭 1] 내역 관리 -->
         <div id="tab-dashboard" class="tab-content space-y-6">
-            <!-- 기간 필터 -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-4">
-                <div class="flex items-center gap-2 text-gray-600 font-medium">
-                    <i class="far fa-calendar-alt"></i> 조회 기간
-                </div>
-                <input type="date" id="filter-start" class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50">
-                <span class="text-gray-400">~</span>
-                <input type="date" id="filter-end" class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50">
-                <button onclick="renderApp()" class="bg-gray-800 hover:bg-black text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">
-                    조회
-                </button>
-            </div>
-
             <!-- 요약 카드 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
-                    <p class="text-sm text-gray-500 mb-1 font-medium">총 판매액 (수익)</p>
-                    <h3 id="dash-income" class="text-3xl font-bold text-blue-600">0원</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-7 rounded-3xl shadow-sm border border-blue-50">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Total Income</p>
+                    <h3 id="dash-income" class="text-3xl font-black text-blue-600 tracking-tighter">0원</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-                    <p class="text-sm text-gray-500 mb-1 font-medium">총 재료비 (지출)</p>
-                    <h3 id="dash-expense" class="text-3xl font-bold text-red-500">0원</h3>
+                <div class="bg-white p-7 rounded-3xl shadow-sm border border-red-50">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Total Expense</p>
+                    <h3 id="dash-expense" class="text-3xl font-black text-red-500 tracking-tighter">0원</h3>
                 </div>
-                <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-2xl shadow-md text-white">
-                    <p class="text-sm text-purple-100 mb-1 font-medium">순수익 (판매 - 재료)</p>
-                    <h3 id="dash-net" class="text-3xl font-bold">0원</h3>
+                <div class="bg-gradient-to-br from-purple-600 to-indigo-700 p-7 rounded-3xl shadow-lg text-white">
+                    <p class="text-xs font-bold text-purple-200 uppercase mb-2 tracking-widest">Net Profit</p>
+                    <h3 id="dash-net" class="text-3xl font-black tracking-tighter">0원</h3>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- 새 내역 등록 폼 -->
+                <!-- 입력 폼 -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-4">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">새 내역 등록📝</h2>
-                        <form id="entry-form" class="space-y-4">
+                    <div class="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 sticky top-6">
+                        <h2 class="text-xl font-black mb-6 text-gray-800">새 내역 등록</h2>
+                        <form id="entry-form" class="space-y-5">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">구분</label>
-                                <select id="input-type" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50">
+                                <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">구분</label>
+                                <select id="input-type" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400 outline-none">
                                     <option value="income">🔵 판매 수익 (입금)</option>
                                     <option value="expense">🔴 재료 구매 (지출)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
-                                <input type="date" id="input-date" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
+                                <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">날짜</label>
+                                <input type="date" id="input-date" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 focus:ring-2 focus:ring-purple-400 outline-none">
                             </div>
                             
-                            <!-- 판매 수익 전용 입력 필드 -->
-                            <div id="income-group" class="space-y-4 p-4 border border-blue-100 bg-blue-50/30 rounded-lg">
+                            <!-- 판매 수익 전용 -->
+                            <div id="income-group" class="space-y-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">판매 제품</label>
-                                    <select id="input-product" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-white">
-                                        <option value="">제품을 먼저 등록해주세요</option>
-                                    </select>
+                                    <label class="block text-xs font-bold text-blue-400 mb-1 ml-1">판매 제품</label>
+                                    <select id="input-product" class="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-400 outline-none shadow-sm"></select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">판매처</label>
-                                    <select id="input-channel" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-white">
-                                        <option value="">판매처를 먼저 등록해주세요</option>
-                                    </select>
+                                    <label class="block text-xs font-bold text-blue-400 mb-1 ml-1">판매처</label>
+                                    <select id="input-channel" class="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-400 outline-none shadow-sm"></select>
                                 </div>
                             </div>
 
-                            <!-- 재료 구매 전용 입력 필드 -->
-                            <div id="expense-group" class="hidden space-y-4 p-4 border border-red-100 bg-red-50/30 rounded-lg">
+                            <!-- 재료 구매 전용 -->
+                            <div id="expense-group" class="hidden space-y-4 p-5 bg-red-50/50 rounded-2xl border border-red-100">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">구매처 (선택)</label>
-                                    <select id="input-vendor" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-white">
-                                        <option value="">구매처를 먼저 등록해주세요</option>
-                                    </select>
+                                    <label class="block text-xs font-bold text-red-400 mb-1 ml-1">구매처 (선택)</label>
+                                    <select id="input-vendor" class="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-400 outline-none shadow-sm"></select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">지출 항목명</label>
-                                    <input type="text" id="input-expense-name" placeholder="예: UV 레진 1kg, 코스터 몰드" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
+                                    <label class="block text-xs font-bold text-red-400 mb-1 ml-1">항목명</label>
+                                    <input type="text" id="input-expense-name" placeholder="UV 레진, 몰드 등" class="w-full bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-400 outline-none shadow-sm">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">단가 (원)</label>
-                                    <input type="number" id="input-unit-price" placeholder="0" min="0" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50">
+                                    <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">단가 (원)</label>
+                                    <input type="number" id="input-unit-price" placeholder="0" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400 outline-none">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">수량</label>
-                                    <div class="relative">
-                                        <input type="number" id="input-quantity" value="1" min="1" required class="w-full border rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-purple-400 outline-none">
-                                        <span class="absolute right-3 top-2 text-gray-400 text-sm">개</span>
-                                    </div>
+                                    <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">수량</label>
+                                    <input type="number" id="input-quantity" value="1" min="1" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400 outline-none">
                                 </div>
                             </div>
                             
-                            <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-100 mt-2">
-                                <label id="amount-label" class="block text-sm font-bold text-purple-700 mb-1">총 금액 (원)</label>
-                                <input type="number" id="input-amount" placeholder="0" min="0" required class="w-full border border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none font-bold text-gray-800 bg-white shadow-sm">
-                                <p id="price-hint" class="text-xs text-purple-500 mt-1.5 hidden"><i class="fas fa-info-circle"></i> 단가 × 수량으로 자동 계산되었습니다.</p>
+                            <div class="bg-gray-900 p-5 rounded-3xl text-white shadow-lg">
+                                <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Total Amount</label>
+                                <input type="number" id="input-amount" placeholder="0" required class="w-full bg-transparent border-none p-0 text-2xl font-black focus:ring-0 outline-none">
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">비고 (선택)</label>
-                                <textarea id="input-memo" rows="2" placeholder="메모 사항을 적어주세요" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none resize-none"></textarea>
-                            </div>
-                            <button type="submit" id="submit-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md flex justify-center items-center gap-2">
-                                <i class="fas fa-plus-circle"></i> 내역 등록하기
+                            <button type="submit" id="submit-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-3xl transition-all shadow-md active:scale-95">
+                                <i class="fas fa-plus-circle mr-2"></i> 등록하기
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- 상세 내역 리스트 -->
+                <!-- 상세 리스트 -->
                 <div class="lg:col-span-2">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[500px]">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700 flex justify-between items-center">
-                            상세 내역 📋
-                            <span class="text-sm font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full" id="list-count">총 0건</span>
-                        </h2>
-                        <div id="entries-container" class="space-y-3">
-                            <div id="empty-state" class="text-center py-16 text-gray-400 hidden">
-                                <i class="fas fa-receipt text-5xl mb-4 opacity-40"></i>
-                                <p class="text-lg">등록된 내역이 없습니다.<br><span class="text-sm">새로운 내역을 등록해 보세요!</span></p>
+                    <div class="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 min-h-[600px]">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b pb-6">
+                            <h2 class="text-xl font-black text-gray-800">전체 거래 내역</h2>
+                            <div class="flex items-center gap-2 bg-gray-50 p-2 rounded-2xl">
+                                <input type="date" id="filter-start" class="bg-transparent border-none text-xs font-bold focus:ring-0">
+                                <span class="text-gray-300">~</span>
+                                <input type="date" id="filter-end" class="bg-transparent border-none text-xs font-bold focus:ring-0">
+                                <button onclick="renderApp()" class="bg-gray-800 text-white p-2 rounded-xl hover:bg-black transition-all">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="entries-container" class="space-y-4">
+                            <div id="empty-state" class="text-center py-24 text-gray-300">
+                                <i class="fas fa-receipt text-6xl mb-4 opacity-20"></i>
+                                <p class="font-bold text-lg">데이터가 없습니다.</p>
                             </div>
                         </div>
                     </div>
@@ -219,184 +202,102 @@
             </div>
         </div>
 
-        <!-- [탭 2] 제품 관리 -->
+        <!-- [탭 2,3,4,5] - 기존과 동일하되 디자인 통일 -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">신규 제품 등록 💎</h2>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                        <h2 class="text-lg font-black mb-6">신규 제품 등록</h2>
                         <form id="product-form" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">제품 코드</label>
-                                <input type="text" id="prod-code" placeholder="예: C-001" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">제품명</label>
-                                <input type="text" id="prod-name" placeholder="예: 바다결 코스터" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">기본 판매가 (원)</label>
-                                <input type="number" id="prod-price" placeholder="0" min="0" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                            </div>
-                            <button type="submit" id="prod-submit-btn" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md">
-                                제품 추가
-                            </button>
+                            <input type="text" id="prod-code" placeholder="제품 코드 (C-001)" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold">
+                            <input type="text" id="prod-name" placeholder="제품명" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold">
+                            <input type="number" id="prod-price" placeholder="기본 판매가" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold">
+                            <button type="submit" class="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-md">제품 추가</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">등록된 제품 목록 📦</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-600 text-sm">
-                                        <th class="p-3 rounded-tl-lg font-medium">코드</th>
-                                        <th class="p-3 font-medium">제품명</th>
-                                        <th class="p-3 font-medium">기본가</th>
-                                        <th class="p-3 rounded-tr-lg text-center font-medium">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="products-table-body" class="divide-y divide-gray-100">
-                                </tbody>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">제품 목록</h2>
+                        <div class="overflow-hidden">
+                            <table class="w-full text-left">
+                                <tbody id="products-table-body" class="divide-y divide-gray-50"></tbody>
                             </table>
-                            <div id="prod-empty-state" class="text-center py-12 text-gray-400 hidden">
-                                제품을 먼저 등록해주세요.
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- [탭 3] 판매처 관리 -->
+        
+        <!-- 판매처 관리 탭 -->
         <div id="tab-channels" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">신규 판매처 등록 🏪</h2>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                        <h2 class="text-lg font-black mb-6">판매처 추가</h2>
                         <form id="channel-form" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">판매처명</label>
-                                <input type="text" id="chan-name" placeholder="예: 스마트스토어, OO공방" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                            </div>
-                            <button type="submit" id="chan-submit-btn" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md">
-                                판매처 추가
-                            </button>
+                            <input type="text" id="chan-name" placeholder="판매처 이름" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold">
+                            <button type="submit" class="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl">추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">등록된 판매처 목록 🏬</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-600 text-sm">
-                                        <th class="p-3 rounded-tl-lg font-medium">판매처명</th>
-                                        <th class="p-3 rounded-tr-lg text-center w-24 font-medium">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="channels-table-body" class="divide-y divide-gray-100">
-                                </tbody>
-                            </table>
-                            <div id="chan-empty-state" class="text-center py-12 text-gray-400 hidden">
-                                판매처를 먼저 등록해주세요.
-                            </div>
-                        </div>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">판매처 목록</h2>
+                        <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- [탭 4] 구매처 관리 -->
+        <!-- 구매처 관리 탭 -->
         <div id="tab-vendors" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">신규 구매처 등록 🛒</h2>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+                        <h2 class="text-lg font-black mb-6">구매처 추가</h2>
                         <form id="vendor-form" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">구매처명</label>
-                                <input type="text" id="ven-name" placeholder="예: 동대문 부자재상가, 미니어몰" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                            </div>
-                            <button type="submit" id="ven-submit-btn" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md">
-                                구매처 추가
-                            </button>
+                            <input type="text" id="ven-name" placeholder="구매처 이름" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold">
+                            <button type="submit" class="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl">추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">등록된 구매처 목록 🛍️</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-600 text-sm">
-                                        <th class="p-3 rounded-tl-lg font-medium">구매처명</th>
-                                        <th class="p-3 rounded-tr-lg text-center w-24 font-medium">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="vendors-table-body" class="divide-y divide-gray-100">
-                                </tbody>
-                            </table>
-                            <div id="ven-empty-state" class="text-center py-12 text-gray-400 hidden">
-                                구매처를 먼저 등록해주세요.
-                            </div>
-                        </div>
+                    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">구매처 목록</h2>
+                        <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- [탭 5] 통계 분석 -->
-        <div id="tab-stats" class="tab-content hidden space-y-6">
+        <!-- 통계 분석 탭 -->
+        <div id="tab-stats" class="tab-content hidden space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- 판매처별 통계 -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-lg font-bold text-gray-800">📊 판매처별 매출 통계</h2>
-                        <p class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">선택된 날짜 기준</p>
-                    </div>
+                <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <h2 class="text-xl font-black mb-8 flex items-center gap-2">
+                        <i class="fas fa-store text-blue-500"></i> 판매처별 매출
+                    </h2>
                     <div id="stats-container" class="space-y-6"></div>
-                    <div id="stats-empty-state" class="text-center py-12 text-gray-400 hidden">
-                        해당 기간에 판매 수익 내역이 없습니다.
-                    </div>
                 </div>
-
-                <!-- 구매처별 통계 -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="text-lg font-bold text-gray-800">🛒 구매처별 지출 통계</h2>
-                        <p class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">선택된 날짜 기준</p>
-                    </div>
+                <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <h2 class="text-xl font-black mb-8 flex items-center gap-2">
+                        <i class="fas fa-truck text-red-400"></i> 구매처별 지출
+                    </h2>
                     <div id="vendor-stats-container" class="space-y-6"></div>
-                    <div id="vendor-stats-empty-state" class="text-center py-12 text-gray-400 hidden">
-                        해당 기간에 재료 구매 내역이 없습니다.
-                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // 🌟 수정됨: 이메일/비밀번호 로그인 모듈 가져오기
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 알림창(모달) 제어 함수
-        window.showModal = function(message) {
-            document.getElementById('custom-modal-text').textContent = message;
-            document.getElementById('custom-modal').classList.remove('hidden');
-        };
-        window.closeModal = function() {
-            document.getElementById('custom-modal').classList.add('hidden');
-        };
-
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Firebase 설정 (직접 입력하신 정보)
+        const firebaseConfig = {
             apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
             authDomain: "openzeroc.firebaseapp.com",
             projectId: "openzeroc",
@@ -406,541 +307,265 @@
             measurementId: "G-M4K79K2XPG"
         };
 
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (error) { 
-            console.error("Firebase Init Error:", error); 
-            showModal("서버 연결에 실패했습니다. Firebase 설정을 확인해주세요.");
-        }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         let currentUser = null;
         let allEntries = []; 
         let allProducts = [];
         let allChannels = [];
         let allVendors = [];
-        let unsubEntries, unsubProducts, unsubChannels, unsubVendors;
+        let unsubs = [];
 
         const formatMoney = (num) => new Intl.NumberFormat('ko-KR').format(num) + '원';
+        const showModal = (msg) => { document.getElementById('custom-modal-text').innerText = msg; document.getElementById('custom-modal').classList.remove('hidden'); };
+        window.closeModal = () => document.getElementById('custom-modal').classList.add('hidden');
 
-        // 🌟 수정됨: 완벽한 계정 동기화를 위한 이메일 인증 방식 적용
+        // 🌟 [핵심] 로그인 유지 및 상태 감지
+        setPersistence(auth, browserLocalPersistence);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 이미 로그인된 상태라면 바로 대시보드 진입
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                subscribeToData();
+            } else {
+                // 로그아웃 상태라면 로그인 화면 표시
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+
+        // 🌟 [핵심] 로그인 처리
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('login-id').value;
             const pw = document.getElementById('login-pw').value;
+            const syncEmail = `${id}@resin.app`;
 
-            // 작가님 전용 아이디/비밀번호 확인
             if (id === 'jina' && pw === 'jadu6486') {
-                document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('loading-screen').classList.remove('hidden');
-                document.getElementById('loading-screen').classList.add('flex');
-                
-                // 파이어베이스 인증용 가상 이메일 생성 (PC, 모바일 모두 동일한 계정으로 로그인됨)
-                const syncEmail = `${id}@resin.app`; 
-                
                 try {
-                    // 1. 기존 가입된 계정으로 로그인 시도
                     await signInWithEmailAndPassword(auth, syncEmail, pw);
-                    setupApp();
-                } catch (error) {
-                    // 2. 계정이 없으면 (최초 1회) 자동으로 가입 후 로그인
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-login-credentials' || error.code === 'auth/invalid-credential') {
-                        try {
-                            await createUserWithEmailAndPassword(auth, syncEmail, pw);
-                            setupApp();
-                        } catch (createError) {
-                            console.error(createError);
-                            showModal("계정 초기화에 실패했습니다. 파이어베이스의 [이메일/비밀번호] 로그인이 켜져 있는지 확인해주세요.");
-                            resetLoginUI();
-                        }
-                    } else {
-                        console.error(error);
-                        showModal("로그인 중 에러가 발생했습니다: " + error.code);
-                        resetLoginUI();
-                    }
-                }
+                } catch (err) {
+                    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/invalid-credential') {
+                        try { await createUserWithEmailAndPassword(auth, syncEmail, pw); } catch (ce) { console.error(ce); showModal("계정 생성 실패"); }
+                    } else { showModal("로그인 오류: " + err.code); }
+                } finally { document.getElementById('loading-screen').classList.add('hidden'); }
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
             }
         });
 
-        // 정상 로그인 후 대시보드 진입 처리
-        function setupApp() {
-            currentUser = auth.currentUser;
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('flex');
-            document.getElementById('app-container').classList.remove('hidden');
-            subscribeToData();
-        }
+        window.handleLogout = () => { if(confirm("로그아웃 하시겠습니까?")) signOut(auth); };
 
-        // 로그인 실패 시 다시 로그인 화면으로 돌아가기
-        function resetLoginUI() {
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('flex');
-            document.getElementById('login-screen').classList.remove('hidden');
-        }
-
-        // 탭 전환 로직
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('text-purple-600', 'border-purple-600');
-                btn.classList.add('text-gray-500', 'border-transparent');
-            });
-            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
-            activeBtn.classList.remove('text-gray-500', 'border-transparent');
-            activeBtn.classList.add('text-purple-600', 'border-purple-600');
-        };
-
-        // 수입/지출 폼 토글
-        document.getElementById('input-type').addEventListener('change', (e) => {
-            const isIncome = e.target.value === 'income';
-            document.getElementById('income-group').classList.toggle('hidden', !isIncome);
-            document.getElementById('expense-group').classList.toggle('hidden', isIncome);
-            document.getElementById('amount-label').textContent = isIncome ? '총 판매 금액 (원)' : '총 지출 금액 (원)';
-            document.getElementById('price-hint').classList.add('hidden');
-            
-            document.getElementById('input-unit-price').value = '';
-            document.getElementById('input-amount').value = '';
-            document.getElementById('input-quantity').value = 1;
-            document.getElementById('input-product').value = '';
-            document.getElementById('input-vendor').value = '';
-        });
-
-        // 제품 선택 시 가격 연동
-        document.getElementById('input-product').addEventListener('change', (e) => {
-            const hintEl = document.getElementById('price-hint');
-            if(!e.target.value) {
-                document.getElementById('input-unit-price').value = '';
-                document.getElementById('input-amount').value = '';
-                hintEl.classList.add('hidden');
-                return;
-            }
-            const selectedProd = allProducts.find(p => p.id === e.target.value);
-            if(selectedProd) {
-                const unitPrice = selectedProd.price;
-                const qty = Number(document.getElementById('input-quantity').value) || 1;
-                document.getElementById('input-unit-price').value = unitPrice;
-                document.getElementById('input-amount').value = unitPrice * qty;
-                hintEl.classList.remove('hidden'); 
-            }
-        });
-
-        // 수량 및 단가 변경 시 총 금액 자동 계산 로직
-        const calculateTotal = () => {
-            const unitPrice = Number(document.getElementById('input-unit-price').value) || 0;
-            const qty = Number(document.getElementById('input-quantity').value) || 1;
-            if (unitPrice > 0) {
-                document.getElementById('input-amount').value = unitPrice * qty;
-                document.getElementById('price-hint').classList.remove('hidden');
-            }
-        };
-
-        document.getElementById('input-quantity').addEventListener('input', calculateTotal);
-        document.getElementById('input-unit-price').addEventListener('input', calculateTotal);
-
-        // 3. 데이터 실시간 구독
+        // 🌟 데이터 실시간 동기화
         function subscribeToData() {
             if (!currentUser) return;
-            
-            // 내역 데이터
-            const entriesRef = collection(db, 'jina_resin', currentUser.uid, 'entries');
-            unsubEntries = onSnapshot(entriesRef, (snapshot) => {
-                allEntries = [];
-                snapshot.forEach(doc => allEntries.push({ id: doc.id, ...doc.data() }));
-                renderApp();
-            }, (err) => console.error(err));
+            // 이전 구독 해제
+            unsubs.forEach(unsub => unsub());
+            unsubs = [];
 
-            // 제품 데이터
-            const productsRef = collection(db, 'jina_resin', currentUser.uid, 'products');
-            unsubProducts = onSnapshot(productsRef, (snapshot) => {
-                allProducts = [];
-                snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
-                updateProductSelect();
+            const userPath = (col) => collection(db, 'jina_resin', currentUser.uid, col);
+
+            unsubs.push(onSnapshot(userPath('entries'), (s) => { allEntries = s.docs.map(d => ({id: d.id, ...d.data()})); renderApp(); }));
+            unsubs.push(onSnapshot(userPath('products'), (s) => { 
+                allProducts = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                const select = document.getElementById('input-product');
+                select.innerHTML = '<option value="">제품 선택</option>' + allProducts.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
                 renderProducts();
-            }, (err) => console.error(err));
-
-            // 판매처 데이터
-            const channelsRef = collection(db, 'jina_resin', currentUser.uid, 'channels');
-            unsubChannels = onSnapshot(channelsRef, (snapshot) => {
-                allChannels = [];
-                snapshot.forEach(doc => allChannels.push({ id: doc.id, ...doc.data() }));
-                updateChannelSelect();
+            }));
+            unsubs.push(onSnapshot(userPath('channels'), (s) => { 
+                allChannels = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                document.getElementById('input-channel').innerHTML = '<option value="">판매처 선택</option>' + allChannels.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
                 renderChannels();
-            }, (err) => console.error(err));
-
-            // 구매처 데이터
-            const vendorsRef = collection(db, 'jina_resin', currentUser.uid, 'vendors');
-            unsubVendors = onSnapshot(vendorsRef, (snapshot) => {
-                allVendors = [];
-                snapshot.forEach(doc => allVendors.push({ id: doc.id, ...doc.data() }));
-                updateVendorSelect();
+            }));
+            unsubs.push(onSnapshot(userPath('vendors'), (s) => { 
+                allVendors = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                document.getElementById('input-vendor').innerHTML = '<option value="">구매처 선택</option>' + allVendors.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
                 renderVendors();
-            }, (err) => console.error(err));
+            }));
         }
 
-        // 드롭다운 및 테이블 렌더링 함수들
-        function updateProductSelect() {
-            const select = document.getElementById('input-product');
-            select.innerHTML = '<option value="">제품을 선택하세요</option>';
-            allProducts.forEach(prod => {
-                const opt = document.createElement('option');
-                opt.value = prod.id;
-                opt.textContent = `[${prod.code}] ${prod.name} (${formatMoney(prod.price)})`;
-                select.appendChild(opt);
-            });
-        }
-
-        function updateChannelSelect() {
-            const select = document.getElementById('input-channel');
-            select.innerHTML = '<option value="">판매처를 선택하세요</option>';
-            allChannels.forEach(chan => {
-                const opt = document.createElement('option');
-                opt.value = chan.name;
-                opt.textContent = chan.name;
-                select.appendChild(opt);
-            });
-        }
-
-        function updateVendorSelect() {
-            const select = document.getElementById('input-vendor');
-            select.innerHTML = '<option value="">구매처를 선택하세요 (선택)</option>';
-            allVendors.forEach(ven => {
-                const opt = document.createElement('option');
-                opt.value = ven.name;
-                opt.textContent = ven.name;
-                select.appendChild(opt);
-            });
-        }
-
-        window.renderProducts = function() {
-            const tbody = document.getElementById('products-table-body');
-            const emptyState = document.getElementById('prod-empty-state');
-            tbody.innerHTML = '';
-            if(allProducts.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                const sorted = [...allProducts].sort((a,b) => a.code.localeCompare(b.code));
-                sorted.forEach(prod => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors group";
-                    tr.innerHTML = `
-                        <td class="p-3 font-mono text-sm text-gray-500">${prod.code}</td>
-                        <td class="p-3 font-semibold">${prod.name}</td>
-                        <td class="p-3 text-blue-600">${formatMoney(prod.price)}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteProduct('${prod.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fas fa-trash-alt"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        window.renderChannels = function() {
-            const tbody = document.getElementById('channels-table-body');
-            const emptyState = document.getElementById('chan-empty-state');
-            tbody.innerHTML = '';
-            if(allChannels.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                const sorted = [...allChannels].sort((a,b) => a.name.localeCompare(b.name));
-                sorted.forEach(chan => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors group";
-                    tr.innerHTML = `
-                        <td class="p-3 font-semibold text-gray-800">${chan.name}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteChannel('${chan.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fas fa-trash-alt"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        window.renderVendors = function() {
-            const tbody = document.getElementById('vendors-table-body');
-            const emptyState = document.getElementById('ven-empty-state');
-            tbody.innerHTML = '';
-            if(allVendors.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                const sorted = [...allVendors].sort((a,b) => a.name.localeCompare(b.name));
-                sorted.forEach(ven => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors group";
-                    tr.innerHTML = `
-                        <td class="p-3 font-semibold text-gray-800">${ven.name}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteVendor('${ven.id}')" class="text-red-400 hover:text-red-600 transition-colors"><i class="fas fa-trash-alt"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        // 대시보드 렌더링
-        window.renderApp = function() {
-            const startStr = document.getElementById('filter-start').value;
-            const endStr = document.getElementById('filter-end').value;
-            
-            let filteredEntries = allEntries.filter(entry => {
-                if (!startStr || !endStr) return true;
-                return entry.date >= startStr && entry.date <= endStr;
-            });
-            
-            filteredEntries.sort((a, b) => {
-                if (a.date !== b.date) return b.date.localeCompare(a.date);
-                return b.createdAt - a.createdAt;
-            });
-
-            let totalIncome = 0, totalExpense = 0;
-            const channelStats = {}, vendorStats = {};
-
-            filteredEntries.forEach(entry => {
-                if (entry.type === 'income') {
-                    totalIncome += Number(entry.amount);
-                    if(entry.channel) channelStats[entry.channel] = (channelStats[entry.channel] || 0) + Number(entry.amount);
-                } else if (entry.type === 'expense') {
-                    totalExpense += Number(entry.amount);
-                    if(entry.vendor) vendorStats[entry.vendor] = (vendorStats[entry.vendor] || 0) + Number(entry.amount);
-                }
-            });
-
-            document.getElementById('dash-income').textContent = formatMoney(totalIncome);
-            document.getElementById('dash-expense').textContent = formatMoney(totalExpense);
-            document.getElementById('dash-net').textContent = formatMoney(totalIncome - totalExpense);
-
-            const container = document.getElementById('entries-container');
-            const emptyState = document.getElementById('empty-state');
-            document.getElementById('list-count').textContent = `총 ${filteredEntries.length}건`;
-
-            container.innerHTML = '';
-            if (filteredEntries.length === 0) {
-                emptyState.classList.remove('hidden');
-                container.appendChild(emptyState);
-            } else {
-                emptyState.classList.add('hidden');
-                filteredEntries.forEach(entry => {
-                    const isIncome = entry.type === 'income';
-                    const icon = isIncome ? '<i class="fas fa-arrow-down text-blue-500 bg-blue-100 p-2 rounded-full"></i>' : '<i class="fas fa-arrow-up text-red-500 bg-red-100 p-2 rounded-full"></i>';
-                    const sign = isIncome ? '+' : '-';
-                    const amountClass = isIncome ? 'text-blue-600' : 'text-red-500';
-                    const typeLabel = isIncome ? '판매' : '지출';
-                    
-                    let badgeHtml = '';
-                    if (isIncome && entry.channel) {
-                        badgeHtml = `<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">${entry.channel}</span>`;
-                    } else if (!isIncome && entry.vendor) {
-                        badgeHtml = `<span class="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">${entry.vendor}</span>`;
-                    }
-
-                    // 수량 및 단가 뱃지 HTML
-                    let unitText = entry.unitPrice ? `${formatMoney(entry.unitPrice)} × ` : '';
-                    let qtyHtml = entry.quantity ? `<span class="text-[11px] bg-indigo-50 text-indigo-600 font-medium px-1.5 py-0.5 rounded border border-indigo-100 ml-1 whitespace-nowrap">${unitText}${entry.quantity}개</span>` : '';
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = "flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-purple-200 transition-colors group";
-                    itemDiv.innerHTML = `
-                        <div class="flex items-center gap-4 overflow-hidden w-2/3">
-                            <div class="flex-shrink-0">${icon}</div>
-                            <div class="overflow-hidden w-full">
-                                <div class="flex items-center flex-wrap gap-y-1 mb-1">
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded ${isIncome ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-red-50 text-red-600 border border-red-100'} mr-1">${typeLabel}</span>
-                                    <p class="font-bold text-gray-800 truncate">${entry.name}</p>
-                                    ${qtyHtml}
-                                    ${badgeHtml}
-                                </div>
-                                <div class="flex text-xs text-gray-500 gap-2 truncate">
-                                    <span><i class="far fa-calendar text-gray-400"></i> ${entry.date}</span>
-                                    ${entry.memo ? `<span class="truncate">· ${entry.memo}</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4 flex-shrink-0 ml-2">
-                            <div class="text-right">
-                                <p class="font-bold ${amountClass} text-lg tracking-tight">${sign} ${formatMoney(entry.amount)}</p>
-                            </div>
-                            <button onclick="deleteEntry('${entry.id}')" class="text-gray-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-opacity" title="삭제">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(itemDiv);
-                });
-                container.appendChild(emptyState); 
-            }
-
-            renderStats(channelStats, totalIncome, 'stats-container', 'stats-empty-state', 'from-blue-400 to-purple-500');
-            renderStats(vendorStats, totalExpense, 'vendor-stats-container', 'vendor-stats-empty-state', 'from-red-400 to-orange-500');
+        // UI 제어 (탭 전환)
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => { b.classList.replace('text-purple-600','text-gray-400'); b.classList.replace('border-purple-600','border-transparent'); });
+            const btn = document.getElementById(`tab-btn-${tab}`);
+            btn.classList.replace('text-gray-400','text-purple-600'); btn.classList.replace('border-transparent','border-purple-600');
         };
 
-        function renderStats(statsObj, totalAmount, containerId, emptyStateId, gradientClasses) {
-            const statsContainer = document.getElementById(containerId);
-            const statsEmpty = document.getElementById(emptyStateId);
-            statsContainer.innerHTML = '';
-            const keys = Object.keys(statsObj);
-            
-            if(keys.length === 0 || totalAmount === 0) {
-                statsEmpty.classList.remove('hidden');
-                return;
-            }
-            statsEmpty.classList.add('hidden');
-            keys.sort((a, b) => statsObj[b] - statsObj[a]);
+        // 수입/지출 폼 제어
+        document.getElementById('input-type').addEventListener('change', (e) => {
+            const isInc = e.target.value === 'income';
+            document.getElementById('income-group').classList.toggle('hidden', !isInc);
+            document.getElementById('expense-group').classList.toggle('hidden', isInc);
+            document.getElementById('input-unit-price').value = '';
+            document.getElementById('input-amount').value = '';
+        });
 
-            keys.forEach(key => {
-                const amount = statsObj[key];
-                const percentage = Math.round((amount / totalAmount) * 100);
-                const statDiv = document.createElement('div');
-                statDiv.innerHTML = `
-                    <div class="flex justify-between items-end mb-1">
-                        <span class="font-bold text-gray-700">${key}</span>
-                        <span class="font-semibold text-gray-700">${formatMoney(amount)} <span class="text-xs text-gray-400 font-normal ml-1">(${percentage}%)</span></span>
-                    </div>
-                    <div class="w-full bg-gray-100 rounded-full h-3 mb-4 overflow-hidden">
-                        <div class="bg-gradient-to-r ${gradientClasses} h-3 rounded-full" style="width: ${percentage}%"></div>
-                    </div>
-                `;
-                statsContainer.appendChild(statDiv);
-            });
-        }
+        // 자동 계산
+        const calculate = () => {
+            const up = Number(document.getElementById('input-unit-price').value) || 0;
+            const q = Number(document.getElementById('input-quantity').value) || 1;
+            if(up > 0) document.getElementById('input-amount').value = up * q;
+        };
+        document.getElementById('input-quantity').addEventListener('input', calculate);
+        document.getElementById('input-unit-price').addEventListener('input', calculate);
+        document.getElementById('input-product').addEventListener('change', (e) => {
+            const p = allProducts.find(x => x.id === e.target.value);
+            if(p) { document.getElementById('input-unit-price').value = p.price; calculate(); }
+        });
 
-        // 4. 데이터 저장 (신규 내역, 제품, 판매처, 구매처)
+        // 데이터 저장
         document.getElementById('entry-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser) return;
-
             const type = document.getElementById('input-type').value;
-            const date = document.getElementById('input-date').value;
-            const unitPrice = Number(document.getElementById('input-unit-price').value) || 0;
-            const quantity = Number(document.getElementById('input-quantity').value) || 1;
-            const amount = Number(document.getElementById('input-amount').value);
-            const memo = document.getElementById('input-memo').value;
-            let name = "", channel = null, vendor = null;
+            let name = "";
+            let channel = null, vendor = null;
 
-            if (type === 'income') {
-                const prodSelect = document.getElementById('input-product');
-                if(!prodSelect.value) { showModal("판매한 제품을 선택해주세요. (제품 탭에서 등록)"); return; }
-                const channelSelect = document.getElementById('input-channel');
-                if(!channelSelect.value) { showModal("판매처를 선택해주세요. (판매처 탭에서 등록)"); return; }
-                
-                const selectedProd = allProducts.find(p => p.id === prodSelect.value);
-                name = selectedProd ? `[${selectedProd.code}] ${selectedProd.name}` : "알 수 없는 제품";
+            if(type === 'income') {
+                const pId = document.getElementById('input-product').value;
+                if(!pId) return showModal("제품을 선택하세요.");
+                name = allProducts.find(x => x.id === pId).name;
                 channel = document.getElementById('input-channel').value;
             } else {
                 name = document.getElementById('input-expense-name').value;
-                if(!name) { showModal("지출 항목명을 입력해주세요."); return; }
-                vendor = document.getElementById('input-vendor').value || null;
+                vendor = document.getElementById('input-vendor').value;
             }
 
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-
             try {
-                const entriesRef = collection(db, 'jina_resin', currentUser.uid, 'entries');
-                await addDoc(entriesRef, { type, date, unitPrice, quantity, name, amount, channel, vendor, memo, createdAt: Date.now() });
-
-                if(type === 'expense') {
-                    document.getElementById('input-expense-name').value = '';
-                    document.getElementById('input-vendor').value = '';
-                } else {
-                    document.getElementById('input-product').value = '';
-                }
-                document.getElementById('input-unit-price').value = '';
-                document.getElementById('input-amount').value = '';
-                document.getElementById('input-quantity').value = 1;
-                document.getElementById('input-memo').value = '';
-                document.getElementById('price-hint').classList.add('hidden');
-            } catch (error) { 
-                console.error(error); 
-                showModal("저장에 실패했습니다."); 
-            } finally { btn.disabled = false; }
+                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'entries'), {
+                    type, name, channel, vendor,
+                    date: document.getElementById('input-date').value,
+                    unitPrice: Number(document.getElementById('input-unit-price').value),
+                    quantity: Number(document.getElementById('input-quantity').value),
+                    amount: Number(document.getElementById('input-amount').value),
+                    createdAt: Date.now()
+                });
+                document.getElementById('entry-form').reset();
+                document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            } catch (e) { showModal("저장 실패"); }
         });
 
-        document.getElementById('product-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(!currentUser) return;
-            const code = document.getElementById('prod-code').value;
-            const name = document.getElementById('prod-name').value;
-            const price = Number(document.getElementById('prod-price').value);
-            const btn = document.getElementById('prod-submit-btn');
-            btn.disabled = true;
-            try {
-                const productsRef = collection(db, 'jina_resin', currentUser.uid, 'products');
-                await addDoc(productsRef, { code, name, price, createdAt: Date.now() });
-                document.getElementById('prod-code').value = '';
-                document.getElementById('prod-name').value = '';
-                document.getElementById('prod-price').value = '';
-            } catch (err) { console.error(err); }
-            finally { btn.disabled = false; }
-        });
+        // 리스트 렌더링
+        window.renderApp = () => {
+            const start = document.getElementById('filter-start').value;
+            const end = document.getElementById('filter-end').value;
+            let filtered = allEntries.filter(e => (!start || e.date >= start) && (!end || e.date <= end));
+            filtered.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 
-        document.getElementById('channel-form')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(!currentUser) return;
-            const name = document.getElementById('chan-name').value;
-            const btn = document.getElementById('chan-submit-btn');
-            btn.disabled = true;
-            try {
-                const channelsRef = collection(db, 'jina_resin', currentUser.uid, 'channels');
-                await addDoc(channelsRef, { name, createdAt: Date.now() });
-                document.getElementById('chan-name').value = '';
-            } catch (err) { console.error(err); }
-            finally { btn.disabled = false; }
-        });
+            let inc = 0, exp = 0;
+            const cStats = {}, vStats = {};
 
-        document.getElementById('vendor-form')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(!currentUser) return;
-            const name = document.getElementById('ven-name').value;
-            const btn = document.getElementById('ven-submit-btn');
-            btn.disabled = true;
-            try {
-                const vendorsRef = collection(db, 'jina_resin', currentUser.uid, 'vendors');
-                await addDoc(vendorsRef, { name, createdAt: Date.now() });
-                document.getElementById('ven-name').value = '';
-            } catch (err) { console.error(err); }
-            finally { btn.disabled = false; }
-        });
+            const container = document.getElementById('entries-container');
+            container.innerHTML = '';
 
-        // 5. 삭제 기능들
-        window.deleteEntry = async function(id) {
-            if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'entries', id)); } 
-            catch (error) { console.error(error); }
-        }
-        window.deleteProduct = async function(id) {
-            if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'products', id)); } 
-            catch (error) { console.error(error); }
-        }
-        window.deleteChannel = async function(id) {
-            if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)); } 
-            catch (error) { console.error(error); }
-        }
-        window.deleteVendor = async function(id) {
-            if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)); } 
-            catch (error) { console.error(error); }
-        }
+            filtered.forEach(e => {
+                if(e.type === 'income') { inc += e.amount; if(e.channel) cStats[e.channel] = (cStats[e.channel]||0) + e.amount; }
+                else { exp += e.amount; if(e.vendor) vStats[e.vendor] = (vStats[e.vendor]||0) + e.amount; }
 
-        // 초기 날짜 세팅
+                const div = document.createElement('div');
+                div.className = "p-5 bg-white border border-gray-100 rounded-3xl flex justify-between items-center group transition-all hover:border-purple-200 shadow-sm";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center ${e.type==='income'?'bg-blue-50 text-blue-500':'bg-red-50 text-red-500'}">
+                            <i class="fas fa-${e.type==='income'?'plus':'minus'} text-xs"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs font-black uppercase ${e.type==='income'?'text-blue-600':'text-red-600'}">${e.type==='income'?'판매':'지출'}</span>
+                                <h4 class="font-bold text-gray-800">${e.name}</h4>
+                                <span class="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">${e.quantity}개</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-[11px] text-gray-400 font-medium">
+                                <span><i class="far fa-calendar mr-1"></i>${e.date}</span>
+                                <span><i class="fas fa-tag mr-1"></i>${e.channel || e.vendor || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <p class="text-lg font-black ${e.type==='income'?'text-blue-600':'text-red-500'}">${e.type==='income'?'+':'-'} ${formatMoney(e.amount)}</p>
+                        <button onclick="deleteEntry('${e.id}')" class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-2">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            if(filtered.length === 0) document.getElementById('empty-state').classList.remove('hidden');
+            else document.getElementById('empty-state').classList.add('hidden');
+
+            document.getElementById('dash-income').innerText = formatMoney(inc);
+            document.getElementById('dash-expense').innerText = formatMoney(exp);
+            document.getElementById('dash-net').innerText = formatMoney(inc - exp);
+            document.getElementById('list-count').innerText = `총 ${filtered.length}건`;
+
+            renderStats(cStats, inc, 'stats-container', 'stats-empty-state', 'bg-blue-500');
+            renderStats(vStats, exp, 'vendor-stats-container', 'vendor-stats-empty-state', 'bg-red-400');
+        };
+
+        const renderStats = (stats, total, cId, eId, color) => {
+            const container = document.getElementById(cId);
+            container.innerHTML = '';
+            const keys = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
+            if(keys.length === 0) return document.getElementById(eId).classList.remove('hidden');
+            document.getElementById(eId).classList.add('hidden');
+            keys.forEach(k => {
+                const per = Math.round((stats[k]/total)*100);
+                container.innerHTML += `
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="font-bold text-sm">${k}</span><span class="text-xs font-bold text-gray-400">${formatMoney(stats[k])} (${per}%)</span></div>
+                        <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden"><div class="${color} h-full" style="width:${per}%"></div></div>
+                    </div>
+                `;
+            });
+        };
+
+        // 삭제 및 기타 탭 저장 (기존과 동일하되 경로 수정)
+        const saveToPath = async (col, data, formId) => {
+            try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(formId).reset(); } 
+            catch (e) { showModal("오류 발생"); }
+        };
+        document.getElementById('product-form').onsubmit = (e) => { e.preventDefault(); saveToPath('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value)}, 'product-form'); };
+        document.getElementById('channel-form').onsubmit = (e) => { e.preventDefault(); saveToPath('channels', {name: document.getElementById('chan-name').value}, 'channel-form'); };
+        document.getElementById('vendor-form').onsubmit = (e) => { e.preventDefault(); saveToPath('vendors', {name: document.getElementById('ven-name').value}, 'vendor-form'); };
+
+        window.deleteEntry = (id) => { if(confirm("내역을 삭제하시겠습니까?")) deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'entries', id)); };
+        window.deleteProduct = (id) => { if(confirm("제품을 삭제하시겠습니까?")) deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'products', id)); };
+        window.deleteChannel = (id) => { if(confirm("판매처를 삭제하시겠습니까?")) deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)); };
+        window.deleteVendor = (id) => { if(confirm("구매처를 삭제하시겠습니까?")) deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)); };
+
+        window.renderProducts = () => {
+            const body = document.getElementById('products-table-body');
+            body.innerHTML = allProducts.map(p => `
+                <tr class="hover:bg-gray-50 transition-all">
+                    <td class="p-4 font-mono text-xs text-gray-400">${p.code}</td>
+                    <td class="p-4 font-bold">${p.name}</td>
+                    <td class="p-4 text-blue-600 font-bold">${formatMoney(p.price)}</td>
+                    <td class="p-4 text-right"><button onclick="deleteProduct('${p.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>
+            `).join('');
+            document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
+        };
+        window.renderChannels = () => {
+            document.getElementById('channels-table-body').innerHTML = allChannels.map(c => `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between font-bold">${c.name} <button onclick="deleteChannel('${c.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></div>`).join('');
+            document.getElementById('chan-empty-state').classList.toggle('hidden', allChannels.length > 0);
+        };
+        window.renderVendors = () => {
+            document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between font-bold">${v.name} <button onclick="deleteVendor('${v.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></div>`).join('');
+            document.getElementById('ven-empty-state').classList.toggle('hidden', allVendors.length > 0);
+        };
+
         const today = new Date();
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        const formatDate = (date) => date.toISOString().split('T')[0];
-        document.getElementById('input-date').value = formatDate(today);
-        document.getElementById('filter-start').value = formatDate(firstDay);
-        document.getElementById('filter-end').value = formatDate(today);
+        document.getElementById('input-date').value = today.toISOString().split('T')[0];
+        document.getElementById('filter-start').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById('filter-end').value = today.toISOString().split('T')[0];
     </script>
 </body>
 </html>
