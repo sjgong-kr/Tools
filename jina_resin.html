@@ -7,6 +7,8 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- 🌟 추가: 엑셀 다운로드를 위한 SheetJS 라이브러리 -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
@@ -205,17 +207,24 @@
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[600px]">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10 border-b border-slate-100 pb-8">
                             <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
-                            <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-[1.2rem] border border-slate-100">
-                                <input type="date" id="filter-start" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
-                                <span class="text-slate-300 font-black">~</span>
-                                <input type="date" id="filter-end" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
-                                <button onclick="renderApp()" class="bg-slate-900 text-white w-10 h-10 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md">
-                                    <i class="fas fa-search"></i>
+                            
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <!-- 🌟 추가: 엑셀 다운로드 버튼 -->
+                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-[1.2rem] font-black text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fas fa-file-excel text-lg"></i> 엑셀 다운로드
                                 </button>
+                                
+                                <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-[1.2rem] border border-slate-100">
+                                    <input type="date" id="filter-start" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
+                                    <span class="text-slate-300 font-black">~</span>
+                                    <input type="date" id="filter-end" class="bg-transparent border-none text-[11px] font-black focus:ring-0 w-32">
+                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-10 h-10 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- 🌟 에러의 원인이었던 부분! empty-state를 컨테이너 밖으로 완전히 분리했습니다 -->
                         <div id="empty-state" class="text-center py-32 text-slate-300">
                             <i class="fas fa-receipt text-7xl mb-6 opacity-20"></i>
                             <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
@@ -724,6 +733,62 @@
             });
             document.getElementById(`tab-btn-${tab}`).classList.add('tab-active');
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
+        };
+
+        // 🌟 추가: 엑셀 다운로드 기능 로직
+        window.exportToExcel = () => {
+            const s = document.getElementById('filter-start').value;
+            const e = document.getElementById('filter-end').value;
+            
+            // 현재 설정된 날짜 기준으로 필터링
+            let filtered = allEntries.filter(x => {
+                const isAfterStart = !s || !x.date || x.date >= s;
+                const isBeforeEnd = !e || !x.date || x.date <= e;
+                return isAfterStart && isBeforeEnd;
+            });
+
+            if (filtered.length === 0) {
+                showModal("선택한 기간에 내보낼 데이터가 없습니다.");
+                return;
+            }
+
+            // 날짜 오름차순(과거->최신)으로 정렬 (엑셀 보기에 편함)
+            filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
+
+            // 엑셀에 들어갈 데이터 구조화 (원하는 컬럼명으로 매핑)
+            const excelData = filtered.map(x => ({
+                '거래일자': x.date || '',
+                '구분': x.type === 'income' ? '판매 수익' : '재료 지출',
+                '항목명 (제품/재료)': x.name || '',
+                '단가': x.unitPrice || 0,
+                '수량': x.quantity || 1,
+                '총금액': x.amount || 0,
+                '관련처 (판매처/구매처)': x.channel || x.vendor || '',
+                '메모': x.memo || ''
+            }));
+
+            // SheetJS를 사용하여 워크시트 생성
+            const ws = XLSX.utils.json_to_sheet(excelData);
+
+            // 엑셀 컬럼 너비 깔끔하게 지정
+            ws['!cols'] = [
+                { wch: 12 }, // 거래일자
+                { wch: 12 }, // 구분
+                { wch: 30 }, // 항목명
+                { wch: 12 }, // 단가
+                { wch: 8 },  // 수량
+                { wch: 15 }, // 총금액
+                { wch: 20 }, // 관련처
+                { wch: 40 }  // 메모
+            ];
+
+            // 새로운 워크북(엑셀 파일) 생성 및 시트 추가
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "레진아트_거래내역");
+
+            // 파일명에 오늘 날짜 추가 (예: JINA_ART_장부_20260414.xlsx)
+            const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            XLSX.writeFile(wb, `JINA_ART_장부_${todayStr}.xlsx`);
         };
 
         // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 세팅
