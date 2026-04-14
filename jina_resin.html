@@ -544,27 +544,27 @@
                     div.className = "p-6 bg-white border border-slate-100 rounded-[1.5rem] flex justify-between items-center group transition-all hover:shadow-lg hover:-translate-y-1";
                     div.innerHTML = `
                         <div class="flex items-center gap-5">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-xl">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
-                            <div>
+                            <div class="space-y-1.5">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-slate-50 px-2 py-0.5 rounded-md">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900">${x.name}</h4>
+                                    <h4 class="font-black text-slate-900 text-lg">${x.name}</h4>
                                 </div>
-                                <div class="flex items-center gap-3 text-[11px] text-slate-400 font-bold">
-                                    <span><i class="far fa-calendar-alt mr-1"></i>${x.date || '-'}</span>
-                                    <span><i class="fas fa-layer-group mr-1"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span><i class="fas fa-tag mr-1"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex items-center gap-3 text-sm text-slate-600 font-bold">
+                                    <span class="text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
+                                    <span class="bg-slate-50 border border-slate-100 text-slate-500 px-2 py-1 rounded-lg text-xs"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="bg-slate-50 border border-slate-100 text-slate-500 px-2 py-1 rounded-lg text-xs"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
                         <div class="flex items-center gap-6">
                             <div class="text-right">
-                                <p class="text-lg font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
-                                <p class="text-[10px] text-slate-300 font-bold">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                                <p class="text-xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
+                                <p class="text-xs text-slate-400 font-bold mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
-                            <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-300 hover:text-rose-600 transition-all">
+                            <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-12 h-12 flex items-center justify-center rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-lg">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -735,7 +735,7 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 🌟 추가: 엑셀 다운로드 기능 로직
+        // 🌟 수정: 엑셀 다운로드 (다중 시트 지원 및 깔끔한 포맷)
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -747,48 +747,66 @@
                 return isAfterStart && isBeforeEnd;
             });
 
-            if (filtered.length === 0) {
-                showModal("선택한 기간에 내보낼 데이터가 없습니다.");
+            if (filtered.length === 0 && allProducts.length === 0 && allChannels.length === 0 && allVendors.length === 0) {
+                showModal("내보낼 데이터가 전혀 없습니다.");
                 return;
             }
 
-            // 날짜 오름차순(과거->최신)으로 정렬 (엑셀 보기에 편함)
-            filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
-
-            // 엑셀에 들어갈 데이터 구조화 (원하는 컬럼명으로 매핑)
-            const excelData = filtered.map(x => ({
-                '거래일자': x.date || '',
-                '구분': x.type === 'income' ? '판매 수익' : '재료 지출',
-                '항목명 (제품/재료)': x.name || '',
-                '단가': x.unitPrice || 0,
-                '수량': x.quantity || 1,
-                '총금액': x.amount || 0,
-                '관련처 (판매처/구매처)': x.channel || x.vendor || '',
-                '메모': x.memo || ''
-            }));
-
-            // SheetJS를 사용하여 워크시트 생성
-            const ws = XLSX.utils.json_to_sheet(excelData);
-
-            // 엑셀 컬럼 너비 깔끔하게 지정
-            ws['!cols'] = [
-                { wch: 12 }, // 거래일자
-                { wch: 12 }, // 구분
-                { wch: 30 }, // 항목명
-                { wch: 12 }, // 단가
-                { wch: 8 },  // 수량
-                { wch: 15 }, // 총금액
-                { wch: 20 }, // 관련처
-                { wch: 40 }  // 메모
-            ];
-
-            // 새로운 워크북(엑셀 파일) 생성 및 시트 추가
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "레진아트_거래내역");
 
-            // 파일명에 오늘 날짜 추가 (예: JINA_ART_장부_20260414.xlsx)
+            // 1. 거래 내역 시트
+            if (filtered.length > 0) {
+                // 날짜 오름차순(과거->최신)으로 정렬
+                filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
+
+                const excelData = filtered.map(x => ({
+                    '거래일자': x.date || '',
+                    '구분': x.type === 'income' ? '판매 수익' : '재료 지출',
+                    '항목명 (제품/재료)': x.name || '',
+                    '단가': x.unitPrice || 0,
+                    '수량': x.quantity || 1,
+                    '총금액': x.amount || 0,
+                    '관련처 (판매처/구매처)': x.channel || x.vendor || '',
+                    '메모': x.memo || ''
+                }));
+
+                const wsEntries = XLSX.utils.json_to_sheet(excelData);
+                // 엑셀 열(Column) 너비 깔끔하게 지정
+                wsEntries['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 35 }, { wch: 12 }, { wch: 8 }, { wch: 15 }, { wch: 25 }, { wch: 40 }];
+                XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
+            }
+
+            // 2. 등록 제품 시트
+            if (allProducts.length > 0) {
+                const productData = allProducts.map(p => ({
+                    '제품코드': p.code || '',
+                    '제품명': p.name || '',
+                    '기본 단가 (원)': p.price || 0
+                }));
+                const wsProducts = XLSX.utils.json_to_sheet(productData);
+                wsProducts['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
+            }
+
+            // 3. 판매처 시트
+            if (allChannels.length > 0) {
+                const channelData = allChannels.map(c => ({ '판매처명': c.name || '' }));
+                const wsChannels = XLSX.utils.json_to_sheet(channelData);
+                wsChannels['!cols'] = [{ wch: 30 }];
+                XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
+            }
+
+            // 4. 구매처 시트
+            if (allVendors.length > 0) {
+                const vendorData = allVendors.map(v => ({ '구매처명': v.name || '' }));
+                const wsVendors = XLSX.utils.json_to_sheet(vendorData);
+                wsVendors['!cols'] = [{ wch: 30 }];
+                XLSX.utils.book_append_sheet(wb, wsVendors, "구매처_목록");
+            }
+
+            // 파일명에 오늘 날짜 추가
             const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            XLSX.writeFile(wb, `JINA_ART_장부_${todayStr}.xlsx`);
+            XLSX.writeFile(wb, `JINA_ART_통합장부_${todayStr}.xlsx`);
         };
 
         // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 세팅
