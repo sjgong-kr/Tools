@@ -19,9 +19,19 @@
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
         .tab-active { color: #8b5cf6; border-bottom: 3px solid #8b5cf6; }
+        
+        /* 🌟 추가: 탭 전환 시 부드러운 페이드인 애니메이션 */
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-content:not(.hidden) {
+            animation: fadeInTab 0.3s ease-out forwards;
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased">
+<!-- 🌟 수정: 스크롤바가 생기고 사라질 때 화면이 좌우로 밀리지 않도록 overflow-y-scroll 고정 -->
+<body class="text-slate-800 antialiased overflow-y-scroll">
 
     <!-- 로그인 화면 -->
     <div id="login-screen" class="fixed inset-0 bg-slate-100 z-[100] flex items-center justify-center">
