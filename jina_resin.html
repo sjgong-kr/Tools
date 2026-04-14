@@ -52,12 +52,28 @@
         <p class="text-gray-500 font-medium text-lg tracking-tight">데이터 동기화 중...</p>
     </div>
 
-    <!-- 커스텀 모달 -->
+    <!-- 범용 알림 모달 -->
     <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-xs w-full text-center">
             <div class="text-purple-500 text-5xl mb-4"><i class="fas fa-check-circle"></i></div>
             <p id="custom-modal-text" class="text-gray-800 font-semibold mb-6 text-lg leading-snug"></p>
             <button onclick="closeModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-2xl font-bold transition-all shadow-md">확인</button>
+        </div>
+    </div>
+
+    <!-- 수정 전용 모달 -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[90] hidden flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
+            <h2 id="edit-modal-title" class="text-xl font-black mb-6 text-gray-800">정보 수정</h2>
+            <form id="edit-form" class="space-y-4">
+                <div id="edit-fields-container" class="space-y-4">
+                    <!-- 필드가 동적으로 생성됨 -->
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-bold py-3.5 rounded-2xl transition-all">취소</button>
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md">저장하기</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -96,7 +112,6 @@
 
         <!-- [탭 1] 내역 관리 -->
         <div id="tab-dashboard" class="tab-content space-y-6">
-            <!-- 요약 카드 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-7 rounded-3xl shadow-sm border border-blue-50">
                     <p class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Total Income</p>
@@ -113,7 +128,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- 입력 폼 -->
                 <div class="lg:col-span-1">
                     <div class="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 sticky top-6">
                         <h2 class="text-xl font-black mb-6 text-gray-800">새 내역 등록</h2>
@@ -130,7 +144,6 @@
                                 <input type="date" id="input-date" required class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 focus:ring-2 focus:ring-purple-400 outline-none">
                             </div>
                             
-                            <!-- 판매 수익 전용 -->
                             <div id="income-group" class="space-y-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
                                 <div>
                                     <label class="block text-xs font-bold text-blue-400 mb-1 ml-1">판매 제품</label>
@@ -142,7 +155,6 @@
                                 </div>
                             </div>
 
-                            <!-- 재료 구매 전용 -->
                             <div id="expense-group" class="hidden space-y-4 p-5 bg-red-50/50 rounded-2xl border border-red-100">
                                 <div>
                                     <label class="block text-xs font-bold text-red-400 mb-1 ml-1">구매처 (선택)</label>
@@ -177,7 +189,6 @@
                     </div>
                 </div>
 
-                <!-- 상세 리스트 -->
                 <div class="lg:col-span-2">
                     <div class="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 min-h-[600px]">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b pb-6">
@@ -191,7 +202,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="entries-container" class="space-y-4">
+                        <div id="entries-container" class="space-y-4 text-sm font-medium">
                             <div id="empty-state" class="text-center py-24 text-gray-300">
                                 <i class="fas fa-receipt text-6xl mb-4 opacity-20"></i>
                                 <p class="font-bold text-lg">데이터가 없습니다.</p>
@@ -202,7 +213,7 @@
             </div>
         </div>
 
-        <!-- [탭 2,3,4,5] - 기존과 동일하되 디자인 통일 -->
+        <!-- [탭 2] 제품 관리 -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
@@ -229,7 +240,7 @@
             </div>
         </div>
         
-        <!-- 판매처 관리 탭 -->
+        <!-- [탭 3] 판매처 관리 -->
         <div id="tab-channels" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
@@ -250,7 +261,7 @@
             </div>
         </div>
 
-        <!-- 구매처 관리 탭 -->
+        <!-- [탭 4] 구매처 관리 -->
         <div id="tab-vendors" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="md:col-span-1">
@@ -271,7 +282,7 @@
             </div>
         </div>
 
-        <!-- 통계 분석 탭 -->
+        <!-- [탭 5] 통계 분석 -->
         <div id="tab-stats" class="tab-content hidden space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
@@ -294,9 +305,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 설정 (직접 입력하신 정보)
+        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
             authDomain: "openzeroc.firebaseapp.com",
@@ -317,29 +328,84 @@
         let allChannels = [];
         let allVendors = [];
         let unsubs = [];
+        let currentEditingItem = null; // 수정 중인 항목 추적
 
         const formatMoney = (num) => new Intl.NumberFormat('ko-KR').format(num) + '원';
         const showModal = (msg) => { document.getElementById('custom-modal-text').innerText = msg; document.getElementById('custom-modal').classList.remove('hidden'); };
         window.closeModal = () => document.getElementById('custom-modal').classList.add('hidden');
 
-        // 🌟 [핵심] 로그인 유지 및 상태 감지
+        // 수정 모달 제어
+        window.openEditModal = (type, item) => {
+            currentEditingItem = { type, ...item };
+            const container = document.getElementById('edit-fields-container');
+            container.innerHTML = '';
+            document.getElementById('edit-modal-title').innerText = `${type === 'product' ? '제품' : type === 'channel' ? '판매처' : '구매처'} 정보 수정`;
+
+            if (type === 'product') {
+                container.innerHTML = `
+                    <input type="text" id="edit-prod-code" value="${item.code}" placeholder="제품 코드" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400">
+                    <input type="text" id="edit-prod-name" value="${item.name}" placeholder="제품명" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400">
+                    <input type="number" id="edit-prod-price" value="${item.price}" placeholder="기본 판매가" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400">
+                `;
+            } else {
+                container.innerHTML = `
+                    <input type="text" id="edit-common-name" value="${item.name}" placeholder="이름" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 font-bold focus:ring-2 focus:ring-purple-400">
+                `;
+            }
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = () => {
+            document.getElementById('edit-modal').classList.add('hidden');
+            currentEditingItem = null;
+        };
+
+        // 수정 저장 로직
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentEditingItem) return;
+
+            const { type, id } = currentEditingItem;
+            const docRef = doc(db, 'jina_resin', currentUser.uid, type === 'product' ? 'products' : type === 'channel' ? 'channels' : 'vendors', id);
+            let updateData = {};
+
+            if (type === 'product') {
+                updateData = {
+                    code: document.getElementById('edit-prod-code').value,
+                    name: document.getElementById('edit-prod-name').value,
+                    price: Number(document.getElementById('edit-prod-price').value)
+                };
+            } else {
+                updateData = {
+                    name: document.getElementById('edit-common-name').value
+                };
+            }
+
+            try {
+                await updateDoc(docRef, updateData);
+                closeEditModal();
+                showModal("수정되었습니다.");
+            } catch (err) {
+                console.error(err);
+                showModal("수정에 실패했습니다.");
+            }
+        });
+
+        // 인증 유지
         setPersistence(auth, browserLocalPersistence);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // 이미 로그인된 상태라면 바로 대시보드 진입
                 currentUser = user;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 subscribeToData();
             } else {
-                // 로그아웃 상태라면 로그인 화면 표시
                 document.getElementById('login-screen').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
             }
         });
 
-        // 🌟 [핵심] 로그인 처리
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('login-id').value;
@@ -362,10 +428,8 @@
 
         window.handleLogout = () => { if(confirm("로그아웃 하시겠습니까?")) signOut(auth); };
 
-        // 🌟 데이터 실시간 동기화
         function subscribeToData() {
             if (!currentUser) return;
-            // 이전 구독 해제
             unsubs.forEach(unsub => unsub());
             unsubs = [];
 
@@ -390,25 +454,24 @@
             }));
         }
 
-        // UI 제어 (탭 전환)
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => { b.classList.replace('text-purple-600','text-gray-400'); b.classList.replace('border-purple-600','border-transparent'); });
+            document.querySelectorAll('nav button').forEach(b => { 
+                b.classList.remove('text-purple-600', 'border-purple-600');
+                b.classList.add('text-gray-400', 'border-transparent');
+            });
             const btn = document.getElementById(`tab-btn-${tab}`);
-            btn.classList.replace('text-gray-400','text-purple-600'); btn.classList.replace('border-transparent','border-purple-600');
+            btn.classList.remove('text-gray-400', 'border-transparent');
+            btn.classList.add('text-purple-600', 'border-purple-600');
         };
 
-        // 수입/지출 폼 제어
         document.getElementById('input-type').addEventListener('change', (e) => {
             const isInc = e.target.value === 'income';
             document.getElementById('income-group').classList.toggle('hidden', !isInc);
             document.getElementById('expense-group').classList.toggle('hidden', isInc);
-            document.getElementById('input-unit-price').value = '';
-            document.getElementById('input-amount').value = '';
         });
 
-        // 자동 계산
         const calculate = () => {
             const up = Number(document.getElementById('input-unit-price').value) || 0;
             const q = Number(document.getElementById('input-quantity').value) || 1;
@@ -421,7 +484,6 @@
             if(p) { document.getElementById('input-unit-price').value = p.price; calculate(); }
         });
 
-        // 데이터 저장
         document.getElementById('entry-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const type = document.getElementById('input-type').value;
@@ -452,7 +514,6 @@
             } catch (e) { showModal("저장 실패"); }
         });
 
-        // 리스트 렌더링
         window.renderApp = () => {
             const start = document.getElementById('filter-start').value;
             const end = document.getElementById('filter-end').value;
@@ -504,10 +565,6 @@
             document.getElementById('dash-income').innerText = formatMoney(inc);
             document.getElementById('dash-expense').innerText = formatMoney(exp);
             document.getElementById('dash-net').innerText = formatMoney(inc - exp);
-            document.getElementById('list-count').innerText = `총 ${filtered.length}건`;
-
-            renderStats(cStats, inc, 'stats-container', 'stats-empty-state', 'bg-blue-500');
-            renderStats(vStats, exp, 'vendor-stats-container', 'vendor-stats-empty-state', 'bg-red-400');
         };
 
         const renderStats = (stats, total, cId, eId, color) => {
@@ -527,7 +584,6 @@
             });
         };
 
-        // 삭제 및 기타 탭 저장 (기존과 동일하되 경로 수정)
         const saveToPath = async (col, data, formId) => {
             try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(formId).reset(); } 
             catch (e) { showModal("오류 발생"); }
@@ -544,21 +600,40 @@
         window.renderProducts = () => {
             const body = document.getElementById('products-table-body');
             body.innerHTML = allProducts.map(p => `
-                <tr class="hover:bg-gray-50 transition-all">
+                <tr class="hover:bg-gray-50 transition-all group">
                     <td class="p-4 font-mono text-xs text-gray-400">${p.code}</td>
-                    <td class="p-4 font-bold">${p.name}</td>
-                    <td class="p-4 text-blue-600 font-bold">${formatMoney(p.price)}</td>
-                    <td class="p-4 text-right"><button onclick="deleteProduct('${p.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></td>
+                    <td class="p-4 font-bold text-sm">${p.name}</td>
+                    <td class="p-4 text-blue-600 font-bold text-sm">${formatMoney(p.price)}</td>
+                    <td class="p-4 text-right flex gap-2 justify-end">
+                        <button onclick="openEditModal('product', ${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-gray-300 hover:text-purple-600 transition-all"><i class="fas fa-pen text-sm"></i></button>
+                        <button onclick="deleteProduct('${p.id}')" class="text-gray-300 hover:text-red-500 transition-all"><i class="fas fa-trash-alt text-sm"></i></button>
+                    </td>
                 </tr>
             `).join('');
             document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
         };
         window.renderChannels = () => {
-            document.getElementById('channels-table-body').innerHTML = allChannels.map(c => `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between font-bold">${c.name} <button onclick="deleteChannel('${c.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></div>`).join('');
+            document.getElementById('channels-table-body').innerHTML = allChannels.map(c => `
+                <div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center font-bold text-sm">
+                    ${c.name} 
+                    <div class="flex gap-3">
+                        <button onclick="openEditModal('channel', ${JSON.stringify(c).replace(/"/g, '&quot;')})" class="text-gray-300 hover:text-purple-600"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteChannel('${c.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
             document.getElementById('chan-empty-state').classList.toggle('hidden', allChannels.length > 0);
         };
         window.renderVendors = () => {
-            document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between font-bold">${v.name} <button onclick="deleteVendor('${v.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button></div>`).join('');
+            document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `
+                <div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center font-bold text-sm">
+                    ${v.name} 
+                    <div class="flex gap-3">
+                        <button onclick="openEditModal('vendor', ${JSON.stringify(v).replace(/"/g, '&quot;')})" class="text-gray-300 hover:text-purple-600"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteVendor('${v.id}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
             document.getElementById('ven-empty-state').classList.toggle('hidden', allVendors.length > 0);
         };
 
