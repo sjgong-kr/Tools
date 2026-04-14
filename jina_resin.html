@@ -390,7 +390,6 @@
             appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
             measurementId: "G-M4K79K2XPG"
         };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'jina-resin-app';
 
         let app, auth, db;
         try {
@@ -412,7 +411,7 @@
         const formatMoney = (num) => new Intl.NumberFormat('ko-KR').format(num) + '원';
 
         // 1. 로그인 로직 처리 (ID/PW 체크 후 통과되면 파이어베이스 Auth 호출)
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('login-id').value;
             const pw = document.getElementById('login-pw').value;
@@ -422,7 +421,8 @@
                 document.getElementById('loading-screen').classList.remove('hidden');
                 document.getElementById('loading-screen').classList.add('flex');
                 
-                initAuth(); // 로그인 검증 성공 후 파이어베이스 연동 시작
+                // 🌟 수정: initAuth()가 끝날 때까지 기다리도록 await 추가
+                await initAuth(); 
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
             }
@@ -435,9 +435,18 @@
                 } else {
                     await signInAnonymously(auth);
                 }
+                
+                // 🌟 수정: 로그인이 성공(또는 이미 유지된 상태)하면 무조건 화면을 전환하도록 변경
+                currentUser = auth.currentUser;
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('flex');
+                document.getElementById('app-container').classList.remove('hidden');
+                
+                // 데이터 불러오기 시작
+                subscribeToData();
+
             } catch (error) { 
                 console.error("Auth Error:", error);
-                // 🌟 수정된 부분: 로그인 실패 이유를 정확히 알려주도록 오류 메시지 강화
                 showModal("로그인 실패: 파이어베이스 '익명 로그인' 설정이나 접속 설정을 확인해주세요. (" + error.code + ")");
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('loading-screen').classList.remove('flex');
@@ -445,17 +454,7 @@
             }
         };
 
-        // 2. 인증 상태 감지 후 데이터 구독 시작
-        onAuthStateChanged(auth, (user) => {
-            if (user && document.getElementById('login-screen').classList.contains('hidden')) {
-                currentUser = user;
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('loading-screen').classList.remove('flex');
-                document.getElementById('app-container').classList.remove('hidden');
-                
-                subscribeToData();
-            }
-        });
+        // 🌟 수정: onAuthStateChanged 부분 완전 삭제 (위 initAuth 내부에서 직접 처리하도록 단순화)
 
         // 탭 전환 로직
         window.switchTab = function(tabId) {
@@ -503,16 +502,16 @@
         function subscribeToData() {
             if (!currentUser) return;
             
-            // 내역 데이터 (jina_resin_entries)
-            const entriesRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_entries');
+            // 내역 데이터
+            const entriesRef = collection(db, 'jina_resin', currentUser.uid, 'entries');
             unsubEntries = onSnapshot(entriesRef, (snapshot) => {
                 allEntries = [];
                 snapshot.forEach(doc => allEntries.push({ id: doc.id, ...doc.data() }));
                 renderApp();
             }, (err) => console.error(err));
 
-            // 제품 데이터 (jina_resin_products)
-            const productsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_products');
+            // 제품 데이터
+            const productsRef = collection(db, 'jina_resin', currentUser.uid, 'products');
             unsubProducts = onSnapshot(productsRef, (snapshot) => {
                 allProducts = [];
                 snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
@@ -520,8 +519,8 @@
                 renderProducts();
             }, (err) => console.error(err));
 
-            // 판매처 데이터 (jina_resin_channels)
-            const channelsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_channels');
+            // 판매처 데이터
+            const channelsRef = collection(db, 'jina_resin', currentUser.uid, 'channels');
             unsubChannels = onSnapshot(channelsRef, (snapshot) => {
                 allChannels = [];
                 snapshot.forEach(doc => allChannels.push({ id: doc.id, ...doc.data() }));
@@ -529,8 +528,8 @@
                 renderChannels();
             }, (err) => console.error(err));
 
-            // 구매처 데이터 (jina_resin_vendors)
-            const vendorsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_vendors');
+            // 구매처 데이터
+            const vendorsRef = collection(db, 'jina_resin', currentUser.uid, 'vendors');
             unsubVendors = onSnapshot(vendorsRef, (snapshot) => {
                 allVendors = [];
                 snapshot.forEach(doc => allVendors.push({ id: doc.id, ...doc.data() }));
@@ -794,7 +793,7 @@
             btn.disabled = true;
 
             try {
-                const entriesRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_entries');
+                const entriesRef = collection(db, 'jina_resin', currentUser.uid, 'entries');
                 await addDoc(entriesRef, { type, date, name, amount, channel, vendor, memo, createdAt: Date.now() });
 
                 if(type === 'expense') {
@@ -821,7 +820,7 @@
             const btn = document.getElementById('prod-submit-btn');
             btn.disabled = true;
             try {
-                const productsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_products');
+                const productsRef = collection(db, 'jina_resin', currentUser.uid, 'products');
                 await addDoc(productsRef, { code, name, price, createdAt: Date.now() });
                 document.getElementById('prod-code').value = '';
                 document.getElementById('prod-name').value = '';
@@ -837,7 +836,7 @@
             const btn = document.getElementById('chan-submit-btn');
             btn.disabled = true;
             try {
-                const channelsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_channels');
+                const channelsRef = collection(db, 'jina_resin', currentUser.uid, 'channels');
                 await addDoc(channelsRef, { name, createdAt: Date.now() });
                 document.getElementById('chan-name').value = '';
             } catch (err) { console.error(err); }
@@ -851,7 +850,7 @@
             const btn = document.getElementById('ven-submit-btn');
             btn.disabled = true;
             try {
-                const vendorsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_vendors');
+                const vendorsRef = collection(db, 'jina_resin', currentUser.uid, 'vendors');
                 await addDoc(vendorsRef, { name, createdAt: Date.now() });
                 document.getElementById('ven-name').value = '';
             } catch (err) { console.error(err); }
@@ -861,22 +860,22 @@
         // 5. 삭제 기능들
         window.deleteEntry = async function(id) {
             if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_entries', id)); } 
+            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'entries', id)); } 
             catch (error) { console.error(error); }
         }
         window.deleteProduct = async function(id) {
             if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_products', id)); } 
+            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'products', id)); } 
             catch (error) { console.error(error); }
         }
         window.deleteChannel = async function(id) {
             if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_channels', id)); } 
+            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)); } 
             catch (error) { console.error(error); }
         }
         window.deleteVendor = async function(id) {
             if (!currentUser) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'jina_resin_vendors', id)); } 
+            try { await deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)); } 
             catch (error) { console.error(error); }
         }
 
