@@ -214,13 +214,17 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="entries-container" class="space-y-5">
-                            <div id="empty-state" class="text-center py-32 text-slate-300">
-                                <i class="fas fa-receipt text-7xl mb-6 opacity-20"></i>
-                                <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
-                                <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
-                            </div>
+                        
+                        <!-- 🌟 에러의 원인이었던 부분! empty-state를 컨테이너 밖으로 완전히 분리했습니다 -->
+                        <div id="empty-state" class="text-center py-32 text-slate-300">
+                            <i class="fas fa-receipt text-7xl mb-6 opacity-20"></i>
+                            <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
+                            <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
                         </div>
+                        <div id="entries-container" class="space-y-5">
+                            <!-- 리스트가 생성될 공간 -->
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -243,11 +247,11 @@
                 <div class="md:col-span-3">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
                         <h2 class="text-xl font-black mb-8">내 제품 목록</h2>
+                        <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 제품이 없습니다.</div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <tbody id="products-table-body" class="divide-y divide-slate-50"></tbody>
                             </table>
-                            <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 제품이 없습니다.</div>
                         </div>
                     </div>
                 </div>
@@ -269,8 +273,8 @@
                 <div class="md:col-span-3">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
                         <h2 class="text-xl font-black mb-8">전체 판매처</h2>
-                        <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                         <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 판매처가 없습니다.</div>
+                        <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
             </div>
@@ -291,8 +295,8 @@
                 <div class="md:col-span-3">
                     <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
                         <h2 class="text-xl font-black mb-8">전체 구매처</h2>
-                        <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                         <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 구매처가 없습니다.</div>
+                        <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
             </div>
@@ -306,22 +310,22 @@
                     <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
                         <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
                     </h2>
-                    <div id="stats-container" class="space-y-8"></div>
                     <div id="stats-empty-state" class="text-center py-20 text-slate-300">
                         <i class="fas fa-chart-pie text-6xl mb-4 opacity-30"></i>
-                        <p class="font-black text-lg">해당 기간의 매출 내역이 없습니다.</p>
+                        <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
                     </div>
+                    <div id="stats-container" class="space-y-8"></div>
                 </div>
                 <!-- 제품 통계 -->
                 <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
                     <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
                         <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
                     </h2>
-                    <div id="product-stats-container" class="space-y-8"></div>
                     <div id="product-stats-empty-state" class="text-center py-20 text-slate-300">
                         <i class="fas fa-chart-bar text-6xl mb-4 opacity-30"></i>
-                        <p class="font-black text-lg">해당 기간의 매출 내역이 없습니다.</p>
+                        <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
                     </div>
+                    <div id="product-stats-container" class="space-y-8"></div>
                 </div>
             </div>
             <!-- 구매처 통계 -->
@@ -329,11 +333,11 @@
                 <h2 class="text-2xl font-black mb-10 flex items-center gap-3">
                     <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
                 </h2>
-                <div id="vendor-stats-container" class="space-y-8"></div>
                 <div id="vendor-stats-empty-state" class="text-center py-20 text-slate-500">
                     <i class="fas fa-boxes text-6xl mb-4 opacity-30"></i>
-                    <p class="font-black text-lg">해당 기간의 매입 내역이 없습니다.</p>
+                    <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
                 </div>
+                <div id="vendor-stats-container" class="space-y-8"></div>
             </div>
         </div>
     </div>
@@ -363,7 +367,8 @@
         let unsubs = [];
         let currentEditInfo = null;
 
-        const formatMoney = (n) => new Intl.NumberFormat('ko-KR').format(n || 0) + '원';
+        // 숫자를 원화로 변경 (NaN 보호 처리 포함)
+        const formatMoney = (n) => new Intl.NumberFormat('ko-KR').format(Number(n) || 0) + '원';
         
         window.showModal = (msg, isConfirm = false, onConfirm = null) => {
             const modal = document.getElementById('custom-modal');
@@ -442,19 +447,19 @@
             ];
         }
 
-        // 타입 설정
+        // 폼 타입(수익/지출) 스위치
         window.setType = (type) => {
             document.getElementById('input-type').value = type;
             const isInc = type === 'income';
             document.getElementById('income-group').classList.toggle('hidden', !isInc);
             document.getElementById('expense-group').classList.toggle('hidden', isInc);
-            document.getElementById('btn-type-income').className = isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-blue-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500";
-            document.getElementById('btn-type-expense').className = !isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-rose-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500";
+            document.getElementById('btn-type-income').className = isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-blue-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:bg-slate-200";
+            document.getElementById('btn-type-expense').className = !isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-rose-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:bg-slate-200";
             document.getElementById('input-unit-price').value = '';
             document.getElementById('input-amount').value = '';
         };
 
-        // 자동 계산
+        // 수량/단가 자동 계산
         const calc = () => {
             const up = Number(document.getElementById('input-unit-price').value) || 0;
             const q = Number(document.getElementById('input-quantity').value) || 1;
@@ -466,7 +471,7 @@
             if(p) { document.getElementById('input-unit-price').value = p.price; calc(); }
         };
 
-        // 거래 저장
+        // 거래 내역 저장
         document.getElementById('entry-form').onsubmit = async e => {
             e.preventDefault();
             const type = document.getElementById('input-type').value;
@@ -485,7 +490,6 @@
                     createdAt: Date.now()
                 });
                 
-                // 등록 성공시 일부 초기화
                 document.getElementById('input-unit-price').value = '';
                 document.getElementById('input-amount').value = '';
                 document.getElementById('input-expense-name').value = '';
@@ -494,93 +498,107 @@
             } catch(e) { showModal("등록 실패"); }
         };
 
-        // 메인 렌더링 (대시보드 + 통계)
+        // 🌟 핵심 버그 수정: 메인 렌더링 (대시보드 + 리스트 + 통계 통합)
         window.renderApp = () => {
-            const s = document.getElementById('filter-start').value;
-            const e = document.getElementById('filter-end').value;
-            
-            // 날짜 기반 안전한 필터링 (날짜 데이터가 없으면 일단 포함시킴)
-            let filtered = allEntries.filter(x => {
-                const isAfterStart = !s || !x.date || x.date >= s;
-                const isBeforeEnd = !e || !x.date || x.date <= e;
-                return isAfterStart && isBeforeEnd;
-            });
-            filtered.sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
-
-            let inc = 0, exp = 0;
-            const cS = {}, vS = {}, pS = {};
-
-            const container = document.getElementById('entries-container');
-            container.innerHTML = '';
-
-            filtered.forEach(x => {
-                // Number 강제 캐스팅으로 NaN 버그 원천 차단
-                const amt = Number(x.amount) || 0;
+            try {
+                const s = document.getElementById('filter-start').value;
+                const e = document.getElementById('filter-end').value;
                 
-                if(x.type === 'income') { 
-                    inc += amt; 
-                    if(x.channel) cS[x.channel] = (cS[x.channel] || 0) + amt;
-                    if(x.name) pS[x.name] = (pS[x.name] || 0) + amt;
-                } else { 
-                    exp += amt; 
-                    if(x.vendor) vS[x.vendor] = (vS[x.vendor] || 0) + amt;
+                // 날짜 필터링 적용
+                let filtered = allEntries.filter(x => {
+                    const isAfterStart = !s || !x.date || x.date >= s;
+                    const isBeforeEnd = !e || !x.date || x.date <= e;
+                    return isAfterStart && isBeforeEnd;
+                });
+                filtered.sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
+
+                let inc = 0, exp = 0;
+                const cS = {}, vS = {}, pS = {};
+
+                // 컨테이너 초기화 시, empty-state가 밖으로 빠져나왔으므로 안전하게 비울 수 있음!
+                const container = document.getElementById('entries-container');
+                container.innerHTML = '';
+
+                filtered.forEach(x => {
+                    const amt = Number(x.amount) || 0;
+                    
+                    if(x.type === 'income') { 
+                        inc += amt; 
+                        if(x.channel) cS[x.channel] = (cS[x.channel] || 0) + amt;
+                        if(x.name) pS[x.name] = (pS[x.name] || 0) + amt;
+                    } else { 
+                        exp += amt; 
+                        if(x.vendor) vS[x.vendor] = (vS[x.vendor] || 0) + amt;
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = "p-6 bg-white border border-slate-100 rounded-[1.5rem] flex justify-between items-center group transition-all hover:shadow-lg hover:-translate-y-1";
+                    div.innerHTML = `
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black">
+                                <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-slate-50 px-2 py-0.5 rounded-md">${x.type==='income'?'판매':'지출'}</span>
+                                    <h4 class="font-black text-slate-900">${x.name}</h4>
+                                </div>
+                                <div class="flex items-center gap-3 text-[11px] text-slate-400 font-bold">
+                                    <span><i class="far fa-calendar-alt mr-1"></i>${x.date || '-'}</span>
+                                    <span><i class="fas fa-layer-group mr-1"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span><i class="fas fa-tag mr-1"></i>${x.channel || x.vendor}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="text-right">
+                                <p class="text-lg font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
+                                <p class="text-[10px] text-slate-300 font-bold">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                            </div>
+                            <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-300 hover:text-rose-600 transition-all">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+
+                // 에러 원천 차단을 위한 요소 유무 체크 및 토글
+                const emptyState = document.getElementById('empty-state');
+                if(emptyState) {
+                    emptyState.classList.toggle('hidden', filtered.length > 0);
                 }
 
-                const div = document.createElement('div');
-                div.className = "p-6 bg-white border border-slate-100 rounded-[1.5rem] flex justify-between items-center group transition-all hover:shadow-lg hover:-translate-y-1";
-                div.innerHTML = `
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black">
-                            <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-slate-50 px-2 py-0.5 rounded-md">${x.type==='income'?'판매':'지출'}</span>
-                                <h4 class="font-black text-slate-900">${x.name}</h4>
-                            </div>
-                            <div class="flex items-center gap-3 text-[11px] text-slate-400 font-bold">
-                                <span><i class="far fa-calendar-alt mr-1"></i>${x.date || '날짜없음'}</span>
-                                <span><i class="fas fa-layer-group mr-1"></i>${x.quantity || 1}개</span>
-                                ${x.channel || x.vendor ? `<span><i class="fas fa-tag mr-1"></i>${x.channel || x.vendor}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-right">
-                            <p class="text-lg font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
-                            <p class="text-[10px] text-slate-300 font-bold">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
-                        </div>
-                        <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-300 hover:text-rose-600 transition-all">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+                // 상단 Total 카드 업데이트
+                document.getElementById('dash-income').innerText = formatMoney(inc);
+                document.getElementById('dash-expense').innerText = formatMoney(exp);
+                document.getElementById('dash-net').innerText = formatMoney(inc - exp);
 
-            document.getElementById('empty-state').classList.toggle('hidden', filtered.length > 0);
-            document.getElementById('dash-income').innerText = formatMoney(inc);
-            document.getElementById('dash-expense').innerText = formatMoney(exp);
-            document.getElementById('dash-net').innerText = formatMoney(inc - exp);
-
-            // 통계 UI 렌더링
-            renderStatUI(cS, inc, 'stats-container', 'stats-empty-state', 'bg-gradient-to-r from-blue-400 to-indigo-600');
-            renderStatUI(pS, inc, 'product-stats-container', 'product-stats-empty-state', 'bg-gradient-to-r from-pink-400 to-purple-600');
-            renderStatUI(vS, exp, 'vendor-stats-container', 'vendor-stats-empty-state', 'bg-gradient-to-r from-rose-400 to-amber-500');
+                // 통계 UI 렌더링 호출
+                renderStatUI(cS, inc, 'stats-container', 'stats-empty-state', 'bg-gradient-to-r from-blue-400 to-indigo-600');
+                renderStatUI(pS, inc, 'product-stats-container', 'product-stats-empty-state', 'bg-gradient-to-r from-pink-400 to-purple-600');
+                renderStatUI(vS, exp, 'vendor-stats-container', 'vendor-stats-empty-state', 'bg-gradient-to-r from-rose-400 to-amber-500');
+                
+            } catch (err) {
+                console.error("렌더링 중 에러 발생:", err);
+            }
         };
 
+        // 통계 UI 생성 모듈
         const renderStatUI = (data, total, cId, eId, colorClass) => {
             const container = document.getElementById(cId);
+            if(!container) return;
             container.innerHTML = '';
-            const keys = Object.keys(data).sort((a,b) => data[b] - data[a]);
             
-            // 데이터가 없거나, 총 금액이 0이면 통계 박스를 숨기고 Empty State 표시
+            const keys = Object.keys(data).sort((a,b) => data[b] - data[a]);
+            const emptyState = document.getElementById(eId);
+            
             if(keys.length === 0 || total === 0) {
-                document.getElementById(eId).classList.remove('hidden');
+                if(emptyState) emptyState.classList.remove('hidden');
                 return;
             }
             
-            document.getElementById(eId).classList.add('hidden');
+            if(emptyState) emptyState.classList.add('hidden');
             
             keys.forEach(k => {
                 const amt = Number(data[k]) || 0;
@@ -649,7 +667,7 @@
         window.handleDeleteChannel = id => showModal("판매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)));
         window.handleDeleteVendor = id => showModal("구매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)));
 
-        // 기본 등록 공통 함수
+        // 기타 관리 탭 정보 저장 로직
         const saveAdd = async (col, data, fId) => {
             try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); }
         };
@@ -657,7 +675,7 @@
         document.getElementById('channel-form').onsubmit = e => { e.preventDefault(); saveAdd('channels', {name: document.getElementById('chan-name').value}, 'channel-form'); };
         document.getElementById('vendor-form').onsubmit = e => { e.preventDefault(); saveAdd('vendors', {name: document.getElementById('ven-name').value}, 'vendor-form'); };
 
-        // 설정 탭 렌더링
+        // 설정 탭 리스트 렌더링
         window.renderProducts = () => {
             const body = document.getElementById('products-table-body');
             body.innerHTML = allProducts.map(p => `
@@ -708,16 +726,14 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 계산식
+        // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 세팅
         const getLocalDateStr = (d) => {
             const date = new Date(d);
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
             return date.toISOString().split('T')[0];
         };
-        
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        
         document.getElementById('input-date').value = getLocalDateStr(now);
         document.getElementById('filter-start').value = getLocalDateStr(firstDay);
         document.getElementById('filter-end').value = getLocalDateStr(now);
