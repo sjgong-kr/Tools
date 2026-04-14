@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JINA 레진 아트 프로 관리자</title>
+    <title>planet_jina 프로 관리자</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 🌟 추가: 엑셀 다운로드를 위한 SheetJS 라이브러리 -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- 🌟 수정: 엑셀 셀 색상, 테두리 등 고급 스타일링을 지원하는 xlsx-js-style 라이브러리로 교체 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
@@ -30,7 +30,7 @@
                 <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl text-white">
                     <i class="fas fa-gem text-5xl"></i>
                 </div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight">JINA ART</h2>
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight">planet_jina</h2>
                 <p class="text-slate-400 mt-2 font-medium">관리자 전용 계정으로 로그인</p>
             </div>
             <form id="login-form" class="space-y-4">
@@ -94,7 +94,7 @@
                     <i class="fas fa-gem text-3xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 tracking-tighter">JINA ART</h1>
+                    <h1 class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 tracking-tighter">planet_jina</h1>
                     <p class="text-slate-400 font-bold flex items-center gap-2 mt-1">
                         <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 통합 클라우드 대시보드
                     </p>
@@ -209,16 +209,17 @@
                             <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
                             
                             <div class="flex items-center gap-3 flex-wrap">
-                                <!-- 🌟 엑셀 다운로드 버튼 -->
-                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-[1.2rem] font-black text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fas fa-file-excel text-lg"></i> 엑셀 다운로드
+                                <!-- 🌟 엑셀 다운로드 버튼 크기 상향 -->
+                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 rounded-[1.2rem] font-black text-base transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fas fa-file-excel text-xl"></i> 엑셀 다운로드
                                 </button>
                                 
-                                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-[1.2rem] border border-slate-100">
-                                    <input type="date" id="filter-start" class="bg-transparent border-none text-sm font-black text-slate-700 focus:ring-0 w-36">
-                                    <span class="text-slate-300 font-black">~</span>
-                                    <input type="date" id="filter-end" class="bg-transparent border-none text-sm font-black text-slate-700 focus:ring-0 w-36">
-                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-11 h-11 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md">
+                                <!-- 🌟 필터 날짜 폰트 크기 및 영역 대폭 상향 -->
+                                <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-[1.5rem] border border-slate-200 shadow-inner">
+                                    <input type="date" id="filter-start" class="bg-transparent border-none text-lg font-black text-slate-800 focus:ring-0 w-40 cursor-pointer">
+                                    <span class="text-slate-400 font-black text-lg">~</span>
+                                    <input type="date" id="filter-end" class="bg-transparent border-none text-lg font-black text-slate-800 focus:ring-0 w-40 cursor-pointer">
+                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-12 h-12 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md text-lg">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
@@ -544,25 +545,27 @@
                     div.className = "p-6 bg-white border border-slate-100 rounded-[1.5rem] flex justify-between items-center group transition-all hover:shadow-lg hover:-translate-y-1";
                     div.innerHTML = `
                         <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-xl">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-2xl">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 mb-2.5">
                                     <span class="text-[11px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900 text-lg">${x.name}</h4>
+                                    <h4 class="font-black text-slate-900 text-xl">${x.name}</h4>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-sm font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
-                                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-sm"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1.5 rounded-xl shadow-sm"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <!-- 🌟 리스트 날짜 폰트 크기 및 디자인 강조 -->
+                                    <span class="text-lg font-black text-slate-800 bg-slate-100 border border-slate-200 shadow-sm px-4 py-1.5 rounded-xl"><i class="far fa-calendar-alt text-slate-500 mr-2"></i>${x.date || '-'}</span>
+                                    <span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
                         <div class="flex items-center gap-6">
                             <div class="text-right">
-                                <p class="text-xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
-                                <p class="text-xs text-slate-400 font-bold mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                                <!-- 🌟 금액 폰트 크기 상향 -->
+                                <p class="text-2xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
+                                <p class="text-sm text-slate-400 font-bold mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
                             <button onclick="handleDeleteEntry('${x.id}')" class="opacity-0 group-hover:opacity-100 w-12 h-12 flex items-center justify-center rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-lg">
                                 <i class="fas fa-trash-alt"></i>
@@ -735,12 +738,11 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 🌟 수정: 엑셀 다운로드 (다중 시트 지원 및 깔끔한 포맷)
+        // 🌟 수정: xlsx-js-style을 활용하여 첨부하신 보고서 폼 기반의 엑셀 스타일 완벽 적용
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
             
-            // 현재 설정된 날짜 기준으로 필터링
             let filtered = allEntries.filter(x => {
                 const isAfterStart = !s || !x.date || x.date >= s;
                 const isBeforeEnd = !e || !x.date || x.date <= e;
@@ -754,21 +756,63 @@
 
             const wb = XLSX.utils.book_new();
 
-            // --- 1. 거래 내역 시트 (고급 포맷) ---
+            // 🌟 엑셀 공통 디자인(스타일) 세팅
+            const headerStyle = {
+                fill: { fgColor: { rgb: "F1F5F9" } },
+                font: { bold: true, color: { rgb: "334155" }, sz: 11 },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top: { style: "medium", color: { rgb: "CBD5E1" } },
+                    bottom: { style: "medium", color: { rgb: "CBD5E1" } },
+                    left: { style: "thin", color: { rgb: "E2E8F0" } },
+                    right: { style: "thin", color: { rgb: "E2E8F0" } }
+                }
+            };
+
+            const dataStyleCenter = { 
+                alignment: { horizontal: "center", vertical: "center" },
+                border: { bottom: { style: "thin", color: { rgb: "E2E8F0" } } }
+            };
+            const dataStyleLeft = { 
+                alignment: { horizontal: "left", vertical: "center" },
+                border: { bottom: { style: "thin", color: { rgb: "E2E8F0" } } }
+            };
+            const dataStyleMoney = { 
+                alignment: { horizontal: "right", vertical: "center" },
+                border: { bottom: { style: "thin", color: { rgb: "E2E8F0" } } },
+                numFmt: '#,##0"원"'
+            };
+            const dataStyleQty = { 
+                alignment: { horizontal: "center", vertical: "center" },
+                border: { bottom: { style: "thin", color: { rgb: "E2E8F0" } } },
+                numFmt: '#,##0"개"'
+            };
+
+            // 출력 일시 구하기
+            const now = new Date();
+            const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // --- 1. 거래 내역 시트 ---
             if (filtered.length > 0) {
-                // 날짜 오름차순(과거->최신)으로 정렬
                 filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
 
-                let totalInc = 0;
-                let totalExp = 0;
+                let totalInc = 0, totalExp = 0;
+                const aoa = [];
 
-                // 셀 배열 생성 (제목, 공백, 헤더)
-                const aoa = [
-                    [`📊 JINA ART 거래 내역 (${s || '전체'} ~ ${e || '현재'})`],
-                    [], 
-                    ['거래일자', '구분', '항목명 (제품/재료)', '단가', '수량', '총금액', '관련처', '메모']
-                ];
+                // 타이틀 및 출력일시
+                const titleStr = `📊 planet_jina 장부 현황 [${s || '전체'} ~ ${e || '현재'}]`;
+                aoa.push([
+                    { v: titleStr, s: { font: { sz: 16, bold: true, color: { rgb: "4338CA" } }, alignment: { vertical: "center" } } },
+                    null, null, null, null, null, null,
+                    { v: printTime, s: { font: { color: { rgb: "64748B" }, italic: true }, alignment: { horizontal: "right", vertical: "center" } } }
+                ]);
+                aoa.push([]); // 빈 줄
 
+                // 헤더
+                const headers = ['거래일자', '구분', '항목명 (제품/재료)', '단가', '수량', '총금액', '관련처', '메모'];
+                aoa.push(headers.map(h => ({ v: h, s: headerStyle })));
+
+                // 데이터
                 filtered.forEach(x => {
                     const amt = Number(x.amount) || 0;
                     const price = Number(x.unitPrice) || 0;
@@ -776,86 +820,85 @@
                     else totalExp += amt;
 
                     aoa.push([
-                        x.date || '',
-                        x.type === 'income' ? '🔵 판매 수익' : '🔴 재료 지출',
-                        x.name || '',
-                        price,
-                        Number(x.quantity) || 1,
-                        amt,
-                        x.channel || x.vendor || '',
-                        x.memo || ''
+                        { v: x.date || '', s: dataStyleCenter },
+                        { v: x.type === 'income' ? '🔵 판매 수익' : '🔴 재료 지출', s: dataStyleCenter },
+                        { v: x.name || '', s: dataStyleLeft },
+                        { v: price, s: dataStyleMoney },
+                        { v: Number(x.quantity) || 1, s: dataStyleQty },
+                        { v: amt, s: dataStyleMoney },
+                        { v: x.channel || x.vendor || '', s: dataStyleCenter },
+                        { v: x.memo || '', s: dataStyleLeft }
                     ]);
                 });
 
-                // 하단 합계 요약 섹션 추가
-                aoa.push([]); // 빈 줄
-                aoa.push(['', '', '', '', '🔵 총 판매 수익:', totalInc, '', '']);
-                aoa.push(['', '', '', '', '🔴 총 재료 지출:', totalExp, '', '']);
-                aoa.push(['', '', '', '', '✨ 순수익:', totalInc - totalExp, '', '']);
+                // 하단 합계
+                aoa.push([]);
+                const sumHeaderStyle = { font: { bold: true }, alignment: { horizontal: "right" } };
+                const sumIncomeStyle = { font: { bold: true, color: { rgb: "2563EB" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+                const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+                const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "4338CA" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+
+                aoa.push([null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalInc, s: sumIncomeStyle}, null, null]);
+                aoa.push([null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalExp, s: sumExpenseStyle}, null, null]);
+                aoa.push([null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalInc - totalExp, s: sumNetStyle}, null, null]);
 
                 const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
-
-                // 1행 타이틀 칸 병합
-                wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
-
-                // 숫자 서식 지정 (통화 및 수량 포맷)
-                const range = XLSX.utils.decode_range(wsEntries['!ref']);
-                for (let R = 3; R <= range.e.r; ++R) {
-                    for (let C = 3; C <= 5; ++C) { // 단가(D), 수량(E), 총금액(F)
-                        const cell = wsEntries[XLSX.utils.encode_cell({c: C, r: R})];
-                        if (cell && typeof cell.v === 'number') {
-                            if (C === 4) cell.z = '#,##0"개"';
-                            else cell.z = '"₩"#,##0';
-                        }
-                    }
-                }
-
-                // 열 너비 지정
-                wsEntries['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 10 }, { wch: 18 }, { wch: 25 }, { wch: 40 }];
+                wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+                wsEntries['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 35 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 20 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
             // --- 2. 등록 제품 시트 ---
             if (allProducts.length > 0) {
-                const aoa = [['💎 JINA ART 등록 제품 목록'], [], ['제품코드', '제품명', '기본 단가']];
-                allProducts.forEach(p => aoa.push([p.code || '', p.name || '', Number(p.price) || 0]));
+                const aoa = [];
+                aoa.push([
+                    { v: `💎 planet_jina 제품 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "4338CA" } } } },
+                    null,
+                    { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }
+                ]);
+                aoa.push([]);
+                aoa.push(['제품코드', '제품명', '기본 단가'].map(h => ({ v: h, s: headerStyle })));
+                
+                allProducts.forEach(p => aoa.push([
+                    { v: p.code || '', s: dataStyleCenter },
+                    { v: p.name || '', s: dataStyleLeft },
+                    { v: Number(p.price) || 0, s: dataStyleMoney }
+                ]));
                 
                 const wsProducts = XLSX.utils.aoa_to_sheet(aoa);
-                wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
-                
-                const range = XLSX.utils.decode_range(wsProducts['!ref']);
-                for (let R = 3; R <= range.e.r; ++R) {
-                    const cell = wsProducts[XLSX.utils.encode_cell({c: 2, r: R})];
-                    if (cell && typeof cell.v === 'number') cell.z = '"₩"#,##0';
-                }
-                
+                wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
                 wsProducts['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 15 }];
-                XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품");
+                XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
             }
 
             // --- 3. 판매처 시트 ---
             if (allChannels.length > 0) {
-                const aoa = [['🏪 등록된 판매처 목록'], [], ['판매처명']];
-                allChannels.forEach(c => aoa.push([c.name || '']));
+                const aoa = [
+                    [{ v: `🏪 판매처 목록`, s: { font: { sz: 14, bold: true } } }, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
+                    [],
+                    ['판매처명'].map(h => ({ v: h, s: headerStyle }))
+                ];
+                allChannels.forEach(c => aoa.push([{ v: c.name || '', s: dataStyleCenter }]));
                 const wsChannels = XLSX.utils.aoa_to_sheet(aoa);
-                wsChannels['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 0 } }];
-                wsChannels['!cols'] = [{ wch: 30 }];
-                XLSX.utils.book_append_sheet(wb, wsChannels, "판매처");
+                wsChannels['!cols'] = [{ wch: 30 }, { wch: 20 }];
+                XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
             }
 
             // --- 4. 구매처 시트 ---
             if (allVendors.length > 0) {
-                const aoa = [['🛒 등록된 구매처 목록'], [], ['구매처명']];
-                allVendors.forEach(v => aoa.push([v.name || '']));
+                const aoa = [
+                    [{ v: `🛒 구매처 목록`, s: { font: { sz: 14, bold: true } } }, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
+                    [],
+                    ['구매처명'].map(h => ({ v: h, s: headerStyle }))
+                ];
+                allVendors.forEach(v => aoa.push([{ v: v.name || '', s: dataStyleCenter }]));
                 const wsVendors = XLSX.utils.aoa_to_sheet(aoa);
-                wsVendors['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 0 } }];
-                wsVendors['!cols'] = [{ wch: 30 }];
-                XLSX.utils.book_append_sheet(wb, wsVendors, "구매처");
+                wsVendors['!cols'] = [{ wch: 30 }, { wch: 20 }];
+                XLSX.utils.book_append_sheet(wb, wsVendors, "구매처_목록");
             }
 
-            // 파일명에 오늘 날짜 추가
             const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            XLSX.writeFile(wb, `JINA_ART_통합장부_${todayStr}.xlsx`);
+            XLSX.writeFile(wb, `planet_jina_통합장부_${todayStr}.xlsx`);
         };
 
         // 완벽한 한국(로컬) 시간대 적용을 위한 날짜 세팅
