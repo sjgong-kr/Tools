@@ -170,20 +170,25 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="col-span-1">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">단가 (원)</label>
+                                    <input type="number" id="input-unit-price" placeholder="0" min="0" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50">
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">수량</label>
                                     <div class="relative">
                                         <input type="number" id="input-quantity" value="1" min="1" required class="w-full border rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-purple-400 outline-none">
                                         <span class="absolute right-3 top-2 text-gray-400 text-sm">개</span>
                                     </div>
                                 </div>
-                                <div class="col-span-2">
-                                    <label id="amount-label" class="block text-sm font-medium text-gray-700 mb-1">총 판매 금액 (원)</label>
-                                    <input type="number" id="input-amount" placeholder="0" min="0" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none">
-                                </div>
                             </div>
-                            <p id="price-hint" class="text-xs text-purple-600 mt-1 hidden"><i class="fas fa-info-circle"></i> 단가×수량으로 자동 계산되었습니다. 실제 금액으로 수정 가능합니다.</p>
+                            
+                            <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-100 mt-2">
+                                <label id="amount-label" class="block text-sm font-bold text-purple-700 mb-1">총 판매 금액 (원)</label>
+                                <input type="number" id="input-amount" placeholder="0" min="0" required class="w-full border border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400 outline-none font-bold text-gray-800 bg-white shadow-sm">
+                                <p id="price-hint" class="text-xs text-purple-500 mt-1.5 hidden"><i class="fas fa-info-circle"></i> 단가 × 수량으로 자동 계산되었습니다. (직접 수정 가능)</p>
+                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">비고 (선택)</label>
@@ -417,7 +422,6 @@
         let allChannels = [];
         let allVendors = [];
         let unsubEntries, unsubProducts, unsubChannels, unsubVendors;
-        let currentUnitPrice = 0; // 선택된 제품 단가 저장용
 
         const formatMoney = (num) => new Intl.NumberFormat('ko-KR').format(num) + '원';
 
@@ -489,40 +493,44 @@
             document.getElementById('amount-label').textContent = isIncome ? '총 판매 금액 (원)' : '총 지출 금액 (원)';
             document.getElementById('price-hint').classList.add('hidden');
             
+            document.getElementById('input-unit-price').value = '';
             document.getElementById('input-amount').value = '';
             document.getElementById('input-quantity').value = 1;
             document.getElementById('input-product').value = '';
             document.getElementById('input-vendor').value = '';
-            currentUnitPrice = 0;
         });
 
         // 제품 선택 시 가격 연동
         document.getElementById('input-product').addEventListener('change', (e) => {
             const hintEl = document.getElementById('price-hint');
             if(!e.target.value) {
+                document.getElementById('input-unit-price').value = '';
                 document.getElementById('input-amount').value = '';
-                currentUnitPrice = 0;
                 hintEl.classList.add('hidden');
                 return;
             }
             const selectedProd = allProducts.find(p => p.id === e.target.value);
             if(selectedProd) {
-                currentUnitPrice = selectedProd.price;
+                const unitPrice = selectedProd.price;
                 const qty = Number(document.getElementById('input-quantity').value) || 1;
-                document.getElementById('input-amount').value = currentUnitPrice * qty;
+                document.getElementById('input-unit-price').value = unitPrice;
+                document.getElementById('input-amount').value = unitPrice * qty;
                 hintEl.classList.remove('hidden'); 
             }
         });
 
-        // 수량 변경 시 가격 자동 계산 로직
-        document.getElementById('input-quantity').addEventListener('input', (e) => {
-            const type = document.getElementById('input-type').value;
-            // 수입(판매)이면서 제품 단가가 있을 때만 자동 계산
-            if (type === 'income' && currentUnitPrice > 0) {
-                const qty = Number(e.target.value) || 1;
-                document.getElementById('input-amount').value = currentUnitPrice * qty;
+        // 수량 및 단가 변경 시 총 금액 자동 계산 로직
+        const calculateTotal = () => {
+            const unitPrice = Number(document.getElementById('input-unit-price').value) || 0;
+            const qty = Number(document.getElementById('input-quantity').value) || 1;
+            if (unitPrice > 0) {
+                document.getElementById('input-amount').value = unitPrice * qty;
+                document.getElementById('price-hint').classList.remove('hidden');
             }
-        });
+        };
+
+        document.getElementById('input-quantity').addEventListener('input', calculateTotal);
+        document.getElementById('input-unit-price').addEventListener('input', calculateTotal);
 
         // 3. 데이터 실시간 구독 (Firestore Rules 규칙과 일치하는 경로 사용)
         function subscribeToData() {
@@ -725,8 +733,9 @@
                         badgeHtml = `<span class="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">${entry.vendor}</span>`;
                     }
 
-                    // 수량 뱃지 HTML
-                    let qtyHtml = entry.quantity ? `<span class="text-[11px] bg-indigo-50 text-indigo-600 font-medium px-1.5 py-0.5 rounded border border-indigo-100 ml-1 whitespace-nowrap">${entry.quantity}개</span>` : '';
+                    // 수량 및 단가 뱃지 HTML
+                    let unitText = entry.unitPrice ? `${formatMoney(entry.unitPrice)} × ` : '';
+                    let qtyHtml = entry.quantity ? `<span class="text-[11px] bg-indigo-50 text-indigo-600 font-medium px-1.5 py-0.5 rounded border border-indigo-100 ml-1 whitespace-nowrap">${unitText}${entry.quantity}개</span>` : '';
 
                     const itemDiv = document.createElement('div');
                     itemDiv.className = "flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-purple-200 transition-colors group";
@@ -801,6 +810,7 @@
 
             const type = document.getElementById('input-type').value;
             const date = document.getElementById('input-date').value;
+            const unitPrice = Number(document.getElementById('input-unit-price').value) || 0;
             const quantity = Number(document.getElementById('input-quantity').value) || 1;
             const amount = Number(document.getElementById('input-amount').value);
             const memo = document.getElementById('input-memo').value;
@@ -826,7 +836,7 @@
 
             try {
                 const entriesRef = collection(db, 'jina_resin', currentUser.uid, 'entries');
-                await addDoc(entriesRef, { type, date, quantity, name, amount, channel, vendor, memo, createdAt: Date.now() });
+                await addDoc(entriesRef, { type, date, unitPrice, quantity, name, amount, channel, vendor, memo, createdAt: Date.now() });
 
                 if(type === 'expense') {
                     document.getElementById('input-expense-name').value = '';
@@ -834,11 +844,11 @@
                 } else {
                     document.getElementById('input-product').value = '';
                 }
+                document.getElementById('input-unit-price').value = '';
                 document.getElementById('input-amount').value = '';
                 document.getElementById('input-quantity').value = 1;
                 document.getElementById('input-memo').value = '';
                 document.getElementById('price-hint').classList.add('hidden');
-                currentUnitPrice = 0; // 단가 초기화
             } catch (error) { 
                 console.error(error); 
                 showModal("저장에 실패했습니다."); 
