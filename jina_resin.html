@@ -579,7 +579,8 @@
             allProducts.forEach(prod => {
                 const opt = document.createElement('option');
                 opt.value = prod.id;
-                opt.textContent = `[${prod.code}] ${prod.name}`;
+                // 🌟 수정: 드롭다운 목록에 기본가 표시 추가
+                opt.textContent = `[${prod.code}] ${prod.name} (${formatMoney(prod.price)})`;
                 select.appendChild(opt);
             });
         }
