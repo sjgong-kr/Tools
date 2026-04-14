@@ -237,7 +237,8 @@
                             <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
                             <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
                         </div>
-                        <div id="entries-container" class="space-y-4 sm:space-y-6">
+                        <!-- 🌟 리스트 간격을 좁혀서 더 많이 보이도록 조정 (space-y-4 -> space-y-3) -->
+                        <div id="entries-container" class="space-y-3 sm:space-y-3.5">
                             <!-- 리스트 공간 -->
                         </div>
 
@@ -565,36 +566,39 @@
                     }
 
                     const div = document.createElement('div');
-                    // 컨테이너 여백(padding) 더 넓게 조정
-                    div.className = "p-6 sm:p-8 bg-white border border-slate-100 rounded-[2rem] flex flex-col sm:flex-row justify-between sm:items-center gap-5 group transition-all hover:shadow-xl hover:-translate-y-1";
+                    // 🌟 카드 상하 여백 및 둥글기를 줄여 한 화면에 여러 개가 보이도록 슬림하게 압축
+                    div.className = "p-4 sm:p-5 bg-white border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-md hover:-translate-y-0.5";
                     div.innerHTML = `
-                        <div class="flex items-center gap-5 sm:gap-6 flex-1 min-w-0">
-                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.2rem] flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-2xl sm:text-3xl shrink-0">
+                        <div class="flex items-center gap-4 flex-1 min-w-0">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-lg sm:text-xl shrink-0">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-                                    <span class="text-xs font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
-                                    <!-- 제목 크기 상향 -->
-                                    <h4 class="font-black text-slate-900 text-xl sm:text-2xl">${x.name}</h4>
+                                <div class="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2">
+                                    <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
+                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate">${x.name}</h4>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
-                                    <!-- 🌟 날짜 크기 상향 및 디자인 강화 -->
-                                    <span class="text-base sm:text-lg font-black text-slate-800 bg-slate-100 border border-slate-200 shadow-sm px-4 py-1.5 rounded-[0.8rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-500 mr-2"></i>${x.date || '-'}</span>
-                                    <span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-[0.8rem] shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-[0.8rem] shadow-sm truncate"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-sm font-black text-slate-700 bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-[0.6rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
+                                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm truncate"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between sm:justify-end gap-5 shrink-0 mt-3 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-5 sm:pt-0">
+                        <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0 mt-3 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-3 sm:pt-0">
                             <div class="text-left sm:text-right flex-1 sm:flex-none">
-                                <!-- 금액 폰트 크기 상향 -->
-                                <p class="text-2xl sm:text-3xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
-                                <p class="text-xs sm:text-sm text-slate-400 font-bold mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                                <p class="text-xl sm:text-2xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
+                                <p class="text-[10px] sm:text-xs text-slate-400 font-bold mt-0.5 sm:mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
-                            <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-12 h-12 flex items-center justify-center rounded-[1rem] bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-xl shrink-0">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            <!-- 🌟 상세 내역 전용 수정 버튼 추가 -->
+                            <div class="flex gap-1.5">
+                                <button onclick="openEditModal('entry', '${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all text-base shrink-0 border border-slate-100 shadow-sm">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-base shrink-0 border border-rose-50 shadow-sm">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                     container.appendChild(div);
@@ -655,13 +659,13 @@
             });
         };
 
-        // 🌟 수정: 구매처 관리 모달창에도 기타 메모(memo) 항목 추가
+        // 🌟 수정: 상세 내역(entry) 수정 폼 지원 로직 추가
         window.openEditModal = (type, id) => {
-            currentEditInfo = { type, id };
             const container = document.getElementById('edit-fields-container');
             let item;
             
             if(type === 'product') {
+                currentEditInfo = { type, id };
                 item = allProducts.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -670,6 +674,7 @@
                     <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                 `;
             } else if(type === 'channel') {
+                currentEditInfo = { type, id };
                 item = allChannels.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -680,7 +685,8 @@
                     <input type="text" id="edit-c-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
                     <textarea id="edit-c-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
                 `;
-            } else {
+            } else if(type === 'vendor') {
+                currentEditInfo = { type, id };
                 item = allVendors.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
@@ -691,6 +697,44 @@
                     <input type="text" id="edit-v-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
                     <textarea id="edit-v-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
                 `;
+            } else if(type === 'entry') {
+                // 🌟 상세 장부 내역 수정을 위한 모달 필드 구성
+                item = allEntries.find(x => x.id === id);
+                if(!item) return;
+                currentEditInfo = { type, id, originalType: item.type }; // income, expense 구분값 보존
+                
+                container.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 ml-1">거래 일자</label>
+                        <input type="date" id="edit-e-date" value="${item.date || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매 제품명' : '지출 항목명'}</label>
+                        <input type="text" id="edit-e-name" value="${item.name || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매처' : '구매처'}</label>
+                        <input type="text" id="edit-e-related" value="${item.channel || item.vendor || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-1 space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 ml-1">단가 (원)</label>
+                            <input type="number" id="edit-e-price" value="${item.unitPrice || 0}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400" oninput="document.getElementById('edit-e-amount').value = (this.value || 0) * (document.getElementById('edit-e-qty').value || 1)">
+                        </div>
+                        <div class="flex-1 space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 ml-1">수량</label>
+                            <input type="number" id="edit-e-qty" value="${item.quantity || 1}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400" oninput="document.getElementById('edit-e-amount').value = (document.getElementById('edit-e-price').value || 0) * (this.value || 1)">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 ml-1">총금액 (원)</label>
+                        <input type="number" id="edit-e-amount" value="${item.amount || 0}" class="w-full bg-slate-100 p-4 rounded-2xl ring-2 ring-slate-200 font-black outline-none focus:ring-purple-400">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 ml-1">메모</label>
+                        <textarea id="edit-e-memo" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
+                    </div>
+                `;
             }
             document.getElementById('edit-modal').classList.remove('hidden');
         };
@@ -700,7 +744,9 @@
         document.getElementById('edit-form').onsubmit = async e => {
             e.preventDefault();
             const { type, id } = currentEditInfo;
-            const ref = doc(db, 'jina_resin', currentUser.uid, type === 'product' ? 'products' : type === 'channel' ? 'channels' : 'vendors', id);
+            // 컬렉션명 판별
+            const colName = type === 'product' ? 'products' : type === 'channel' ? 'channels' : type === 'vendor' ? 'vendors' : 'entries';
+            const ref = doc(db, 'jina_resin', currentUser.uid, colName, id);
             
             let data = {};
             if (type === 'product') {
@@ -714,15 +760,30 @@
                     address: document.getElementById('edit-c-address').value,
                     memo: document.getElementById('edit-c-memo').value
                 };
-            } else {
+            } else if (type === 'vendor') {
                 data = { 
                     name: document.getElementById('edit-v-name').value,
                     bizNum: document.getElementById('edit-v-biz').value,
                     contact: document.getElementById('edit-v-contact').value,
                     link: document.getElementById('edit-v-link').value,
                     address: document.getElementById('edit-v-address').value,
-                    memo: document.getElementById('edit-v-memo').value // 기타 메모 저장 추가
+                    memo: document.getElementById('edit-v-memo').value
                 };
+            } else if (type === 'entry') {
+                // 🌟 상세 장부 수정 데이터 추출
+                data = {
+                    date: document.getElementById('edit-e-date').value,
+                    name: document.getElementById('edit-e-name').value,
+                    unitPrice: Number(document.getElementById('edit-e-price').value) || 0,
+                    quantity: Number(document.getElementById('edit-e-qty').value) || 1,
+                    amount: Number(document.getElementById('edit-e-amount').value) || 0,
+                    memo: document.getElementById('edit-e-memo').value
+                };
+                if (currentEditInfo.originalType === 'income') {
+                    data.channel = document.getElementById('edit-e-related').value;
+                } else {
+                    data.vendor = document.getElementById('edit-e-related').value;
+                }
             }
 
             try { await updateDoc(ref, data); closeEditModal(); showModal("수정 완료되었습니다."); } catch(e) { showModal("수정 실패"); }
