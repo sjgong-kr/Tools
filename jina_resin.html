@@ -202,21 +202,30 @@
                     </div>
                 </div>
 
+                <!-- 상세 장부 영역 -->
                 <div class="lg:col-span-3">
                     <div class="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[600px]">
-                        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-8 border-b border-slate-100 pb-8">
-                            <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
-                            
-                            <div class="flex items-center gap-3 flex-wrap w-full xl:w-auto">
-                                <button onclick="exportToExcel()" class="flex-1 xl:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 rounded-[1.2rem] font-black text-base transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
-                                    <i class="fas fa-file-excel text-xl"></i> 엑셀 다운로드
+                        <div class="flex flex-col gap-6 mb-8 border-b border-slate-100 pb-8">
+                            <div class="flex justify-between items-center w-full">
+                                <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
+                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-sm sm:text-base transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
+                                    <i class="fas fa-file-excel text-lg"></i> 엑셀 다운로드
                                 </button>
-                                
-                                <div class="flex flex-1 xl:flex-none items-center gap-2 bg-slate-50 p-2.5 rounded-[1.5rem] border border-slate-200 shadow-inner">
-                                    <input type="date" id="filter-start" class="bg-transparent border-none text-sm sm:text-base font-black text-slate-800 focus:ring-0 w-full min-w-[100px] cursor-pointer text-center px-1">
+                            </div>
+                            
+                            <!-- 🌟 추가/수정: 빠른 기간 필터 버튼 및 큼직한 날짜 선택 UI -->
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-[1.5rem] border border-slate-200 shadow-inner">
+                                <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
+                                    <button onclick="setFilterQuick('today')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">오늘</button>
+                                    <button onclick="setFilterQuick('week')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">1주일</button>
+                                    <button onclick="setFilterQuick('month')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">이번 달</button>
+                                    <button onclick="setFilterQuick('all')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap text-purple-600">전체</button>
+                                </div>
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <input type="date" id="filter-start" class="bg-white border border-slate-200 rounded-xl text-sm sm:text-base font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-36 p-2 cursor-pointer text-center shadow-sm">
                                     <span class="text-slate-400 font-black">~</span>
-                                    <input type="date" id="filter-end" class="bg-transparent border-none text-sm sm:text-base font-black text-slate-800 focus:ring-0 w-full min-w-[100px] cursor-pointer text-center px-1">
-                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-12 h-11 rounded-xl hover:scale-105 transition-all flex items-center justify-center shadow-md shrink-0 ml-1">
+                                    <input type="date" id="filter-end" class="bg-white border border-slate-200 rounded-xl text-sm sm:text-base font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-36 p-2 cursor-pointer text-center shadow-sm">
+                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-12 h-10 rounded-xl hover:bg-black transition-all flex items-center justify-center shadow-md shrink-0 ml-1">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
@@ -228,7 +237,7 @@
                             <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
                             <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
                         </div>
-                        <div id="entries-container" class="space-y-4 sm:space-y-5">
+                        <div id="entries-container" class="space-y-4 sm:space-y-6">
                             <!-- 리스트 공간 -->
                         </div>
 
@@ -292,7 +301,7 @@
             </div>
         </div>
 
-        <!-- [탭 4] 구매처 관리 (추가 필드 반영) -->
+        <!-- [탭 4] 구매처 관리 (🌟 기타 메모 항목 추가) -->
         <div id="tab-vendors" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
                 <div class="md:col-span-2">
@@ -304,6 +313,8 @@
                             <input type="text" id="ven-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="text" id="ven-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="text" id="ven-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <!-- 🌟 기타 메모 입력 추가 -->
+                            <textarea id="ven-memo" placeholder="기타 항목 / 메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
                             <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">구매처 추가하기</button>
                         </form>
                     </div>
@@ -505,6 +516,7 @@
             } catch(e) { showModal("등록 실패"); }
         };
 
+        // 🌟 수정: 대시보드 리스트의 폰트와 크기를 더 크고 가독성 좋게, 여백 넓게 디자인 개선
         window.renderApp = () => {
             try {
                 const s = document.getElementById('filter-start').value;
@@ -535,30 +547,34 @@
                     }
 
                     const div = document.createElement('div');
-                    div.className = "p-5 sm:p-6 bg-white border border-slate-100 rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-lg hover:-translate-y-1";
+                    // 컨테이너 여백(padding) 더 넓게 조정
+                    div.className = "p-6 sm:p-8 bg-white border border-slate-100 rounded-[2rem] flex flex-col sm:flex-row justify-between sm:items-center gap-5 group transition-all hover:shadow-xl hover:-translate-y-1";
                     div.innerHTML = `
-                        <div class="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
-                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-xl sm:text-2xl shrink-0">
+                        <div class="flex items-center gap-5 sm:gap-6 flex-1 min-w-0">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.2rem] flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-2xl sm:text-3xl shrink-0">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-2.5">
-                                    <span class="text-[10px] sm:text-[11px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate">${x.name}</h4>
+                                <div class="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+                                    <span class="text-xs font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
+                                    <!-- 제목 크기 상향 -->
+                                    <h4 class="font-black text-slate-900 text-xl sm:text-2xl">${x.name}</h4>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                                    <span class="text-sm sm:text-base font-black text-slate-800 bg-slate-100 border border-slate-200 shadow-sm px-3 sm:px-4 py-1.5 rounded-xl whitespace-nowrap"><i class="far fa-calendar-alt text-slate-500 mr-2"></i>${x.date || '-'}</span>
-                                    <span class="text-xs sm:text-sm font-bold text-slate-500 bg-white border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span class="text-xs sm:text-sm font-bold text-slate-500 bg-white border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl shadow-sm truncate max-w-[120px] sm:max-w-none"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
+                                    <!-- 🌟 날짜 크기 상향 및 디자인 강화 -->
+                                    <span class="text-base sm:text-lg font-black text-slate-800 bg-slate-100 border border-slate-200 shadow-sm px-4 py-1.5 rounded-[0.8rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-500 mr-2"></i>${x.date || '-'}</span>
+                                    <span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-[0.8rem] shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1.5 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="text-sm font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-[0.8rem] shadow-sm truncate"><i class="fas fa-tag mr-1.5 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 shrink-0 mt-2 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-4 sm:pt-0">
+                        <div class="flex items-center justify-between sm:justify-end gap-5 shrink-0 mt-3 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-5 sm:pt-0">
                             <div class="text-left sm:text-right flex-1 sm:flex-none">
-                                <p class="text-xl sm:text-2xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'}">${formatMoney(amt)}</p>
-                                <p class="text-[11px] sm:text-xs text-slate-400 font-bold mt-0.5 sm:mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                                <!-- 금액 폰트 크기 상향 -->
+                                <p class="text-2xl sm:text-3xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
+                                <p class="text-xs sm:text-sm text-slate-400 font-bold mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
-                            <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-base sm:text-lg shrink-0">
+                            <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-12 h-12 flex items-center justify-center rounded-[1rem] bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-xl shrink-0">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -613,7 +629,7 @@
             });
         };
 
-        // 안전한 정보 수정 폼 세팅
+        // 🌟 수정: 구매처 관리 모달창에도 기타 메모(memo) 항목 추가
         window.openEditModal = (type, id) => {
             currentEditInfo = { type, id };
             const container = document.getElementById('edit-fields-container');
@@ -647,6 +663,7 @@
                     <input type="text" id="edit-v-contact" value="${item.contact || ''}" placeholder="연락처" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
                     <input type="text" id="edit-v-link" value="${item.link || ''}" placeholder="링크 / 웹사이트" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
                     <input type="text" id="edit-v-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
+                    <textarea id="edit-v-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
                 `;
             }
             document.getElementById('edit-modal').classList.remove('hidden');
@@ -677,7 +694,8 @@
                     bizNum: document.getElementById('edit-v-biz').value,
                     contact: document.getElementById('edit-v-contact').value,
                     link: document.getElementById('edit-v-link').value,
-                    address: document.getElementById('edit-v-address').value
+                    address: document.getElementById('edit-v-address').value,
+                    memo: document.getElementById('edit-v-memo').value // 기타 메모 저장 추가
                 };
             }
 
@@ -705,6 +723,7 @@
             }, 'channel-form'); 
         };
         
+        // 🌟 수정: 구매처 신규 등록 폼 제출 시 메모(memo) 필드 함께 저장
         document.getElementById('vendor-form').onsubmit = e => { 
             e.preventDefault(); 
             saveAdd('vendors', {
@@ -712,7 +731,8 @@
                 bizNum: document.getElementById('ven-biz-num').value,
                 contact: document.getElementById('ven-contact').value,
                 link: document.getElementById('ven-link').value,
-                address: document.getElementById('ven-address').value
+                address: document.getElementById('ven-address').value,
+                memo: document.getElementById('ven-memo').value // 추가
             }, 'vendor-form'); 
         };
 
@@ -753,6 +773,7 @@
             document.getElementById('chan-empty-state').classList.toggle('hidden', allChannels.length > 0);
         };
 
+        // 🌟 수정: 구매처 리스트에도 기타 메모(memo) 항목 표시되도록 추가
         window.renderVendors = () => {
             document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `
                 <div class="p-6 bg-slate-50 rounded-[1.5rem] flex flex-col gap-3 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
@@ -768,6 +789,7 @@
                         ${v.contact ? `<p class="flex items-center gap-2"><i class="fas fa-phone opacity-60 w-4 text-center"></i>${v.contact}</p>` : ''}
                         ${v.link ? `<p class="flex items-center gap-2"><i class="fas fa-link opacity-60 w-4 text-center"></i><a href="${v.link.startsWith('http') ? v.link : 'https://'+v.link}" target="_blank" class="text-blue-500 hover:underline break-all">${v.link}</a></p>` : ''}
                         ${v.address ? `<p class="flex items-center gap-2"><i class="fas fa-map-marker-alt opacity-60 w-4 text-center"></i>${v.address}</p>` : ''}
+                        ${v.memo ? `<p class="mt-3 text-slate-400 bg-white p-3 rounded-xl border border-slate-100 whitespace-pre-wrap"><i class="fas fa-sticky-note opacity-60 mr-1.5"></i>${v.memo}</p>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -784,7 +806,33 @@
             document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
         };
 
-        // 🌟 완벽한 실무형 엑셀 Export 세팅 (배경색, 굵은 테두리, 정렬 포맷 최적화)
+        // 🌟 추가: 일자별/기간별 빠른 필터링 기능
+        window.setFilterQuick = (rangeType) => {
+            const today = new Date();
+            let startDate = new Date();
+            let endDate = new Date();
+
+            if (rangeType === 'today') {
+                // start와 end 모두 오늘 날짜로 유지
+            } else if (rangeType === 'week') {
+                // 1주일 전으로 시작일 세팅
+                startDate.setDate(today.getDate() - 6); 
+            } else if (rangeType === 'month') {
+                // 이번달 1일로 시작일 세팅
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            } else if (rangeType === 'all') {
+                // 입력창을 아예 비우면 전체 데이터가 조회됨
+                document.getElementById('filter-start').value = '';
+                document.getElementById('filter-end').value = '';
+                renderApp();
+                return;
+            }
+
+            document.getElementById('filter-start').value = getLocalDateStr(startDate);
+            document.getElementById('filter-end').value = getLocalDateStr(endDate);
+            renderApp();
+        };
+
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -802,8 +850,6 @@
 
             const wb = XLSX.utils.book_new();
 
-            // --- 엑셀 공통 프리미엄 서식 ---
-            // 헤더 서식 (진한 파란색 배경, 흰색 텍스트, 얇은 테두리, 중앙 정렬)
             const headerStyle = {
                 fill: { fgColor: { rgb: "1E3A8A" } },
                 font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
@@ -816,7 +862,6 @@
                 }
             };
 
-            // 데이터 기본 서식 (얇은 테두리)
             const baseBorder = {
                 top: { style: "thin", color: { rgb: "BFBFBF" } },
                 bottom: { style: "thin", color: { rgb: "BFBFBF" } },
@@ -917,12 +962,13 @@
                 XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
             }
 
-            // --- 4. 구매처 시트 ---
+            // --- 4. 구매처 시트 (🌟 기타 메모 엑셀 연동) ---
             if (allVendors.length > 0) {
                 const aoa = [
-                    [{ v: `🛒 구매처 상세 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "1E3A8A" } } } }, null, null, null, null, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
+                    [{ v: `🛒 구매처 상세 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "1E3A8A" } } } }, null, null, null, null, null, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
                     [],
-                    ['순번', '구매처명', '사업자 번호', '연락처', '링크', '주소'].map(h => ({ v: h, s: headerStyle }))
+                    // 🌟 기타(메모) 헤더 추가
+                    ['순번', '구매처명', '사업자 번호', '연락처', '링크', '주소', '기타 (메모)'].map(h => ({ v: h, s: headerStyle }))
                 ];
                 allVendors.forEach((v, idx) => aoa.push([
                     { v: idx + 1, s: dataStyleCenter },
@@ -930,11 +976,12 @@
                     { v: v.bizNum || '', s: dataStyleCenter },
                     { v: v.contact || '', s: dataStyleCenter },
                     { v: v.link || '', s: dataStyleLeft },
-                    { v: v.address || '', s: dataStyleLeft }
+                    { v: v.address || '', s: dataStyleLeft },
+                    { v: v.memo || '', s: dataStyleLeft } // 🌟 기타 데이터 추가
                 ]));
                 const wsVendors = XLSX.utils.aoa_to_sheet(aoa);
                 wsVendors['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
-                wsVendors['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 30 }];
+                wsVendors['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 30 }]; // 열 7개 맞춤
                 XLSX.utils.book_append_sheet(wb, wsVendors, "구매처_목록");
             }
 
