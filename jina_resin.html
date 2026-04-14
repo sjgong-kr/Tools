@@ -380,15 +380,15 @@
             document.getElementById('custom-modal').classList.add('hidden');
         };
 
-        // 🌟 수정된 부분: GitHub Pages 배포 시 본인의 파이어베이스 설정이 필요합니다.
-        // 파이어베이스 콘솔 -> 프로젝트 설정에서 아래 내용들을 확인하고 교체해주세요.
+        // 🌟 수정된 부분: 전달해주신 실제 파이어베이스 설정값을 적용했습니다.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "여기에_본인의_API_KEY를_넣으세요",
-            authDomain: "여기에_본인의_AUTH_DOMAIN을_넣으세요",
-            projectId: "여기에_본인의_PROJECT_ID를_넣으세요",
-            storageBucket: "여기에_본인의_STORAGE_BUCKET을_넣으세요",
-            messagingSenderId: "여기에_MESSAGING_SENDER_ID를_넣으세요",
-            appId: "여기에_APP_ID를_넣으세요"
+            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+            authDomain: "openzeroc.firebaseapp.com",
+            projectId: "openzeroc",
+            storageBucket: "openzeroc.firebasestorage.app",
+            messagingSenderId: "465944510778",
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+            measurementId: "G-M4K79K2XPG"
         };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'jina-resin-app';
 
