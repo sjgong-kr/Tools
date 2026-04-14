@@ -833,6 +833,7 @@
             renderApp();
         };
 
+        // 🌟 완벽한 실무형 엑셀 Export 세팅 (노키아 보고서 스타일 & 하단 요약 복구)
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -850,29 +851,25 @@
 
             const wb = XLSX.utils.book_new();
 
+            // --- 엑셀 공통 프리미엄 서식 (단정하고 프로페셔널한 회색 톤) ---
+            const borderThin = { style: "thin", color: { rgb: "BFBFBF" } }; // 부드러운 회색 테두리
+            const borderAll = { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin };
+
+            // 헤더: 연한 회색 배경, 진한 글씨, 가운데 정렬, 모든 테두리
             const headerStyle = {
-                fill: { fgColor: { rgb: "1E3A8A" } },
-                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+                fill: { fgColor: { rgb: "F1F5F9" } },
+                font: { bold: true, color: { rgb: "334155" }, sz: 11 },
                 alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "000000" } },
-                    bottom: { style: "thin", color: { rgb: "000000" } },
-                    left: { style: "thin", color: { rgb: "000000" } },
-                    right: { style: "thin", color: { rgb: "000000" } }
-                }
+                border: borderAll
             };
 
-            const baseBorder = {
-                top: { style: "thin", color: { rgb: "BFBFBF" } },
-                bottom: { style: "thin", color: { rgb: "BFBFBF" } },
-                left: { style: "thin", color: { rgb: "BFBFBF" } },
-                right: { style: "thin", color: { rgb: "BFBFBF" } }
-            };
+            const dataStyleCenter = { alignment: { horizontal: "center", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleLeft = { alignment: { horizontal: "left", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleMoney = { alignment: { horizontal: "right", vertical: "center" }, border: borderAll, numFmt: '#,##0"원"', font: { color: { rgb: "334155" } } };
+            const dataStyleQty = { alignment: { horizontal: "center", vertical: "center" }, border: borderAll, numFmt: '#,##0"개"', font: { color: { rgb: "334155" } } };
 
-            const dataStyleCenter = { alignment: { horizontal: "center", vertical: "center" }, border: baseBorder };
-            const dataStyleLeft = { alignment: { horizontal: "left", vertical: "center" }, border: baseBorder };
-            const dataStyleMoney = { alignment: { horizontal: "right", vertical: "center" }, border: baseBorder, numFmt: '#,##0"원"' };
-            const dataStyleQty = { alignment: { horizontal: "center", vertical: "center" }, border: baseBorder, numFmt: '#,##0"개"' };
+            const titleStyle = { font: { sz: 16, bold: true, color: { rgb: "0F172A" } }, alignment: { vertical: "center" } };
+            const dateStyle = { font: { color: { rgb: "64748B" }, italic: true }, alignment: { horizontal: "right", vertical: "center" } };
 
             const now = new Date();
             const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -881,12 +878,14 @@
             if (filtered.length > 0) {
                 filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
 
+                let totalInc = 0, totalExp = 0;
                 const aoa = [];
                 const titleStr = `📊 planet_jina 장부 현황 [${s || '전체'} ~ ${e || '현재'}]`;
+                
                 aoa.push([
-                    { v: titleStr, s: { font: { sz: 16, bold: true, color: { rgb: "1E3A8A" } }, alignment: { vertical: "center" } } },
+                    { v: titleStr, s: titleStyle },
                     null, null, null, null, null, null, null,
-                    { v: printTime, s: { font: { color: { rgb: "64748B" }, italic: true }, alignment: { horizontal: "right", vertical: "center" } } }
+                    { v: printTime, s: dateStyle }
                 ]);
                 aoa.push([]); 
 
@@ -896,11 +895,13 @@
                 filtered.forEach((x, idx) => {
                     const amt = Number(x.amount) || 0;
                     const price = Number(x.unitPrice) || 0;
+                    if(x.type === 'income') totalInc += amt;
+                    else totalExp += amt;
 
                     aoa.push([
                         { v: idx + 1, s: dataStyleCenter },
                         { v: x.date || '', s: dataStyleCenter },
-                        { v: x.type === 'income' ? '판매 수익' : '재료 지출', s: dataStyleCenter },
+                        { v: x.type === 'income' ? '🔵 판매 수익' : '🔴 재료 지출', s: dataStyleCenter },
                         { v: x.name || '', s: dataStyleLeft },
                         { v: x.channel || x.vendor || '', s: dataStyleCenter },
                         { v: price, s: dataStyleMoney },
@@ -910,9 +911,20 @@
                     ]);
                 });
 
+                // 🌟 하단 요약 (Total) 복구 및 스타일링
+                aoa.push([]); // 빈 줄
+                const sumHeaderStyle = { font: { bold: true, color: { rgb: "334155" } }, alignment: { horizontal: "right" } };
+                const sumIncomeStyle = { font: { bold: true, color: { rgb: "2563EB" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+                const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+                const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "4338CA" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+
+                aoa.push([null, null, null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalInc, s: sumIncomeStyle}, null]);
+                aoa.push([null, null, null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalExp, s: sumExpenseStyle}, null]);
+                aoa.push([null, null, null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalInc - totalExp, s: sumNetStyle}, null]);
+
                 const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
                 wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]; 
-                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
+                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
@@ -920,9 +932,9 @@
             if (allProducts.length > 0) {
                 const aoa = [];
                 aoa.push([
-                    { v: `💎 planet_jina 제품 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "1E3A8A" } } } },
+                    { v: `💎 planet_jina 제품 목록`, s: titleStyle },
                     null, null,
-                    { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }
+                    { v: printTime, s: dateStyle }
                 ]);
                 aoa.push([]);
                 aoa.push(['순번', '제품코드', '제품명', '기본 단가'].map(h => ({ v: h, s: headerStyle })));
@@ -943,7 +955,7 @@
             // --- 3. 판매처 시트 ---
             if (allChannels.length > 0) {
                 const aoa = [
-                    [{ v: `🏪 판매처 상세 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "1E3A8A" } } } }, null, null, null, null, null, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
+                    [{ v: `🏪 판매처 상세 목록`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
                     [],
                     ['순번', '판매처명', '사업자 번호', '연락처', '링크', '주소', '기타 (메모)'].map(h => ({ v: h, s: headerStyle }))
                 ];
@@ -957,17 +969,16 @@
                     { v: c.memo || '', s: dataStyleLeft }
                 ]));
                 const wsChannels = XLSX.utils.aoa_to_sheet(aoa);
-                wsChannels['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+                wsChannels['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
                 wsChannels['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 30 }];
                 XLSX.utils.book_append_sheet(wb, wsChannels, "판매처_목록");
             }
 
-            // --- 4. 구매처 시트 (🌟 기타 메모 엑셀 연동) ---
+            // --- 4. 구매처 시트 ---
             if (allVendors.length > 0) {
                 const aoa = [
-                    [{ v: `🛒 구매처 상세 목록`, s: { font: { sz: 14, bold: true, color: { rgb: "1E3A8A" } } } }, null, null, null, null, null, { v: printTime, s: { font: { color: { rgb: "64748B" } }, alignment: { horizontal: "right" } } }],
+                    [{ v: `🛒 구매처 상세 목록`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
                     [],
-                    // 🌟 기타(메모) 헤더 추가
                     ['순번', '구매처명', '사업자 번호', '연락처', '링크', '주소', '기타 (메모)'].map(h => ({ v: h, s: headerStyle }))
                 ];
                 allVendors.forEach((v, idx) => aoa.push([
@@ -977,11 +988,11 @@
                     { v: v.contact || '', s: dataStyleCenter },
                     { v: v.link || '', s: dataStyleLeft },
                     { v: v.address || '', s: dataStyleLeft },
-                    { v: v.memo || '', s: dataStyleLeft } // 🌟 기타 데이터 추가
+                    { v: v.memo || '', s: dataStyleLeft } 
                 ]));
                 const wsVendors = XLSX.utils.aoa_to_sheet(aoa);
-                wsVendors['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
-                wsVendors['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 30 }]; // 열 7개 맞춤
+                wsVendors['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+                wsVendors['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 30 }, { wch: 30 }];
                 XLSX.utils.book_append_sheet(wb, wsVendors, "구매처_목록");
             }
 
