@@ -420,8 +420,10 @@
                         <h2 class="text-2xl font-black flex items-center gap-3">
                             <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
                         </h2>
-                        <div class="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100 text-right shrink-0">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                        <!-- 🌟 수정: 통계 기간 표시 추가 -->
+                        <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
+                            <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
                             <p id="stats-total-channel" class="text-2xl font-black text-indigo-600">0원</p>
                         </div>
                     </div>
@@ -436,8 +438,10 @@
                         <h2 class="text-2xl font-black flex items-center gap-3">
                             <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
                         </h2>
-                        <div class="bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100 text-right shrink-0">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                        <!-- 🌟 수정: 통계 기간 표시 추가 -->
+                        <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
+                            <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
                             <p id="stats-total-product" class="text-2xl font-black text-pink-600">0원</p>
                         </div>
                     </div>
@@ -453,8 +457,10 @@
                     <h2 class="text-2xl font-black flex items-center gap-3">
                         <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
                     </h2>
-                    <div class="bg-white/10 px-5 py-3 rounded-2xl border border-white/10 text-right shrink-0">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Spending</p>
+                    <!-- 🌟 수정: 통계 기간 표시 추가 (다크테마용) -->
+                    <div class="bg-white/10 px-5 py-4 rounded-2xl border border-white/10 text-right shrink-0">
+                        <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">Total Spending</p>
                         <p id="stats-total-vendor" class="text-2xl font-black text-white">0원</p>
                     </div>
                 </div>
@@ -636,6 +642,12 @@
                 const s = document.getElementById('filter-start').value;
                 const e = document.getElementById('filter-end').value;
                 
+                // 🌟 추가: 통계 탭에 적용될 날짜 기간 텍스트 업데이트
+                const dateStr = (!s && !e) ? '전체 기간' : `${s || '처음'} ~ ${e || '현재'}`;
+                document.querySelectorAll('.stats-date-label').forEach(el => {
+                    el.innerHTML = `<i class="far fa-calendar-alt"></i> ${dateStr}`;
+                });
+
                 let filtered = allEntries.filter(x => {
                     const isAfterStart = !s || !x.date || x.date >= s;
                     const isBeforeEnd = !e || !x.date || x.date <= e;
