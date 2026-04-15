@@ -28,21 +28,13 @@
             animation: fadeInTab 0.3s ease-out forwards;
         }
 
-        /* 🌟 수정: 인쇄 화면(Print) 최적화 및 충돌 해결 */
+        /* 인쇄 화면(Print) 최적화 */
         @media print {
             body { background-color: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            
-            /* 앱 UI 화면들은 인쇄 시 확실하게 제거 */
             #login-screen, #loading-screen, #custom-modal, #edit-modal, #print-modal, #app-container { display: none !important; }
-            
-            /* 인쇄 영역 노출 (JS와 연동) */
             #print-area { display: block !important; width: 100%; padding: 0; }
-            
             @page { size: A4; margin: 10mm; }
-            
-            /* 1줄에 3개, 높이는 약 38mm로 설정하면 A4 기준 7줄(21개)이 완벽히 들어갑니다 */
             .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 38mm; gap: 4mm; width: 100%; }
-            
             .price-tag {
                 border: 1.5px dashed #94A3B8; 
                 border-radius: 12px; 
@@ -153,7 +145,7 @@
         </div>
     </div>
 
-    <!-- 🌟 실제 인쇄될 숨김 영역 (기본적으로는 숨김, 인쇄 직전에만 노출) -->
+    <!-- 실제 인쇄될 숨김 영역 -->
     <div id="print-area" class="hidden"></div>
 
     <!-- 메인 대시보드 -->
@@ -227,6 +219,7 @@
                                     </div>
                                 </div>
 
+                                <!-- 수익 폼 -->
                                 <div id="income-group" class="space-y-4">
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-black text-slate-400 ml-1">제품 선택</label>
@@ -238,10 +231,26 @@
                                     </div>
                                 </div>
 
+                                <!-- 🌟 지출 폼 (카테고리 추가) -->
                                 <div id="expense-group" class="hidden space-y-4">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">항목명 직접 입력</label>
-                                        <input type="text" id="input-expense-name" placeholder="재료명을 적어주세요" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[10px] font-black text-slate-400 ml-1">재료 카테고리</label>
+                                        <select id="input-expense-category" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                            <option value="" disabled selected>카테고리 선택</option>
+                                            <option value="크리스탈레진">크리스탈레진</option>
+                                            <option value="UV레진">UV레진</option>
+                                            <option value="몰드">몰드</option>
+                                            <option value="비즈">비즈</option>
+                                            <option value="파츠">파츠</option>
+                                            <option value="부자재">부자재</option>
+                                            <option value="스티커">스티커</option>
+                                            <option value="도구">도구</option>
+                                            <option value="기타">기타</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-black text-slate-400 ml-1">상세 항목명 직접 입력</label>
+                                        <input type="text" id="input-expense-name" placeholder="예: 벚꽃 펜던트 파츠 10종" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-black text-slate-400 ml-1">구매처 선택</label>
@@ -569,6 +578,7 @@
             document.getElementById('btn-type-expense').className = !isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-rose-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:bg-slate-200";
             document.getElementById('input-unit-price').value = '';
             document.getElementById('input-amount').value = '';
+            document.getElementById('input-expense-category').value = '';
         };
 
         const calc = () => {
@@ -585,12 +595,24 @@
         document.getElementById('entry-form').onsubmit = async e => {
             e.preventDefault();
             const type = document.getElementById('input-type').value;
-            let name = (type === 'income') ? allProducts.find(x => x.id === document.getElementById('input-product').value)?.name : document.getElementById('input-expense-name').value;
-            if(!name) return showModal("항목을 선택하거나 입력하세요.");
+            let name = "";
+            let category = null;
+
+            if(type === 'income') {
+                const pId = document.getElementById('input-product').value;
+                if(!pId) return showModal("판매 제품을 선택하세요.");
+                name = allProducts.find(x => x.id === pId).name;
+            } else {
+                const catSelect = document.getElementById('input-expense-category');
+                if(!catSelect.value) return showModal("지출 카테고리를 선택해주세요.");
+                category = catSelect.value;
+                name = document.getElementById('input-expense-name').value;
+                if(!name) return showModal("상세 항목명을 입력하세요.");
+            }
 
             try {
                 await addDoc(collection(db, 'jina_resin', currentUser.uid, 'entries'), {
-                    type, name, 
+                    type, name, category,
                     date: document.getElementById('input-date').value,
                     channel: document.getElementById('input-channel').value || null,
                     vendor: document.getElementById('input-vendor').value || null,
@@ -604,6 +626,7 @@
                 document.getElementById('input-amount').value = '';
                 document.getElementById('input-expense-name').value = '';
                 document.getElementById('input-memo').value = '';
+                document.getElementById('input-expense-category').value = '';
                 showModal("거래가 등록되었습니다.");
             } catch(e) { showModal("등록 실패"); }
         };
@@ -637,6 +660,12 @@
                         if(x.vendor) vS[x.vendor] = (vS[x.vendor] || 0) + amt;
                     }
 
+                    // 🌟 재료 지출일 경우 카테고리를 이름 앞에 예쁘게 뱃지로 표시
+                    let categoryBadge = '';
+                    if (x.type === 'expense' && x.category) {
+                        categoryBadge = `<span class="text-[11px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100 mr-2">${x.category}</span>`;
+                    }
+
                     const div = document.createElement('div');
                     div.className = "p-4 sm:p-5 bg-white border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-md hover:-translate-y-0.5";
                     div.innerHTML = `
@@ -647,7 +676,7 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2">
                                     <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate">${x.name}</h4>
+                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate flex items-center">${categoryBadge}${x.name}</h4>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-sm font-black text-slate-700 bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-[0.6rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
@@ -768,13 +797,29 @@
                 if(!item) return;
                 currentEditInfo = { type, id, originalType: item.type }; 
                 
+                // 🌟 수정 모달에도 지출 카테고리를 반영
+                let categoryHtml = '';
+                if (item.type === 'expense') {
+                    const categories = ['기타', '크리스탈레진', 'UV레진', '몰드', '비즈', '파츠', '부자재', '스티커', '도구'];
+                    const options = categories.map(c => `<option value="${c}" ${item.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                    categoryHtml = `
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 ml-1">지출 카테고리</label>
+                            <select id="edit-e-category" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                }
+
                 container.innerHTML = `
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-400 ml-1">거래 일자</label>
                         <input type="date" id="edit-e-date" value="${item.date || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                     </div>
+                    ${categoryHtml}
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매 제품명' : '지출 항목명'}</label>
+                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매 제품명' : '상세 지출 항목명'}</label>
                         <input type="text" id="edit-e-name" value="${item.name || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                     </div>
                     <div class="space-y-1">
@@ -846,6 +891,8 @@
                     data.channel = document.getElementById('edit-e-related').value;
                 } else {
                     data.vendor = document.getElementById('edit-e-related').value;
+                    const catEl = document.getElementById('edit-e-category');
+                    if (catEl) data.category = catEl.value; // 🌟 수정한 카테고리 정보 저장
                 }
             }
 
@@ -1000,7 +1047,6 @@
             document.getElementById('print-modal').classList.add('hidden');
         };
 
-        // 🌟 수정: 인쇄 시 빈 화면이 나타나는 버그 해결을 위해 강제 노출 및 딜레이(0.1초) 적용
         window.executePrint = () => {
             const inputs = document.querySelectorAll('.print-qty-input');
             let tagsHtml = '';
@@ -1133,11 +1179,17 @@
                     if(x.type === 'income') totalInc += amt;
                     else totalExp += amt;
 
+                    // 🌟 엑셀 항목명에도 카테고리 정보 포함시켜서 내보내기
+                    let exportName = x.name || '';
+                    if (x.type === 'expense' && x.category) {
+                        exportName = `[${x.category}] ${exportName}`;
+                    }
+
                     aoa.push([
                         { v: idx + 1, s: dataStyleCenter },
                         { v: x.date || '', s: dataStyleCenter },
-                        { v: x.type === 'income' ? '🔵 판매 수익' : '🔴 재료 지출', s: dataStyleCenter },
-                        { v: x.name || '', s: dataStyleLeft },
+                        { v: x.type === 'income' ? '판매 수익' : '재료 지출', s: dataStyleCenter },
+                        { v: exportName, s: dataStyleLeft },
                         { v: x.channel || x.vendor || '', s: dataStyleCenter },
                         { v: price, s: dataStyleMoney },
                         { v: Number(x.quantity) || 1, s: dataStyleQty },
@@ -1158,7 +1210,7 @@
 
                 const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
                 wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]; 
-                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
+                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
