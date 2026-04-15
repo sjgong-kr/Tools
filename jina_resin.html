@@ -171,9 +171,11 @@
             </div>
         </header>
 
+        <!-- 🌟 수정: 네비게이션에 카테고리 관리 탭 추가 -->
         <nav class="flex gap-6 mb-10 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar font-black text-lg tracking-tight">
             <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="pb-4 px-2 whitespace-nowrap tab-active transition-all">내역 관리</button>
             <button onclick="switchTab('products')" id="tab-btn-products" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">제품 관리</button>
+            <button onclick="switchTab('categories')" id="tab-btn-categories" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">카테고리 관리</button>
             <button onclick="switchTab('channels')" id="tab-btn-channels" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">판매처 관리</button>
             <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">구매처 관리</button>
             <button onclick="switchTab('stats')" id="tab-btn-stats" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">통계 분석</button>
@@ -231,21 +233,12 @@
                                     </div>
                                 </div>
 
-                                <!-- 🌟 지출 폼 (카테고리 추가) -->
+                                <!-- 🌟 지출 폼 (JS에서 카테고리 동적 주입) -->
                                 <div id="expense-group" class="hidden space-y-4">
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-black text-slate-400 ml-1">재료 카테고리</label>
                                         <select id="input-expense-category" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
-                                            <option value="" disabled selected>카테고리 선택</option>
-                                            <option value="크리스탈레진">크리스탈레진</option>
-                                            <option value="UV레진">UV레진</option>
-                                            <option value="몰드">몰드</option>
-                                            <option value="비즈">비즈</option>
-                                            <option value="파츠">파츠</option>
-                                            <option value="부자재">부자재</option>
-                                            <option value="스티커">스티커</option>
-                                            <option value="도구">도구</option>
-                                            <option value="기타">기타</option>
+                                            <!-- JS 주입 -->
                                         </select>
                                     </div>
                                     <div class="space-y-1">
@@ -357,6 +350,28 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🌟 추가된 탭: 카테고리 관리 -->
+        <div id="tab-categories" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
+                <div class="md:col-span-2">
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
+                        <h2 class="text-xl font-black mb-8">카테고리 신규 등록</h2>
+                        <form id="category-form" class="space-y-4">
+                            <input type="text" id="cat-name" placeholder="카테고리명 (예: 크리스탈레진) *" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">카테고리 추가하기</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
+                        <h2 class="text-xl font-black mb-8">전체 카테고리 정보</h2>
+                        <div id="cat-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 카테고리가 없습니다.</div>
+                        <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- [탭 3] 판매처 관리 -->
         <div id="tab-channels" class="tab-content hidden space-y-6">
@@ -420,7 +435,6 @@
                         <h2 class="text-2xl font-black flex items-center gap-3">
                             <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
                         </h2>
-                        <!-- 🌟 수정: 통계 기간 표시 추가 -->
                         <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
                             <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
                             <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
@@ -438,7 +452,6 @@
                         <h2 class="text-2xl font-black flex items-center gap-3">
                             <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
                         </h2>
-                        <!-- 🌟 수정: 통계 기간 표시 추가 -->
                         <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
                             <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
                             <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
@@ -457,7 +470,6 @@
                     <h2 class="text-2xl font-black flex items-center gap-3">
                         <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
                     </h2>
-                    <!-- 🌟 수정: 통계 기간 표시 추가 (다크테마용) -->
                     <div class="bg-white/10 px-5 py-4 rounded-2xl border border-white/10 text-right shrink-0">
                         <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
                         <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">Total Spending</p>
@@ -494,7 +506,7 @@
         const db = getFirestore(app);
 
         let currentUser = null;
-        let allEntries = [], allProducts = [], allChannels = [], allVendors = [];
+        let allEntries = [], allProducts = [], allCategories = [], allChannels = [], allVendors = [];
         let unsubs = [];
         let currentEditInfo = null;
 
@@ -561,6 +573,12 @@
                     allProducts = s.docs.map(d => ({id:d.id, ...d.data()})); 
                     document.getElementById('input-product').innerHTML = '<option value="">제품 선택</option>' + allProducts.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
                     renderProducts();
+                }),
+                // 🌟 추가: 카테고리 데이터 실시간 로딩
+                onSnapshot(p('categories'), s => { 
+                    allCategories = s.docs.map(d => ({id:d.id, ...d.data()})); 
+                    document.getElementById('input-expense-category').innerHTML = '<option value="" disabled selected>카테고리 선택</option>' + allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                    renderCategories();
                 }),
                 onSnapshot(p('channels'), s => { 
                     allChannels = s.docs.map(d => ({id:d.id, ...d.data()})); 
@@ -642,7 +660,6 @@
                 const s = document.getElementById('filter-start').value;
                 const e = document.getElementById('filter-end').value;
                 
-                // 🌟 추가: 통계 탭에 적용될 날짜 기간 텍스트 업데이트
                 const dateStr = (!s && !e) ? '전체 기간' : `${s || '처음'} ~ ${e || '현재'}`;
                 document.querySelectorAll('.stats-date-label').forEach(el => {
                     el.innerHTML = `<i class="far fa-calendar-alt"></i> ${dateStr}`;
@@ -672,12 +689,6 @@
                         if(x.vendor) vS[x.vendor] = (vS[x.vendor] || 0) + amt;
                     }
 
-                    // 🌟 재료 지출일 경우 카테고리를 이름 앞에 예쁘게 뱃지로 표시
-                    let categoryBadge = '';
-                    if (x.type === 'expense' && x.category) {
-                        categoryBadge = `<span class="text-[11px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100 mr-2">${x.category}</span>`;
-                    }
-
                     const div = document.createElement('div');
                     div.className = "p-4 sm:p-5 bg-white border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-md hover:-translate-y-0.5";
                     div.innerHTML = `
@@ -688,10 +699,11 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2">
                                     <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate flex items-center">${categoryBadge}${x.name}</h4>
+                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate">${x.name}</h4>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-sm font-black text-slate-700 bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-[0.6rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
+                                    <span class="text-xs font-bold ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm whitespace-nowrap"><i class="fas fa-folder-open mr-1 opacity-50"></i>${x.category || (x.type==='income'?'완제품':'미지정')}</span>
                                     <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
                                     ${x.channel || x.vendor ? `<span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm truncate"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
@@ -782,6 +794,13 @@
                     <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                     <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
                 `;
+            } else if(type === 'category') {
+                // 🌟 추가: 카테고리 수정 필드
+                item = allCategories.find(x => x.id === id);
+                if(!item) return;
+                container.innerHTML = `
+                    <input type="text" id="edit-cat-name" value="${item.name || ''}" placeholder="카테고리명" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                `;
             } else if(type === 'channel') {
                 item = allChannels.find(x => x.id === id);
                 if(!item) return;
@@ -809,16 +828,22 @@
                 if(!item) return;
                 currentEditInfo = { type, id, originalType: item.type }; 
                 
-                // 🌟 수정 모달에도 지출 카테고리를 반영
                 let categoryHtml = '';
                 if (item.type === 'expense') {
-                    const categories = ['기타', '크리스탈레진', 'UV레진', '몰드', '비즈', '파츠', '부자재', '스티커', '도구'];
-                    const options = categories.map(c => `<option value="${c}" ${item.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                    // 🌟 DB에서 가져온 카테고리 목록으로 드롭다운 채우기
+                    let catOptions = allCategories.map(c => `<option value="${c.name}" ${item.category === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
+                    
+                    // 기존 카테고리가 삭제된 경우에도 드롭다운에 표시되게끔 처리
+                    if (item.category && !allCategories.find(c => c.name === item.category)) {
+                        catOptions = `<option value="${item.category}" selected>${item.category} (삭제됨)</option>` + catOptions;
+                    }
+                    
                     categoryHtml = `
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-400 ml-1">지출 카테고리</label>
                             <select id="edit-e-category" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                                ${options}
+                                <option value="" ${!item.category ? 'selected' : ''}>카테고리 선택 안함</option>
+                                ${catOptions}
                             </select>
                         </div>
                     `;
@@ -866,12 +891,14 @@
         document.getElementById('edit-form').onsubmit = async e => {
             e.preventDefault();
             const { type, id } = currentEditInfo;
-            const colName = type === 'product' ? 'products' : type === 'channel' ? 'channels' : type === 'vendor' ? 'vendors' : 'entries';
+            const colName = type === 'product' ? 'products' : type === 'category' ? 'categories' : type === 'channel' ? 'channels' : type === 'vendor' ? 'vendors' : 'entries';
             const ref = doc(db, 'jina_resin', currentUser.uid, colName, id);
             
             let data = {};
             if (type === 'product') {
                 data = { code: document.getElementById('edit-p-code').value, name: document.getElementById('edit-p-name').value, price: Number(document.getElementById('edit-p-price').value) };
+            } else if (type === 'category') {
+                data = { name: document.getElementById('edit-cat-name').value };
             } else if (type === 'channel') {
                 data = { 
                     name: document.getElementById('edit-c-name').value,
@@ -904,7 +931,7 @@
                 } else {
                     data.vendor = document.getElementById('edit-e-related').value;
                     const catEl = document.getElementById('edit-e-category');
-                    if (catEl) data.category = catEl.value; // 🌟 수정한 카테고리 정보 저장
+                    if (catEl) data.category = catEl.value; 
                 }
             }
 
@@ -913,12 +940,16 @@
 
         window.handleDeleteEntry = id => showModal("이 거래 내역을 삭제할까요?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'entries', id)));
         window.handleDeleteProduct = id => showModal("제품을 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'products', id)));
+        window.handleDeleteCategory = id => showModal("카테고리를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'categories', id)));
         window.handleDeleteChannel = id => showModal("판매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)));
         window.handleDeleteVendor = id => showModal("구매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)));
 
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
         document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value)}, 'product-form'); };
+        
+        // 🌟 추가: 카테고리 폼 저장 로직
+        document.getElementById('category-form').onsubmit = e => { e.preventDefault(); saveAdd('categories', {name: document.getElementById('cat-name').value}, 'category-form'); };
         
         document.getElementById('channel-form').onsubmit = e => { 
             e.preventDefault(); 
@@ -957,6 +988,20 @@
                 </tr>
             `).join('');
             document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
+        };
+
+        // 🌟 추가: 카테고리 리스트 렌더링 로직
+        window.renderCategories = () => {
+            document.getElementById('categories-table-body').innerHTML = allCategories.map(c => `
+                <div class="p-5 bg-slate-50 rounded-[1.5rem] flex justify-between items-center text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+                    <span class="text-lg font-black"><i class="fas fa-folder-open text-slate-300 mr-2"></i>${c.name}</span>
+                    <div class="flex gap-2">
+                        <button onclick="openEditModal('category', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-purple-600 transition-all"><i class="fas fa-pen text-sm"></i></button>
+                        <button onclick="handleDeleteCategory('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt text-sm"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('cat-empty-state').classList.toggle('hidden', allCategories.length > 0);
         };
 
         window.renderChannels = () => {
@@ -1140,7 +1185,7 @@
                 return isAfterStart && isBeforeEnd;
             });
 
-            if (filtered.length === 0 && allProducts.length === 0 && allChannels.length === 0 && allVendors.length === 0) {
+            if (filtered.length === 0 && allProducts.length === 0 && allChannels.length === 0 && allVendors.length === 0 && allCategories.length === 0) {
                 showModal("내보낼 데이터가 전혀 없습니다.");
                 return;
             }
@@ -1182,7 +1227,6 @@
                 ]);
                 aoa.push([]); 
 
-                // 🌟 수정: 엑셀 헤더에 '카테고리' 항목 추가
                 const headers = ['순번', '거래일자', '구분', '카테고리', '항목명 (제품/재료)', '관련처', '단가', '수량', '총금액', '메모'];
                 aoa.push(headers.map(h => ({ v: h, s: headerStyle })));
 
@@ -1192,14 +1236,13 @@
                     if(x.type === 'income') totalInc += amt;
                     else totalExp += amt;
 
-                    // 🌟 수정: 카테고리 텍스트를 독립적으로 변수화
                     const categoryText = x.category || (x.type === 'income' ? '완제품' : '미지정');
 
                     aoa.push([
                         { v: idx + 1, s: dataStyleCenter },
                         { v: x.date || '', s: dataStyleCenter },
                         { v: x.type === 'income' ? '판매 수익' : '재료 지출', s: dataStyleCenter },
-                        { v: categoryText, s: dataStyleCenter }, // 🌟 카테고리 열 추가
+                        { v: categoryText, s: dataStyleCenter }, 
                         { v: x.name || '', s: dataStyleLeft },
                         { v: x.channel || x.vendor || '', s: dataStyleCenter },
                         { v: price, s: dataStyleMoney },
@@ -1215,14 +1258,12 @@
                 const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
                 const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "4338CA" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
 
-                // 🌟 수정: 칸(Column)이 늘어나서, 하단 합계 요약 셀들의 위치 조정
                 aoa.push([null, null, null, null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalInc, s: sumIncomeStyle}, null]);
                 aoa.push([null, null, null, null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalExp, s: sumExpenseStyle}, null]);
                 aoa.push([null, null, null, null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalInc - totalExp, s: sumNetStyle}, null]);
 
                 const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
                 wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }]; 
-                // 🌟 수정: 카테고리(4번째)의 열 너비 지정 (wch: 14)
                 wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
@@ -1248,6 +1289,23 @@
                 wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
                 wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }];
                 XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
+            }
+
+            // 🌟 추가: 카테고리 엑셀 시트 
+            if (allCategories.length > 0) {
+                const aoa = [
+                    [{ v: `📁 카테고리 목록`, s: titleStyle }, null, { v: printTime, s: dateStyle }],
+                    [],
+                    ['순번', '카테고리명'].map(h => ({ v: h, s: headerStyle }))
+                ];
+                allCategories.forEach((c, idx) => aoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: c.name || '', s: dataStyleCenter }
+                ]));
+                const wsCategories = XLSX.utils.aoa_to_sheet(aoa);
+                wsCategories['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+                wsCategories['!cols'] = [{ wch: 6 }, { wch: 30 }];
+                XLSX.utils.book_append_sheet(wb, wsCategories, "카테고리_목록");
             }
 
             if (allChannels.length > 0) {
