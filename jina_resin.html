@@ -31,10 +31,14 @@
         /* 인쇄 화면(Print) 최적화 */
         @media print {
             body { background-color: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #login-screen, #loading-screen, #custom-modal, #edit-modal, #print-modal, #app-container { display: none !important; }
-            #print-area { display: block !important; width: 100%; padding: 0; }
+            body * { visibility: hidden; } 
+            #print-area, #print-area * { visibility: visible; } 
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            
             @page { size: A4; margin: 10mm; }
+            
             .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 38mm; gap: 4mm; width: 100%; }
+            
             .price-tag {
                 border: 1.5px dashed #94A3B8; 
                 border-radius: 12px; 
@@ -50,25 +54,25 @@
 
     <!-- 로그인 화면 -->
     <div id="login-screen" class="fixed inset-0 bg-slate-100 z-[100] flex items-center justify-center">
-        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm mx-4 border border-white/40">
-            <div class="text-center mb-10">
-                <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl text-white">
-                    <i class="fas fa-gem text-5xl"></i>
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 border border-white/40">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-xl text-white">
+                    <i class="fas fa-gem text-4xl"></i>
                 </div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight">planet_jina</h2>
-                <p class="text-slate-400 mt-2 font-medium">관리자 전용 계정으로 로그인</p>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">planet_jina</h2>
+                <p class="text-slate-400 mt-2 text-sm font-medium">관리자 전용 계정으로 로그인</p>
             </div>
-            <form id="login-form" class="space-y-4">
+            <form id="login-form" class="space-y-3">
                 <div>
-                    <input type="text" id="login-id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none font-semibold" placeholder="아이디">
+                    <input type="text" id="login-id" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none font-semibold" placeholder="아이디">
                 </div>
                 <div>
-                    <input type="password" id="login-pw" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none font-semibold" placeholder="비밀번호">
+                    <input type="password" id="login-pw" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-purple-100 focus:border-purple-400 transition-all outline-none font-semibold" placeholder="비밀번호">
                 </div>
-                <div id="login-error" class="hidden bg-rose-50 text-rose-500 text-xs p-4 rounded-2xl flex items-center gap-2 border border-rose-100 font-bold">
+                <div id="login-error" class="hidden bg-rose-50 text-rose-500 text-xs p-3 rounded-xl flex items-center gap-2 border border-rose-100 font-bold">
                     <i class="fas fa-exclamation-circle text-sm"></i> 정보가 올바르지 않습니다.
                 </div>
-                <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black py-5 rounded-2xl transition-all shadow-xl active:scale-[0.98] mt-4">
+                <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white text-sm font-black py-3.5 rounded-xl transition-all shadow-xl active:scale-[0.98] mt-3">
                     로그인 시작하기
                 </button>
             </form>
@@ -77,34 +81,34 @@
 
     <!-- 로딩 스피너 -->
     <div id="loading-screen" class="fixed inset-0 bg-white/80 backdrop-blur-md z-[110] hidden flex-col items-center justify-center">
-        <div class="loader mb-6"></div>
-        <p class="text-slate-500 font-bold text-xl tracking-tight">데이터 동기화 중...</p>
+        <div class="loader mb-5"></div>
+        <p class="text-slate-500 font-bold text-lg tracking-tight">데이터 동기화 중...</p>
     </div>
 
     <!-- 범용 모달 -->
     <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center backdrop-blur-sm px-4">
-        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
-            <div id="modal-icon" class="text-purple-500 text-6xl mb-6"><i class="fas fa-check-circle"></i></div>
-            <p id="custom-modal-text" class="text-slate-900 font-black mb-8 text-xl leading-snug"></p>
-            <div id="modal-buttons" class="flex gap-3">
-                <button id="modal-confirm-btn" onclick="closeModal()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black transition-all shadow-lg active:scale-95 text-lg">확인</button>
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <div id="modal-icon" class="text-purple-500 text-5xl mb-5"><i class="fas fa-check-circle"></i></div>
+            <p id="custom-modal-text" class="text-slate-900 font-black mb-6 text-lg leading-snug"></p>
+            <div id="modal-buttons" class="flex gap-2">
+                <button id="modal-confirm-btn" onclick="closeModal()" class="w-full bg-slate-950 text-white py-3 rounded-xl font-black transition-all shadow-lg active:scale-95 text-sm">확인</button>
             </div>
         </div>
     </div>
 
     <!-- 수정 전용 모달 -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 z-[150] hidden flex items-center justify-center backdrop-blur-sm px-4 font-semibold">
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto hide-scrollbar">
-            <h2 id="edit-modal-title" class="text-2xl font-black mb-8 text-slate-900 flex items-center gap-2">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto hide-scrollbar">
+            <h2 id="edit-modal-title" class="text-xl font-black mb-5 text-slate-900 flex items-center gap-2">
                 <i class="fas fa-pen-nib text-purple-500"></i> 정보 수정
             </h2>
-            <form id="edit-form" class="space-y-5">
-                <div id="edit-fields-container" class="space-y-4">
+            <form id="edit-form" class="space-y-4">
+                <div id="edit-fields-container" class="space-y-3">
                     <!-- 필드 동적 생성 -->
                 </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black py-4 rounded-2xl transition-all">취소</button>
-                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95">저장</button>
+                <div class="flex gap-2 pt-3">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-black py-3 rounded-xl transition-all">취소</button>
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-black py-3 rounded-xl transition-all shadow-xl active:scale-95">저장</button>
                 </div>
             </form>
         </div>
@@ -112,33 +116,33 @@
 
     <!-- 다중 가격표 인쇄 모달 -->
     <div id="print-modal" class="fixed inset-0 bg-slate-900/60 z-[160] hidden flex items-center justify-center backdrop-blur-sm px-4 font-semibold">
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col">
-            <h2 class="text-2xl font-black mb-6 text-slate-900 flex items-center gap-2 shrink-0">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col">
+            <h2 class="text-xl font-black mb-5 text-slate-900 flex items-center gap-2 shrink-0">
                 <i class="fas fa-print text-emerald-500"></i> 제품 가격표 일괄 인쇄
             </h2>
             <div class="space-y-4 overflow-y-auto flex-1 hide-scrollbar pr-2 pb-2">
                 
-                <div class="space-y-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="space-y-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <label class="text-[11px] font-black text-slate-500"><i class="fas fa-image mr-1"></i> 로고 이미지 첨부 (선택)</label>
-                    <input type="file" id="print-logo-upload" accept="image/*" class="w-full text-sm bg-white p-2 rounded-xl border border-slate-200 focus:outline-none">
-                    <p class="text-[10px] text-slate-400 mt-1">파일을 첨부하면 planet_jina 텍스트 왼쪽에 들어갑니다.</p>
+                    <input type="file" id="print-logo-upload" accept="image/*" class="w-full text-xs bg-white p-2 rounded-lg border border-slate-200 focus:outline-none">
+                    <p class="text-[9px] text-slate-400 mt-1">파일을 첨부하면 planet_jina 텍스트 왼쪽에 들어갑니다.</p>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col">
                     <div class="flex justify-between items-center mb-3">
-                        <span class="text-sm font-black text-slate-700">인쇄할 제품별 수량 입력</span>
-                        <span id="print-total-qty" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">총 0개</span>
+                        <span class="text-xs font-black text-slate-700">인쇄할 제품별 수량 입력</span>
+                        <span id="print-total-qty" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">총 0개</span>
                     </div>
                     <div id="print-product-list" class="space-y-2 max-h-[30vh] overflow-y-auto hide-scrollbar">
                         <!-- JS로 제품 리스트 렌더링 -->
                     </div>
                 </div>
-                <p class="text-[11px] text-slate-400 text-center font-bold"><i class="fas fa-info-circle"></i> A4 1장에 최대 21개(3x7)가 가장 알맞게 들어갑니다.</p>
+                <p class="text-[10px] text-slate-400 text-center font-bold"><i class="fas fa-info-circle"></i> A4 1장에 최대 21개(3x7)가 가장 알맞게 들어갑니다.</p>
             </div>
             
-            <div class="flex gap-3 pt-4 shrink-0 mt-4 border-t border-slate-100">
-                <button type="button" onclick="closePrintModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black py-4 rounded-2xl transition-all">취소</button>
-                <button type="button" onclick="executePrint()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
+            <div class="flex gap-2 pt-3 shrink-0 mt-4 border-t border-slate-100">
+                <button type="button" onclick="closePrintModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 text-sm font-black py-3 rounded-xl transition-all">취소</button>
+                <button type="button" onclick="executePrint()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black py-3 rounded-xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
                     <i class="fas fa-print"></i> 인쇄 시작
                 </button>
             </div>
@@ -148,127 +152,129 @@
     <!-- 실제 인쇄될 숨김 영역 -->
     <div id="print-area" class="hidden"></div>
 
-    <!-- 메인 대시보드 -->
-    <div id="app-container" class="hidden max-w-7xl mx-auto p-4 md:p-8">
+    <!-- 메인 대시보드 (전체 폭 살짝 축소) -->
+    <div id="app-container" class="hidden max-w-6xl mx-auto p-4 md:p-6">
         
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-8 rounded-[2.5rem] shadow-xl border border-white/50 glass-card">
-            <div class="flex items-center gap-6">
-                <div class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-5 rounded-[1.8rem] text-white shadow-2xl rotate-3">
-                    <i class="fas fa-gem text-3xl"></i>
+        <!-- 상단 헤더 슬림화 -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-lg border border-white/50 glass-card">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-2xl text-white shadow-xl rotate-3">
+                    <i class="fas fa-gem text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 tracking-tighter">planet_jina</h1>
-                    <p class="text-slate-400 font-bold flex items-center gap-2 mt-1">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> 통합 클라우드 대시보드
+                    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 tracking-tighter">planet_jina</h1>
+                    <p class="text-slate-400 text-xs font-bold flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> 통합 클라우드 대시보드
                     </p>
                 </div>
             </div>
-            <div class="mt-6 md:mt-0 flex items-center gap-4">
-                <div class="px-6 py-3 bg-slate-900 text-white rounded-[1.2rem] text-sm font-black shadow-lg">jina 님</div>
-                <button onclick="handleLogout()" class="w-12 h-12 flex items-center justify-center bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-[1.2rem] transition-all group" title="로그아웃">
-                    <i class="fas fa-power-off group-hover:rotate-180 transition-all duration-500"></i>
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
+                <div class="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-md">jina 님</div>
+                <button onclick="handleLogout()" class="w-9 h-9 flex items-center justify-center bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all group" title="로그아웃">
+                    <i class="fas fa-power-off group-hover:rotate-180 transition-all duration-500 text-sm"></i>
                 </button>
             </div>
         </header>
 
-        <!-- 🌟 수정: 네비게이션에 카테고리 관리 탭 추가 -->
-        <nav class="flex gap-6 mb-10 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar font-black text-lg tracking-tight">
-            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="pb-4 px-2 whitespace-nowrap tab-active transition-all">내역 관리</button>
-            <button onclick="switchTab('products')" id="tab-btn-products" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">제품 관리</button>
-            <button onclick="switchTab('categories')" id="tab-btn-categories" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">카테고리 관리</button>
-            <button onclick="switchTab('channels')" id="tab-btn-channels" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">판매처 관리</button>
-            <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">구매처 관리</button>
-            <button onclick="switchTab('stats')" id="tab-btn-stats" class="pb-4 px-2 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">통계 분석</button>
+        <nav class="flex gap-5 mb-8 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar font-black text-base tracking-tight">
+            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="pb-3 px-1 whitespace-nowrap tab-active transition-all">내역 관리</button>
+            <button onclick="switchTab('products')" id="tab-btn-products" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">제품 관리</button>
+            <button onclick="switchTab('categories')" id="tab-btn-categories" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">카테고리 관리</button>
+            <button onclick="switchTab('channels')" id="tab-btn-channels" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">판매처 관리</button>
+            <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">구매처 관리</button>
+            <button onclick="switchTab('stats')" id="tab-btn-stats" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">통계 분석</button>
         </nav>
 
         <!-- [탭 1] 내역 관리 -->
-        <div id="tab-dashboard" class="tab-content space-y-10">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border-l-[12px] border-blue-500 flex flex-col justify-between">
-                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Total Revenue</p>
-                    <h3 id="dash-income" class="text-4xl font-black text-slate-900 tracking-tighter">0원</h3>
+        <div id="tab-dashboard" class="tab-content space-y-8">
+            <!-- 🌟 요약 카드 크기 절반 수준으로 대폭 축소 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-white p-5 rounded-3xl shadow-lg border-l-[8px] border-blue-500 flex flex-col justify-between">
+                    <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest mb-2">Total Revenue</p>
+                    <h3 id="dash-income" class="text-2xl font-black text-slate-900 tracking-tighter">0원</h3>
                 </div>
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border-l-[12px] border-rose-500 flex flex-col justify-between">
-                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Total Spending</p>
-                    <h3 id="dash-expense" class="text-4xl font-black text-slate-900 tracking-tighter">0원</h3>
+                <div class="bg-white p-5 rounded-3xl shadow-lg border-l-[8px] border-rose-500 flex flex-col justify-between">
+                    <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest mb-2">Total Spending</p>
+                    <h3 id="dash-expense" class="text-2xl font-black text-slate-900 tracking-tighter">0원</h3>
                 </div>
-                <div class="bg-gradient-to-br from-slate-900 to-slate-700 p-8 rounded-[2.5rem] shadow-2xl flex flex-col justify-between">
-                    <p class="text-slate-300 font-black uppercase text-xs tracking-widest mb-4">Net Growth</p>
-                    <h3 id="dash-net" class="text-4xl font-black text-white tracking-tighter">0원</h3>
+                <div class="bg-gradient-to-br from-slate-900 to-slate-700 p-5 rounded-3xl shadow-xl flex flex-col justify-between">
+                    <p class="text-slate-300 font-black uppercase text-[10px] tracking-widest mb-2">Net Growth</p>
+                    <h3 id="dash-net" class="text-2xl font-black text-white tracking-tighter">0원</h3>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-10">
+            <!-- 하단 좌우 컨테이너 간격 및 패딩 축소 -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div class="lg:col-span-2">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
-                        <h2 class="text-2xl font-black mb-8 text-slate-900">새 거래 등록</h2>
-                        <form id="entry-form" class="space-y-6">
-                            <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl">
-                                <button type="button" id="btn-type-income" onclick="setType('income')" class="flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-blue-600">판매 수익</button>
-                                <button type="button" id="btn-type-expense" onclick="setType('expense')" class="flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500">재료 지출</button>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
+                        <h2 class="text-xl font-black mb-6 text-slate-900">새 거래 등록</h2>
+                        <form id="entry-form" class="space-y-4">
+                            <div class="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                                <button type="button" id="btn-type-income" onclick="setType('income')" class="flex-1 py-2.5 rounded-lg font-black text-xs transition-all bg-white shadow-sm text-blue-600">판매 수익</button>
+                                <button type="button" id="btn-type-expense" onclick="setType('expense')" class="flex-1 py-2.5 rounded-lg font-black text-xs transition-all text-slate-500">재료 지출</button>
                                 <input type="hidden" id="input-type" value="income">
                             </div>
                             
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">거래 일자</label>
-                                        <input type="date" id="input-date" required class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">거래 일자</label>
+                                        <input type="date" id="input-date" required class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">수량</label>
-                                        <input type="number" id="input-quantity" value="1" min="1" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">수량</label>
+                                        <input type="number" id="input-quantity" value="1" min="1" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                 </div>
 
                                 <!-- 수익 폼 -->
-                                <div id="income-group" class="space-y-4">
+                                <div id="income-group" class="space-y-3">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">제품 선택</label>
-                                        <select id="input-product" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">제품 선택</label>
+                                        <select id="input-product" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">판매처 선택</label>
-                                        <select id="input-channel" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">판매처 선택</label>
+                                        <select id="input-channel" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                 </div>
 
-                                <!-- 🌟 지출 폼 (JS에서 카테고리 동적 주입) -->
-                                <div id="expense-group" class="hidden space-y-4">
+                                <!-- 지출 폼 -->
+                                <div id="expense-group" class="hidden space-y-3">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">재료 카테고리</label>
-                                        <select id="input-expense-category" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">재료 카테고리</label>
+                                        <select id="input-expense-category" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                             <!-- JS 주입 -->
                                         </select>
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">상세 항목명 직접 입력</label>
-                                        <input type="text" id="input-expense-name" placeholder="예: 벚꽃 펜던트 파츠 10종" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">상세 항목명</label>
+                                        <input type="text" id="input-expense-name" placeholder="항목 입력" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">구매처 선택</label>
-                                        <select id="input-vendor" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">구매처 선택</label>
+                                        <select id="input-vendor" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">단가 (원)</label>
-                                        <input type="number" id="input-unit-price" placeholder="0" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">단가 (원)</label>
+                                        <input type="number" id="input-unit-price" placeholder="0" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-black text-slate-400 ml-1">합계 금액 (원)</label>
-                                        <input type="number" id="input-amount" placeholder="0" required class="w-full bg-slate-100 border-none rounded-2xl px-4 py-3.5 font-black outline-none focus:ring-2 focus:ring-slate-300 transition-all">
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">합계 금액 (원)</label>
+                                        <input type="number" id="input-amount" placeholder="0" required class="w-full bg-slate-100 border-none rounded-xl px-3 py-2.5 text-sm font-black outline-none focus:ring-2 focus:ring-slate-300 transition-all">
                                     </div>
                                 </div>
 
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-black text-slate-400 ml-1">메모</label>
-                                    <textarea id="input-memo" rows="2" placeholder="메모 사항" class="w-full bg-slate-50 border-none rounded-2xl px-4 py-3.5 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all resize-none"></textarea>
+                                    <label class="text-[9px] font-black text-slate-400 ml-1">메모</label>
+                                    <textarea id="input-memo" rows="2" placeholder="메모" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all resize-none"></textarea>
                                 </div>
                             </div>
 
-                            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-[1.5rem] transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3">
+                            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
                                 <i class="fas fa-check"></i> 거래 저장하기
                             </button>
                         </form>
@@ -276,39 +282,40 @@
                 </div>
 
                 <div class="lg:col-span-3">
-                    <div class="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[600px]">
-                        <div class="flex flex-col gap-6 mb-8 border-b border-slate-100 pb-8">
+                    <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[500px]">
+                        <div class="flex flex-col gap-4 mb-6 border-b border-slate-100 pb-5">
                             <div class="flex justify-between items-center w-full">
-                                <h2 class="text-2xl font-black text-slate-900">상세 장부</h2>
-                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-sm sm:text-base transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
-                                    <i class="fas fa-file-excel text-lg"></i> 엑셀 다운로드
+                                <h2 class="text-xl font-black text-slate-900">상세 장부</h2>
+                                <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-xs sm:text-sm transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                    <i class="fas fa-file-excel"></i> 엑셀 다운로드
                                 </button>
                             </div>
                             
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-[1.5rem] border border-slate-200 shadow-inner">
-                                <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
-                                    <button onclick="setFilterQuick('today')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">오늘</button>
-                                    <button onclick="setFilterQuick('week')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">1주일</button>
-                                    <button onclick="setFilterQuick('month')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap">이번 달</button>
-                                    <button onclick="setFilterQuick('all')" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm border border-slate-200 whitespace-nowrap text-purple-600">전체</button>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
+                                <div class="flex gap-1.5 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
+                                    <button onclick="setFilterQuick('today')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">오늘</button>
+                                    <button onclick="setFilterQuick('week')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">1주</button>
+                                    <button onclick="setFilterQuick('month')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">이번 달</button>
+                                    <button onclick="setFilterQuick('all')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap text-purple-600">전체</button>
                                 </div>
-                                <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <input type="date" id="filter-start" class="bg-white border border-slate-200 rounded-xl text-sm sm:text-base font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-36 p-2 cursor-pointer text-center shadow-sm">
-                                    <span class="text-slate-400 font-black">~</span>
-                                    <input type="date" id="filter-end" class="bg-white border border-slate-200 rounded-xl text-sm sm:text-base font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-36 p-2 cursor-pointer text-center shadow-sm">
-                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-12 h-10 rounded-xl hover:bg-black transition-all flex items-center justify-center shadow-md shrink-0 ml-1">
-                                        <i class="fas fa-search"></i>
+                                <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                                    <input type="date" id="filter-start" class="bg-white border border-slate-200 rounded-lg text-xs sm:text-sm font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-32 py-1.5 px-2 cursor-pointer text-center shadow-sm">
+                                    <span class="text-slate-400 font-black text-xs">~</span>
+                                    <input type="date" id="filter-end" class="bg-white border border-slate-200 rounded-lg text-xs sm:text-sm font-black text-slate-800 focus:ring-2 focus:ring-purple-400 w-full sm:w-32 py-1.5 px-2 cursor-pointer text-center shadow-sm">
+                                    <button onclick="renderApp()" class="bg-slate-900 text-white w-10 h-9 rounded-lg hover:bg-black transition-all flex items-center justify-center shadow-sm shrink-0 ml-1">
+                                        <i class="fas fa-search text-xs"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         
-                        <div id="empty-state" class="text-center py-32 text-slate-300">
-                            <i class="fas fa-receipt text-7xl mb-6 opacity-20"></i>
-                            <p class="font-black text-xl mb-2">기록된 거래가 없습니다.</p>
-                            <p class="text-sm font-bold">좌측 폼에서 새로운 내역을 추가해주세요.</p>
+                        <div id="empty-state" class="text-center py-24 text-slate-300">
+                            <i class="fas fa-receipt text-5xl mb-4 opacity-20"></i>
+                            <p class="font-black text-lg mb-1">기록된 거래가 없습니다.</p>
+                            <p class="text-xs font-bold">좌측 폼에서 내역을 추가해주세요.</p>
                         </div>
-                        <div id="entries-container" class="space-y-3 sm:space-y-3.5">
+                        <!-- 리스트 아이템 간격 축소 -->
+                        <div id="entries-container" class="space-y-2.5 sm:space-y-3">
                             <!-- 리스트 공간 -->
                         </div>
 
@@ -319,31 +326,31 @@
 
         <!-- [탭 2] 제품 관리 -->
         <div id="tab-products" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
-                        <h2 class="text-xl font-black mb-8">제품 신규 등록</h2>
-                        <form id="product-form" class="space-y-5">
-                            <input type="text" id="prod-code" placeholder="제품 코드 (C-001)" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="prod-name" placeholder="제품명" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="number" id="prod-price" placeholder="단가 (원)" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all">제품 추가하기</button>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                        <h2 class="text-lg font-black mb-5">제품 신규 등록</h2>
+                        <form id="product-form" class="space-y-4">
+                            <input type="text" id="prod-code" placeholder="제품 코드 (C-001)" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="prod-name" placeholder="제품명" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="number" id="prod-price" placeholder="단가 (원)" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <button type="submit" class="w-full bg-slate-950 text-white text-sm font-black py-3.5 rounded-xl shadow-md active:scale-95 transition-all">제품 추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-3">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-xl font-black">내 제품 목록</h2>
-                            <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-md active:scale-95 flex items-center gap-2">
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-black">내 제품 목록</h2>
+                            <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
                                 <i class="fas fa-print"></i> 가격표 일괄 인쇄
                             </button>
                         </div>
                         
-                        <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 제품이 없습니다.</div>
+                        <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 제품이 없습니다.</div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
-                                <tbody id="products-table-body" class="divide-y divide-slate-50"></tbody>
+                                <tbody id="products-table-body" class="divide-y divide-slate-50 text-sm"></tbody>
                             </table>
                         </div>
                     </div>
@@ -351,136 +358,136 @@
             </div>
         </div>
 
-        <!-- 🌟 추가된 탭: 카테고리 관리 -->
+        <!-- 🌟 [탭 3] 카테고리 관리 -->
         <div id="tab-categories" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
-                        <h2 class="text-xl font-black mb-8">카테고리 신규 등록</h2>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
+                        <h2 class="text-lg font-black mb-5">카테고리 신규 등록</h2>
                         <form id="category-form" class="space-y-4">
-                            <input type="text" id="cat-name" placeholder="카테고리명 (예: 크리스탈레진) *" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">카테고리 추가하기</button>
+                            <input type="text" id="cat-name" placeholder="카테고리명 (예: 크리스탈레진) *" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <button type="submit" class="w-full bg-slate-950 text-white text-sm font-black py-3.5 rounded-xl shadow-md active:scale-95 transition-all">카테고리 추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-3">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <h2 class="text-xl font-black mb-8">전체 카테고리 정보</h2>
-                        <div id="cat-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 카테고리가 없습니다.</div>
-                        <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">전체 카테고리 정보</h2>
+                        <div id="cat-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 카테고리가 없습니다.</div>
+                        <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- [탭 3] 판매처 관리 -->
+        <!-- [탭 4] 판매처 관리 -->
         <div id="tab-channels" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
-                        <h2 class="text-xl font-black mb-8">판매처 신규 등록</h2>
-                        <form id="channel-form" class="space-y-4">
-                            <input type="text" id="chan-name" placeholder="판매처 이름 (예: 아이디어스) *" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="chan-biz-num" placeholder="사업자 번호 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="chan-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="chan-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="chan-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <textarea id="chan-memo" placeholder="기타 항목 / 메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
-                            <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">판매처 추가하기</button>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
+                        <h2 class="text-lg font-black mb-5">판매처 신규 등록</h2>
+                        <form id="channel-form" class="space-y-3">
+                            <input type="text" id="chan-name" placeholder="판매처 이름 (예: 아이디어스) *" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="chan-biz-num" placeholder="사업자 번호 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="chan-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="chan-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="chan-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <textarea id="chan-memo" placeholder="메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
+                            <button type="submit" class="w-full bg-slate-950 text-white text-sm font-black py-3.5 rounded-xl shadow-md active:scale-95 transition-all mt-1">판매처 추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-3">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <h2 class="text-xl font-black mb-8">전체 판매처 정보</h2>
-                        <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 판매처가 없습니다.</div>
-                        <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">전체 판매처 정보</h2>
+                        <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 판매처가 없습니다.</div>
+                        <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- [탭 4] 구매처 관리 -->
+        <!-- [탭 5] 구매처 관리 -->
         <div id="tab-vendors" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 sticky top-10">
-                        <h2 class="text-xl font-black mb-8">구매처 신규 등록</h2>
-                        <form id="vendor-form" class="space-y-4">
-                            <input type="text" id="ven-name" placeholder="구매처 이름 (예: 동대문상가) *" required class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="ven-biz-num" placeholder="사업자 번호 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="ven-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="ven-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <input type="text" id="ven-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
-                            <textarea id="ven-memo" placeholder="기타 항목 / 메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
-                            <button type="submit" class="w-full bg-slate-950 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-2">구매처 추가하기</button>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
+                        <h2 class="text-lg font-black mb-5">구매처 신규 등록</h2>
+                        <form id="vendor-form" class="space-y-3">
+                            <input type="text" id="ven-name" placeholder="구매처 이름 (예: 동대문상가) *" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="ven-biz-num" placeholder="사업자 번호 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="ven-contact" placeholder="연락처 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="ven-link" placeholder="링크/웹사이트 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <input type="text" id="ven-address" placeholder="주소 (선택)" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400">
+                            <textarea id="ven-memo" placeholder="메모 사항 (선택)" rows="2" class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 resize-none"></textarea>
+                            <button type="submit" class="w-full bg-slate-950 text-white text-sm font-black py-3.5 rounded-xl shadow-md active:scale-95 transition-all mt-1">구매처 추가하기</button>
                         </form>
                     </div>
                 </div>
                 <div class="md:col-span-3">
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 min-h-[500px]">
-                        <h2 class="text-xl font-black mb-8">전체 구매처 정보</h2>
-                        <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black">등록된 구매처가 없습니다.</div>
-                        <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
+                        <h2 class="text-lg font-black mb-6">전체 구매처 정보</h2>
+                        <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 구매처가 없습니다.</div>
+                        <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- [탭 5] 통계 분석 -->
-        <div id="tab-stats" class="tab-content hidden space-y-12 pb-20">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div class="bg-white p-8 sm:p-10 rounded-[3rem] shadow-xl border border-slate-100">
-                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4 mb-8">
-                        <h2 class="text-2xl font-black flex items-center gap-3">
+        <!-- [탭 6] 통계 분석 -->
+        <div id="tab-stats" class="tab-content hidden space-y-8 pb-16">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-slate-100">
+                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 mb-6">
+                        <h2 class="text-xl font-black flex items-center gap-2">
                             <i class="fas fa-store text-indigo-500"></i> 마켓별 매출 비중
                         </h2>
-                        <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
-                            <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
-                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
-                            <p id="stats-total-channel" class="text-2xl font-black text-indigo-600">0원</p>
+                        <div class="bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 text-right shrink-0">
+                            <div class="stats-date-label text-[10px] font-bold text-slate-400 mb-1 flex items-center justify-end gap-1"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
+                            <p id="stats-total-channel" class="text-xl font-black text-indigo-600">0원</p>
                         </div>
                     </div>
-                    <div id="stats-empty-state" class="text-center py-20 text-slate-300">
-                        <i class="fas fa-chart-pie text-6xl mb-4 opacity-30"></i>
-                        <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
+                    <div id="stats-empty-state" class="text-center py-16 text-slate-300">
+                        <i class="fas fa-chart-pie text-5xl mb-3 opacity-30"></i>
+                        <p class="font-black text-base">해당 기간의 데이터가 없습니다.</p>
                     </div>
-                    <div id="stats-container" class="space-y-8"></div>
+                    <div id="stats-container" class="space-y-5"></div>
                 </div>
-                <div class="bg-white p-8 sm:p-10 rounded-[3rem] shadow-xl border border-slate-100">
-                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4 mb-8">
-                        <h2 class="text-2xl font-black flex items-center gap-3">
+                <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-lg border border-slate-100">
+                    <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 mb-6">
+                        <h2 class="text-xl font-black flex items-center gap-2">
                             <i class="fas fa-gem text-pink-500"></i> 제품별 누적 매출
                         </h2>
-                        <div class="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-right shrink-0">
-                            <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
-                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
-                            <p id="stats-total-product" class="text-2xl font-black text-pink-600">0원</p>
+                        <div class="bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 text-right shrink-0">
+                            <div class="stats-date-label text-[10px] font-bold text-slate-400 mb-1 flex items-center justify-end gap-1"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Total Revenue</p>
+                            <p id="stats-total-product" class="text-xl font-black text-pink-600">0원</p>
                         </div>
                     </div>
-                    <div id="product-stats-empty-state" class="text-center py-20 text-slate-300">
-                        <i class="fas fa-chart-bar text-6xl mb-4 opacity-30"></i>
-                        <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
+                    <div id="product-stats-empty-state" class="text-center py-16 text-slate-300">
+                        <i class="fas fa-chart-bar text-5xl mb-3 opacity-30"></i>
+                        <p class="font-black text-base">해당 기간의 데이터가 없습니다.</p>
                     </div>
-                    <div id="product-stats-container" class="space-y-8"></div>
+                    <div id="product-stats-container" class="space-y-5"></div>
                 </div>
             </div>
-            <div class="bg-slate-950 p-8 sm:p-10 rounded-[3rem] shadow-2xl text-white">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-                    <h2 class="text-2xl font-black flex items-center gap-3">
+            <div class="bg-slate-950 p-6 sm:p-8 rounded-3xl shadow-xl text-white">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                    <h2 class="text-xl font-black flex items-center gap-2">
                         <i class="fas fa-truck-loading text-rose-400"></i> 거래처별 매입 분석
                     </h2>
-                    <div class="bg-white/10 px-5 py-4 rounded-2xl border border-white/10 text-right shrink-0">
-                        <div class="stats-date-label text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-end gap-1.5"><i class="far fa-calendar-alt"></i> 전체 기간</div>
-                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">Total Spending</p>
-                        <p id="stats-total-vendor" class="text-2xl font-black text-white">0원</p>
+                    <div class="bg-white/10 px-4 py-3 rounded-xl border border-white/10 text-right shrink-0">
+                        <div class="stats-date-label text-[10px] font-bold text-slate-400 mb-1 flex items-center justify-end gap-1"><i class="far fa-calendar-alt"></i> 전체 기간</div>
+                        <p class="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-0.5">Total Spending</p>
+                        <p id="stats-total-vendor" class="text-xl font-black text-white">0원</p>
                     </div>
                 </div>
-                <div id="vendor-stats-empty-state" class="text-center py-20 text-slate-500">
-                    <i class="fas fa-boxes text-6xl mb-4 opacity-30"></i>
-                    <p class="font-black text-lg">해당 기간의 데이터가 없습니다.</p>
+                <div id="vendor-stats-empty-state" class="text-center py-16 text-slate-500">
+                    <i class="fas fa-boxes text-5xl mb-3 opacity-30"></i>
+                    <p class="font-black text-base">해당 기간의 데이터가 없습니다.</p>
                 </div>
-                <div id="vendor-stats-container" class="space-y-8"></div>
+                <div id="vendor-stats-container" class="space-y-5"></div>
             </div>
         </div>
     </div>
@@ -517,9 +524,9 @@
             document.getElementById('custom-modal-text').innerText = msg;
             document.getElementById('modal-icon').innerHTML = isConfirm ? '<i class="fas fa-question-circle text-amber-500"></i>' : '<i class="fas fa-check-circle text-purple-500"></i>';
             document.getElementById('modal-buttons').innerHTML = isConfirm ? 
-                `<button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black">취소</button>
-                 <button id="modal-real-btn" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-black shadow-lg">삭제</button>` : 
-                `<button onclick="closeModal()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black">확인</button>`;
+                `<button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-black text-sm">취소</button>
+                 <button id="modal-real-btn" class="flex-1 bg-rose-500 text-white py-3 rounded-xl font-black shadow-md text-sm">삭제</button>` : 
+                `<button onclick="closeModal()" class="w-full bg-slate-950 text-white py-3 rounded-xl font-black text-sm">확인</button>`;
             
             if(isConfirm) document.getElementById('modal-real-btn').onclick = () => { onConfirm(); closeModal(); };
             modal.classList.remove('hidden');
@@ -574,7 +581,6 @@
                     document.getElementById('input-product').innerHTML = '<option value="">제품 선택</option>' + allProducts.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
                     renderProducts();
                 }),
-                // 🌟 추가: 카테고리 데이터 실시간 로딩
                 onSnapshot(p('categories'), s => { 
                     allCategories = s.docs.map(d => ({id:d.id, ...d.data()})); 
                     document.getElementById('input-expense-category').innerHTML = '<option value="" disabled selected>카테고리 선택</option>' + allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -598,8 +604,8 @@
             const isInc = type === 'income';
             document.getElementById('income-group').classList.toggle('hidden', !isInc);
             document.getElementById('expense-group').classList.toggle('hidden', isInc);
-            document.getElementById('btn-type-income').className = isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-blue-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:bg-slate-200";
-            document.getElementById('btn-type-expense').className = !isInc ? "flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-rose-600" : "flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:bg-slate-200";
+            document.getElementById('btn-type-income').className = isInc ? "flex-1 py-2.5 rounded-lg font-black text-xs transition-all bg-white shadow-sm text-blue-600" : "flex-1 py-2.5 rounded-lg font-black text-xs transition-all text-slate-500 hover:bg-slate-200";
+            document.getElementById('btn-type-expense').className = !isInc ? "flex-1 py-2.5 rounded-lg font-black text-xs transition-all bg-white shadow-sm text-rose-600" : "flex-1 py-2.5 rounded-lg font-black text-xs transition-all text-slate-500 hover:bg-slate-200";
             document.getElementById('input-unit-price').value = '';
             document.getElementById('input-amount').value = '';
             document.getElementById('input-expense-category').value = '';
@@ -655,6 +661,7 @@
             } catch(e) { showModal("등록 실패"); }
         };
 
+        // 🌟 슬림해진 내역 렌더링
         window.renderApp = () => {
             try {
                 const s = document.getElementById('filter-start').value;
@@ -690,35 +697,35 @@
                     }
 
                     const div = document.createElement('div');
-                    div.className = "p-4 sm:p-5 bg-white border border-slate-100 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 group transition-all hover:shadow-md hover:-translate-y-0.5";
+                    div.className = "p-3.5 sm:p-4 bg-white border border-slate-100 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 group transition-all hover:shadow-md hover:-translate-y-0.5";
                     div.innerHTML = `
-                        <div class="flex items-center gap-4 flex-1 min-w-0">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-lg sm:text-xl shrink-0">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg flex items-center justify-center ${x.type==='income'?'bg-blue-50 text-blue-500':'bg-rose-50 text-rose-500'} font-black text-base sm:text-lg shrink-0">
                                 <i class="fas fa-${x.type==='income'?'arrow-down':'arrow-up'}"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2">
-                                    <span class="text-[10px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shrink-0">${x.type==='income'?'판매':'지출'}</span>
-                                    <h4 class="font-black text-slate-900 text-lg sm:text-xl truncate">${x.name}</h4>
+                                <div class="flex flex-wrap items-center gap-1.5 mb-1 sm:mb-1.5">
+                                    <span class="text-[9px] font-black uppercase ${x.type==='income'?'text-blue-600':'text-rose-600'} bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md shrink-0">${x.type==='income'?'판매':'지출'}</span>
+                                    <h4 class="font-black text-slate-900 text-base sm:text-lg truncate">${x.name}</h4>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-sm font-black text-slate-700 bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-[0.6rem] whitespace-nowrap"><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>${x.date || '-'}</span>
-                                    <span class="text-xs font-bold ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm whitespace-nowrap"><i class="fas fa-folder-open mr-1 opacity-50"></i>${x.category || (x.type==='income'?'완제품':'미지정')}</span>
-                                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
-                                    ${x.channel || x.vendor ? `<span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-[0.6rem] shadow-sm truncate"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="text-xs font-black text-slate-700 bg-slate-100 border border-slate-200 shadow-sm px-2.5 py-1 rounded-md whitespace-nowrap"><i class="far fa-calendar-alt text-slate-400 mr-1"></i>${x.date || '-'}</span>
+                                    <span class="text-[11px] font-bold ${x.type==='income'?'text-blue-500':'text-rose-500'} bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap"><i class="fas fa-folder-open mr-1 opacity-50"></i>${x.category || (x.type==='income'?'완제품':'미지정')}</span>
+                                    <span class="text-[11px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap"><i class="fas fa-layer-group mr-1 opacity-50"></i>${x.quantity || 1}개</span>
+                                    ${x.channel || x.vendor ? `<span class="text-[11px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-sm truncate"><i class="fas fa-tag mr-1 opacity-50"></i>${x.channel || x.vendor}</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0 mt-3 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-3 sm:pt-0">
+                        <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 mt-2 sm:mt-0 w-full sm:w-auto border-t sm:border-none border-slate-50 pt-2 sm:pt-0">
                             <div class="text-left sm:text-right flex-1 sm:flex-none">
-                                <p class="text-xl sm:text-2xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
-                                <p class="text-[10px] sm:text-xs text-slate-400 font-bold mt-0.5 sm:mt-1">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
+                                <p class="text-lg sm:text-xl font-black ${x.type==='income'?'text-blue-600':'text-rose-500'} tracking-tight">${formatMoney(amt)}</p>
+                                <p class="text-[9px] sm:text-[10px] text-slate-400 font-bold mt-0.5">${x.unitPrice ? formatMoney(x.unitPrice)+' / 개' : ''}</p>
                             </div>
-                            <div class="flex gap-1.5">
-                                <button onclick="openEditModal('entry', '${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all text-base shrink-0 border border-slate-100 shadow-sm">
+                            <div class="flex gap-1">
+                                <button onclick="openEditModal('entry', '${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all text-sm shrink-0 border border-slate-100 shadow-sm">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-base shrink-0 border border-rose-50 shadow-sm">
+                                <button onclick="handleDeleteEntry('${x.id}')" class="sm:opacity-0 group-hover:opacity-100 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all text-sm shrink-0 border border-rose-50 shadow-sm">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
@@ -768,12 +775,12 @@
                 const amt = Number(data[k]) || 0;
                 const per = Math.round((amt / total) * 100);
                 container.innerHTML += `
-                    <div class="space-y-2">
+                    <div class="space-y-1.5">
                         <div class="flex justify-between items-end font-black">
-                            <span class="text-sm truncate w-1/2">${k}</span>
-                            <span class="text-xs opacity-60">${formatMoney(amt)} (${per}%)</span>
+                            <span class="text-xs truncate w-1/2">${k}</span>
+                            <span class="text-[10px] opacity-60">${formatMoney(amt)} (${per}%)</span>
                         </div>
-                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                             <div class="${colorClass} h-full transition-all duration-1000" style="width:${per}%"></div>
                         </div>
                     </div>
@@ -790,38 +797,37 @@
                 item = allProducts.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
-                    <input type="text" id="edit-p-code" value="${item.code}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
-                    <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    <input type="text" id="edit-p-code" value="${item.code}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
+                    <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                 `;
             } else if(type === 'category') {
-                // 🌟 추가: 카테고리 수정 필드
                 item = allCategories.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
-                    <input type="text" id="edit-cat-name" value="${item.name || ''}" placeholder="카테고리명" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                    <input type="text" id="edit-cat-name" value="${item.name || ''}" placeholder="카테고리명" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                 `;
             } else if(type === 'channel') {
                 item = allChannels.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
-                    <input type="text" id="edit-c-name" value="${item.name || ''}" placeholder="판매처 이름" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-c-biz" value="${item.bizNum || ''}" placeholder="사업자 번호" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-c-contact" value="${item.contact || ''}" placeholder="연락처" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-c-link" value="${item.link || ''}" placeholder="링크 / 웹사이트" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-c-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <textarea id="edit-c-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
+                    <input type="text" id="edit-c-name" value="${item.name || ''}" placeholder="판매처 이름" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-c-biz" value="${item.bizNum || ''}" placeholder="사업자 번호" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-c-contact" value="${item.contact || ''}" placeholder="연락처" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-c-link" value="${item.link || ''}" placeholder="링크 / 웹사이트" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-c-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <textarea id="edit-c-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm resize-none">${item.memo || ''}</textarea>
                 `;
             } else if(type === 'vendor') {
                 item = allVendors.find(x => x.id === id);
                 if(!item) return;
                 container.innerHTML = `
-                    <input type="text" id="edit-v-name" value="${item.name || ''}" placeholder="구매처 이름" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-v-biz" value="${item.bizNum || ''}" placeholder="사업자 번호" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-v-contact" value="${item.contact || ''}" placeholder="연락처" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-v-link" value="${item.link || ''}" placeholder="링크 / 웹사이트" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <input type="text" id="edit-v-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
-                    <textarea id="edit-v-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
+                    <input type="text" id="edit-v-name" value="${item.name || ''}" placeholder="구매처 이름" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-v-biz" value="${item.bizNum || ''}" placeholder="사업자 번호" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-v-contact" value="${item.contact || ''}" placeholder="연락처" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-v-link" value="${item.link || ''}" placeholder="링크 / 웹사이트" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <input type="text" id="edit-v-address" value="${item.address || ''}" placeholder="주소" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
+                    <textarea id="edit-v-memo" placeholder="기타 항목 (메모)" rows="2" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm resize-none">${item.memo || ''}</textarea>
                 `;
             } else if(type === 'entry') {
                 item = allEntries.find(x => x.id === id);
@@ -830,18 +836,14 @@
                 
                 let categoryHtml = '';
                 if (item.type === 'expense') {
-                    // 🌟 DB에서 가져온 카테고리 목록으로 드롭다운 채우기
                     let catOptions = allCategories.map(c => `<option value="${c.name}" ${item.category === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
-                    
-                    // 기존 카테고리가 삭제된 경우에도 드롭다운에 표시되게끔 처리
                     if (item.category && !allCategories.find(c => c.name === item.category)) {
                         catOptions = `<option value="${item.category}" selected>${item.category} (삭제됨)</option>` + catOptions;
                     }
-                    
                     categoryHtml = `
                         <div class="space-y-1">
-                            <label class="text-[10px] font-black text-slate-400 ml-1">지출 카테고리</label>
-                            <select id="edit-e-category" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
+                            <label class="text-[9px] font-black text-slate-400 ml-1">지출 카테고리</label>
+                            <select id="edit-e-category" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
                                 <option value="" ${!item.category ? 'selected' : ''}>카테고리 선택 안함</option>
                                 ${catOptions}
                             </select>
@@ -851,35 +853,35 @@
 
                 container.innerHTML = `
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">거래 일자</label>
-                        <input type="date" id="edit-e-date" value="${item.date || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                        <label class="text-[9px] font-black text-slate-400 ml-1">거래 일자</label>
+                        <input type="date" id="edit-e-date" value="${item.date || ''}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                     </div>
                     ${categoryHtml}
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매 제품명' : '상세 지출 항목명'}</label>
-                        <input type="text" id="edit-e-name" value="${item.name || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400">
+                        <label class="text-[9px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매 제품명' : '상세 지출 항목명'}</label>
+                        <input type="text" id="edit-e-name" value="${item.name || ''}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매처' : '구매처'}</label>
-                        <input type="text" id="edit-e-related" value="${item.channel || item.vendor || ''}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400">
+                        <label class="text-[9px] font-black text-slate-400 ml-1">${item.type === 'income' ? '판매처' : '구매처'}</label>
+                        <input type="text" id="edit-e-related" value="${item.channel || item.vendor || ''}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm">
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-2">
                         <div class="flex-1 space-y-1">
-                            <label class="text-[10px] font-black text-slate-400 ml-1">단가 (원)</label>
-                            <input type="number" id="edit-e-price" value="${item.unitPrice || 0}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400" oninput="document.getElementById('edit-e-amount').value = (this.value || 0) * (document.getElementById('edit-e-qty').value || 1)">
+                            <label class="text-[9px] font-black text-slate-400 ml-1">단가 (원)</label>
+                            <input type="number" id="edit-e-price" value="${item.unitPrice || 0}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm" oninput="document.getElementById('edit-e-amount').value = (this.value || 0) * (document.getElementById('edit-e-qty').value || 1)">
                         </div>
                         <div class="flex-1 space-y-1">
-                            <label class="text-[10px] font-black text-slate-400 ml-1">수량</label>
-                            <input type="number" id="edit-e-qty" value="${item.quantity || 1}" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400" oninput="document.getElementById('edit-e-amount').value = (document.getElementById('edit-e-price').value || 0) * (this.value || 1)">
+                            <label class="text-[9px] font-black text-slate-400 ml-1">수량</label>
+                            <input type="number" id="edit-e-qty" value="${item.quantity || 1}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm" oninput="document.getElementById('edit-e-amount').value = (document.getElementById('edit-e-price').value || 0) * (this.value || 1)">
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">총금액 (원)</label>
-                        <input type="number" id="edit-e-amount" value="${item.amount || 0}" class="w-full bg-slate-100 p-4 rounded-2xl ring-2 ring-slate-200 font-black outline-none focus:ring-purple-400">
+                        <label class="text-[9px] font-black text-slate-400 ml-1">총금액 (원)</label>
+                        <input type="number" id="edit-e-amount" value="${item.amount || 0}" class="w-full bg-slate-100 px-4 py-3 rounded-xl ring-2 ring-slate-200 font-black outline-none focus:ring-purple-400 text-sm">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 ml-1">메모</label>
-                        <textarea id="edit-e-memo" rows="2" class="w-full bg-slate-50 p-4 rounded-2xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 resize-none">${item.memo || ''}</textarea>
+                        <label class="text-[9px] font-black text-slate-400 ml-1">메모</label>
+                        <textarea id="edit-e-memo" rows="2" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-bold outline-none focus:ring-purple-400 text-sm resize-none">${item.memo || ''}</textarea>
                     </div>
                 `;
             }
@@ -947,8 +949,6 @@
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
         document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value)}, 'product-form'); };
-        
-        // 🌟 추가: 카테고리 폼 저장 로직
         document.getElementById('category-form').onsubmit = e => { e.preventDefault(); saveAdd('categories', {name: document.getElementById('cat-name').value}, 'category-form'); };
         
         document.getElementById('channel-form').onsubmit = e => { 
@@ -978,26 +978,25 @@
         window.renderProducts = () => {
             document.getElementById('products-table-body').innerHTML = allProducts.map(p => `
                 <tr class="hover:bg-slate-50 transition-all font-bold group">
-                    <td class="p-5 text-xs text-slate-400 font-mono">${p.code}</td>
-                    <td class="p-5 text-slate-900">${p.name}</td>
-                    <td class="p-5 text-blue-600">${formatMoney(p.price)}</td>
-                    <td class="p-5 text-right flex gap-1.5 justify-end">
-                        <button onclick="openEditModal('product', '${p.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all flex items-center justify-center border border-slate-100 shadow-sm"><i class="fas fa-pen-nib"></i></button>
-                        <button onclick="handleDeleteProduct('${p.id}')" class="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center border border-rose-50 shadow-sm"><i class="fas fa-trash-alt"></i></button>
+                    <td class="p-3 sm:p-4 text-xs text-slate-400 font-mono">${p.code}</td>
+                    <td class="p-3 sm:p-4 text-slate-900">${p.name}</td>
+                    <td class="p-3 sm:p-4 text-blue-600">${formatMoney(p.price)}</td>
+                    <td class="p-3 sm:p-4 text-right flex gap-1.5 justify-end">
+                        <button onclick="openEditModal('product', '${p.id}')" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all flex items-center justify-center border border-slate-100 shadow-sm text-sm"><i class="fas fa-pen-nib"></i></button>
+                        <button onclick="handleDeleteProduct('${p.id}')" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center border border-rose-50 shadow-sm text-sm"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>
             `).join('');
             document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
         };
 
-        // 🌟 추가: 카테고리 리스트 렌더링 로직
         window.renderCategories = () => {
             document.getElementById('categories-table-body').innerHTML = allCategories.map(c => `
-                <div class="p-5 bg-slate-50 rounded-[1.5rem] flex justify-between items-center text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
-                    <span class="text-lg font-black"><i class="fas fa-folder-open text-slate-300 mr-2"></i>${c.name}</span>
-                    <div class="flex gap-2">
-                        <button onclick="openEditModal('category', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-purple-600 transition-all"><i class="fas fa-pen text-sm"></i></button>
-                        <button onclick="handleDeleteCategory('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt text-sm"></i></button>
+                <div class="p-4 bg-slate-50 rounded-xl flex justify-between items-center text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+                    <span class="text-base font-black"><i class="fas fa-folder-open text-slate-300 mr-2"></i>${c.name}</span>
+                    <div class="flex gap-1.5">
+                        <button onclick="openEditModal('category', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
+                        <button onclick="handleDeleteCategory('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1006,20 +1005,20 @@
 
         window.renderChannels = () => {
             document.getElementById('channels-table-body').innerHTML = allChannels.map(c => `
-                <div class="p-6 bg-slate-50 rounded-[1.5rem] flex flex-col gap-3 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+                <div class="p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
                     <div class="flex justify-between items-start">
-                        <span class="text-xl font-black">${c.name}</span>
-                        <div class="flex gap-2">
-                            <button onclick="openEditModal('channel', '${c.id}')" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-purple-600 transition-all"><i class="fas fa-pen"></i></button>
-                            <button onclick="handleDeleteChannel('${c.id}')" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt"></i></button>
+                        <span class="text-lg font-black">${c.name}</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="openEditModal('channel', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
+                            <button onclick="handleDeleteChannel('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
-                    <div class="text-xs text-slate-500 font-bold space-y-1.5 mt-2">
-                        ${c.bizNum ? `<p class="flex items-center gap-2"><i class="fas fa-id-card opacity-60 w-4 text-center"></i>${c.bizNum}</p>` : ''}
-                        ${c.contact ? `<p class="flex items-center gap-2"><i class="fas fa-phone opacity-60 w-4 text-center"></i>${c.contact}</p>` : ''}
-                        ${c.link ? `<p class="flex items-center gap-2"><i class="fas fa-link opacity-60 w-4 text-center"></i><a href="${c.link.startsWith('http') ? c.link : 'https://'+c.link}" target="_blank" class="text-blue-500 hover:underline break-all">${c.link}</a></p>` : ''}
-                        ${c.address ? `<p class="flex items-center gap-2"><i class="fas fa-map-marker-alt opacity-60 w-4 text-center"></i>${c.address}</p>` : ''}
-                        ${c.memo ? `<p class="mt-3 text-slate-400 bg-white p-3 rounded-xl border border-slate-100 whitespace-pre-wrap"><i class="fas fa-sticky-note opacity-60 mr-1.5"></i>${c.memo}</p>` : ''}
+                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1">
+                        ${c.bizNum ? `<p class="flex items-center gap-1.5"><i class="fas fa-id-card opacity-60 w-3 text-center"></i>${c.bizNum}</p>` : ''}
+                        ${c.contact ? `<p class="flex items-center gap-1.5"><i class="fas fa-phone opacity-60 w-3 text-center"></i>${c.contact}</p>` : ''}
+                        ${c.link ? `<p class="flex items-center gap-1.5"><i class="fas fa-link opacity-60 w-3 text-center"></i><a href="${c.link.startsWith('http') ? c.link : 'https://'+c.link}" target="_blank" class="text-blue-500 hover:underline break-all">${c.link}</a></p>` : ''}
+                        ${c.address ? `<p class="flex items-center gap-1.5"><i class="fas fa-map-marker-alt opacity-60 w-3 text-center"></i>${c.address}</p>` : ''}
+                        ${c.memo ? `<p class="mt-2 text-slate-400 bg-white p-2.5 rounded-lg border border-slate-100 whitespace-pre-wrap"><i class="fas fa-sticky-note opacity-60 mr-1"></i>${c.memo}</p>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -1028,20 +1027,20 @@
 
         window.renderVendors = () => {
             document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `
-                <div class="p-6 bg-slate-50 rounded-[1.5rem] flex flex-col gap-3 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+                <div class="p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
                     <div class="flex justify-between items-start">
-                        <span class="text-xl font-black">${v.name}</span>
-                        <div class="flex gap-2">
-                            <button onclick="openEditModal('vendor', '${v.id}')" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-purple-600 transition-all"><i class="fas fa-pen"></i></button>
-                            <button onclick="handleDeleteVendor('${v.id}')" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt"></i></button>
+                        <span class="text-lg font-black">${v.name}</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="openEditModal('vendor', '${v.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
+                            <button onclick="handleDeleteVendor('${v.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
-                    <div class="text-xs text-slate-500 font-bold space-y-1.5 mt-2">
-                        ${v.bizNum ? `<p class="flex items-center gap-2"><i class="fas fa-id-card opacity-60 w-4 text-center"></i>${v.bizNum}</p>` : ''}
-                        ${v.contact ? `<p class="flex items-center gap-2"><i class="fas fa-phone opacity-60 w-4 text-center"></i>${v.contact}</p>` : ''}
-                        ${v.link ? `<p class="flex items-center gap-2"><i class="fas fa-link opacity-60 w-4 text-center"></i><a href="${v.link.startsWith('http') ? v.link : 'https://'+v.link}" target="_blank" class="text-blue-500 hover:underline break-all">${v.link}</a></p>` : ''}
-                        ${v.address ? `<p class="flex items-center gap-2"><i class="fas fa-map-marker-alt opacity-60 w-4 text-center"></i>${v.address}</p>` : ''}
-                        ${v.memo ? `<p class="mt-3 text-slate-400 bg-white p-3 rounded-xl border border-slate-100 whitespace-pre-wrap"><i class="fas fa-sticky-note opacity-60 mr-1.5"></i>${v.memo}</p>` : ''}
+                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1">
+                        ${v.bizNum ? `<p class="flex items-center gap-1.5"><i class="fas fa-id-card opacity-60 w-3 text-center"></i>${v.bizNum}</p>` : ''}
+                        ${v.contact ? `<p class="flex items-center gap-1.5"><i class="fas fa-phone opacity-60 w-3 text-center"></i>${v.contact}</p>` : ''}
+                        ${v.link ? `<p class="flex items-center gap-1.5"><i class="fas fa-link opacity-60 w-3 text-center"></i><a href="${v.link.startsWith('http') ? v.link : 'https://'+v.link}" target="_blank" class="text-blue-500 hover:underline break-all">${v.link}</a></p>` : ''}
+                        ${v.address ? `<p class="flex items-center gap-1.5"><i class="fas fa-map-marker-alt opacity-60 w-3 text-center"></i>${v.address}</p>` : ''}
+                        ${v.memo ? `<p class="mt-2 text-slate-400 bg-white p-2.5 rounded-lg border border-slate-100 whitespace-pre-wrap"><i class="fas fa-sticky-note opacity-60 mr-1"></i>${v.memo}</p>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -1085,7 +1084,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-[10px] text-slate-400 font-bold">수량</span>
-                        <input type="number" min="0" value="0" data-name="${p.name}" data-price="${p.price}" class="print-qty-input w-16 bg-slate-50 border border-slate-200 rounded-xl text-center text-sm font-black py-2 focus:ring-2 focus:ring-emerald-400 outline-none transition-all" oninput="updatePrintTotal()">
+                        <input type="number" min="0" value="0" data-name="${p.name}" data-price="${p.price}" class="print-qty-input w-14 bg-slate-50 border border-slate-200 rounded-lg text-center text-sm font-black py-1.5 focus:ring-2 focus:ring-emerald-400 outline-none transition-all" oninput="updatePrintTotal()">
                     </div>
                 </div>
             `).join('');
@@ -1158,7 +1157,6 @@
             let endDate = new Date();
 
             if (rangeType === 'today') {
-                // start와 end 모두 오늘 날짜로 유지
             } else if (rangeType === 'week') {
                 startDate.setDate(today.getDate() - 6); 
             } else if (rangeType === 'month') {
@@ -1291,7 +1289,6 @@
                 XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
             }
 
-            // 🌟 추가: 카테고리 엑셀 시트 
             if (allCategories.length > 0) {
                 const aoa = [
                     [{ v: `📁 카테고리 목록`, s: titleStyle }, null, { v: printTime, s: dateStyle }],
