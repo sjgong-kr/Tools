@@ -9,7 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- 엑셀 고급 스타일링 지원 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
-    <!-- 🌟 추가: 드래그 앤 드롭 순서 변경을 위한 SortableJS 라이브러리 -->
+    <!-- 드래그 앤 드롭 순서 변경을 위한 SortableJS 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -154,10 +154,9 @@
     <!-- 실제 인쇄될 숨김 영역 -->
     <div id="print-area" class="hidden"></div>
 
-    <!-- 메인 대시보드 (전체 폭 살짝 축소) -->
+    <!-- 메인 대시보드 -->
     <div id="app-container" class="hidden max-w-6xl mx-auto p-4 md:p-6">
         
-        <!-- 상단 헤더 슬림화 -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-lg border border-white/50 glass-card">
             <div class="flex items-center gap-4">
                 <div class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-2xl text-white shadow-xl rotate-3">
@@ -327,7 +326,7 @@
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
-                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
                         <h2 class="text-lg font-black mb-5">제품 신규 등록</h2>
                         <form id="product-form" class="space-y-4">
                             <input type="text" id="prod-code" placeholder="제품 코드 (C-001)" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
@@ -341,15 +340,18 @@
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-lg font-black">내 제품 목록</h2>
-                            <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                                <i class="fas fa-print"></i> 가격표 일괄 인쇄
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <span class="hidden sm:inline-block text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>끌어서 순서 변경</span>
+                                <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
+                                    <i class="fas fa-print"></i> 가격표 일괄 인쇄
+                                </button>
+                            </div>
                         </div>
                         
                         <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 제품이 없습니다.</div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <tbody id="products-table-body" class="divide-y divide-slate-50 text-sm"></tbody>
+                        <div class="overflow-x-auto pb-4">
+                            <table class="w-full text-left border-collapse">
+                                <tbody id="products-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
                             </table>
                         </div>
                     </div>
@@ -357,7 +359,7 @@
             </div>
         </div>
 
-        <!-- 🌟 [탭 3] 카테고리 관리 (드래그 앤 드롭 기능 추가) -->
+        <!-- [탭 3] 카테고리 관리 -->
         <div id="tab-categories" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
@@ -373,7 +375,7 @@
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-lg font-black">전체 카테고리 정보</h2>
-                            <span class="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>아이콘을 끌어서 순서 변경</span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>아이콘을 끌어서 순서 변경</span>
                         </div>
                         <div id="cat-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 카테고리가 없습니다.</div>
                         <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -401,7 +403,10 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
-                        <h2 class="text-lg font-black mb-6">전체 판매처 정보</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-black">전체 판매처 정보</h2>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>아이콘을 끌어서 순서 변경</span>
+                        </div>
                         <div id="chan-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 판매처가 없습니다.</div>
                         <div id="channels-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
@@ -428,7 +433,10 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
-                        <h2 class="text-lg font-black mb-6">전체 구매처 정보</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-black">전체 구매처 정보</h2>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>아이콘을 끌어서 순서 변경</span>
+                        </div>
                         <div id="ven-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 구매처가 없습니다.</div>
                         <div id="vendors-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
@@ -571,36 +579,36 @@
 
         window.handleLogout = () => { showModal("로그아웃 하시겠습니까?", true, () => signOut(auth)); };
 
+        // 🌟 수정: 모든 목록 데이터를 가져올 때 order 또는 createdAt 기반으로 정렬 처리
         function subscribeData() {
             if (!currentUser) return;
             unsubs.forEach(u => u());
             const p = c => collection(db, 'jina_resin', currentUser.uid, c);
+            const sortOrder = (a, b) => (a.order !== undefined ? a.order : (a.createdAt || 0)) - (b.order !== undefined ? b.order : (b.createdAt || 0));
 
             unsubs = [
                 onSnapshot(p('entries'), s => { allEntries = s.docs.map(d => ({id:d.id, ...d.data()})); renderApp(); }),
                 onSnapshot(p('products'), s => { 
                     allProducts = s.docs.map(d => ({id:d.id, ...d.data()})); 
+                    allProducts.sort(sortOrder);
                     document.getElementById('input-product').innerHTML = '<option value="">제품 선택</option>' + allProducts.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
                     renderProducts();
                 }),
-                // 🌟 수정: 카테고리를 가져올 때 새로 추가된 'order' 순서 또는 생성일 기준으로 정렬합니다.
                 onSnapshot(p('categories'), s => { 
                     allCategories = s.docs.map(d => ({id:d.id, ...d.data()})); 
-                    allCategories.sort((a, b) => {
-                        const orderA = a.order !== undefined ? a.order : (a.createdAt || 0);
-                        const orderB = b.order !== undefined ? b.order : (b.createdAt || 0);
-                        return orderA - orderB;
-                    });
+                    allCategories.sort(sortOrder);
                     document.getElementById('input-expense-category').innerHTML = '<option value="" disabled selected>카테고리 선택</option>' + allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
                     renderCategories();
                 }),
                 onSnapshot(p('channels'), s => { 
                     allChannels = s.docs.map(d => ({id:d.id, ...d.data()})); 
+                    allChannels.sort(sortOrder);
                     document.getElementById('input-channel').innerHTML = '<option value="">판매처 선택</option>' + allChannels.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
                     renderChannels();
                 }),
                 onSnapshot(p('vendors'), s => { 
                     allVendors = s.docs.map(d => ({id:d.id, ...d.data()})); 
+                    allVendors.sort(sortOrder);
                     document.getElementById('input-vendor').innerHTML = '<option value="">구매처 선택</option>' + allVendors.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
                     renderVendors();
                 })
@@ -953,18 +961,11 @@
         window.handleDeleteChannel = id => showModal("판매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id)));
         window.handleDeleteVendor = id => showModal("구매처를 삭제하시겠습니까?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id)));
 
+        // 🌟 수정: 새 항목 등록 시 맨 아래로 들어가도록 order 부여
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
-        document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value)}, 'product-form'); };
-        
-        // 🌟 수정: 새 카테고리 추가 시 order 값을 전체 길이로 주어 맨 아래에 위치하게 함
-        document.getElementById('category-form').onsubmit = e => { 
-            e.preventDefault(); 
-            saveAdd('categories', {
-                name: document.getElementById('cat-name').value,
-                order: allCategories.length 
-            }, 'category-form'); 
-        };
+        document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value), order: allProducts.length}, 'product-form'); };
+        document.getElementById('category-form').onsubmit = e => { e.preventDefault(); saveAdd('categories', {name: document.getElementById('cat-name').value, order: allCategories.length}, 'category-form'); };
         
         document.getElementById('channel-form').onsubmit = e => { 
             e.preventDefault(); 
@@ -974,7 +975,8 @@
                 contact: document.getElementById('chan-contact').value,
                 link: document.getElementById('chan-link').value,
                 address: document.getElementById('chan-address').value,
-                memo: document.getElementById('chan-memo').value
+                memo: document.getElementById('chan-memo').value,
+                order: allChannels.length
             }, 'channel-form'); 
         };
         
@@ -986,14 +988,18 @@
                 contact: document.getElementById('ven-contact').value,
                 link: document.getElementById('ven-link').value,
                 address: document.getElementById('ven-address').value,
-                memo: document.getElementById('ven-memo').value
+                memo: document.getElementById('ven-memo').value,
+                order: allVendors.length
             }, 'vendor-form'); 
         };
 
+        // 🌟 수정: 제품, 판매처, 구매처 목록 렌더링에 드래그 핸들과 data-id 추가 및 SortableJS 활성화
         window.renderProducts = () => {
-            document.getElementById('products-table-body').innerHTML = allProducts.map(p => `
-                <tr class="hover:bg-slate-50 transition-all font-bold group">
-                    <td class="p-3 sm:p-4 text-xs text-slate-400 font-mono">${p.code}</td>
+            const container = document.getElementById('products-table-body');
+            container.innerHTML = allProducts.map(p => `
+                <tr data-id="${p.id}" class="product-item hover:bg-slate-50 transition-all font-bold group bg-white">
+                    <td class="p-3 sm:p-4 w-10 text-center"><i class="fas fa-grip-lines text-slate-300 cursor-grab active:cursor-grabbing drag-handle hover:text-purple-500 transition-colors"></i></td>
+                    <td class="py-3 sm:py-4 text-xs text-slate-400 font-mono">${p.code}</td>
                     <td class="p-3 sm:p-4 text-slate-900">${p.name}</td>
                     <td class="p-3 sm:p-4 text-blue-600">${formatMoney(p.price)}</td>
                     <td class="p-3 sm:p-4 text-right flex gap-1.5 justify-end">
@@ -1003,9 +1009,20 @@
                 </tr>
             `).join('');
             document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
+
+            if (window.prodSortable) window.prodSortable.destroy();
+            window.prodSortable = new Sortable(container, {
+                animation: 150, handle: '.drag-handle', ghostClass: 'bg-slate-50',
+                onEnd: function () {
+                    const itemEls = container.querySelectorAll('.product-item');
+                    itemEls.forEach((itemEl, idx) => {
+                        const id = itemEl.getAttribute('data-id');
+                        updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', id), { order: idx }).catch(e => console.error(e));
+                    });
+                }
+            });
         };
 
-        // 🌟 수정: 카테고리 항목에 드래그 아이콘(Grip) 추가 및 SortableJS 활성화
         window.renderCategories = () => {
             const container = document.getElementById('categories-table-body');
             container.innerHTML = allCategories.map(c => `
@@ -1022,34 +1039,34 @@
             `).join('');
             document.getElementById('cat-empty-state').classList.toggle('hidden', allCategories.length > 0);
 
-            // SortableJS 초기화 (드래그가 끝나면 바뀐 순서대로 Firestore에 저장)
             if (window.catSortable) window.catSortable.destroy();
             window.catSortable = new Sortable(container, {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'opacity-50',
+                animation: 150, handle: '.drag-handle', ghostClass: 'opacity-50',
                 onEnd: function () {
                     const itemEls = container.querySelectorAll('.category-item');
                     itemEls.forEach((itemEl, idx) => {
                         const id = itemEl.getAttribute('data-id');
-                        const ref = doc(db, 'jina_resin', currentUser.uid, 'categories', id);
-                        updateDoc(ref, { order: idx }).catch(e => console.error(e));
+                        updateDoc(doc(db, 'jina_resin', currentUser.uid, 'categories', id), { order: idx }).catch(e => console.error(e));
                     });
                 }
             });
         };
 
         window.renderChannels = () => {
-            document.getElementById('channels-table-body').innerHTML = allChannels.map(c => `
-                <div class="p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+            const container = document.getElementById('channels-table-body');
+            container.innerHTML = allChannels.map(c => `
+                <div data-id="${c.id}" class="channel-item p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md bg-white">
                     <div class="flex justify-between items-start">
-                        <span class="text-lg font-black">${c.name}</span>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-grip-lines text-slate-300 cursor-grab active:cursor-grabbing drag-handle hover:text-purple-500 transition-colors p-2 -ml-2 shrink-0"></i>
+                            <span class="text-lg font-black">${c.name}</span>
+                        </div>
                         <div class="flex gap-1.5">
                             <button onclick="openEditModal('channel', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
                             <button onclick="handleDeleteChannel('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
-                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1">
+                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1 pl-7">
                         ${c.bizNum ? `<p class="flex items-center gap-1.5"><i class="fas fa-id-card opacity-60 w-3 text-center"></i>${c.bizNum}</p>` : ''}
                         ${c.contact ? `<p class="flex items-center gap-1.5"><i class="fas fa-phone opacity-60 w-3 text-center"></i>${c.contact}</p>` : ''}
                         ${c.link ? `<p class="flex items-center gap-1.5"><i class="fas fa-link opacity-60 w-3 text-center"></i><a href="${c.link.startsWith('http') ? c.link : 'https://'+c.link}" target="_blank" class="text-blue-500 hover:underline break-all">${c.link}</a></p>` : ''}
@@ -1059,19 +1076,35 @@
                 </div>
             `).join('');
             document.getElementById('chan-empty-state').classList.toggle('hidden', allChannels.length > 0);
+
+            if (window.chanSortable) window.chanSortable.destroy();
+            window.chanSortable = new Sortable(container, {
+                animation: 150, handle: '.drag-handle', ghostClass: 'opacity-50',
+                onEnd: function () {
+                    const itemEls = container.querySelectorAll('.channel-item');
+                    itemEls.forEach((itemEl, idx) => {
+                        const id = itemEl.getAttribute('data-id');
+                        updateDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', id), { order: idx }).catch(e => console.error(e));
+                    });
+                }
+            });
         };
 
         window.renderVendors = () => {
-            document.getElementById('vendors-table-body').innerHTML = allVendors.map(v => `
-                <div class="p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
+            const container = document.getElementById('vendors-table-body');
+            container.innerHTML = allVendors.map(v => `
+                <div data-id="${v.id}" class="vendor-item p-4 sm:p-5 bg-slate-50 rounded-xl flex flex-col gap-2 text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md bg-white">
                     <div class="flex justify-between items-start">
-                        <span class="text-lg font-black">${v.name}</span>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-grip-lines text-slate-300 cursor-grab active:cursor-grabbing drag-handle hover:text-purple-500 transition-colors p-2 -ml-2 shrink-0"></i>
+                            <span class="text-lg font-black">${v.name}</span>
+                        </div>
                         <div class="flex gap-1.5">
                             <button onclick="openEditModal('vendor', '${v.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
                             <button onclick="handleDeleteVendor('${v.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
-                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1">
+                    <div class="text-[11px] text-slate-500 font-bold space-y-1 mt-1 pl-7">
                         ${v.bizNum ? `<p class="flex items-center gap-1.5"><i class="fas fa-id-card opacity-60 w-3 text-center"></i>${v.bizNum}</p>` : ''}
                         ${v.contact ? `<p class="flex items-center gap-1.5"><i class="fas fa-phone opacity-60 w-3 text-center"></i>${v.contact}</p>` : ''}
                         ${v.link ? `<p class="flex items-center gap-1.5"><i class="fas fa-link opacity-60 w-3 text-center"></i><a href="${v.link.startsWith('http') ? v.link : 'https://'+v.link}" target="_blank" class="text-blue-500 hover:underline break-all">${v.link}</a></p>` : ''}
@@ -1081,6 +1114,18 @@
                 </div>
             `).join('');
             document.getElementById('ven-empty-state').classList.toggle('hidden', allVendors.length > 0);
+
+            if (window.venSortable) window.venSortable.destroy();
+            window.venSortable = new Sortable(container, {
+                animation: 150, handle: '.drag-handle', ghostClass: 'opacity-50',
+                onEnd: function () {
+                    const itemEls = container.querySelectorAll('.vendor-item');
+                    itemEls.forEach((itemEl, idx) => {
+                        const id = itemEl.getAttribute('data-id');
+                        updateDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', id), { order: idx }).catch(e => console.error(e));
+                    });
+                }
+            });
         };
 
         window.switchTab = (tab) => {
