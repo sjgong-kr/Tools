@@ -9,6 +9,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- 엑셀 고급 스타일링 지원 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
+    <!-- 🌟 추가: 드래그 앤 드롭 순서 변경을 위한 SortableJS 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
@@ -187,7 +189,6 @@
 
         <!-- [탭 1] 내역 관리 -->
         <div id="tab-dashboard" class="tab-content space-y-8">
-            <!-- 🌟 요약 카드 크기 절반 수준으로 대폭 축소 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="bg-white p-5 rounded-3xl shadow-lg border-l-[8px] border-blue-500 flex flex-col justify-between">
                     <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest mb-2">Total Revenue</p>
@@ -203,7 +204,6 @@
                 </div>
             </div>
 
-            <!-- 하단 좌우 컨테이너 간격 및 패딩 축소 -->
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div class="lg:col-span-2">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
@@ -314,7 +314,6 @@
                             <p class="font-black text-lg mb-1">기록된 거래가 없습니다.</p>
                             <p class="text-xs font-bold">좌측 폼에서 내역을 추가해주세요.</p>
                         </div>
-                        <!-- 리스트 아이템 간격 축소 -->
                         <div id="entries-container" class="space-y-2.5 sm:space-y-3">
                             <!-- 리스트 공간 -->
                         </div>
@@ -358,7 +357,7 @@
             </div>
         </div>
 
-        <!-- 🌟 [탭 3] 카테고리 관리 -->
+        <!-- 🌟 [탭 3] 카테고리 관리 (드래그 앤 드롭 기능 추가) -->
         <div id="tab-categories" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
@@ -372,9 +371,12 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
-                        <h2 class="text-lg font-black mb-6">전체 카테고리 정보</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-black">전체 카테고리 정보</h2>
+                            <span class="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>아이콘을 끌어서 순서 변경</span>
+                        </div>
                         <div id="cat-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 카테고리가 없습니다.</div>
-                        <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+                        <div id="categories-table-body" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                     </div>
                 </div>
             </div>
@@ -581,8 +583,14 @@
                     document.getElementById('input-product').innerHTML = '<option value="">제품 선택</option>' + allProducts.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
                     renderProducts();
                 }),
+                // 🌟 수정: 카테고리를 가져올 때 새로 추가된 'order' 순서 또는 생성일 기준으로 정렬합니다.
                 onSnapshot(p('categories'), s => { 
                     allCategories = s.docs.map(d => ({id:d.id, ...d.data()})); 
+                    allCategories.sort((a, b) => {
+                        const orderA = a.order !== undefined ? a.order : (a.createdAt || 0);
+                        const orderB = b.order !== undefined ? b.order : (b.createdAt || 0);
+                        return orderA - orderB;
+                    });
                     document.getElementById('input-expense-category').innerHTML = '<option value="" disabled selected>카테고리 선택</option>' + allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
                     renderCategories();
                 }),
@@ -661,7 +669,6 @@
             } catch(e) { showModal("등록 실패"); }
         };
 
-        // 🌟 슬림해진 내역 렌더링
         window.renderApp = () => {
             try {
                 const s = document.getElementById('filter-start').value;
@@ -949,7 +956,15 @@
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
         document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value)}, 'product-form'); };
-        document.getElementById('category-form').onsubmit = e => { e.preventDefault(); saveAdd('categories', {name: document.getElementById('cat-name').value}, 'category-form'); };
+        
+        // 🌟 수정: 새 카테고리 추가 시 order 값을 전체 길이로 주어 맨 아래에 위치하게 함
+        document.getElementById('category-form').onsubmit = e => { 
+            e.preventDefault(); 
+            saveAdd('categories', {
+                name: document.getElementById('cat-name').value,
+                order: allCategories.length 
+            }, 'category-form'); 
+        };
         
         document.getElementById('channel-form').onsubmit = e => { 
             e.preventDefault(); 
@@ -990,17 +1005,38 @@
             document.getElementById('prod-empty-state').classList.toggle('hidden', allProducts.length > 0);
         };
 
+        // 🌟 수정: 카테고리 항목에 드래그 아이콘(Grip) 추가 및 SortableJS 활성화
         window.renderCategories = () => {
-            document.getElementById('categories-table-body').innerHTML = allCategories.map(c => `
-                <div class="p-4 bg-slate-50 rounded-xl flex justify-between items-center text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md">
-                    <span class="text-base font-black"><i class="fas fa-folder-open text-slate-300 mr-2"></i>${c.name}</span>
-                    <div class="flex gap-1.5">
+            const container = document.getElementById('categories-table-body');
+            container.innerHTML = allCategories.map(c => `
+                <div data-id="${c.id}" class="category-item p-4 bg-slate-50 rounded-xl flex justify-between items-center text-slate-800 border border-slate-100 relative group transition-all hover:shadow-md bg-white">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fas fa-grip-lines text-slate-300 cursor-grab active:cursor-grabbing drag-handle hover:text-purple-500 transition-colors p-2 -ml-2 shrink-0"></i>
+                        <span class="text-base font-black truncate"><i class="fas fa-folder-open text-slate-300 mr-1.5 hidden sm:inline"></i>${c.name}</span>
+                    </div>
+                    <div class="flex gap-1.5 shrink-0">
                         <button onclick="openEditModal('category', '${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-purple-600 transition-all text-sm"><i class="fas fa-pen"></i></button>
                         <button onclick="handleDeleteCategory('${c.id}')" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-400 hover:text-rose-500 transition-all text-sm"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
             `).join('');
             document.getElementById('cat-empty-state').classList.toggle('hidden', allCategories.length > 0);
+
+            // SortableJS 초기화 (드래그가 끝나면 바뀐 순서대로 Firestore에 저장)
+            if (window.catSortable) window.catSortable.destroy();
+            window.catSortable = new Sortable(container, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'opacity-50',
+                onEnd: function () {
+                    const itemEls = container.querySelectorAll('.category-item');
+                    itemEls.forEach((itemEl, idx) => {
+                        const id = itemEl.getAttribute('data-id');
+                        const ref = doc(db, 'jina_resin', currentUser.uid, 'categories', id);
+                        updateDoc(ref, { order: idx }).catch(e => console.error(e));
+                    });
+                }
+            });
         };
 
         window.renderChannels = () => {
