@@ -1177,12 +1177,13 @@
                 
                 aoa.push([
                     { v: titleStr, s: titleStyle },
-                    null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null,
                     { v: printTime, s: dateStyle }
                 ]);
                 aoa.push([]); 
 
-                const headers = ['순번', '거래일자', '구분', '항목명 (제품/재료)', '관련처', '단가', '수량', '총금액', '메모'];
+                // 🌟 수정: 엑셀 헤더에 '카테고리' 항목 추가
+                const headers = ['순번', '거래일자', '구분', '카테고리', '항목명 (제품/재료)', '관련처', '단가', '수량', '총금액', '메모'];
                 aoa.push(headers.map(h => ({ v: h, s: headerStyle })));
 
                 filtered.forEach((x, idx) => {
@@ -1191,17 +1192,15 @@
                     if(x.type === 'income') totalInc += amt;
                     else totalExp += amt;
 
-                    // 🌟 엑셀 항목명에도 카테고리 정보 포함시켜서 내보내기
-                    let exportName = x.name || '';
-                    if (x.type === 'expense' && x.category) {
-                        exportName = `[${x.category}] ${exportName}`;
-                    }
+                    // 🌟 수정: 카테고리 텍스트를 독립적으로 변수화
+                    const categoryText = x.category || (x.type === 'income' ? '완제품' : '미지정');
 
                     aoa.push([
                         { v: idx + 1, s: dataStyleCenter },
                         { v: x.date || '', s: dataStyleCenter },
                         { v: x.type === 'income' ? '판매 수익' : '재료 지출', s: dataStyleCenter },
-                        { v: exportName, s: dataStyleLeft },
+                        { v: categoryText, s: dataStyleCenter }, // 🌟 카테고리 열 추가
+                        { v: x.name || '', s: dataStyleLeft },
                         { v: x.channel || x.vendor || '', s: dataStyleCenter },
                         { v: price, s: dataStyleMoney },
                         { v: Number(x.quantity) || 1, s: dataStyleQty },
@@ -1216,13 +1215,15 @@
                 const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
                 const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "4338CA" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
 
-                aoa.push([null, null, null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalInc, s: sumIncomeStyle}, null]);
-                aoa.push([null, null, null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalExp, s: sumExpenseStyle}, null]);
-                aoa.push([null, null, null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalInc - totalExp, s: sumNetStyle}, null]);
+                // 🌟 수정: 칸(Column)이 늘어나서, 하단 합계 요약 셀들의 위치 조정
+                aoa.push([null, null, null, null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalInc, s: sumIncomeStyle}, null]);
+                aoa.push([null, null, null, null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalExp, s: sumExpenseStyle}, null]);
+                aoa.push([null, null, null, null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalInc - totalExp, s: sumNetStyle}, null]);
 
                 const wsEntries = XLSX.utils.aoa_to_sheet(aoa);
-                wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]; 
-                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
+                wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }]; 
+                // 🌟 수정: 카테고리(4번째)의 열 너비 지정 (wch: 14)
+                wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
