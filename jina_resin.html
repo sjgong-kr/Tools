@@ -1150,19 +1150,32 @@
             document.getElementById('inventory-status-container').innerHTML = statusHtml || '<p class="text-slate-400 text-sm text-center py-10 font-bold col-span-2">표시할 재고가 없습니다.</p>';
 
             const sortedLogs = [...allInventoryLogs].sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
-            document.getElementById('inventory-logs-container').innerHTML = sortedLogs.map(log => `
+            
+            // 🌟 수정: 재고 내역 리스트 표시 시 항상 플러스(+) 형태와 뱃지로 표시
+            document.getElementById('inventory-logs-container').innerHTML = sortedLogs.map(log => {
+                const typeLabel = log.adjType || (log.qtyChange > 0 ? '입고' : '차감');
+                const absQty = log.absQty !== undefined ? log.absQty : Math.abs(log.qtyChange);
+                const isPlus = log.qtyChange > 0;
+                const badgeColor = isPlus ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-rose-600 bg-rose-50 border-rose-100';
+
+                return `
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center group transition-all">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
+                    <div class="flex-1 min-w-0 pr-3">
+                        <div class="flex items-center gap-2 mb-1.5">
                             <span class="text-[10px] font-black text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">${log.date}</span>
                             <span class="text-xs font-black text-indigo-600">${log.channelName}</span>
                         </div>
-                        <div class="text-sm font-black text-slate-800">${log.productName} <span class="${log.qtyChange > 0 ? 'text-blue-500':'text-rose-500'} ml-1">${log.qtyChange > 0 ? '+'+log.qtyChange : log.qtyChange}개</span></div>
-                        <div class="text-[11px] text-slate-500 mt-1 font-bold">${log.memo}</div>
+                        <div class="text-sm font-black text-slate-800 truncate flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${typeLabel}</span>
+                            ${log.productName} 
+                            <span class="ml-1 text-slate-600">${absQty}개</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 mt-1 font-bold truncate">${log.memo}</div>
                     </div>
                     <button onclick="handleDeleteInvLog('${log.id}')" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-white text-rose-400 hover:text-rose-600 border border-slate-200 transition-all text-xs shrink-0 shadow-sm"><i class="fas fa-trash-alt"></i></button>
                 </div>
-            `).join('') || '<p class="text-slate-400 text-sm text-center py-10 font-bold">조정 내역이 없습니다.</p>';
+                `;
+            }).join('') || '<p class="text-slate-400 text-sm text-center py-10 font-bold">조정 내역이 없습니다.</p>';
         };
 
         window.renderProducts = () => {
