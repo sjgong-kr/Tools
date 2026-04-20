@@ -239,7 +239,8 @@
                                         <select id="input-product" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[9px] font-black text-slate-400 ml-1">판매처 (재고 차감 위치)</label>
+                                        <!-- 🌟 텍스트 변경: 납품/재고 증가를 명시 -->
+                                        <label class="text-[9px] font-black text-slate-400 ml-1">판매처 (납품처 / 재고 증가)</label>
                                         <select id="input-channel" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                 </div>
@@ -334,11 +335,22 @@
                 <!-- 좌측: 재고 조정 폼 -->
                 <div class="md:col-span-2">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
-                        <h2 class="text-lg font-black mb-5">수동 재고 조정 (입고/폐기 등)</h2>
+                        <h2 class="text-lg font-black mb-5">수동 재고 조정 (판매/폐기 등)</h2>
                         <form id="inventory-form" class="space-y-4">
                             <div class="space-y-1">
                                 <label class="text-[9px] font-black text-slate-400 ml-1">조정 일자</label>
                                 <input type="date" id="inv-date" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-black text-slate-400 ml-1">조정 항목 (유형)</label>
+                                <select id="inv-type" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                    <option value="" disabled selected>항목 선택</option>
+                                    <option value="입고">입고 (재고 추가)</option>
+                                    <option value="판매">판매 (재고 차감)</option>
+                                    <option value="폐기">폐기 (재고 차감)</option>
+                                    <option value="기타(추가)">기타 (재고 추가)</option>
+                                    <option value="기타(차감)">기타 (재고 차감)</option>
+                                </select>
                             </div>
                             <div class="space-y-1">
                                 <label class="text-[9px] font-black text-slate-400 ml-1">조정 대상 제품</label>
@@ -349,8 +361,8 @@
                                 <select id="inv-channel" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[9px] font-black text-slate-400 ml-1">증감 수량 (숫자 입력)</label>
-                                <input type="number" id="inv-qty" placeholder="예: 추가시 5, 차감/폐기시 -2" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                <label class="text-[9px] font-black text-slate-400 ml-1">조정 수량 (항상 숫자로만 입력)</label>
+                                <input type="number" id="inv-qty" min="1" placeholder="예: 5" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                             </div>
                             <div class="space-y-1">
                                 <label class="text-[9px] font-black text-slate-400 ml-1">상세 내용 및 사유</label>
@@ -682,15 +694,23 @@
             ];
         }
 
+        // 🌟 수정: 장부 판매 시 재고 '추가(납품)', 수동 조정 시 재고 가감
         window.getCurrentStock = (productName, channelName) => {
             let stock = 0;
-            // 오직 '재고 조정 내역'에서 수동으로 조정한 값만 합산합니다.
-            allInventoryLogs.forEach(log => {
-                if (log.productName === productName && log.channelName === channelName) stock += Number(log.qtyChange);
-            });
             
-            // 🌟 삭제된 부분: 장부(판매 내역)에서 자동으로 재고를 빼던 로직을 제거했습니다.
-            // 이제 판매를 등록해도 재고가 자동으로 마이너스 되지 않습니다.
+            // 1. 장부 내역(판매 수익) 합산 -> 판매처로 납품한 수량이므로 재고 증가(+)
+            allEntries.forEach(entry => {
+                if (entry.type === 'income' && entry.name === productName && entry.channel === channelName) {
+                    stock += Number(entry.quantity); // 🌟 여기가 중요합니다. += 로 변경되었습니다.
+                }
+            });
+
+            // 2. 수동 조정 내역 합산 (+ 입고/기타, - 판매/폐기 등)
+            allInventoryLogs.forEach(log => {
+                if (log.productName === productName && log.channelName === channelName) {
+                    stock += Number(log.qtyChange);
+                }
+            });
             
             return stock;
         };
@@ -1079,15 +1099,21 @@
         document.getElementById('inventory-form').onsubmit = e => {
             e.preventDefault();
             const date = document.getElementById('inv-date').value;
+            const adjType = document.getElementById('inv-type').value;
             const productName = document.getElementById('inv-product').value;
             const channelName = document.getElementById('inv-channel').value;
-            const qtyChange = Number(document.getElementById('inv-qty').value);
+            const rawQty = Number(document.getElementById('inv-qty').value);
             const memo = document.getElementById('inv-memo').value;
 
+            if(!adjType) return showModal("조정 유형(항목)을 선택해주세요.");
             if(!productName || !channelName) return showModal("제품과 판매처를 선택해주세요.");
-            if(!qtyChange) return showModal("증감 수량을 0이 아닌 값으로 입력하세요.");
+            if(rawQty <= 0) return showModal("수량은 1 이상의 숫자로 입력하세요.");
 
-            saveAdd('inventory_logs', { date, productName, channelName, qtyChange, memo }, 'inventory-form');
+            const isMinus = adjType === '판매' || adjType === '폐기' || adjType === '기타(차감)';
+            const qtyChange = isMinus ? -rawQty : rawQty;
+            const absQty = rawQty;
+
+            saveAdd('inventory_logs', { date, adjType, productName, channelName, qtyChange, absQty, memo }, 'inventory-form');
             document.getElementById('inv-date').value = getLocalDateStr(new Date()); 
         };
 
@@ -1153,7 +1179,6 @@
 
             const sortedLogs = [...allInventoryLogs].sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
             
-            // 🌟 수정: 재고 내역 리스트 표시 시 항상 플러스(+) 형태와 뱃지로 표시
             document.getElementById('inventory-logs-container').innerHTML = sortedLogs.map(log => {
                 const typeLabel = log.adjType || (log.qtyChange > 0 ? '입고' : '차감');
                 const absQty = log.absQty !== undefined ? log.absQty : Math.abs(log.qtyChange);
