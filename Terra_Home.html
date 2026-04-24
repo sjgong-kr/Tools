@@ -118,6 +118,11 @@
                             <input type="text" id="tx-amount" readonly class="w-full bg-slate-100 text-slate-700 rounded-xl px-4 py-3 text-lg font-black outline-none border border-slate-200" value="0원">
                         </div>
 
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">메모 (선택사항)</label>
+                            <input type="text" id="tx-memo" placeholder="비고 입력" class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400">
+                        </div>
+
                         <button type="submit" id="btn-submit-tx" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 mt-4">입고 내역 저장하기</button>
                     </form>
                 </div>
@@ -260,8 +265,12 @@
                     <div id="stat-channels" class="space-y-4"></div>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">제품별 매출 순위</h2>
-                    <div id="stat-products-out" class="space-y-4"></div>
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">판매처별 상세 판매 수량</h2>
+                    <div id="stat-channel-products" class="space-y-3 max-h-[300px] overflow-y-auto hide-scrollbar pr-2"></div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 md:col-span-2">
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">제품별 상세 판매 수량/매출</h2>
+                    <div id="stat-products-out" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto hide-scrollbar pr-2"></div>
                 </div>
             </div>
 
@@ -496,7 +505,10 @@
                                 <span class="text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-500">${tx.date}</span>
                                 <span class="text-xs font-black text-slate-700 truncate">${partnerName}</span>
                             </div>
-                            <div class="text-sm font-black text-slate-800 truncate">${p ? p.name : '삭제된 제품'}</div>
+                            <div class="text-sm font-black text-slate-800 truncate flex items-center gap-2">
+                                ${p ? p.name : '삭제된 제품'}
+                                ${tx.memo ? `<span class="text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 rounded truncate max-w-[100px]"><i class="fas fa-comment-dots mr-1"></i>${tx.memo}</span>` : ''}
+                            </div>
                             <div class="text-[11px] text-slate-500 mt-0.5">단가: ${formatMoney(tx.price)} &times; ${tx.qty}개</div>
                         </div>
                         <div class="text-right shrink-0">
@@ -517,7 +529,8 @@
             let totalSales = 0, totalPurchases = 0;
             const channelSales = {};
             const vendorPurchases = {};
-            const productSales = {};
+            const productSalesInfo = {}; // 제품별 판매 정보 {qty, amt}
+            const channelProductSalesInfo = {}; // 판매처별 제품 판매 정보
             const vendorProductPurchases = {};
 
             // 날짜 범위에 해당하는 거래 내역만 필터링
@@ -534,8 +547,18 @@
                 if (tx.type === 'OUT') {
                     totalSales += amt;
                     const c = state.channels.find(x => x.id === tx.partnerId)?.name || '기타/삭제됨';
+                    
                     channelSales[c] = (channelSales[c] || 0) + amt;
-                    productSales[pName] = (productSales[pName] || 0) + amt;
+                    
+                    if(!productSalesInfo[pName]) productSalesInfo[pName] = { qty: 0, amt: 0 };
+                    productSalesInfo[pName].qty += tx.qty;
+                    productSalesInfo[pName].amt += amt;
+
+                    if(!channelProductSalesInfo[c]) channelProductSalesInfo[c] = {};
+                    if(!channelProductSalesInfo[c][pName]) channelProductSalesInfo[c][pName] = { qty: 0, amt: 0 };
+                    channelProductSalesInfo[c][pName].qty += tx.qty;
+                    channelProductSalesInfo[c][pName].amt += amt;
+
                 } else {
                     totalPurchases += amt;
                     const v = state.vendors.find(x => x.id === tx.partnerId)?.name || '기타/삭제됨';
@@ -576,8 +599,55 @@
             };
 
             renderBars(channelSales, 'stat-channels', 'bg-emerald-500');
-            renderBars(productSales, 'stat-products-out', 'bg-indigo-400');
             renderBars(vendorPurchases, 'stat-vendors', 'bg-teal-500');
+
+            // 제품별 상세 판매 현황 렌더링
+            const poContainer = document.getElementById('stat-products-out');
+            const poKeys = Object.keys(productSalesInfo).sort((a,b) => productSalesInfo[b].qty - productSalesInfo[a].qty);
+            if(poKeys.length === 0) {
+                poContainer.innerHTML = '<p class="text-sm text-slate-400 text-center py-4 sm:col-span-2 lg:col-span-3">데이터가 없습니다.</p>';
+            } else {
+                poContainer.innerHTML = poKeys.map((p, idx) => `
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center gap-2 overflow-hidden pr-2">
+                            <span class="bg-emerald-100 text-emerald-600 text-[10px] font-black px-1.5 py-0.5 rounded shrink-0">${idx+1}위</span>
+                            <span class="text-sm font-black text-slate-800 truncate">${p}</span>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-black text-rose-500">${productSalesInfo[p].qty}개</div>
+                            <div class="text-[10px] text-slate-400">${formatMoney(productSalesInfo[p].amt)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 판매처별 상세 제품 판매 현황 렌더링
+            const cpContainer = document.getElementById('stat-channel-products');
+            const cpKeys = Object.keys(channelProductSalesInfo).sort();
+            if(cpKeys.length === 0) {
+                cpContainer.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">데이터가 없습니다.</p>';
+            } else {
+                cpContainer.innerHTML = cpKeys.map(c => {
+                    const products = channelProductSalesInfo[c];
+                    const pKeys = Object.keys(products).sort((a,b) => products[b].qty - products[a].qty);
+                    const pList = pKeys.map(p => `
+                        <div class="flex justify-between items-center text-xs py-2 border-b border-slate-200 last:border-0">
+                            <span class="text-slate-600 font-bold truncate pr-2">${p}</span>
+                            <div class="text-right shrink-0">
+                                <span class="font-black text-rose-500">${products[p].qty}개</span>
+                                <span class="text-[10px] text-slate-400 ml-1">(${formatMoney(products[p].amt)})</span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <h3 class="text-sm font-black text-slate-800 mb-2 flex items-center gap-1.5"><i class="fas fa-store text-amber-500"></i> ${c}</h3>
+                            <div>${pList}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
             
             // 업체별 상세 제품 입고 내역 렌더링
             const vpContainer = document.getElementById('stat-vendor-products');
@@ -731,6 +801,7 @@
             const productId = document.getElementById('tx-product').value;
             const qty = Number(document.getElementById('tx-qty').value);
             const price = Number(document.getElementById('tx-price').value);
+            const memo = document.getElementById('tx-memo').value;
             
             if (type === 'OUT') {
                 const stock = getStock(productId).current;
@@ -739,11 +810,12 @@
 
             try {
                 await addDoc(collection(db, 'terra_data', userId, 'transactions'), {
-                    type, date, partnerId, productId, qty, price, createdAt: Date.now()
+                    type, date, partnerId, productId, qty, price, memo, createdAt: Date.now()
                 });
                 
                 document.getElementById('tx-qty').value = 1;
                 document.getElementById('tx-price').value = '';
+                document.getElementById('tx-memo').value = '';
                 window.calcTxAmount();
                 window.showModal(type === 'IN' ? "입고 내역이 저장되었습니다." : "판매 내역이 저장되었습니다.");
             } catch (error) {
@@ -782,47 +854,19 @@
             const now = new Date();
             const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            // --- 1. 재고 현황 시트 ---
-            const stockAoa = [];
-            stockAoa.push([{ v: `📦 Terra 현재 재고 현황`, s: titleStyle }, null, null, null, null, { v: printTime, s: dateStyle }]);
-            stockAoa.push([]);
-            const stockHeaders = ['입고업체', '카테고리', '제품명', '총 입고', '총 판매', '현재 재고'];
-            stockAoa.push(stockHeaders.map(h => ({ v: h, s: headerStyle })));
-
-            state.products.forEach(p => {
-                const v = state.vendors.find(x => x.id === p.vendorId)?.name || '-';
-                const c = state.categories.find(x => x.id === p.categoryId)?.name || '-';
-                const st = getStock(p.id);
-                stockAoa.push([
-                    { v: v, s: dataStyleCenter },
-                    { v: c, s: dataStyleCenter },
-                    { v: p.name, s: dataStyleLeft },
-                    { v: st.inQty, s: dataStyleQty },
-                    { v: st.outQty, s: dataStyleQty },
-                    { v: st.current, s: dataStyleQty }
-                ]);
-            });
-
-            const wsStock = XLSX.utils.aoa_to_sheet(stockAoa);
-            wsStock['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }]; // 제목 병합
-            wsStock['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 15 }]; // 컬럼 넓이
-            XLSX.utils.book_append_sheet(wb, wsStock, "현재 재고 현황");
-
-
-            // --- 2. 거래 내역 시트 ---
+            // --- 1. 거래 내역 시트 ---
             const txAoa = [];
-            txAoa.push([{ v: `📊 Terra 전체 거래 내역`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }]);
+            txAoa.push([{ v: `📊 Terra 장부 현황 [전체]`, s: titleStyle }, null, null, null, null, null, null, null, { v: printTime, s: dateStyle }]);
             txAoa.push([]);
-            const txHeaders = ['거래일자', '구분', '관련처(업체/판매처)', '제품명', '수량', '단가', '총 금액'];
+            const txHeaders = ['순번', '거래일자', '구분', '항목명 (제품)', '관련처', '단가', '수량', '총금액', '메모'];
             txAoa.push(txHeaders.map(h => ({ v: h, s: headerStyle })));
 
             const sortedTx = [...state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
-            
             let totalSales = 0, totalPurchases = 0;
 
-            sortedTx.forEach(tx => {
+            sortedTx.forEach((tx, idx) => {
                 const isOpIn = tx.type === 'IN';
-                const typeStr = isOpIn ? '입고' : '판매';
+                const typeStr = isOpIn ? '재료 지출' : '판매 수익';
                 const partnerName = isOpIn 
                     ? (state.vendors.find(v => v.id === tx.partnerId)?.name || '-')
                     : (state.channels.find(c => c.id === tx.partnerId)?.name || '-');
@@ -833,31 +877,111 @@
                 else totalSales += total;
 
                 txAoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
                     { v: tx.date, s: dataStyleCenter },
                     { v: typeStr, s: dataStyleCenter },
-                    { v: partnerName, s: dataStyleCenter },
                     { v: pName, s: dataStyleLeft },
-                    { v: tx.qty, s: dataStyleQty },
+                    { v: partnerName, s: dataStyleCenter },
                     { v: tx.price, s: dataStyleMoney },
-                    { v: total, s: dataStyleMoney }
+                    { v: tx.qty, s: dataStyleQty },
+                    { v: total, s: dataStyleMoney },
+                    { v: tx.memo || '', s: dataStyleLeft }
                 ]);
             });
 
-            // 총계계산 꼬리말 추가
             txAoa.push([]); 
             const sumHeaderStyle = { font: { bold: true, color: { rgb: "334155" } }, alignment: { horizontal: "right" } };
-            const sumIncomeStyle = { font: { bold: true, color: { rgb: "059669" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
-            const sumExpenseStyle = { font: { bold: true, color: { rgb: "14B8A6" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
-            const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "0F172A" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+            const sumIncomeStyle = { font: { bold: true, color: { rgb: "2563EB" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+            const sumExpenseStyle = { font: { bold: true, color: { rgb: "E11D48" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+            const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "4338CA" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
 
-            txAoa.push([null, null, null, null, null, {v: '🟢 총 판매 수익:', s: sumHeaderStyle}, {v: totalSales, s: sumIncomeStyle}]);
-            txAoa.push([null, null, null, null, null, {v: '🔵 총 입고 매입액:', s: sumHeaderStyle}, {v: totalPurchases, s: sumExpenseStyle}]);
-            txAoa.push([null, null, null, null, null, {v: '✨ 예상 순이익:', s: sumHeaderStyle}, {v: totalSales - totalPurchases, s: sumNetStyle}]);
+            txAoa.push([null, null, null, null, null, null, {v: '🔵 총 판매 수익:', s: sumHeaderStyle}, {v: totalSales, s: sumIncomeStyle}, null]);
+            txAoa.push([null, null, null, null, null, null, {v: '🔴 총 재료 지출:', s: sumHeaderStyle}, {v: totalPurchases, s: sumExpenseStyle}, null]);
+            txAoa.push([null, null, null, null, null, null, {v: '✨ 순수익:', s: sumHeaderStyle}, {v: totalSales - totalPurchases, s: sumNetStyle}, null]);
 
             const wsTx = XLSX.utils.aoa_to_sheet(txAoa);
-            wsTx['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]; // 제목 병합
-            wsTx['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 20 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 15 }]; // 컬럼 넓이
-            XLSX.utils.book_append_sheet(wb, wsTx, "전체 거래 내역");
+            wsTx['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }]; 
+            wsTx['!cols'] = [{ wch: 8 }, { wch: 15 }, { wch: 12 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 30 }]; 
+            XLSX.utils.book_append_sheet(wb, wsTx, "거래내역");
+
+            // --- 2. 재고 현황 시트 ---
+            const stockAoa = [];
+            stockAoa.push([{ v: `📦 Terra 현재 재고 현황`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }]);
+            stockAoa.push([]);
+            const stockHeaders = ['순번', '입고업체', '카테고리', '제품명', '총 입고', '총 판매', '현재 재고'];
+            stockAoa.push(stockHeaders.map(h => ({ v: h, s: headerStyle })));
+
+            state.products.forEach((p, idx) => {
+                const v = state.vendors.find(x => x.id === p.vendorId)?.name || '-';
+                const c = state.categories.find(x => x.id === p.categoryId)?.name || '-';
+                const st = getStock(p.id);
+                stockAoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: v, s: dataStyleCenter },
+                    { v: c, s: dataStyleCenter },
+                    { v: p.name, s: dataStyleLeft },
+                    { v: st.inQty, s: dataStyleQty },
+                    { v: st.outQty, s: dataStyleQty },
+                    { v: st.current, s: dataStyleQty }
+                ]);
+            });
+
+            const wsStock = XLSX.utils.aoa_to_sheet(stockAoa);
+            wsStock['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+            wsStock['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, wsStock, "재고_현황");
+
+            // --- 3. 제품 목록 시트 ---
+            const prodAoa = [];
+            prodAoa.push([{ v: `💎 Terra 제품 목록`, s: titleStyle }, null, null, { v: printTime, s: dateStyle }]);
+            prodAoa.push([]);
+            prodAoa.push(['순번', '입고업체', '카테고리', '제품명'].map(h => ({ v: h, s: headerStyle })));
+            state.products.forEach((p, idx) => {
+                const v = state.vendors.find(x => x.id === p.vendorId)?.name || '-';
+                const c = state.categories.find(x => x.id === p.categoryId)?.name || '-';
+                prodAoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: v, s: dataStyleCenter },
+                    { v: c, s: dataStyleCenter },
+                    { v: p.name, s: dataStyleLeft }
+                ]);
+            });
+            const wsProd = XLSX.utils.aoa_to_sheet(prodAoa);
+            wsProd['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+            wsProd['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 15 }, { wch: 35 }];
+            XLSX.utils.book_append_sheet(wb, wsProd, "등록제품_목록");
+
+            // --- 4. 판매처 목록 시트 ---
+            const chanAoa = [];
+            chanAoa.push([{ v: `🏪 판매처 목록`, s: titleStyle }, { v: printTime, s: dateStyle }]);
+            chanAoa.push([]);
+            chanAoa.push(['순번', '판매처명'].map(h => ({ v: h, s: headerStyle })));
+            state.channels.forEach((c, idx) => {
+                chanAoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: c.name, s: dataStyleCenter }
+                ]);
+            });
+            const wsChan = XLSX.utils.aoa_to_sheet(chanAoa);
+            wsChan['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+            wsChan['!cols'] = [{ wch: 8 }, { wch: 25 }];
+            if (state.channels.length > 0) XLSX.utils.book_append_sheet(wb, wsChan, "판매처_목록");
+
+            // --- 5. 입고처 목록 시트 ---
+            const venAoa = [];
+            venAoa.push([{ v: `🛒 입고처 목록`, s: titleStyle }, { v: printTime, s: dateStyle }]);
+            venAoa.push([]);
+            venAoa.push(['순번', '구매/입고처명'].map(h => ({ v: h, s: headerStyle })));
+            state.vendors.forEach((v, idx) => {
+                venAoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: v.name, s: dataStyleCenter }
+                ]);
+            });
+            const wsVen = XLSX.utils.aoa_to_sheet(venAoa);
+            wsVen['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+            wsVen['!cols'] = [{ wch: 8 }, { wch: 25 }];
+            if (state.vendors.length > 0) XLSX.utils.book_append_sheet(wb, wsVen, "구매처_목록");
 
             // --- 엑셀 파일 다운로드 실행 (Blob 변환) ---
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
