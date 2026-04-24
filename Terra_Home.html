@@ -8,8 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- SheetJS (Excel Export) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- 엑셀 고급 스타일링 지원 라이브러리 (SheetJS-Style) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; background-color: #f0fdf4; }
@@ -221,6 +221,22 @@
 
         <!-- [탭 3] 통계 분석 -->
         <div id="tab-stats" class="tab-content hidden space-y-6">
+            <!-- 기간 설정 필터 -->
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex gap-1.5 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
+                    <button onclick="setStatFilterQuick('today', this)" class="stat-filter-btn px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">오늘</button>
+                    <button onclick="setStatFilterQuick('week', this)" class="stat-filter-btn px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">1주</button>
+                    <button onclick="setStatFilterQuick('month', this)" class="stat-filter-btn px-3 py-1.5 bg-white hover:bg-slate-100 text-emerald-600 border-emerald-300 font-bold rounded-lg text-[11px] transition-all shadow-sm whitespace-nowrap">이번 달</button>
+                    <button onclick="setStatFilterQuick('all', this)" class="stat-filter-btn px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-[11px] transition-all shadow-sm border border-slate-200 whitespace-nowrap">전체</button>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="date" id="stat-filter-start" class="bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-emerald-400 w-full sm:w-32 py-2 px-2 text-center outline-none">
+                    <span class="text-slate-400 font-black text-xs">~</span>
+                    <input type="date" id="stat-filter-end" class="bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-emerald-400 w-full sm:w-32 py-2 px-2 text-center outline-none">
+                    <button onclick="renderStats()" class="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-black transition-all flex items-center justify-center shadow-sm text-xs font-black whitespace-nowrap">조회</button>
+                </div>
+            </div>
+
             <!-- 요약 카드 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border-l-[8px] border-emerald-500 flex flex-col justify-between">
@@ -237,14 +253,27 @@
                 </div>
             </div>
 
+            <!-- 판매/매출 관련 통계 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">판매처별 매출 현황</h2>
                     <div id="stat-channels" class="space-y-4"></div>
                 </div>
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">제품별 매출 순위</h2>
+                    <div id="stat-products-out" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- 입고/매입 관련 통계 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">입고 업체별 매입 현황</h2>
                     <div id="stat-vendors" class="space-y-4"></div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">업체별 상세 입고 현황</h2>
+                    <div id="stat-vendor-products" class="space-y-3 max-h-[300px] overflow-y-auto hide-scrollbar pr-2"></div>
                 </div>
             </div>
         </div>
@@ -482,20 +511,41 @@
         }
 
         function renderStats() {
+            const startDate = document.getElementById('stat-filter-start').value;
+            const endDate = document.getElementById('stat-filter-end').value;
+
             let totalSales = 0, totalPurchases = 0;
             const channelSales = {};
             const vendorPurchases = {};
+            const productSales = {};
+            const vendorProductPurchases = {};
 
-            state.transactions.forEach(tx => {
+            // 날짜 범위에 해당하는 거래 내역만 필터링
+            const filteredTx = state.transactions.filter(tx => {
+                if (startDate && tx.date < startDate) return false;
+                if (endDate && tx.date > endDate) return false;
+                return true;
+            });
+
+            filteredTx.forEach(tx => {
                 const amt = tx.qty * tx.price;
+                const pName = state.products.find(x => x.id === tx.productId)?.name || '삭제된 제품';
+
                 if (tx.type === 'OUT') {
                     totalSales += amt;
                     const c = state.channels.find(x => x.id === tx.partnerId)?.name || '기타/삭제됨';
                     channelSales[c] = (channelSales[c] || 0) + amt;
+                    productSales[pName] = (productSales[pName] || 0) + amt;
                 } else {
                     totalPurchases += amt;
                     const v = state.vendors.find(x => x.id === tx.partnerId)?.name || '기타/삭제됨';
                     vendorPurchases[v] = (vendorPurchases[v] || 0) + amt;
+                    
+                    // 업체별 제품 상세 입고 누적
+                    if(!vendorProductPurchases[v]) vendorProductPurchases[v] = {};
+                    if(!vendorProductPurchases[v][pName]) vendorProductPurchases[v][pName] = { qty: 0, amt: 0 };
+                    vendorProductPurchases[v][pName].qty += tx.qty;
+                    vendorProductPurchases[v][pName].amt += amt;
                 }
             });
 
@@ -515,7 +565,7 @@
                     return `
                         <div>
                             <div class="flex justify-between text-xs font-bold mb-1.5">
-                                <span class="text-slate-700">${k}</span><span class="text-slate-900">${formatMoney(data[k])}</span>
+                                <span class="text-slate-700 truncate pr-2">${k}</span><span class="text-slate-900 shrink-0">${formatMoney(data[k])}</span>
                             </div>
                             <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                                 <div class="${colorClass} h-full transition-all duration-1000" style="width: ${pct}%"></div>
@@ -526,8 +576,70 @@
             };
 
             renderBars(channelSales, 'stat-channels', 'bg-emerald-500');
+            renderBars(productSales, 'stat-products-out', 'bg-indigo-400');
             renderBars(vendorPurchases, 'stat-vendors', 'bg-teal-500');
+            
+            // 업체별 상세 제품 입고 내역 렌더링
+            const vpContainer = document.getElementById('stat-vendor-products');
+            const vpKeys = Object.keys(vendorProductPurchases).sort();
+            if(vpKeys.length === 0) {
+                vpContainer.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">데이터가 없습니다.</p>';
+            } else {
+                vpContainer.innerHTML = vpKeys.map(v => {
+                    const products = vendorProductPurchases[v];
+                    const pKeys = Object.keys(products).sort((a,b) => products[b].amt - products[a].amt);
+                    const pList = pKeys.map(p => `
+                        <div class="flex justify-between items-center text-xs py-2 border-b border-slate-200 last:border-0">
+                            <span class="text-slate-600 font-bold truncate pr-2">${p}</span>
+                            <div class="text-right shrink-0">
+                                <span class="font-black text-teal-600">${products[p].qty}개</span>
+                                <span class="text-[10px] text-slate-400 ml-1">(${formatMoney(products[p].amt)})</span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <h3 class="text-sm font-black text-slate-800 mb-2 flex items-center gap-1.5"><i class="fas fa-industry text-indigo-400"></i> ${v}</h3>
+                            <div>${pList}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
+
+        window.setStatFilterQuick = (range, btnElement) => {
+            // 버튼 색상 스타일 업데이트
+            if(btnElement) {
+                document.querySelectorAll('.stat-filter-btn').forEach(btn => {
+                    btn.classList.remove('text-emerald-600', 'border-emerald-300');
+                    btn.classList.add('text-slate-700', 'border-slate-200');
+                });
+                btnElement.classList.remove('text-slate-700', 'border-slate-200');
+                btnElement.classList.add('text-emerald-600', 'border-emerald-300');
+            }
+
+            const today = new Date();
+            today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+            let start = new Date(today);
+            let end = new Date(today);
+
+            if (range === 'week') {
+                start.setDate(start.getDate() - 6);
+            } else if (range === 'month') {
+                start = new Date(today.getFullYear(), today.getMonth(), 1);
+                start.setMinutes(start.getMinutes() - start.getTimezoneOffset());
+            } else if (range === 'all') {
+                document.getElementById('stat-filter-start').value = '';
+                document.getElementById('stat-filter-end').value = '';
+                renderStats();
+                return;
+            }
+
+            document.getElementById('stat-filter-start').value = start.toISOString().split('T')[0];
+            document.getElementById('stat-filter-end').value = end.toISOString().split('T')[0];
+            renderStats();
+        };
 
         // --- 5. Firebase 데이터 조작 핸들러 ---
         window.deleteMaster = async (collectionName, id) => {
@@ -648,19 +760,66 @@
 
             const wb = XLSX.utils.book_new();
 
-            const stockData = [['입고업체', '카테고리', '제품명', '총 입고', '총 판매', '현재 재고']];
+            // --- 엑셀 스타일 정의 ---
+            const borderThin = { style: "thin", color: { rgb: "BFBFBF" } }; 
+            const borderAll = { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin };
+
+            const headerStyle = {
+                fill: { fgColor: { rgb: "F1F5F9" } },
+                font: { bold: true, color: { rgb: "334155" }, sz: 11 },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: borderAll
+            };
+
+            const dataStyleCenter = { alignment: { horizontal: "center", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleLeft = { alignment: { horizontal: "left", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleMoney = { alignment: { horizontal: "right", vertical: "center" }, border: borderAll, numFmt: '#,##0"원"', font: { color: { rgb: "334155" } } };
+            const dataStyleQty = { alignment: { horizontal: "center", vertical: "center" }, border: borderAll, numFmt: '#,##0"개"', font: { color: { rgb: "334155" } } };
+
+            const titleStyle = { font: { sz: 16, bold: true, color: { rgb: "059669" } }, alignment: { vertical: "center" } };
+            const dateStyle = { font: { color: { rgb: "64748B" }, italic: true }, alignment: { horizontal: "right", vertical: "center" } };
+
+            const now = new Date();
+            const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // --- 1. 재고 현황 시트 ---
+            const stockAoa = [];
+            stockAoa.push([{ v: `📦 Terra 현재 재고 현황`, s: titleStyle }, null, null, null, null, { v: printTime, s: dateStyle }]);
+            stockAoa.push([]);
+            const stockHeaders = ['입고업체', '카테고리', '제품명', '총 입고', '총 판매', '현재 재고'];
+            stockAoa.push(stockHeaders.map(h => ({ v: h, s: headerStyle })));
+
             state.products.forEach(p => {
                 const v = state.vendors.find(x => x.id === p.vendorId)?.name || '-';
                 const c = state.categories.find(x => x.id === p.categoryId)?.name || '-';
                 const st = getStock(p.id);
-                stockData.push([v, c, p.name, st.inQty, st.outQty, st.current]);
+                stockAoa.push([
+                    { v: v, s: dataStyleCenter },
+                    { v: c, s: dataStyleCenter },
+                    { v: p.name, s: dataStyleLeft },
+                    { v: st.inQty, s: dataStyleQty },
+                    { v: st.outQty, s: dataStyleQty },
+                    { v: st.current, s: dataStyleQty }
+                ]);
             });
-            const wsStock = XLSX.utils.aoa_to_sheet(stockData);
+
+            const wsStock = XLSX.utils.aoa_to_sheet(stockAoa);
+            wsStock['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }]; // 제목 병합
+            wsStock['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 15 }]; // 컬럼 넓이
             XLSX.utils.book_append_sheet(wb, wsStock, "현재 재고 현황");
 
-            const txData = [['거래일자', '구분', '관련처(업체/판매처)', '제품명', '수량', '단가', '총 금액']];
+
+            // --- 2. 거래 내역 시트 ---
+            const txAoa = [];
+            txAoa.push([{ v: `📊 Terra 전체 거래 내역`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }]);
+            txAoa.push([]);
+            const txHeaders = ['거래일자', '구분', '관련처(업체/판매처)', '제품명', '수량', '단가', '총 금액'];
+            txAoa.push(txHeaders.map(h => ({ v: h, s: headerStyle })));
+
             const sortedTx = [...state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
             
+            let totalSales = 0, totalPurchases = 0;
+
             sortedTx.forEach(tx => {
                 const isOpIn = tx.type === 'IN';
                 const typeStr = isOpIn ? '입고' : '판매';
@@ -670,17 +829,54 @@
                 const pName = state.products.find(x => x.id === tx.productId)?.name || '-';
                 const total = tx.qty * tx.price;
                 
-                txData.push([tx.date, typeStr, partnerName, pName, tx.qty, tx.price, total]);
+                if (isOpIn) totalPurchases += total;
+                else totalSales += total;
+
+                txAoa.push([
+                    { v: tx.date, s: dataStyleCenter },
+                    { v: typeStr, s: dataStyleCenter },
+                    { v: partnerName, s: dataStyleCenter },
+                    { v: pName, s: dataStyleLeft },
+                    { v: tx.qty, s: dataStyleQty },
+                    { v: tx.price, s: dataStyleMoney },
+                    { v: total, s: dataStyleMoney }
+                ]);
             });
-            const wsTx = XLSX.utils.aoa_to_sheet(txData);
+
+            // 총계계산 꼬리말 추가
+            txAoa.push([]); 
+            const sumHeaderStyle = { font: { bold: true, color: { rgb: "334155" } }, alignment: { horizontal: "right" } };
+            const sumIncomeStyle = { font: { bold: true, color: { rgb: "059669" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+            const sumExpenseStyle = { font: { bold: true, color: { rgb: "14B8A6" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+            const sumNetStyle = { font: { bold: true, sz: 12, color: { rgb: "0F172A" } }, numFmt: '#,##0"원"', alignment: { horizontal: "right" } };
+
+            txAoa.push([null, null, null, null, null, {v: '🟢 총 판매 수익:', s: sumHeaderStyle}, {v: totalSales, s: sumIncomeStyle}]);
+            txAoa.push([null, null, null, null, null, {v: '🔵 총 입고 매입액:', s: sumHeaderStyle}, {v: totalPurchases, s: sumExpenseStyle}]);
+            txAoa.push([null, null, null, null, null, {v: '✨ 예상 순이익:', s: sumHeaderStyle}, {v: totalSales - totalPurchases, s: sumNetStyle}]);
+
+            const wsTx = XLSX.utils.aoa_to_sheet(txAoa);
+            wsTx['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]; // 제목 병합
+            wsTx['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 20 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 15 }]; // 컬럼 넓이
             XLSX.utils.book_append_sheet(wb, wsTx, "전체 거래 내역");
 
+            // --- 엑셀 파일 다운로드 실행 (Blob 변환) ---
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            XLSX.writeFile(wb, `Terra_판매재고관리_${dateStr}.xlsx`);
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Terra_판매재고관리_${dateStr}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         };
 
         // 초기화
         document.getElementById('tx-date').value = getLocalDateStr();
+        window.setStatFilterQuick('month'); // 기본 통계 기간: 이번 달
         renderAll();
     </script>
 </body>
