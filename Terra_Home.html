@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terra 판매 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f0fdf4; } /* 밝은 그린 배경 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.4); }
+        .tab-active { color: #059669; border-bottom: 3px solid #059669; }
+        
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-content:not(.hidden) { animation: fadeInTab 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased overflow-y-scroll">
+
+    <!-- 범용 알림 모달 -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <div id="modal-icon" class="text-emerald-500 text-5xl mb-5"><i class="fas fa-check-circle"></i></div>
+            <p id="custom-modal-text" class="text-slate-900 font-black mb-6 text-lg leading-snug"></p>
+            <div id="modal-buttons" class="flex gap-2">
+                <button onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black transition-all shadow-lg active:scale-95 text-sm hover:bg-black">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 대시보드 -->
+    <div id="app-container" class="max-w-6xl mx-auto p-4 md:p-6">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 glass-card">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-br from-emerald-500 via-teal-500 to-green-600 p-4 rounded-2xl text-white shadow-lg rotate-3">
+                    <i class="fas fa-leaf text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tighter">Terra 판매 관리</h1>
+                    <p class="text-slate-400 text-xs font-bold flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> 통합 입출고·판매 대시보드
+                    </p>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
+                <div class="px-5 py-2 bg-slate-100 text-emerald-700 rounded-xl text-xs font-black border border-emerald-200">로컬 테스트 모드</div>
+            </div>
+        </header>
+
+        <!-- 네비게이션 탭 -->
+        <nav class="flex gap-5 mb-8 border-b-2 border-slate-200 overflow-x-auto hide-scrollbar font-black text-base tracking-tight">
+            <button onclick="switchTab('sales')" id="tab-btn-sales" class="pb-3 px-1 whitespace-nowrap tab-active transition-all">판매 관리</button>
+            <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-emerald-500 transition-all">입고/재고 관리</button>
+            <button onclick="switchTab('masters')" id="tab-btn-masters" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-emerald-500 transition-all">기초 정보 관리</button>
+            <button onclick="switchTab('stats')" id="tab-btn-stats" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-emerald-500 transition-all">통계 분석</button>
+        </nav>
+
+        <!-- [탭 1] 판매 관리 -->
+        <div id="tab-sales" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 판매 등록 폼 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 h-fit">
+                    <h2 class="text-xl font-black mb-6 text-slate-800 flex items-center gap-2"><i class="fas fa-shopping-cart text-emerald-500"></i> 제품 판매 등록</h2>
+                    <form id="form-sale" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">판매 일자</label>
+                            <input type="date" id="sale-date" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">판매처 선택</label>
+                            <select id="sale-channel" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1 flex justify-between">
+                                <span>판매 제품</span>
+                                <span id="sale-stock-display" class="text-emerald-600"></span>
+                            </label>
+                            <select id="sale-product" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400" onchange="updateSaleStock()"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 ml-1">수량</label>
+                                <input type="number" id="sale-qty" min="1" value="1" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400" oninput="calcSaleAmount()">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 ml-1">판매 단가(원)</label>
+                                <input type="number" id="sale-price" min="0" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400" oninput="calcSaleAmount()">
+                            </div>
+                        </div>
+                        <div class="space-y-1 pt-2">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">총 판매 금액</label>
+                            <input type="text" id="sale-amount" readonly class="w-full bg-emerald-50 text-emerald-700 rounded-xl px-4 py-3 text-lg font-black outline-none border border-emerald-100" value="0원">
+                        </div>
+                        <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white text-sm font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 mt-4">판매 기록 저장</button>
+                    </form>
+                </div>
+                <!-- 판매 내역 리스트 -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-black mb-6 text-slate-800">최근 판매 내역</h2>
+                    <div id="sales-list" class="space-y-3 max-h-[600px] overflow-y-auto hide-scrollbar">
+                        <!-- JS로 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [탭 2] 입고/재고 관리 -->
+        <div id="tab-inventory" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 입고 등록 폼 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 h-fit">
+                    <h2 class="text-xl font-black mb-6 text-slate-800 flex items-center gap-2"><i class="fas fa-box-open text-teal-500"></i> 제품 입고 등록</h2>
+                    <form id="form-in" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">입고 일자</label>
+                            <input type="date" id="in-date" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-teal-400">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">입고 업체 및 제품</label>
+                            <select id="in-product" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-teal-400"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 ml-1">입고 수량</label>
+                                <input type="number" id="in-qty" min="1" value="1" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-teal-400" oninput="calcInAmount()">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-500 ml-1">입고 단가(원)</label>
+                                <input type="number" id="in-price" min="0" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-teal-400" oninput="calcInAmount()">
+                            </div>
+                        </div>
+                        <div class="space-y-1 pt-2">
+                            <label class="text-[10px] font-black text-slate-500 ml-1">총 매입 금액</label>
+                            <input type="text" id="in-amount" readonly class="w-full bg-slate-100 text-slate-700 rounded-xl px-4 py-3 text-lg font-black outline-none border border-slate-200" value="0원">
+                        </div>
+                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 mt-4">입고 기록 저장</button>
+                    </form>
+                </div>
+                <!-- 재고 현황 -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h2 class="text-xl font-black mb-6 text-slate-800">현재 재고 현황</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-100 text-slate-400 text-xs font-black">
+                                        <th class="pb-3 pr-4">입고업체</th>
+                                        <th class="pb-3 pr-4">카테고리</th>
+                                        <th class="pb-3 pr-4">제품명</th>
+                                        <th class="pb-3 pr-4 text-center">총입고</th>
+                                        <th class="pb-3 pr-4 text-center">총판매</th>
+                                        <th class="pb-3 text-right text-emerald-600">현재재고</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-status" class="divide-y divide-slate-50 text-sm font-bold">
+                                    <!-- JS 렌더링 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-black mb-4 text-slate-800">최근 입고 내역</h2>
+                        <div id="inventory-history" class="space-y-2 max-h-[300px] overflow-y-auto hide-scrollbar">
+                            <!-- JS 렌더링 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [탭 3] 기초 정보 관리 -->
+        <div id="tab-masters" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 입고 업체 관리 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-4 text-slate-800 flex items-center gap-2"><i class="fas fa-industry text-indigo-500"></i> 입고 업체 (제조/공급사)</h2>
+                    <form id="form-vendor" class="flex gap-2 mb-4">
+                        <input type="text" id="master-vendor" placeholder="업체명 입력" required class="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-indigo-400">
+                        <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded-xl font-black text-sm active:scale-95">추가</button>
+                    </form>
+                    <div id="list-vendor" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto hide-scrollbar"></div>
+                </div>
+
+                <!-- 판매처 관리 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-4 text-slate-800 flex items-center gap-2"><i class="fas fa-store text-amber-500"></i> 판매처 (납품처)</h2>
+                    <form id="form-channel" class="flex gap-2 mb-4">
+                        <input type="text" id="master-channel" placeholder="판매처명 입력" required class="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-amber-400">
+                        <button type="submit" class="bg-amber-500 text-white px-4 py-2 rounded-xl font-black text-sm active:scale-95">추가</button>
+                    </form>
+                    <div id="list-channel" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto hide-scrollbar"></div>
+                </div>
+
+                <!-- 카테고리 관리 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-4 text-slate-800 flex items-center gap-2"><i class="fas fa-tags text-rose-500"></i> 제품 카테고리</h2>
+                    <form id="form-category" class="flex gap-2 mb-4">
+                        <input type="text" id="master-category" placeholder="카테고리명 입력" required class="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-rose-400">
+                        <button type="submit" class="bg-rose-500 text-white px-4 py-2 rounded-xl font-black text-sm active:scale-95">추가</button>
+                    </form>
+                    <div id="list-category" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto hide-scrollbar"></div>
+                </div>
+
+                <!-- 제품 관리 -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-4 text-slate-800 flex items-center gap-2"><i class="fas fa-box text-emerald-500"></i> 취급 제품 등록</h2>
+                    <form id="form-product" class="space-y-3 mb-4">
+                        <div class="flex gap-2">
+                            <select id="prod-vendor" required class="flex-1 bg-slate-50 rounded-xl px-3 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400">
+                                <option value="" disabled selected>업체 선택</option>
+                            </select>
+                            <select id="prod-category" required class="flex-1 bg-slate-50 rounded-xl px-3 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400">
+                                <option value="" disabled selected>카테고리 선택</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="prod-name" placeholder="제품명" required class="flex-[2] bg-slate-50 rounded-xl px-4 py-2 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-emerald-400">
+                            <button type="submit" class="flex-1 bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-sm active:scale-95">제품 등록</button>
+                        </div>
+                    </form>
+                    <div class="overflow-y-auto max-h-48 hide-scrollbar">
+                        <table class="w-full text-left text-sm font-bold">
+                            <tbody id="list-product" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [탭 4] 통계 분석 -->
+        <div id="tab-stats" class="tab-content hidden space-y-6">
+            <!-- 요약 카드 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-[8px] border-emerald-500 flex flex-col justify-between">
+                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-2">총 판매 매출액</p>
+                    <h3 id="stat-total-sales" class="text-3xl font-black text-slate-800">0원</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-[8px] border-rose-400 flex flex-col justify-between">
+                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-2">총 입고 매입액</p>
+                    <h3 id="stat-total-purchases" class="text-3xl font-black text-slate-800">0원</h3>
+                </div>
+                <div class="bg-slate-900 p-6 rounded-3xl shadow-md flex flex-col justify-between">
+                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-2">예상 순이익</p>
+                    <h3 id="stat-net-profit" class="text-3xl font-black text-white">0원</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">판매처별 매출 현황</h2>
+                    <div id="stat-channels" class="space-y-4"></div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-black mb-5 text-slate-800 border-b border-slate-100 pb-3">입고 업체별 매입 현황</h2>
+                    <div id="stat-vendors" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. 상태 관리 (In-Memory) ---
+        const state = {
+            vendors: [{ id: 'v1', name: '자연생태조합' }, { id: 'v2', name: '에코팜' }],
+            categories: [{ id: 'c1', name: '유기농채소' }, { id: 'c2', name: '건강즙' }],
+            channels: [{ id: 'ch1', name: '스마트스토어' }, { id: 'ch2', name: '마켓컬리' }],
+            products: [
+                { id: 'p1', vendorId: 'v1', categoryId: 'c1', name: '친환경 양배추 1kg' },
+                { id: 'p2', vendorId: 'v2', categoryId: 'c2', name: '순수 호박즙 30포' }
+            ],
+            inventory: [], // { id, date, productId, qty, price }
+            sales: []      // { id, date, channelId, productId, qty, price }
+        };
+
+        // 초기 샘플 데이터 주입
+        state.inventory.push(
+            { id: genId(), date: '2026-04-20', productId: 'p1', qty: 50, price: 3000 },
+            { id: genId(), date: '2026-04-21', productId: 'p2', qty: 100, price: 15000 }
+        );
+        state.sales.push(
+            { id: genId(), date: '2026-04-22', channelId: 'ch1', productId: 'p1', qty: 10, price: 5000 },
+            { id: genId(), date: '2026-04-23', channelId: 'ch2', productId: 'p2', qty: 20, price: 22000 }
+        );
+
+        // --- 2. 유틸 함수 ---
+        function genId() { return Math.random().toString(36).substr(2, 9); }
+        function formatMoney(n) { return new Intl.NumberFormat('ko-KR').format(Number(n) || 0) + '원'; }
+        function getLocalDateStr() {
+            const date = new Date();
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+            return date.toISOString().split('T')[0];
+        }
+
+        function showModal(msg) {
+            document.getElementById('custom-modal-text').innerText = msg;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => { 
+                b.classList.remove('tab-active', 'text-emerald-600'); b.classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-btn-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-btn-${tab}`).classList.remove('text-slate-400');
+            
+            if(tab === 'stats') renderStats();
+        }
+
+        function getStock(productId) {
+            const inQty = state.inventory.filter(i => i.productId === productId).reduce((sum, i) => sum + i.qty, 0);
+            const outQty = state.sales.filter(s => s.productId === productId).reduce((sum, s) => sum + s.qty, 0);
+            return { inQty, outQty, current: inQty - outQty };
+        }
+
+        // --- 3. 렌더링 로직 ---
+        function renderAll() {
+            renderMasters();
+            renderSelectBoxes();
+            renderInventory();
+            renderSales();
+        }
+
+        function renderMasters() {
+            const createBadge = (name, id, type) => `
+                <div class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 flex items-center gap-2 group">
+                    ${name} <button type="button" onclick="deleteMaster('${type}', '${id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+            document.getElementById('list-vendor').innerHTML = state.vendors.map(v => createBadge(v.name, v.id, 'vendor')).join('');
+            document.getElementById('list-channel').innerHTML = state.channels.map(c => createBadge(c.name, c.id, 'channel')).join('');
+            document.getElementById('list-category').innerHTML = state.categories.map(c => createBadge(c.name, c.id, 'category')).join('');
+
+            document.getElementById('list-product').innerHTML = state.products.map(p => {
+                const vendorName = state.vendors.find(v => v.id === p.vendorId)?.name || '-';
+                const catName = state.categories.find(c => c.id === p.categoryId)?.name || '-';
+                return `
+                    <tr class="group hover:bg-slate-50 transition-colors">
+                        <td class="py-2 pr-2 text-xs text-slate-500">[${vendorName}] ${catName}</td>
+                        <td class="py-2 text-slate-800">${p.name}</td>
+                        <td class="py-2 text-right w-10"><button type="button" onclick="deleteMaster('product', '${p.id}')" class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash-alt"></i></button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSelectBoxes() {
+            // 기초정보: 제품 등록 셀렉트
+            document.getElementById('prod-vendor').innerHTML = '<option value="" disabled selected>업체 선택</option>' + state.vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+            document.getElementById('prod-category').innerHTML = '<option value="" disabled selected>카테고리 선택</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            // 입고 폼 셀렉트
+            document.getElementById('in-product').innerHTML = '<option value="" disabled selected>입고할 제품 선택</option>' + state.products.map(p => {
+                const v = state.vendors.find(x => x.id === p.vendorId)?.name;
+                return `<option value="${p.id}">[${v}] ${p.name}</option>`;
+            }).join('');
+
+            // 판매 폼 셀렉트
+            document.getElementById('sale-channel').innerHTML = '<option value="" disabled selected>판매처 선택</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('sale-product').innerHTML = '<option value="" disabled selected>판매할 제품 선택</option>' + state.products.map(p => {
+                const stock = getStock(p.id).current;
+                return `<option value="${p.id}" ${stock <= 0 ? 'disabled' : ''}>${p.name} (재고: ${stock}개)</option>`;
+            }).join('');
+        }
+
+        function renderInventory() {
+            // 재고 현황
+            document.getElementById('inventory-status').innerHTML = state.products.map(p => {
+                const v = state.vendors.find(x => x.id === p.vendorId)?.name || '-';
+                const c = state.categories.find(x => x.id === p.categoryId)?.name || '-';
+                const st = getStock(p.id);
+                return `
+                    <tr>
+                        <td class="py-3 text-slate-500">${v}</td>
+                        <td class="py-3 text-slate-500"><span class="bg-slate-100 px-2 py-1 rounded text-xs">${c}</span></td>
+                        <td class="py-3 text-slate-800">${p.name}</td>
+                        <td class="py-3 text-center text-teal-600">${st.inQty}</td>
+                        <td class="py-3 text-center text-rose-500">${st.outQty}</td>
+                        <td class="py-3 text-right font-black text-emerald-600">${st.current}개</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" class="py-4 text-center text-slate-400">등록된 제품이 없습니다.</td></tr>';
+
+            // 최근 입고 내역
+            const sortedIn = [...state.inventory].sort((a,b) => new Date(b.date) - new Date(a.date));
+            document.getElementById('inventory-history').innerHTML = sortedIn.map(i => {
+                const p = state.products.find(x => x.id === i.productId);
+                return `
+                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100 mb-2">
+                        <div>
+                            <div class="text-[10px] text-slate-400 mb-0.5">${i.date}</div>
+                            <div class="text-sm text-slate-800">${p ? p.name : '삭제된 제품'}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-teal-600 font-black">+ ${i.qty}개</div>
+                            <div class="text-[10px] text-slate-500">@ ${formatMoney(i.price)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<div class="text-center text-slate-400 py-4 text-sm">입고 내역이 없습니다.</div>';
+        }
+
+        function renderSales() {
+            // 최근 판매 내역
+            const sortedOut = [...state.sales].sort((a,b) => new Date(b.date) - new Date(a.date));
+            document.getElementById('sales-list').innerHTML = sortedOut.map(s => {
+                const p = state.products.find(x => x.id === s.productId);
+                const c = state.channels.find(x => x.id === s.channelId);
+                const total = s.qty * s.price;
+                return `
+                    <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-500">${s.date}</span>
+                                <span class="text-xs font-black text-amber-600">${c ? c.name : '삭제된 판매처'}</span>
+                            </div>
+                            <div class="text-base font-black text-slate-800">${p ? p.name : '삭제된 제품'}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">단가: ${formatMoney(s.price)} &times; ${s.qty}개</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg text-emerald-600 font-black">${formatMoney(total)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<div class="text-center text-slate-400 py-10 font-bold">판매 내역이 없습니다.</div>';
+        }
+
+        function renderStats() {
+            let totalSales = 0, totalPurchases = 0;
+            const channelSales = {};
+            const vendorPurchases = {};
+
+            state.sales.forEach(s => {
+                const amt = s.qty * s.price;
+                totalSales += amt;
+                const c = state.channels.find(x => x.id === s.channelId)?.name || '알수없음';
+                channelSales[c] = (channelSales[c] || 0) + amt;
+            });
+
+            state.inventory.forEach(i => {
+                const amt = i.qty * i.price;
+                totalPurchases += amt;
+                const p = state.products.find(x => x.id === i.productId);
+                const v = p ? (state.vendors.find(x => x.id === p.vendorId)?.name || '알수없음') : '알수없음';
+                vendorPurchases[v] = (vendorPurchases[v] || 0) + amt;
+            });
+
+            document.getElementById('stat-total-sales').innerText = formatMoney(totalSales);
+            document.getElementById('stat-total-purchases').innerText = formatMoney(totalPurchases);
+            document.getElementById('stat-net-profit').innerText = formatMoney(totalSales - totalPurchases);
+
+            const renderBars = (data, containerId, colorClass) => {
+                const container = document.getElementById(containerId);
+                const keys = Object.keys(data).sort((a,b) => data[b] - data[a]);
+                if(keys.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-slate-400">데이터가 없습니다.</p>'; return;
+                }
+                const max = Math.max(...Object.values(data));
+                container.innerHTML = keys.map(k => {
+                    const pct = Math.round((data[k] / max) * 100);
+                    return `
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>${k}</span><span>${formatMoney(data[k])}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div class="${colorClass} h-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+
+            renderBars(channelSales, 'stat-channels', 'bg-emerald-500');
+            renderBars(vendorPurchases, 'stat-vendors', 'bg-indigo-500');
+        }
+
+        // --- 4. 이벤트 핸들러 ---
+        window.deleteMaster = (type, id) => {
+            if(!confirm("삭제하시겠습니까?")) return;
+            if(type === 'vendor') state.vendors = state.vendors.filter(x => x.id !== id);
+            if(type === 'channel') state.channels = state.channels.filter(x => x.id !== id);
+            if(type === 'category') state.categories = state.categories.filter(x => x.id !== id);
+            if(type === 'product') state.products = state.products.filter(x => x.id !== id);
+            renderAll();
+        };
+
+        // 폼 제출 (기초 정보)
+        document.getElementById('form-vendor').onsubmit = e => {
+            e.preventDefault();
+            const el = document.getElementById('master-vendor');
+            state.vendors.push({ id: genId(), name: el.value }); el.value = ''; renderAll();
+        };
+        document.getElementById('form-channel').onsubmit = e => {
+            e.preventDefault();
+            const el = document.getElementById('master-channel');
+            state.channels.push({ id: genId(), name: el.value }); el.value = ''; renderAll();
+        };
+        document.getElementById('form-category').onsubmit = e => {
+            e.preventDefault();
+            const el = document.getElementById('master-category');
+            state.categories.push({ id: genId(), name: el.value }); el.value = ''; renderAll();
+        };
+        document.getElementById('form-product').onsubmit = e => {
+            e.preventDefault();
+            const vId = document.getElementById('prod-vendor').value;
+            const cId = document.getElementById('prod-category').value;
+            const nameEl = document.getElementById('prod-name');
+            if(!vId || !cId) return showModal("업체와 카테고리를 선택하세요.");
+            state.products.push({ id: genId(), vendorId: vId, categoryId: cId, name: nameEl.value });
+            nameEl.value = ''; renderAll(); showModal("제품이 등록되었습니다.");
+        };
+
+        // 입고 폼 계산 및 저장
+        window.calcInAmount = () => {
+            const qty = Number(document.getElementById('in-qty').value) || 0;
+            const price = Number(document.getElementById('in-price').value) || 0;
+            document.getElementById('in-amount').value = formatMoney(qty * price);
+        };
+        document.getElementById('form-in').onsubmit = e => {
+            e.preventDefault();
+            const date = document.getElementById('in-date').value;
+            const pId = document.getElementById('in-product').value;
+            const qty = Number(document.getElementById('in-qty').value);
+            const price = Number(document.getElementById('in-price').value);
+            
+            state.inventory.push({ id: genId(), date, productId: pId, qty, price });
+            document.getElementById('form-in').reset();
+            document.getElementById('in-date').value = getLocalDateStr();
+            calcInAmount(); renderAll(); showModal("입고 처리되었습니다.");
+        };
+
+        // 판매 폼 계산 및 저장
+        window.updateSaleStock = () => {
+            const pId = document.getElementById('sale-product').value;
+            const stockDisplay = document.getElementById('sale-stock-display');
+            if(pId) {
+                const stock = getStock(pId).current;
+                stockDisplay.innerText = `현재고: ${stock}개`;
+                document.getElementById('sale-qty').max = stock;
+            } else {
+                stockDisplay.innerText = '';
+            }
+        };
+        window.calcSaleAmount = () => {
+            const qty = Number(document.getElementById('sale-qty').value) || 0;
+            const price = Number(document.getElementById('sale-price').value) || 0;
+            document.getElementById('sale-amount').value = formatMoney(qty * price);
+        };
+        document.getElementById('form-sale').onsubmit = e => {
+            e.preventDefault();
+            const date = document.getElementById('sale-date').value;
+            const cId = document.getElementById('sale-channel').value;
+            const pId = document.getElementById('sale-product').value;
+            const qty = Number(document.getElementById('sale-qty').value);
+            const price = Number(document.getElementById('sale-price').value);
+            
+            const stock = getStock(pId).current;
+            if(qty > stock) return showModal("판매 수량이 현재 재고를 초과합니다!");
+
+            state.sales.push({ id: genId(), date, channelId: cId, productId: pId, qty, price });
+            document.getElementById('form-sale').reset();
+            document.getElementById('sale-date').value = getLocalDateStr();
+            updateSaleStock(); calcSaleAmount(); renderAll(); showModal("판매 내역이 기록되었습니다.");
+        };
+
+        // 초기화
+        document.getElementById('sale-date').value = getLocalDateStr();
+        document.getElementById('in-date').value = getLocalDateStr();
+        renderAll();
+    </script>
+</body>
+</html>
