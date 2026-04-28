@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이블컴 Nokia IP 장비 관리</title>
+<!-- SheetJS for Excel Parsing & Exporting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── 기본 리셋 & 변수 ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --nk-blue:    #0b3580;
+  --nk-mid:     #1456cc;
+  --nk-cyan:    #00c8ff;
+  --nk-glow:    rgba(0,200,255,.15);
+  --bg:         #040c1c;
+  --bg-card:    #080f22;
+  --bg-alt:     #0a1330;
+  --border:     #122050;
+  --border-hi:  #1e3a7a;
+  --text:       #e2e8f0;
+  --text-dim:   #94a3b8;
+  --success:    #10b981;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow Condensed', 'Malgun Gothic', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 헤더 영역 ── */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(to bottom, #000000, var(--bg));
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-accent { color: var(--nk-cyan); }
+.header-actions { display: flex; gap: 10px; }
+
+/* ── 버튼 및 인풋 ── */
+button, .btn-upload {
+  background: var(--nk-blue);
+  color: #fff;
+  border: 1px solid var(--border-hi);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+button:hover, .btn-upload:hover { background: var(--nk-mid); border-color: var(--nk-cyan); box-shadow: 0 0 10px var(--nk-glow); }
+.btn-excel { background: #0d5c2e; border-color: #168a47; }
+.btn-excel:hover { background: #128040; border-color: #1eb35e; box-shadow: 0 0 10px rgba(30,179,94,0.3); }
+.btn-stats { background: #6b21a8; border-color: #9333ea; }
+.btn-stats:hover { background: #7e22ce; border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.3); }
+input[type="file"] { display: none; }
+
+/* ── 메인 컨텐츠 & 툴바 ── */
+main { flex: 1; padding: 20px 30px; display: flex; flex-direction: column; overflow: hidden; }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  padding: 15px 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.filter-group { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+.filter-item { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text-dim); }
+select, input[type="text"] {
+  background: var(--bg-alt);
+  color: #fff;
+  border: 1px solid var(--border-hi);
+  padding: 6px 12px;
+  border-radius: 4px;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  min-width: 150px;
+}
+select:focus, input[type="text"]:focus { border-color: var(--nk-cyan); box-shadow: 0 0 5px var(--nk-glow); }
+input[type="text"]::placeholder { color: #475569; }
+
+/* ── 테이블 영역 ── */
+.table-wrapper {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: auto;
+}
+.table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-wrapper::-webkit-scrollbar-track { background: var(--bg-alt); }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--nk-mid); }
+
+table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+thead { background: var(--bg-alt); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border); }
+th { padding: 12px 16px; font-weight: 600; color: var(--text-dim); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 15px; }
+tr:hover { background: rgba(20, 86, 204, 0.1); }
+
+/* ── 유틸리티 클래스 ── */
+.text-center { text-align: center; }
+.text-dim { color: var(--text-dim); }
+.text-cyan { color: var(--nk-cyan); }
+.font-bold { font-weight: 600; color: #fff; }
+.badge {
+  background: var(--bg-alt);
+  border: 1px solid var(--border-hi);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.ip-block {
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  transition: 0.2s;
+  display: inline-block;
+}
+.ip-block:hover { border-color: var(--nk-cyan); box-shadow: 0 0 8px var(--nk-glow); color: var(--nk-cyan); }
+.ip-block.oamp { color: var(--nk-cyan); }
+.ip-block.loopback { color: var(--success); }
+.ip-block.loopback:hover { border-color: var(--success); box-shadow: 0 0 8px rgba(16,185,129,0.3); color: #34d399; }
+
+/* Shelf 수량 뱃지 스타일 */
+.shelf-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-hi);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+.shelf-badge b { color: #fff; font-weight: 600; }
+
+/* ── 통계 모달 ── */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000; opacity: 0; visibility: hidden; transition: 0.3s;
+}
+.modal-overlay.show { opacity: 1; visibility: visible; }
+.modal-content {
+  background: var(--bg-card); border: 1px solid var(--border-hi);
+  border-radius: 8px; width: 600px; max-width: 90%; max-height: 80vh;
+  display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.modal-header {
+  padding: 15px 20px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h2 { font-size: 18px; color: #fff; margin: 0; }
+.btn-close {
+  background: transparent; border: none; color: var(--text-dim);
+  font-size: 24px; cursor: pointer; padding: 0; line-height: 1;
+}
+.btn-close:hover { color: var(--nk-cyan); }
+.modal-body { padding: 20px; overflow-y: auto; color: var(--text); }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.stat-card { background: var(--bg-alt); border: 1px solid var(--border); padding: 15px; border-radius: 6px; }
+.stat-card h3 { color: var(--nk-cyan); font-size: 15px; margin-bottom: 10px; border-bottom: 1px solid var(--border-hi); padding-bottom: 5px; }
+.stat-card h3 span { color: var(--text-dim); font-size: 13px; font-weight: normal; float: right; }
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+.stat-row span:last-child { font-weight: 600; color: #fff; }
+.stat-sub-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); padding: 4px 0 4px 10px; border-bottom: 1px dashed var(--border); }
+.stat-sub-row:last-child { border-bottom: none; }
+
+/* ── 통계 및 푸터 ── */
+footer {
+  padding: 15px 30px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.stats span { color: var(--nk-cyan); font-weight: 600; margin-left: 5px; }
+
+/* ── 토스트 팝업 (IP 복사 알림) ── */
+#toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(50px);
+  background: var(--nk-cyan);
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(0,200,255,0.3);
+  z-index: 1000;
+}
+#toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+/* 단축키 힌트 */
+.shortcut-hint { font-size: 11px; background: var(--bg); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header>
+  <div class="logo">
+    <span class="logo-accent">NOKIA</span> IP MANAGER
+  </div>
+  <div class="header-actions">
+    <button class="btn-stats" onclick="openStatsModal()">
+      📊 장비 통계
+    </button>
+    <button class="btn-excel" onclick="exportExcel()">
+      ▼ 엑셀 다운로드
+    </button>
+    <label class="btn-upload">
+      <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" onchange="handleFileUpload(event)">
+      + 데이터 업로드
+    </label>
+  </div>
+</header>
+
+<!-- 메인 -->
+<main>
+  <!-- 필터 툴바 -->
+  <div class="toolbar">
+    <div class="filter-group">
+      <div class="filter-item">
+        망 구분: 
+        <select id="filterProject" onchange="applyFilters()">
+          <option value="All">전체 망 보기</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        장비 타입: 
+        <select id="filterType" onchange="applyFilters()">
+          <option value="All">전체 타입 보기</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-group">
+      <input type="text" id="searchInput" placeholder="국소, IP, TID 검색..." onkeyup="applyFilters()">
+      <span class="shortcut-hint">단축키: /</span>
+    </div>
+  </div>
+
+  <!-- 데이터 테이블 -->
+  <div class="table-wrapper">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 60px;">No.</th>
+          <th>망구분</th>
+          <th>Ring 명</th>
+          <th>국소명</th>
+          <th>장비타입</th>
+          <th>Shelf 수량</th>
+          <th>Hostname (TID)</th>
+          <th>OAMP(GNE)</th>
+          <th>Loopback IP</th>
+          <th>Version</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="11" class="text-center text-dim" style="padding: 40px;">
+            우측 상단의 [데이터 업로드] 버튼을 눌러 CSV 또는 엑셀 파일을 등록해주세요.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- 상태바/푸터 -->
+<footer>
+  <div>Ablecom Network Solutions</div>
+  <div class="stats" id="statsArea">
+    총 장비 수: <span id="sTotal">0</span>대 &nbsp;|&nbsp; 표시 중: <span id="sVisible">0</span>대
+  </div>
+</footer>
+
+<!-- 알림 팝업 -->
+<div id="toast">📋 복사 완료!</div>
+
+<!-- 통계 모달 -->
+<div id="statsModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📊 장비 통계 현황</h2>
+      <button class="btn-close" onclick="closeStatsModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="statsModalBody">
+      <!-- 통계 내용이 여기에 삽입됩니다 -->
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1. 전역 상태 변수
+   ============================================================ */
+let allEquipmentList = []; // 전체 원본 데이터
+let filteredData = [];     // 화면에 보여질 필터링된 데이터
+
+/* ============================================================
+   2. 파일 업로드 및 데이터 파싱
+   ============================================================ */
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    // SheetJS를 사용하여 엑셀/CSV 읽기
+    const workbook = XLSX.read(data, {type: 'array'});
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    // 배열 형태로 데이터 추출
+    const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+    
+    parseExcelData(rows);
+    e.target.value = ''; // 같은 파일 재업로드를 위해 초기화
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseExcelData(rows) {
+  let isHeaderFound = false;
+  let colMap = {};
+  let shelfCols = [];
+
+  const newData = [];
+  
+  // 병합된 셀 처리를 위해 이전 행의 값을 기억하는 변수들 설정
+  let lastProject = '기타';
+  let lastRing = '-';
+  let lastType = '-';
+  let lastVersion = '-';
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+    const rowStr = row.join('').replace(/\s/g, '');
+
+    // [핵심 변경] 하나의 시트 안에 여러 개의 표가 있을 수 있으므로, 
+    // 헤더(장비타입, 국소명)가 등장할 때마다 컬럼 매핑 정보를 새롭게 갱신합니다.
+    if (rowStr.includes('장비타입') && rowStr.includes('국소명')) {
+      isHeaderFound = true;
+      colMap = {};
+      shelfCols = [];
+      
+      let minStandardColIdx = 999;
+      const standardCols = ['순', '순번', '망구분', '망 구분', '구분', 'Ring명', 'Ring 명', '국소명'];
+
+      row.forEach((colName, idx) => {
+        if (colName) {
+          const cleanName = String(colName).trim();
+          colMap[cleanName] = idx;
+          // 가장 먼저 등장하는 표준 컬럼의 인덱스를 찾음
+          if (standardCols.includes(cleanName) && idx < minStandardColIdx) {
+            minStandardColIdx = idx;
+          }
+        }
+      });
+
+      // 왼쪽 끝에 있는 장비(Shelf) 수량 헤더 컬럼들을 동적으로 파악
+      row.forEach((colName, idx) => {
+        if (colName && idx < minStandardColIdx) {
+          shelfCols.push({ name: String(colName).trim(), idx: idx });
+        }
+      });
+
+      continue; // 헤더 행 자체는 데이터로 처리하지 않고 다음 행으로 넘어감
+    }
+
+    // 문서 상단에서 헤더를 아직 한 번도 못 찾았으면 데이터 행이 아니므로 스킵
+    if (!isHeaderFound) continue;
+
+    // 망구분, Ring명, 장비타입, 버전 등 병합될 수 있는 셀의 값을 실시간으로 업데이트
+    const currentProject = row[colMap['망 구분']] || row[colMap['구분']] || row[colMap['망구분']];
+    if (currentProject) lastProject = String(currentProject).trim();
+
+    const currentRing = row[colMap['Ring 명']] || row[colMap['Ring명']];
+    if (currentRing) lastRing = String(currentRing).trim();
+
+    const currentType = row[colMap['장비타입']];
+    if (currentType) lastType = String(currentType).trim();
+
+    const currentVersion = row[colMap['Version']];
+    if (currentVersion) lastVersion = String(currentVersion).trim();
+
+    // 국소명이 없으면 데이터 행이 아닌 것으로 간주
+    if (!row[colMap['국소명']]) continue;
+
+    // 현재 읽어들인 표(헤더)에 맞는 Shelf 수량 추출
+    let currentShelfArr = [];
+    shelfCols.forEach(sc => {
+      const val = row[sc.idx];
+      if (val && !isNaN(val)) { // 비어있지 않고 숫자일 경우
+        currentShelfArr.push(`${sc.name}: ${val}`);
+      }
+    });
+    // 데이터가 있으면 "1830PSS-4: 1" 형태로 저장, 없으면 "-"
+    const shelfQtyStr = currentShelfArr.length > 0 ? currentShelfArr.join(' / ') : '-';
+
+    newData.push({
+      project: lastProject,
+      ring: lastRing,
+      station: String(row[colMap['국소명']]).trim(),
+      type: lastType,
+      shelfQty: shelfQtyStr,
+      hostname: row[colMap['TID & Hostname']] || row[colMap['TID']] || '-',
+      oampIp: row[colMap['OAMP(GNE)']] || '-',
+      loopbackIp: row[colMap['Loopback IP']] || '-',
+      version: lastVersion,
+      note: row[colMap['비고']] || ''
+    });
+  }
+
+  if (newData.length > 0) {
+    allEquipmentList = [...allEquipmentList, ...newData];
+    updateFilterOptions();
+    applyFilters(); // 필터 적용 및 테이블 렌더링
+  } else {
+    alert('올바른 양식의 장비 리스트를 찾을 수 없습니다.');
+  }
+}
+
+/* ============================================================
+   3. 필터 설정 및 데이터 검색
+   ============================================================ */
+function updateFilterOptions() {
+  const projectSelect = document.getElementById('filterProject');
+  const typeSelect = document.getElementById('filterType');
+
+  const projects = [...new Set(allEquipmentList.map(item => item.project))].filter(Boolean).sort();
+  const types = [...new Set(allEquipmentList.map(item => item.type))].filter(Boolean).sort();
+
+  projectSelect.innerHTML = '<option value="All">전체 망 보기</option>';
+  projects.forEach(p => projectSelect.innerHTML += `<option value="${p}">${p}</option>`);
+
+  typeSelect.innerHTML = '<option value="All">전체 타입 보기</option>';
+  types.forEach(t => typeSelect.innerHTML += `<option value="${t}">${t}</option>`);
+}
+
+function applyFilters() {
+  const pFilter = document.getElementById('filterProject').value;
+  const tFilter = document.getElementById('filterType').value;
+  const searchTxt = document.getElementById('searchInput').value.toLowerCase();
+
+  filteredData = allEquipmentList.filter(item => {
+    const matchProject = pFilter === 'All' || item.project === pFilter;
+    const matchType = tFilter === 'All' || item.type === tFilter;
+    const matchSearch = searchTxt === '' || 
+                        item.station.toLowerCase().includes(searchTxt) ||
+                        item.hostname.toLowerCase().includes(searchTxt) ||
+                        item.oampIp.toLowerCase().includes(searchTxt) ||
+                        item.loopbackIp.toLowerCase().includes(searchTxt) ||
+                        item.ring.toLowerCase().includes(searchTxt);
+    return matchProject && matchType && matchSearch;
+  });
+
+  renderTable();
+}
+
+/* ============================================================
+   4. 화면 렌더링 및 통계 업데이트
+   ============================================================ */
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-dim" style="padding: 40px;">조건에 맞는 장비 데이터가 없습니다.</td></tr>`;
+  } else {
+    filteredData.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      const displayNo = index + 1; 
+
+      // Shelf 수량을 예쁜 뱃지 형태로 변환 (예: 1830PSS-16II: 1)
+      let shelfHtml = '-';
+      if (item.shelfQty && item.shelfQty !== '-') {
+        shelfHtml = item.shelfQty.split(' / ').map(s => {
+          const parts = s.split(': ');
+          return `<span class="shelf-badge">${esc(parts[0])}: <b>${esc(parts[1])}</b></span>`;
+        }).join('');
+      }
+
+      tr.innerHTML = `
+        <td class="text-center text-dim">${displayNo}</td>
+        <td><span class="badge">${esc(item.project)}</span></td>
+        <td class="text-dim">${esc(item.ring)}</td>
+        <td class="font-bold">${esc(item.station)}</td>
+        <td class="text-cyan">${esc(item.type)}</td>
+        <td>${shelfHtml}</td>
+        <td>${esc(item.hostname)}</td>
+        <td>${item.oampIp !== '-' ? `<span class="ip-block oamp" onclick="copyIP('${esc(item.oampIp)}')">${esc(item.oampIp)}</span>` : '<span class="text-dim">-</span>'}</td>
+        <td>${item.loopbackIp !== '-' ? `<span class="ip-block loopback" onclick="copyIP('${esc(item.loopbackIp)}')">${esc(item.loopbackIp)}</span>` : '<span class="text-dim">-</span>'}</td>
+        <td class="text-dim">${esc(item.version)}</td>
+        <td class="text-dim">${esc(item.note)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 하단 통계 바 업데이트
+  document.getElementById('sTotal').textContent = allEquipmentList.length;
+  document.getElementById('sVisible').textContent = filteredData.length;
+}
+
+/* ============================================================
+   5. 엑셀 내보내기 기능 (SheetJS)
+   ============================================================ */
+function exportExcel() {
+  if (filteredData.length === 0) {
+    alert('내보낼 데이터가 없습니다. 파일을 먼저 업로드해주세요.');
+    return;
+  }
+
+  const exportData = filteredData.map((item, idx) => ({
+    'No': idx + 1,
+    '망구분(프로젝트)': item.project,
+    'Ring 명': item.ring,
+    '국소명': item.station,
+    '장비타입': item.type,
+    'Shelf 수량': item.shelfQty,
+    'Hostname (TID)': item.hostname,
+    'OAMP(GNE)': item.oampIp,
+    'Loopback IP': item.loopbackIp,
+    'Version': item.version,
+    '비고': item.note
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "IP_List");
+  
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  XLSX.writeFile(workbook, `${dateStr}_Nokia_IP_Manager.xlsx`);
+}
+
+/* ============================================================
+   6. 장비 통계 모달 기능 (팝업)
+   ============================================================ */
+function openStatsModal() {
+  if (allEquipmentList.length === 0) {
+    alert('데이터가 없습니다. 먼저 엑셀/CSV 파일을 업로드해주세요.');
+    return;
+  }
+
+  const body = document.getElementById('statsModalBody');
+  const total = allEquipmentList.length;
+  const statsMap = {};
+  
+  allEquipmentList.forEach(item => {
+    const p = item.project || '미분류';
+    const t = item.type || '미분류';
+
+    if (!statsMap[p]) {
+      statsMap[p] = { total: 0, types: {} };
+    }
+    statsMap[p].total += 1;
+    statsMap[p].types[t] = (statsMap[p].types[t] || 0) + 1;
+  });
+
+  const sortedProjects = Object.keys(statsMap).sort((a, b) => statsMap[b].total - statsMap[a].total);
+
+  let gridHtml = '';
+  sortedProjects.forEach(p => {
+    const data = statsMap[p];
+    const sortedTypes = Object.keys(data.types).sort((a, b) => data.types[b] - data.types[a]);
+
+    let typeRowsHtml = sortedTypes.map(t =>
+      `<div class="stat-sub-row">
+         <span>- ${esc(t)}</span>
+         <span style="color:#fff;">${data.types[t]}대</span>
+       </div>`
+    ).join('');
+
+    gridHtml += `
+      <div class="stat-card">
+        <h3>${esc(p)} <span>(총 ${data.total}대)</span></h3>
+        <div style="margin-top: 10px;">
+          ${typeRowsHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  body.innerHTML = `
+    <div style="text-align:center; margin-bottom: 20px; font-size: 16px;">
+      현재 등록된 총 장비는 <strong style="color:var(--nk-cyan); font-size: 20px;">${total}</strong>대 입니다.
+    </div>
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+      ${gridHtml}
+    </div>
+  `;
+
+  document.getElementById('statsModal').classList.add('show');
+}
+
+function closeStatsModal() {
+  const modal = document.getElementById('statsModal');
+  if(modal) modal.classList.remove('show');
+}
+
+/* ============================================================
+   7. 유틸리티 (IP 복사, XSS 방어, 단축키)
+   ============================================================ */
+function copyIP(ip) {
+  if (!ip || ip === '-') return;
+  navigator.clipboard.writeText(ip).then(() => {
+    const t = document.getElementById('toast');
+    t.textContent = `📋 ${ip} 복사됨`;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  }).catch(() => {});
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').blur();
+    closeStatsModal(); 
+  }
+});
+</script>
+
+</body>
+</html>
