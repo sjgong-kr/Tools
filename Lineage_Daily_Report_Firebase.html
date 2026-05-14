@@ -1264,13 +1264,9 @@
         
         let inventory = {};
         let equipped = {};
-        
-        // 보관함 모달용 상태 변수
         let currentAddingSlot = null;
-        let currentEditingItemId = null;
-        let isGlobalAdd = false;
         
-        const standardBuffs = [ 
+        const defaultBuffs = [ 
             { id: 'buff_shield', name: '쉴드 (AC -2)', ac: 2 }, 
             { id: 'buff_b_armor', name: '블레스드 아머 (AC -3)', ac: 3 }, 
             { id: 'buff_earth', name: '어스 스킨 (AC -6)', ac: 6 }, 
@@ -1278,6 +1274,7 @@
             { id: 'buff_sub', name: '구독 버프 (AC -1)', ac: 1 }, 
             { id: 'buff_sec', name: '보안서비스 (AC -1)', ac: 1 } 
         ];
+        let userBuffs = [];
 
         // ==========================================
         // 성장 일지
@@ -1737,13 +1734,57 @@
         // ==========================================
         function renderBuffs() {
             document.getElementById('customBuffAc').value = appData.customBuffAc || 0;
-            document.getElementById('buffChecklist').innerHTML = standardBuffs.map(b => `
-                <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
-                    <input type="checkbox" id="${b.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${appData.activeBuffs.includes(b.id) ? 'checked' : ''} onchange="calculateTotalManualGear()">
-                    <span class="text-xs font-bold text-gray-700">${b.name}</span>
-                </label>
+            document.getElementById('buffChecklist').innerHTML = userBuffs.map(b => `
+                <div class="flex items-center bg-white pl-2.5 pr-1 py-1 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 group transition">
+                    <label class="flex items-center gap-1.5 cursor-pointer py-0.5">
+                        <input type="checkbox" id="${b.id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" ${appData.activeBuffs.includes(b.id) ? 'checked' : ''} onchange="calculateTotalManualGear()">
+                        <span class="text-xs font-bold text-gray-700">${b.name}</span>
+                    </label>
+                    <button onclick="deleteBuff('${b.id}')" class="ml-1 text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="버프 삭제">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
             `).join('');
+            window.lucide.createIcons();
         }
+
+        window.openBuffModal = function() {
+            document.getElementById('newBuffName').value = '';
+            document.getElementById('newBuffAc').value = '';
+            document.getElementById('buffModal').classList.remove('hidden');
+        };
+
+        window.closeBuffModal = function() {
+            document.getElementById('buffModal').classList.add('hidden');
+        };
+
+        window.saveNewBuff = function() {
+            const name = document.getElementById('newBuffName').value.trim();
+            const ac = parseInt(document.getElementById('newBuffAc').value) || 0;
+            if(!name) return;
+
+            const newId = 'buff_' + Date.now();
+            userBuffs.push({ id: newId, name: name + ` (AC -${ac})`, ac: ac });
+            appData.activeBuffs.push(newId); // 추가 시 자동 체크
+            
+            appData.userBuffs = userBuffs;
+            triggerSave();
+            closeBuffModal();
+            renderBuffs();
+            calculateTotalManualGear();
+        };
+
+        window.deleteBuff = function(id) {
+            window.showConfirm('버프 삭제', '이 버프를 목록에서 삭제하시겠습니까?', () => {
+                userBuffs = userBuffs.filter(b => b.id !== id);
+                appData.activeBuffs = appData.activeBuffs.filter(bId => bId !== id);
+                
+                appData.userBuffs = userBuffs;
+                triggerSave();
+                renderBuffs();
+                calculateTotalManualGear();
+            });
+        };
 
         function renderManualArmorTable() {
             const tbody = document.getElementById('manualArmorTableBody'); 
@@ -1933,7 +1974,7 @@
             });
             
             let bAc = 0, aBuffs = []; 
-            standardBuffs.forEach(b => { 
+            userBuffs.forEach(b => { 
                 const cb = document.getElementById(b.id); 
                 if(cb && cb.checked) { bAc += b.ac; aBuffs.push(b.id); } 
             });
@@ -2059,6 +2100,9 @@
             inventory = appData.inventory || {}; 
             equipped = appData.equippedItems || {}; 
             growthLogs = appData.growthDiary || [];
+            
+            // 유저 개인 버프 목록 로드 (없으면 기본값)
+            userBuffs = appData.userBuffs || JSON.parse(JSON.stringify(defaultBuffs));
             
             document.getElementById('cashDateInput').valueAsDate = new Date(); 
             document.getElementById('salesDateInput').valueAsDate = new Date();
