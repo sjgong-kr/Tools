@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리니지 클래식 방수 계산기</title>
+    <style>
+        /* ========== 초보자를 위한 CSS 설명 ==========
+           CSS는 웹페이지의 디자인을 담당합니다.
+           - 색상, 배경, 글자크기, 배치 등을 조절합니다.
+           - CSS Variables (--변수명)를 사용하면 색상 등을 한곳에서 관리할 수 있습니다.
+        */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* CSS 변수 정의 - 색상, 간격 등을 한곳에서 관리 */
+        :root {
+            --bg-primary: #0a0e27;      /* 진한 파란색 배경 */
+            --bg-secondary: #1a1f3a;    /* 살짝 밝은 파란색 */
+            --bg-tertiary: #252d4a;     /* 더 밝은 파란색 */
+            --text-primary: #ffffff;    /* 흰색 글자 */
+            --text-secondary: #b0b5c1;  /* 연한 회색 글자 */
+            --accent-gold: #d4af37;     /* 금색 (리니지 스타일) */
+            --accent-orange: #ff8c42;   /* 주황색 */
+            --accent-green: #52cc80;    /* 초록색 */
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* 전체 컨테이너 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 헤더 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+        
+        /* 탭 메뉴 */
+        .tab-container {
+            margin-bottom: 30px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+        
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 600;
+        }
+        
+        .tab-btn:hover {
+            color: var(--accent-gold);
+        }
+        
+        .tab-btn.active {
+            color: var(--accent-gold);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-gold);
+        }
+        
+        /* 탭 콘텐츠 */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 메인 콘텐츠 그리드 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        /* 입력 박스 */
+        .input-box {
+            background: linear-gradient(135deg, #1a2847 0%, #1f2d48 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .input-box:hover {
+            border-color: var(--accent-orange);
+            box-shadow: 0 8px 32px rgba(255, 140, 66, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-box h3 {
+            color: var(--accent-orange);
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-box h3::before {
+            content: '⚔️';
+            font-size: 1.2em;
+        }
+        
+        /* 입력 필드 */
+        .form-group {
+            margin-bottom: 18px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-gold);
+        }
+        
+        .form-group label {
+            display: block;
+            color: var(--accent-gold);
+            font-size: 0.95em;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: #2a3f5f;  /* 더 어두운 파란색 배경 */
+            border: 2px solid var(--accent-gold);
+            color: var(--text-primary);
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            background: #334466;
+            box-shadow: 0 0 15px rgba(255, 140, 66, 0.4);
+        }
+        
+        /* Select 요소의 option 스타일 */
+        .form-group select option {
+            background: #1a1f3a;
+            color: #ffffff;
+            padding: 10px;
+        }
+        
+        .form-group select option:checked {
+            background: linear-gradient(var(--accent-gold), var(--accent-gold));
+            background-color: var(--accent-gold) !important;
+            color: #000000 !important;
+        }
+        
+        /* 결과 영역 */
+        .results-section {
+            background: linear-gradient(135deg, #1a2847 0%, #1f2d48 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .results-section h2 {
+            color: var(--accent-gold);
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .results-section h2::before {
+            content: '📊';
+        }
+        
+        /* 결과 테이블 */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .results-table thead {
+            background: var(--bg-tertiary);
+        }
+        
+        .results-table th {
+            color: var(--accent-gold);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+        
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .results-table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .results-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-left: 3px solid var(--accent-orange);
+            padding-left: 10px;
+        }
+        
+        .monster-name {
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+        
+        .damage-value {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        /* 버튼 */
+        .btn {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+            border: none;
+            color: #000;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 140, 66, 0.5);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        /* 비교 섹션 */
+        .comparison-section {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .comparison-card {
+            background: linear-gradient(135deg, #1a2847 0%, #1f2d48 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .comparison-card:hover {
+            border-color: var(--accent-orange);
+            box-shadow: 0 8px 32px rgba(255, 140, 66, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-card h4 {
+            color: var(--accent-orange);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+        }
+        
+        .stat-value {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+        
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .content-grid,
+            .comparison-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .tab-buttons {
+                flex-wrap: wrap;
+            }
+        }
+        
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-orange);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>⚔️ 리니지 클래식 방수 계산기 🏹</h1>
+            <p>빠른 렙업을 위해 예상 방수를 비교하여 효과적인 스펙업 방법을 찾으세요!</p>
+        </div>
+        
+        <!-- 탭 메뉴 -->
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('bow')">
+                    🏹 원거리 (활)
+                </button>
+                <button class="tab-btn" onclick="switchTab('sword')">
+                    ⚔️ 근거리 (검)
+                </button>
+            </div>
+            
+            <!-- ========== 활 계산기 탭 ========== -->
+            <div id="bow" class="tab-content active">
+                <div class="content-grid">
+                    <!-- 현재 스팩 입력 -->
+                    <div class="input-box">
+                        <h3>현재 스팩</h3>
+                        <div class="form-group">
+                            <label for="bowLevel1">레벨</label>
+                            <input type="number" id="bowLevel1" value="40" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="bowDex1">Dex (민첩성)</label>
+                            <input type="number" id="bowDex1" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="bowWeapon1">무기</label>
+                            <select id="bowWeapon1">
+                                <option value="">-- 선택 --</option>
+                                <option value="사냥꾼 활">사냥꾼 활</option>
+                                <option value="크로스 보우" selected>크로스 보우</option>
+                                <option value="장궁">장궁</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowEnhance1">강화단계</label>
+                            <select id="bowEnhance1">
+                                <option value="">-- 선택 --</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7">+7</option>
+                                <option value="8" selected>+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowArrow1">화살</label>
+                            <select id="bowArrow1">
+                                <option value="">-- 선택 --</option>
+                                <option value="화살">화살</option>
+                                <option value="은 화살" selected>은 화살</option>
+                                <option value="미스릴 화살">미스릴 화살</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowBuff1">공격 버프 (추가 데미지)</label>
+                            <input type="number" id="bowBuff1" value="0" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- 변경 스팩 입력 -->
+                    <div class="input-box">
+                        <h3>변경 스팩</h3>
+                        <div class="form-group">
+                            <label for="bowLevel2">레벨</label>
+                            <input type="number" id="bowLevel2" value="40" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="bowDex2">Dex (민첩성)</label>
+                            <input type="number" id="bowDex2" value="32" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="bowWeapon2">무기</label>
+                            <select id="bowWeapon2">
+                                <option value="">-- 선택 --</option>
+                                <option value="사냥꾼 활">사냥꾼 활</option>
+                                <option value="크로스 보우">크로스 보우</option>
+                                <option value="장궁" selected>장궁</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowEnhance2">강화단계</label>
+                            <select id="bowEnhance2">
+                                <option value="">-- 선택 --</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7" selected>+7</option>
+                                <option value="8">+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowArrow2">화살</label>
+                            <select id="bowArrow2">
+                                <option value="">-- 선택 --</option>
+                                <option value="화살">화살</option>
+                                <option value="은 화살" selected>은 화살</option>
+                                <option value="미스릴 화살">미스릴 화살</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bowBuff2">공격 버프 (추가 데미지)</label>
+                            <input type="number" id="bowBuff2" value="0" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- 계산 버튼과 결과 -->
+                    <div class="results-section">
+                        <h2>현재 스팩 결과</h2>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>몬스터</th>
+                                    <th>평균 방수</th>
+                                    <th>한방 경험치</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bowResults1">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                        위의 스팩을 선택하고 계산하세요
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="results-section">
+                        <h2>변경 스팩 결과</h2>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>몬스터</th>
+                                    <th>평균 방수</th>
+                                    <th>한방 경험치</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bowResults2">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                        위의 스팩을 선택하고 계산하세요
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="calculateBow()" style="width: 100%; padding: 15px; font-size: 1.1em;">
+                    💥 방수 계산하기
+                </button>
+            </div>
+            
+            <!-- ========== 검 계산기 탭 ========== -->
+            <div id="sword" class="tab-content">
+                <div class="content-grid">
+                    <!-- 현재 스팩 입력 -->
+                    <div class="input-box">
+                        <h3>현재 스팩</h3>
+                        <div class="form-group">
+                            <label for="swordLevel1">레벨</label>
+                            <input type="number" id="swordLevel1" value="40" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="swordStr1">Str (힘)</label>
+                            <input type="number" id="swordStr1" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="swordWeapon1">무기</label>
+                            <select id="swordWeapon1">
+                                <option value="">-- 선택 --</option>
+                                <option value="일본도">일본도</option>
+                                <option value="다마스커스 검">다마스커스 검</option>
+                                <option value="레이피어">레이피어</option>
+                                <option value="메일 브레이커">메일 브레이커</option>
+                                <option value="은장검" selected>은장검</option>
+                                <option value="양손검">양손검</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="swordEnhance1">강화단계</label>
+                            <select id="swordEnhance1">
+                                <option value="">-- 선택 --</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7">+7</option>
+                                <option value="8" selected>+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="swordBuff1">공격 버프 (추가 데미지)</label>
+                            <input type="number" id="swordBuff1" value="0" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- 변경 스팩 입력 -->
+                    <div class="input-box">
+                        <h3>변경 스팩</h3>
+                        <div class="form-group">
+                            <label for="swordLevel2">레벨</label>
+                            <input type="number" id="swordLevel2" value="40" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="swordStr2">Str (힘)</label>
+                            <input type="number" id="swordStr2" value="32" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="swordWeapon2">무기</label>
+                            <select id="swordWeapon2">
+                                <option value="">-- 선택 --</option>
+                                <option value="일본도">일본도</option>
+                                <option value="다마스커스 검">다마스커스 검</option>
+                                <option value="레이피어">레이피어</option>
+                                <option value="메일 브레이커">메일 브레이커</option>
+                                <option value="은장검">은장검</option>
+                                <option value="양손검" selected>양손검</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="swordEnhance2">강화단계</label>
+                            <select id="swordEnhance2">
+                                <option value="">-- 선택 --</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7" selected>+7</option>
+                                <option value="8">+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="swordBuff2">공격 버프 (추가 데미지)</label>
+                            <input type="number" id="swordBuff2" value="0" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- 결과 -->
+                    <div class="results-section">
+                        <h2>현재 스팩 결과</h2>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>몬스터</th>
+                                    <th>평균 방수</th>
+                                    <th>한방 경험치</th>
+                                </tr>
+                            </thead>
+                            <tbody id="swordResults1">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                        위의 스팩을 선택하고 계산하세요
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="results-section">
+                        <h2>변경 스팩 결과</h2>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>몬스터</th>
+                                    <th>평균 방수</th>
+                                    <th>한방 경험치</th>
+                                </tr>
+                            </thead>
+                            <tbody id="swordResults2">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                        위의 스팩을 선택하고 계산하세요
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="calculateSword()" style="width: 100%; padding: 15px; font-size: 1.1em;">
+                    💥 방수 계산하기
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== JavaScript 부분 설명 ==========
+         JavaScript는 웹페이지의 기능을 담당합니다.
+         - 사용자 입력을 받고
+         - 계산을 하고
+         - 결과를 표시합니다.
+    -->
+    <script>
+        // ===== 게임 데이터 정의 =====
+        // 이 부분은 엑셀의 DB 시트와 동일한 데이터입니다.
+        const gameData = {
+            bow: {
+                // 무기 데이터: {작은몹 데미지, 큰몹 데미지, 추가 데미지}
+                weapons: {
+                    '사냥꾼 활': { small: 2, big: 2, extra: 1 },
+                    '크로스 보우': { small: 3, big: 2, extra: 2 },
+                    '장궁': { small: 3, big: 3, extra: 3 }
+                },
+                // 화살 데이터
+                arrows: {
+                    '화살': { small: 6, big: 5, undead: 0 },
+                    '은 화살': { small: 7, big: 6, undead: 10 },
+                    '미스릴 화살': { small: 10, big: 9, undead: 10 }
+                },
+                // 버프 데이터: 버프이름 → 데미지
+                buffs: {
+                    '홀리 웨폰': 1,
+                    '인챈트 웨폰': 2,
+                    '윈드 샷': 0,
+                    '아이 오브 스톰': 2,
+                    '블레스 웨폰': 2,
+                    '전투 강화 주문서': 1
+                },
+                // 몬스터 데이터
+                monsters: [
+                    { name: '켈베로스', exp: 577, hp: 120, ac: -20, type: 'small', level: 24, undead: false },
+                    { name: '버그베어', exp: 485, hp: 250, ac: -6, type: 'big', level: 22, undead: false },
+                    { name: '킹 버그베어', exp: 901, hp: 400, ac: -13, type: 'big', level: 30, undead: false },
+                    { name: '해골돌격병', exp: 842, hp: 280, ac: -15, type: 'small', level: 29, undead: true },
+                    { name: '해골근위병', exp: 730, hp: 270, ac: -15, type: 'small', level: 27, undead: true },
+                    { name: '해골저격병', exp: 730, hp: 250, ac: -15, type: 'small', level: 27, undead: true },
+                    { name: '무리안', exp: 901, hp: 350, ac: -12, type: 'small', level: 30, undead: false },
+                    { name: '에틴', exp: 1226, hp: 500, ac: -22, type: 'big', level: 35, undead: false },
+                    { name: '서큐버스', exp: 1370, hp: 400, ac: -25, type: 'small', level: 37, undead: false },
+                    { name: '서큐버스퀸', exp: 1682, hp: 500, ac: -32, type: 'small', level: 41, undead: false },
+                    { name: '거대 개미', exp: 145, hp: 90, ac: -4, type: 'small', level: 12, undead: false },
+                    { name: '거대 병정 개미', exp: 401, hp: 150, ac: -7, type: 'big', level: 20, undead: false }
+                ]
+            },
+            sword: {
+                weapons: {
+                    '일본도': { small: 10, big: 12, extra: 0, undead: 0 },
+                    '다마스커스 검': { small: 10, big: 11, extra: 0, undead: 0 },
+                    '레이피어': { small: 11, big: 6, extra: 0, undead: 5 },
+                    '메일 브레이커': { small: 4, big: 5, extra: 0, undead: 5 },
+                    '은장검': { small: 8, big: 12, extra: 0, undead: 10 },
+                    '양손검': { small: 14, big: 16, extra: 0, undead: 0 }
+                },
+                buffs: {
+                    '홀리 웨폰': 1,
+                    '인챈트 웨폰': 2,
+                    '전투 강화 주문서': 1,
+                    '블레스 웨폰': 2,
+                    '버서커스': 5,
+                    '글로잉 오라': 1,
+                    '파이어 웨폰': 3,
+                    '브레스 오브 파이어': 3
+                },
+                monsters: [
+                    { name: '켈베로스', exp: 577, hp: 120, ac: -20, type: 'small', level: 24, undead: false },
+                    { name: '버그베어', exp: 485, hp: 250, ac: -6, type: 'big', level: 22, undead: false },
+                    { name: '킹 버그베어', exp: 901, hp: 400, ac: -13, type: 'big', level: 30, undead: false },
+                    { name: '해골돌격병', exp: 842, hp: 280, ac: -15, type: 'small', level: 29, undead: true },
+                    { name: '해골근위병', exp: 730, hp: 270, ac: -15, type: 'small', level: 27, undead: true },
+                    { name: '해골저격병', exp: 730, hp: 250, ac: -15, type: 'small', level: 27, undead: true },
+                    { name: '무리안', exp: 901, hp: 350, ac: -12, type: 'small', level: 30, undead: false },
+                    { name: '에틴', exp: 1226, hp: 500, ac: -22, type: 'big', level: 35, undead: false },
+                    { name: '서큐버스', exp: 1370, hp: 400, ac: -25, type: 'small', level: 37, undead: false },
+                    { name: '서큐버스퀸', exp: 1682, hp: 500, ac: -32, type: 'small', level: 41, undead: false },
+                    { name: '거대 개미', exp: 145, hp: 90, ac: -4, type: 'small', level: 12, undead: false },
+                    { name: '거대 병정 개미', exp: 401, hp: 150, ac: -7, type: 'big', level: 20, undead: false }
+                ]
+            }
+        };
+
+        // ===== 스탯별 데미지 테이블 =====
+        // DEX 또는 STR 값에 따른 보너스 데미지
+        const statDamageTable = {
+            5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0,
+            11: 1, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1,
+            17: 1, 18: 2, 19: 2, 20: 2, 21: 2, 22: 2,
+            23: 3, 24: 3, 25: 5, 26: 5, 27: 5, 28: 5,
+            29: 5, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6,
+            35: 7, 36: 7, 37: 7, 38: 7, 39: 8, 40: 8
+        };
+        
+        // ===== 탭 전환 함수 =====
+        // onclick="switchTab('bow')" 처럼 HTML에서 호출됩니다.
+        function switchTab(tabName) {
+            // 모든 탭 콘텐츠 숨기기
+            const allTabs = document.querySelectorAll('.tab-content');
+            allTabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 모든 탭 버튼 비활성화
+            const allButtons = document.querySelectorAll('.tab-btn');
+            allButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // 선택한 탭 표시
+            document.getElementById(tabName).classList.add('active');
+            
+            // 선택한 버튼 활성화
+            event.target.classList.add('active');
+        }
+        
+        // ===== 활 계산 함수 =====
+        function calculateBow() {
+            // 현재 스팩 입력값 가져오기
+            const specs1 = {
+                level: parseInt(document.getElementById('bowLevel1').value),
+                dex: parseInt(document.getElementById('bowDex1').value),
+                weapon: document.getElementById('bowWeapon1').value,
+                enhance: parseInt(document.getElementById('bowEnhance1').value),
+                arrow: document.getElementById('bowArrow1').value,
+                buff: parseInt(document.getElementById('bowBuff1').value)
+            };
+            
+            // 변경 스팩 입력값 가져오기
+            const specs2 = {
+                level: parseInt(document.getElementById('bowLevel2').value),
+                dex: parseInt(document.getElementById('bowDex2').value),
+                weapon: document.getElementById('bowWeapon2').value,
+                enhance: parseInt(document.getElementById('bowEnhance2').value),
+                arrow: document.getElementById('bowArrow2').value,
+                buff: parseInt(document.getElementById('bowBuff2').value)
+            };
+            
+            // 계산 실행
+            const results1 = calculateDamage(specs1, 'bow');
+            const results2 = calculateDamage(specs2, 'bow');
+            
+            // 결과 표시
+            displayResults(results1, 'bowResults1');
+            displayResults(results2, 'bowResults2');
+        }
+        
+        // ===== 검 계산 함수 =====
+        function calculateSword() {
+            const specs1 = {
+                level: parseInt(document.getElementById('swordLevel1').value),
+                str: parseInt(document.getElementById('swordStr1').value),
+                weapon: document.getElementById('swordWeapon1').value,
+                enhance: parseInt(document.getElementById('swordEnhance1').value),
+                buff: parseInt(document.getElementById('swordBuff1').value)
+            };
+            
+            const specs2 = {
+                level: parseInt(document.getElementById('swordLevel2').value),
+                str: parseInt(document.getElementById('swordStr2').value),
+                weapon: document.getElementById('swordWeapon2').value,
+                enhance: parseInt(document.getElementById('swordEnhance2').value),
+                buff: parseInt(document.getElementById('swordBuff2').value)
+            };
+            
+            const results1 = calculateDamage(specs1, 'sword');
+            const results2 = calculateDamage(specs2, 'sword');
+            
+            displayResults(results1, 'swordResults1');
+            displayResults(results2, 'swordResults2');
+        }
+        
+        // ===== 방수 계산 함수 (엑셀 공식과 동일) =====
+        function calculateDamage(specs, type) {
+            const results = [];
+            
+            if (type === 'bow') {
+                const weaponData = gameData.bow.weapons[specs.weapon];
+                const arrowData = gameData.bow.arrows[specs.arrow];
+                
+                if (!weaponData || !arrowData) {
+                    return [];
+                }
+                
+                // 스탯 데미지 계산 (DEX 기반)
+                const statDmg = statDamageTable[specs.dex] || 0;
+                
+                // 버프 데미지 계산
+                let buffDmg = 0;
+                // HTML에서 버프는 text 형식으로 여러 개 받을 수 있음
+                // 여기서는 input 값을 직접 사용하도록 수정
+                
+                // 렙 추타 = INT(레벨 / 10)
+                const levelBonus = Math.floor(specs.level / 10);
+                
+                gameData.bow.monsters.forEach(monster => {
+                    // 버프 데미지 다시 계산 (이번엔 input에서 숫자로 받음)
+                    const buffDmg_final = specs.buff || 0;
+                    
+                    // 몬스터 타입에 따른 무기 데미지
+                    const weaponMin = 1;  // 무기 min은 항상 1
+                    const weaponMax = weaponData[monster.type];
+                    
+                    // 화살 데미지
+                    const arrowMin = 1;  // 화살 min은 항상 1
+                    const arrowMax = arrowData[monster.type];
+                    
+                    // 추가 데미지 (무기 추뎀)
+                    const extra = weaponData.extra || 0;
+                    
+                    // 언데드 추뎀
+                    let undeadExtra = 0;
+                    if (monster.undead && arrowData.undead) {
+                        undeadExtra = arrowData.undead;
+                    }
+                    
+                    // 강화 데미지 = 강화단계
+                    const enhanceDmg = specs.enhance || 0;
+                    
+                    // 최소 데미지 = 무기min + 화살min + 추뎀 + 언데드 + 강화 + 스탯 + 버프 + 렙보너스
+                    const minDmg = weaponMin + arrowMin + extra + undeadExtra + enhanceDmg + statDmg + buffDmg_final + levelBonus;
+                    
+                    // 최대 데미지 = 무기max + 화살max + 추뎀 + 언데드 + 강화 + 스탯 + 버프 + 렙보너스
+                    const maxDmg = weaponMax + arrowMax + extra + undeadExtra + enhanceDmg + statDmg + buffDmg_final + levelBonus;
+                    
+                    // 평균 데미지
+                    const avgDmg = (minDmg + maxDmg) / 2;
+                    
+                    // 방수 = HP / 평균 데미지
+                    const shots = monster.hp / avgDmg;
+                    const shotsRounded = Math.ceil(shots);
+                    
+                    // 한방당 경험치 = 총경험치 / 방수
+                    const expPerHit = Math.ceil(monster.exp / shotsRounded);
+                    
+                    results.push({
+                        name: monster.name,
+                        shots: shots.toFixed(2),
+                        shotsRounded: shotsRounded,
+                        minShots: Math.ceil(monster.hp / maxDmg),
+                        maxShots: Math.ceil(monster.hp / minDmg),
+                        expPerHit: expPerHit
+                    });
+                });
+                
+            } else if (type === 'sword') {
+                const weaponData = gameData.sword.weapons[specs.weapon];
+                
+                if (!weaponData) {
+                    return [];
+                }
+                
+                // 스탯 데미지 (STR 기반)
+                const statDmg = statDamageTable[specs.str] || 0;
+                
+                // 렙 추타
+                const levelBonus = Math.floor(specs.level / 10);
+                
+                gameData.sword.monsters.forEach(monster => {
+                    const buffDmg_final = specs.buff || 0;
+                    
+                    const weaponMin = 1;
+                    const weaponMax = weaponData[monster.type];
+                    
+                    const enhanceDmg = specs.enhance || 0;
+                    const extra = weaponData.extra || 0;
+                    
+                    // 언데드 추뎀 (1~20 랜덤, 언데드 몬스터일 때만)
+                    let undeadMin = 0;
+                    let undeadMax = 0;
+                    if (monster.undead && weaponData.undead) {
+                        undeadMin = 1;      // 언데드 추뎀 최소값
+                        undeadMax = 20;     // 언데드 추뎀 최대값
+                    }
+                    
+                    const minDmg = weaponMin + extra + enhanceDmg + statDmg + buffDmg_final + levelBonus + undeadMin;
+                    const maxDmg = weaponMax + extra + enhanceDmg + statDmg + buffDmg_final + levelBonus + undeadMax;
+                    
+                    const avgDmg = (minDmg + maxDmg) / 2;
+                    
+                    const shots = monster.hp / avgDmg;
+                    const shotsRounded = Math.ceil(shots);
+                    
+                    const expPerHit = Math.ceil(monster.exp / shotsRounded);
+                    
+                    results.push({
+                        name: monster.name,
+                        shots: shots.toFixed(2),
+                        shotsRounded: shotsRounded,
+                        minShots: Math.ceil(monster.hp / maxDmg),
+                        maxShots: Math.ceil(monster.hp / minDmg),
+                        expPerHit: expPerHit
+                    });
+                });
+            }
+            
+            return results;
+        }
+        
+        // ===== 결과 표시 함수 =====
+        function displayResults(results, targetId) {
+            const tbody = document.getElementById(targetId);
+            
+            // 이전 결과 제거
+            tbody.innerHTML = '';
+            
+            // 결과가 없으면 메시지 표시
+            if (results.length === 0) {
+                tbody.innerHTML = `<tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                        모든 항목을 선택하세요
+                    </td>
+                </tr>`;
+                return;
+            }
+            
+            // 경험치 순으로 정렬 (많은 순)
+            results.sort((a, b) => b.expPerHit - a.expPerHit);
+            
+            // 결과를 HTML로 변환해서 테이블에 추가
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                const shotsRange = `${result.minShots}~${result.maxShots}방`;
+                row.innerHTML = `
+                    <td class="monster-name">${result.name}</td>
+                    <td class="damage-value">${result.shots}방</td>
+                    <td class="damage-value">${result.expPerHit.toLocaleString()} exp</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 페이지 로드시 처음 계산 실행 (기본값으로)
+        window.addEventListener('load', function() {
+            calculateBow();
+        });
+    </script>
+</body>
+</html>
