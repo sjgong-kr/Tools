@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리니지 클래식 세력 및 내역 기록 툴</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 화면 캡쳐를 위한 html2canvas 라이브러리 추가 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
@@ -21,187 +20,45 @@
             overflow-x: hidden;
         }
 
-        .lineage-border {
-            border: 1px solid #4a3b2c;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        }
+        .lineage-border { border: 1px solid #4a3b2c; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); }
+        .btn-lineage { background: linear-gradient(to bottom, #5d4a36, #3b2c1f); border: 1px solid #7a634a; color: #ebdcb8; transition: all 0.2s; }
+        .btn-lineage:hover { background: linear-gradient(to bottom, #6d5843, #4a3828); border-color: #8c7358; color: #fff; }
+        .btn-lineage-danger { background: linear-gradient(to bottom, #6d2a2a, #4a1c1c); border: 1px solid #8a3636; color: #ffcccc; }
+        .btn-lineage-danger:hover { background: linear-gradient(to bottom, #7d3333, #5a2222); }
+        .input-lineage { background-color: #0a0a0a; border: 1px solid #4a3b2c; color: #d0c0a0; }
+        .input-lineage:focus { outline: none; border-color: #7a634a; box-shadow: 0 0 5px rgba(122, 99, 74, 0.5); }
 
-        .btn-lineage {
-            background: linear-gradient(to bottom, #5d4a36, #3b2c1f);
-            border: 1px solid #7a634a;
-            color: #ebdcb8;
-            transition: all 0.2s;
-        }
-
-        .btn-lineage:hover {
-            background: linear-gradient(to bottom, #6d5843, #4a3828);
-            border-color: #8c7358;
-            color: #fff;
-        }
-        
-        .btn-lineage-danger {
-            background: linear-gradient(to bottom, #6d2a2a, #4a1c1c);
-            border: 1px solid #8a3636;
-            color: #ffcccc;
-        }
-        
-        .btn-lineage-danger:hover {
-            background: linear-gradient(to bottom, #7d3333, #5a2222);
-        }
-
-        .input-lineage {
-            background-color: #0a0a0a;
-            border: 1px solid #4a3b2c;
-            color: #d0c0a0;
-        }
-        
-        .input-lineage:focus {
-            outline: none;
-            border-color: #7a634a;
-            box-shadow: 0 0 5px rgba(122, 99, 74, 0.5);
-        }
-
-        /* 커스텀 스크롤바 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #4a3b2c; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #5d4a36; }
 
-        /* 조직도 트리 (Org Chart) CSS */
-        .org-chart-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            flex-wrap: nowrap;
-            gap: 2rem;
-            padding: 2rem 0;
-            overflow-x: auto;
-            min-height: 400px;
-        }
-
-        .tree-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0; /* 화면이 좁아져도 그룹이 압착되지 않도록 보호 */
-        }
-
-        .tree-stem {
-            width: 2px;
-            height: 25px;
-            background-color: #5d4a36;
-        }
-
-        .tree-branches {
-            display: flex;
-            position: relative;
-            padding-top: 25px;
-            margin-top: -1px;
-            flex-wrap: nowrap; /* 줄바꿈 금지: 선 깨짐의 주원인 해결 */
-        }
-
-        .tree-node {
-            position: relative;
-            padding: 0 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0; /* 노드 크기 유지 */
-        }
-
-        .tree-node::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #5d4a36;
-        }
+        .org-chart-container { display: flex; justify-content: center; align-items: flex-start; flex-wrap: nowrap; gap: 2rem; padding: 2rem 0; overflow-x: auto; min-height: 400px; }
+        .tree-group { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .tree-stem { width: 2px; height: 25px; background-color: #5d4a36; }
+        .tree-branches { display: flex; position: relative; padding-top: 25px; margin-top: -1px; flex-wrap: nowrap; }
+        .tree-node { position: relative; padding: 0 12px; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .tree-node::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background-color: #5d4a36; }
         .tree-node:first-child::before { left: 50%; width: 50%; }
         .tree-node:last-child::before { width: 50%; }
         .tree-node:only-child::before { display: none; }
+        .tree-node::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 25px; background-color: #5d4a36; transform: translateX(-50%); }
 
-        .tree-node::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 25px;
-            background-color: #5d4a36;
-            transform: translateX(-50%);
-        }
-
-        .faction-box {
-            width: 130px;
-            background: linear-gradient(180deg, #2b4c7e 0%, #1a2a47 100%);
-            border: 1px solid #4a6b9a;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            margin-top: 25px;
-            position: relative;
-            z-index: 10;
-        }
+        .faction-box { width: 130px; background: linear-gradient(180deg, #2b4c7e 0%, #1a2a47 100%); border: 1px solid #4a6b9a; border-radius: 4px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; margin-top: 25px; position: relative; z-index: 10; }
+        .faction-box.theme-red { background: linear-gradient(180deg, #7e2b2b 0%, #471a1a 100%); border: 1px solid #9a4a4a; }
+        .faction-box.theme-neutral { background: linear-gradient(180deg, #3d4a3d 0%, #1f2a1f 100%); border: 1px solid #5a6b5a; }
+        .faction-box:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); border-color: #ebdcb8; }
         
-        .faction-box.theme-red {
-            background: linear-gradient(180deg, #7e2b2b 0%, #471a1a 100%);
-            border: 1px solid #9a4a4a;
-        }
+        .line-action-btn { transition: all 0.2s; }
+        .line-action-btn:hover.edit { color: #ebdcb8; transform: scale(1.1); }
+        .line-action-btn:hover.delete { color: #ff6b6b; transform: scale(1.1); }
         
-        .faction-box.theme-neutral {
-            background: linear-gradient(180deg, #3d4a3d 0%, #1f2a1f 100%);
-            border: 1px solid #5a6b5a;
-        }
-
-        .faction-box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
-            border-color: #ebdcb8;
-        }
-        
-        /* 라인 수정 및 삭제 버튼 호버 효과 */
-        .line-action-btn {
-            transition: all 0.2s;
-        }
-        .line-action-btn:hover.edit {
-            color: #ebdcb8;
-            transform: scale(1.1);
-        }
-        .line-action-btn:hover.delete {
-            color: #ff6b6b;
-            transform: scale(1.1);
-        }
-        
-        .emblem-upload-area {
-            cursor: pointer;
-            position: relative;
-        }
-        .emblem-upload-area::after {
-            content: '변경';
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-            border-radius: inherit;
-        }
+        .emblem-upload-area { cursor: pointer; position: relative; }
+        .emblem-upload-area::after { content: '변경'; position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white; font-size: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border-radius: inherit; }
         .emblem-upload-area:hover::after { opacity: 1; }
         
-        /* 캡쳐 모드일 때 불필요한 요소 숨기기 */
-        .capture-mode .hide-on-capture {
-            display: none !important;
-        }
-        .capture-mode {
-            padding: 40px !important;
-            background-color: #0f0f0f !important;
-        }
+        .capture-mode .hide-on-capture { display: none !important; }
+        .capture-mode { padding: 40px !important; background-color: #0f0f0f !important; }
     </style>
 </head>
 <body class="p-2 md:p-6 text-sm">
@@ -212,24 +69,21 @@
                 <h1 class="text-3xl font-black text-[#ebdcb8] tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     LINEAGE CLASSIC
                 </h1>
-                <h2 class="text-gray-400 font-medium tracking-wide mt-1">세력 구도 및 일과 기록 시스템</h2>
+                <h2 class="text-gray-400 font-medium tracking-wide mt-1">세력 구도 및 일과 기록 시스템 (Firebase 연동)</h2>
             </div>
             <div class="flex flex-col items-end gap-2 mt-4 md:mt-0">
-                <div class="flex gap-2 mb-2 flex-wrap justify-end">
+                <div class="flex gap-2 mb-1 flex-wrap justify-end items-center">
                     <button onclick="captureOrgChart()" class="bg-[#2c4a2c] hover:bg-[#3a653a] text-white px-3 py-1.5 rounded text-xs border border-[#4a8a4a] transition-colors flex items-center gap-1 font-bold">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         📸 세력도 캡쳐
                     </button>
                     <button onclick="exportData()" class="bg-[#1c2e4a] hover:bg-[#2a4365] text-white px-3 py-1.5 rounded text-xs border border-[#2c588a] transition-colors flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         데이터 백업(JSON)
                     </button>
                     <label class="bg-[#4a2e1c] hover:bg-[#65432a] text-white px-3 py-1.5 rounded text-xs border border-[#8a582c] transition-colors cursor-pointer flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        데이터 복원
-                        <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                        데이터 복원 <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
                     </label>
                 </div>
+                
                 <div class="flex gap-4 text-right">
                     <div>
                         <div class="text-gray-500 text-xs">총 세력</div>
@@ -250,7 +104,6 @@
                     <svg class="w-5 h-5 mr-2 text-[#8c7358]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     새로운 혈맹 창설 (열기/닫기)
                 </div>
-                <svg class="w-5 h-5 transform group-open:rotate-180 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </summary>
             <div class="p-5 border-t border-[#333]">
                 <form id="faction-form" class="flex flex-wrap gap-4 items-end">
@@ -273,7 +126,7 @@
 
         <!-- 조직도 시각화 영역 -->
         <div id="org-chart-wrapper" class="bg-[#0f0f0f] border border-[#222] rounded-xl relative overflow-hidden shadow-2xl flex flex-col">
-            <!-- JavaScript로 트리가 그려집니다 -->
+            <div class="p-20 text-center text-gray-600">데이터를 불러오는 중입니다...</div>
         </div>
     </div>
 
@@ -284,7 +137,6 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             
-            <!-- 좌측: 혈맹 정보 및 내역 기록장 (웹툰 작가님 특화) -->
             <div class="w-full md:w-[45%] bg-[#1a1a1a] flex flex-col border-b md:border-b-0 md:border-r border-[#333] z-10">
                 <div class="p-6 bg-gradient-to-b from-[#252525] to-[#1a1a1a] border-b border-[#333]">
                     <div class="flex items-center gap-3 mb-2">
@@ -296,22 +148,16 @@
                 </div>
                 
                 <div class="p-6 flex-grow flex flex-col">
-                    <label class="block text-sm font-semibold text-[#8c7358] mb-2 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        기타 내역 및 일과 기록장
-                    </label>
-                    <textarea id="detail-desc-input" class="input-lineage w-full p-4 rounded flex-grow resize-none text-sm leading-relaxed" placeholder="이 혈맹과 관련된 주요 사건, 적대 변동, 오늘의 주요 일과 등을 일기처럼 자유롭게 기록하세요."></textarea>
+                    <label class="block text-sm font-semibold text-[#8c7358] mb-2 flex items-center gap-2">기타 내역 및 일과 기록장</label>
+                    <textarea id="detail-desc-input" class="input-lineage w-full p-4 rounded flex-grow resize-none text-sm leading-relaxed" placeholder="이 혈맹과 관련된 주요 사건, 적대 변동, 오늘의 주요 일과 등을 자유롭게 기록하세요."></textarea>
                     
                     <div class="flex gap-2 mt-4">
                         <button onclick="saveFactionDesc()" class="btn-lineage flex-grow py-2 rounded font-medium">기록 저장</button>
-                        <button onclick="deleteCurrentFaction()" class="btn-lineage-danger px-4 py-2 rounded hover:bg-red-900 transition-colors" title="혈맹 개별 삭제">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+                        <button onclick="deleteCurrentFaction()" class="btn-lineage-danger px-4 py-2 rounded hover:bg-red-900 transition-colors" title="혈맹 개별 삭제">삭제</button>
                     </div>
                 </div>
             </div>
             
-            <!-- 우측: 길드원 관리 -->
             <div class="w-full md:w-[55%] p-6 flex flex-col bg-[#111]">
                 <div class="flex justify-between items-end mb-4 border-b border-[#333] pb-2">
                     <h3 class="text-xl font-bold text-[#ebdcb8]">길드원 명단</h3>
@@ -323,10 +169,8 @@
                 <form id="member-add-form" class="flex gap-2 mb-4 bg-[#1a1a1a] p-3 rounded border border-[#2a2a2a] shadow-inner items-center">
                     <input type="text" id="mem-name" placeholder="캐릭터명" required class="input-lineage w-1/4 px-3 py-1.5 rounded text-sm">
                     <select id="mem-class" class="input-lineage w-1/4 px-2 py-1.5 rounded text-sm">
-                        <option value="군주">군주</option><option value="기사">기사</option>
-                        <option value="요정">요정</option><option value="마법사">마법사</option>
-                        <option value="다크엘프">다크엘프</option><option value="용기사">용기사</option>
-                        <option value="환술사">환술사</option>
+                        <option value="군주">군주</option><option value="기사">기사</option><option value="요정">요정</option>
+                        <option value="마법사">마법사</option><option value="다크엘프">다크엘프</option><option value="용기사">용기사</option><option value="환술사">환술사</option>
                     </select>
                     <input type="number" id="mem-level" placeholder="Lv" required min="1" max="99" class="input-lineage w-16 px-2 py-1.5 rounded text-sm text-center">
                     <input type="text" id="mem-role" placeholder="직책/메모 (선택)" class="input-lineage flex-grow px-3 py-1.5 rounded text-sm hidden md:block">
@@ -335,22 +179,42 @@
                 </form>
                 
                 <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
-                    <div id="detail-member-list" class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <!-- 멤버 렌더링 -->
-                    </div>
+                    <div id="detail-member-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 알림 팝업 컨테이너 -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2"></div>
 
-    <script>
-        // Data & Variables
-        let factions = JSON.parse(localStorage.getItem('lineageFactionsOrg')) || [];
-        let currentEditingFactionId = null;
-        let currentEditingMemberId = null; // 수정 중인 길드원 ID 상태 추가
+    <!-- Firebase Modular SDK 적용 (type="module" 필수) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+        // ==========================================
+        // 🔥 Firebase 설정 (작가님의 Key 정보로 적용 완료)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+            authDomain: "openzeroc.firebaseapp.com",
+            projectId: "openzeroc",
+            storageBucket: "openzeroc.firebasestorage.app",
+            messagingSenderId: "465944510778",
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+            measurementId: "G-M4K79K2XPG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // Global State
+        window.factions = [];
+        window.currentEditingFactionId = null;
+        window.currentEditingMemberId = null;
+        let unsubscribe = null;
 
         const classColors = {
             '군주': 'text-yellow-400', '기사': 'text-red-400', '요정': 'text-green-400',
@@ -363,67 +227,40 @@
         const memberAddForm = document.getElementById('member-add-form');
         const toastContainer = document.getElementById('toast-container');
 
-        // Init
-        function init() {
+        // --- Firebase Data Sync (로그인 없이 바로 연동) ---
+        // 페이지 로드 즉시 Firestore 구독 시작 (공용 문서 사용: lineage_area/main_data)
+        unsubscribe = onSnapshot(doc(db, "lineage_area", "main_data"), (docSnap) => {
+            if (docSnap.exists()) {
+                window.factions = docSnap.data().factions || [];
+            } else {
+                window.factions = [];
+            }
             renderOrgChart();
             updateStats();
-        }
+        }, (error) => {
+            console.error("Firestore 권한 오류:", error);
+            showToast("데이터를 불러올 권한이 없거나 설정이 잘못되었습니다. Firebase 규칙을 확인해주세요.", true);
+        });
 
-        function saveToLocalStorage() {
-            localStorage.setItem('lineageFactionsOrg', JSON.stringify(factions));
-            updateStats();
-        }
-
-        // --- JSON Backup / Restore ---
-        function exportData() {
-            if (factions.length === 0) {
-                showToast('내보낼 데이터가 없습니다.', true);
-                return;
+        // 로컬스토리지 대신 Firebase에 업로드하는 통합 저장 함수
+        async function saveToFirebase() {
+            try {
+                // factions 배열 전체를 공용 문서 하나에 덮어쓰기로 안전하게 동기화
+                await setDoc(doc(db, "lineage_area", "main_data"), { factions: window.factions });
+                updateStats();
+            } catch (error) {
+                console.error(error);
+                showToast('Firebase 저장 중 오류가 발생했습니다.', true);
             }
-            const dataStr = JSON.stringify(factions, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            const exportFileDefaultName = `lineage_record_${new Date().toISOString().slice(0,10)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            showToast('데이터를 성공적으로 백업했습니다.');
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (Array.isArray(importedData)) {
-                        if (confirm('기존 데이터를 덮어쓰고 복원하시겠습니까?')) {
-                            factions = importedData;
-                            saveToLocalStorage();
-                            renderOrgChart();
-                            showToast('데이터 복원이 완료되었습니다.');
-                        }
-                    } else {
-                        showToast('올바르지 않은 백업 파일입니다.', true);
-                    }
-                } catch (error) {
-                    showToast('파일을 읽는 중 오류가 발생했습니다.', true);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; 
         }
 
         function updateStats() {
-            document.getElementById('total-factions').textContent = factions.length;
-            const totalMembers = factions.reduce((sum, f) => sum + f.members.length, 0);
+            document.getElementById('total-factions').textContent = window.factions.length;
+            const totalMembers = window.factions.reduce((sum, f) => sum + f.members.length, 0);
             document.getElementById('total-members').textContent = totalMembers;
         }
 
-        function showToast(message, isError = false) {
+        window.showToast = function(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = `px-5 py-3 rounded-md shadow-2xl text-white text-sm font-medium transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 ${isError ? 'bg-[#7d2222] border border-[#a33]' : 'bg-[#2a4365] border border-[#4299e1]'}`;
             toast.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isError ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M5 13l4 4L19 7'}"></path></svg> ${message}`;
@@ -462,24 +299,20 @@
             const newLineName = prompt(`'${oldLineName}'의 새로운 라인 이름을 입력하세요:`, oldLineName);
             if (newLineName && newLineName.trim() !== '' && newLineName !== oldLineName) {
                 const trimmedName = newLineName.trim();
-                factions.forEach(f => { if (f.line === oldLineName) f.line = trimmedName; });
-                saveToLocalStorage();
-                renderOrgChart();
+                window.factions.forEach(f => { if (f.line === oldLineName) f.line = trimmedName; });
+                saveToFirebase(); // Firebase 저장
                 showToast(`라인명이 [${trimmedName}](으)로 변경되었습니다.`);
             }
         };
 
-        // 라인 전체 삭제 (신규 추가)
+        // 라인 전체 삭제
         window.deleteLine = function(lineName) {
-            const factionsInLine = factions.filter(f => f.line === lineName);
+            const factionsInLine = window.factions.filter(f => f.line === lineName);
             if (factionsInLine.length === 0) return;
-
-            if (confirm(`⚠️ 경고: [${lineName}] 라인을 정말 삭제하시겠습니까?\n\n소속된 ${factionsInLine.length}개의 혈맹과 길드원, 그리고 기록 내역이 모두 함께 삭제되며 복구할 수 없습니다.`)) {
-                // 해당 라인에 속한 혈맹들을 모두 제거
-                factions = factions.filter(f => f.line !== lineName);
-                saveToLocalStorage();
-                renderOrgChart();
-                showToast(`[${lineName}] 라인과 소속 혈맹들이 모두 삭제되었습니다.`, true);
+            if (confirm(`⚠️ 경고: [${lineName}] 라인을 정말 삭제하시겠습니까?\n\n소속된 혈맹과 길드원이 모두 삭제됩니다.`)) {
+                window.factions = window.factions.filter(f => f.line !== lineName);
+                saveToFirebase(); // Firebase 저장
+                showToast(`[${lineName}] 라인이 삭제되었습니다.`, true);
             }
         };
 
@@ -493,41 +326,31 @@
             const name = document.getElementById('faction-name').value.trim();
             const file = document.getElementById('faction-emblem').files[0];
 
-            if (factions.some(f => f.name === name)) {
+            if (window.factions.some(f => f.name === name)) {
                 showToast('이미 존재하는 혈맹 이름입니다.', true);
                 btn.disabled = false; btn.textContent = '창설';
                 return;
             }
 
             const emblem = await processImageToBase64(file);
-            factions.push({
+            window.factions.push({
                 id: generateId(), line: line || '무소속', name: name, description: '',
                 emblem: emblem, createdAt: new Date().toLocaleDateString(), members: []
             });
 
-            saveToLocalStorage();
-            renderOrgChart();
+            await saveToFirebase(); // Firebase 저장 대기
             factionForm.reset();
             btn.disabled = false; btn.textContent = '창설';
             showToast(`[${name}] 혈맹이 등록되었습니다.`);
         });
 
-        // HTML 조각 생성 (재사용)
+        // 조직도 HTML 생성 헬퍼
         function createTreeGroupHTML(lineName, factionsInLine, themeType) {
-            // 테마: 0(파랑-전투), 1(빨강-전투), 2(초록/회색-중립)
             let headerBg, themeClass;
-            if (themeType === 0) {
-                headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]';
-                themeClass = '';
-            } else if (themeType === 1) {
-                headerBg = 'from-[#5e1c1c] to-[#3a1111] border-[#8a2c2c]';
-                themeClass = 'theme-red';
-            } else {
-                headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]';
-                themeClass = 'theme-neutral';
-            }
+            if (themeType === 0) { headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]'; themeClass = ''; } 
+            else if (themeType === 1) { headerBg = 'from-[#5e1c1c] to-[#3a1111] border-[#8a2c2c]'; themeClass = 'theme-red'; } 
+            else { headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]'; themeClass = 'theme-neutral'; }
 
-            // 라인 수정 및 삭제 버튼이 포함된 헤더
             let html = `
                 <div class="tree-group min-w-[200px]">
                     <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2">
@@ -580,9 +403,8 @@
             return html;
         }
 
-        // 트리 렌더링 (전투 라인 vs 중립 라인 분리)
-        function renderOrgChart() {
-            if (factions.length === 0) {
+        window.renderOrgChart = function() {
+            if (window.factions.length === 0) {
                 orgChartWrapper.innerHTML = `<div class="p-20 text-center text-gray-600">등록된 세력이 없습니다. 위 폼을 통해 혈맹을 등록하세요.</div>`;
                 return;
             }
@@ -590,8 +412,7 @@
             const combatGroups = {};
             const neutralGroups = {};
 
-            // 중립/기타 키워드가 들어가면 중립 그룹으로 분류
-            factions.forEach(f => {
+            window.factions.forEach(f => {
                 const isNeutral = f.line.includes('중립') || f.line.includes('기타') || f.line.includes('무소속');
                 if (isNeutral) {
                     if (!neutralGroups[f.line]) neutralGroups[f.line] = [];
@@ -604,15 +425,14 @@
 
             let html = '';
 
-            // 1. 전투 라인 렌더링 (상단부)
+            // 전투 라인 렌더링
             const combatNames = Object.keys(combatGroups);
             if (combatNames.length > 0) {
                 html += `<div class="org-chart-container custom-scrollbar pb-8">`;
                 combatNames.forEach((lineName, index) => {
-                    const themeType = index % 2 === 0 ? 0 : 1; // 파랑 vs 빨강 교차
+                    const themeType = index % 2 === 0 ? 0 : 1; 
                     html += createTreeGroupHTML(lineName, combatGroups[lineName], themeType);
 
-                    // 2개 라인일 때만 VS 출력
                     if (combatNames.length === 2 && index === 0) {
                         html += `<div class="flex flex-col items-center pt-8 px-8 flex-shrink-0"><div class="text-4xl md:text-5xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">VS</div></div>`;
                     } else if (index < combatNames.length - 1 && combatNames.length !== 2) {
@@ -622,7 +442,7 @@
                 html += `</div>`;
             }
 
-            // 2. 중립 및 기타 라인 렌더링 (하단부)
+            // 중립/기타 라인 렌더링
             const neutralNames = Object.keys(neutralGroups);
             if (neutralNames.length > 0) {
                 const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
@@ -636,29 +456,25 @@
                         <div class="org-chart-container custom-scrollbar pt-2 min-h-0 items-start justify-center flex-wrap">
                 `;
                 neutralNames.forEach(lineName => {
-                    html += createTreeGroupHTML(lineName, neutralGroups[lineName], 2); // 2 = 중립 테마
+                    html += createTreeGroupHTML(lineName, neutralGroups[lineName], 2);
                 });
                 html += `</div></div>`;
             }
-
             orgChartWrapper.innerHTML = html;
         }
 
-        // --- 모달 제어 및 상세 관리 ---
+        // --- 상세 모달 제어 ---
         window.openFactionDetail = function(factionId) {
-            const faction = factions.find(f => f.id === factionId);
+            const faction = window.factions.find(f => f.id === factionId);
             if(!faction) return;
 
-            currentEditingFactionId = faction.id;
+            window.currentEditingFactionId = faction.id;
 
             const emblemHTML = faction.emblem 
                 ? `<img src="${faction.emblem}" class="w-8 h-8 border border-[#5d4a36] rounded object-cover shadow emblem-upload-area" onclick="document.getElementById('detail-emblem-upload').click()" title="클릭하여 마크 변경">` 
                 : `<div class="w-8 h-8 bg-black border border-[#5d4a36] rounded flex items-center justify-center text-xs text-gray-500 font-bold emblem-upload-area" onclick="document.getElementById('detail-emblem-upload').click()" title="클릭하여 마크 등록">無</div>`;
             
-            document.getElementById('detail-header-top').innerHTML = `
-                ${emblemHTML}
-                <span class="bg-[#332] text-[#d0c0a0] border border-[#5a4a3a] px-2 py-0.5 rounded text-xs font-bold">${faction.line}</span>
-            `;
+            document.getElementById('detail-header-top').innerHTML = `${emblemHTML} <span class="bg-[#332] text-[#d0c0a0] border border-[#5a4a3a] px-2 py-0.5 rounded text-xs font-bold">${faction.line}</span>`;
             document.getElementById('detail-name').textContent = faction.name;
             document.getElementById('detail-date').textContent = faction.createdAt || '-';
             document.getElementById('detail-desc-input').value = faction.description || '';
@@ -677,98 +493,107 @@
         window.closeFactionDetail = function() {
             detailModal.classList.add('hidden');
             detailModal.classList.remove('flex');
-            currentEditingFactionId = null;
+            window.currentEditingFactionId = null;
             document.getElementById('detail-emblem-upload').value = ''; 
-            cancelEditMember(); // 창 닫을 때 수정 상태 초기화
-            renderOrgChart(); 
+            cancelEditMember(); 
         };
 
+        // [이전 버그의 원인: 누락된 괄호 완벽 복구]
         window.updateFactionEmblem = async function(event) {
+            const file = event.target.files[0];
+            if (!file || !window.currentEditingFactionId) return;
+
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
+            if(faction) {
+                faction.emblem = await processImageToBase64(file);
+                saveToFirebase(); // Firebase 저장
+                openFactionDetail(faction.id); // UI 즉시 갱신
+                showToast('마크가 성공적으로 교체되었습니다.');
+            }
+        }; 
+        // ------------------------------------------
+
+        window.saveFactionDesc = function() {
+            if(!window.currentEditingFactionId) return;
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
+            faction.description = document.getElementById('detail-desc-input').value;
+            saveToFirebase(); // Firebase 저장
+            showToast('일과 및 기록이 안전하게 저장되었습니다.');
+        };
+
         // 멤버 추가 및 수정 
         memberAddForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if(!currentEditingFactionId) return;
+            if(!window.currentEditingFactionId) return;
             
-            const faction = factions.find(f => f.id === currentEditingFactionId);
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             const name = document.getElementById('mem-name').value.trim();
             const charClass = document.getElementById('mem-class').value;
             const level = parseInt(document.getElementById('mem-level').value);
             const role = document.getElementById('mem-role').value.trim();
 
-            if (currentEditingMemberId) {
+            if (window.currentEditingMemberId) {
                 // 수정 모드
-                const member = faction.members.find(m => m.id === currentEditingMemberId);
+                const member = faction.members.find(m => m.id === window.currentEditingMemberId);
                 if (member) {
-                    // 이름 중복 체크 (자기 자신 제외)
                     if (member.name !== name && faction.members.some(m => m.name === name)) {
-                        showToast('이미 등록된 캐릭터 이름입니다.', true);
-                        return;
+                        showToast('이미 등록된 캐릭터 이름입니다.', true); return;
                     }
-                    member.name = name;
-                    member.class = charClass;
-                    member.level = level;
-                    member.role = role;
+                    member.name = name; member.class = charClass; member.level = level; member.role = role;
                     showToast('캐릭터 정보가 수정되었습니다.');
                 }
             } else {
                 // 추가 모드
                 if (faction.members.some(m => m.name === name)) {
-                    showToast('이미 등록된 캐릭터입니다.', true);
-                    return;
+                    showToast('이미 등록된 캐릭터입니다.', true); return;
                 }
                 faction.members.push({ id: generateId(), name, class: charClass, level, role });
                 showToast(`${name} 캐릭터가 추가되었습니다.`);
             }
 
+            // 자동 정렬 로직
             faction.members.sort((a, b) => {
                 if (a.class === '군주' && b.class !== '군주') return -1;
                 if (b.class === '군주' && a.class !== '군주') return 1;
                 return b.level - a.level;
             });
 
-            saveToLocalStorage();
+            saveToFirebase(); // Firebase 동기화
             renderDetailMembers(faction);
-            cancelEditMember(); // 수정/추가 완료 후 폼 초기화
+            cancelEditMember();
             document.getElementById('mem-name').focus();
         });
 
-        // 길드원 정보 폼에 불러오기 (수정 모드 시작)
         window.editMember = function(memberId) {
-            const faction = factions.find(f => f.id === currentEditingFactionId);
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             if (!faction) return;
-            
             const member = faction.members.find(m => m.id === memberId);
             if (!member) return;
 
-            currentEditingMemberId = member.id;
+            window.currentEditingMemberId = member.id;
             document.getElementById('mem-name').value = member.name;
             document.getElementById('mem-class').value = member.class;
             document.getElementById('mem-level').value = member.level;
             document.getElementById('mem-role').value = member.role || '';
             
-            // 버튼 상태 변경
             document.getElementById('mem-submit-btn').textContent = '수정 완료';
             document.getElementById('mem-submit-btn').style.background = 'linear-gradient(to bottom, #2b4c7e, #1a2a47)';
             document.getElementById('mem-cancel-btn').classList.remove('hidden');
         };
 
-        // 길드원 수정 취소
         window.cancelEditMember = function() {
-            currentEditingMemberId = null;
+            window.currentEditingMemberId = null;
             memberAddForm.reset();
             document.getElementById('mem-submit-btn').textContent = '추가';
-            document.getElementById('mem-submit-btn').style.background = ''; // 기존 CSS로 복구
+            document.getElementById('mem-submit-btn').style.background = ''; 
             document.getElementById('mem-cancel-btn').classList.add('hidden');
         };
 
-        // 멤버 리스트 렌더링
         function renderDetailMembers(faction) {
             document.getElementById('detail-member-count').textContent = faction.members.length;
             const listEl = document.getElementById('detail-member-list');
-            
             if(faction.members.length === 0) {
-                listEl.innerHTML = `<div class="col-span-full text-center py-10 text-gray-600 border border-dashed border-gray-800 rounded">등록된 캐릭터가 없습니다.</div>`;
-                return;
+                listEl.innerHTML = `<div class="col-span-full text-center py-10 text-gray-600 border border-dashed border-gray-800 rounded">등록된 캐릭터가 없습니다.</div>`; return;
             }
 
             let html = '';
@@ -807,21 +632,21 @@
         }
 
         window.removeMember = function(memberId) {
-            if(!currentEditingFactionId) return;
-            const faction = factions.find(f => f.id === currentEditingFactionId);
+            if(!window.currentEditingFactionId) return;
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             if(confirm('캐릭터를 삭제하시겠습니까?')) {
                 faction.members = faction.members.filter(m => m.id !== memberId);
-                saveToLocalStorage();
+                saveToFirebase(); // Firebase 저장
                 renderDetailMembers(faction);
             }
         };
 
         window.deleteCurrentFaction = function() {
-            if(!currentEditingFactionId) return;
-            const faction = factions.find(f => f.id === currentEditingFactionId);
+            if(!window.currentEditingFactionId) return;
+            const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             if(confirm(`[${faction.name}] 혈맹을 기록에서 완전히 삭제하시겠습니까?`)) {
-                factions = factions.filter(f => f.id !== currentEditingFactionId);
-                saveToLocalStorage();
+                window.factions = window.factions.filter(f => f.id !== window.currentEditingFactionId);
+                saveToFirebase(); // Firebase 저장
                 closeFactionDetail();
                 showToast(`삭제 완료되었습니다.`, true);
             }
@@ -831,50 +656,60 @@
             if (e.target === detailModal) closeFactionDetail();
         });
 
-        // 세력도 캡쳐 기능 (html2canvas)
         window.captureOrgChart = async function() {
             if (typeof html2canvas === 'undefined') {
-                showToast('캡쳐 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', true);
-                return;
+                showToast('캡쳐 라이브러리 로딩 중입니다. 잠시 후 시도해주세요.', true); return;
             }
-
             const wrapper = document.getElementById('org-chart-wrapper');
             const originalBg = wrapper.style.backgroundColor;
-
-            // 1. 캡쳐 모드 활성화 (길드원 목록 및 버튼 등 숨김 처리 적용)
             wrapper.classList.add('capture-mode');
-            
             try {
-                showToast('세력도를 캡쳐하고 있습니다. 잠시만 기다려주세요...', false);
-                
-                // 2. 렌더링을 기다리기 위한 짧은 딜레이
+                showToast('세력도를 캡쳐하고 있습니다...', false);
                 await new Promise(resolve => setTimeout(resolve, 100));
-
-                const canvas = await html2canvas(wrapper, {
-                    backgroundColor: '#0f0f0f', // 다크 테마 배경 강제 적용
-                    scale: 2, // 텍스트를 선명하게 유지 (고해상도 캡쳐)
-                    useCORS: true, // 등록된 혈마크 등 렌더링 유지
-                    logging: false
-                });
-
-                // 3. 이미지로 변환 및 다운로드
+                const canvas = await html2canvas(wrapper, { backgroundColor: '#0f0f0f', scale: 2, useCORS: true, logging: false });
                 const link = document.createElement('a');
                 link.download = `리니지클래식_구도현황_${new Date().toISOString().slice(0,10)}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                
-                showToast('세력도 캡쳐가 성공적으로 저장되었습니다!');
             } catch (error) {
-                console.error(error);
-                showToast('캡쳐 중 오류가 발생했습니다.', true);
+                console.error(error); showToast('캡쳐 오류 발생', true);
             } finally {
-                // 4. 원래 상태로 복구 (길드원 다시 보이기)
-                wrapper.classList.remove('capture-mode');
-                wrapper.style.backgroundColor = originalBg;
+                wrapper.classList.remove('capture-mode'); wrapper.style.backgroundColor = originalBg;
             }
         };
 
-        init();
+        // 데이터 백업 기능 유지 (선택적 오프라인 백업용)
+        window.exportData = function() {
+            if (window.factions.length === 0) return showToast('내보낼 데이터가 없습니다.', true);
+            const dataStr = JSON.stringify(window.factions, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', `lineage_record_${new Date().toISOString().slice(0,10)}.json`);
+            linkElement.click();
+            showToast('데이터를 성공적으로 백업했습니다.');
+        };
+
+        window.importData = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm('기존 데이터를 덮어쓰고 복원하시겠습니까? (Firebase에도 동기화됩니다)')) {
+                            window.factions = importedData;
+                            await saveToFirebase(); // 복원된 데이터를 서버에도 즉시 갱신
+                            renderOrgChart();
+                            showToast('복원 및 서버 동기화 완료!');
+                        }
+                    } else { showToast('올바르지 않은 백업 파일입니다.', true); }
+                } catch (error) { showToast('오류 발생.', true); }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        };
     </script>
 </body>
 </html>
