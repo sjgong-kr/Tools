@@ -524,12 +524,13 @@
                                 <tr>
                                     <th>몬스터</th>
                                     <th>평균 방수</th>
+                                    <th>최소~최대 방수</th>
                                     <th>한방 경험치</th>
                                 </tr>
                             </thead>
                             <tbody id="bowResults1">
                                 <tr>
-                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">
                                         위의 스팩을 선택하고 계산하세요
                                     </td>
                                 </tr>
@@ -544,12 +545,13 @@
                                 <tr>
                                     <th>몬스터</th>
                                     <th>평균 방수</th>
+                                    <th>최소~최대 방수</th>
                                     <th>한방 경험치</th>
                                 </tr>
                             </thead>
                             <tbody id="bowResults2">
                                 <tr>
-                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">
                                         위의 스팩을 선택하고 계산하세요
                                     </td>
                                 </tr>
@@ -656,12 +658,13 @@
                                 <tr>
                                     <th>몬스터</th>
                                     <th>평균 방수</th>
+                                    <th>최소~최대 방수</th>
                                     <th>한방 경험치</th>
                                 </tr>
                             </thead>
                             <tbody id="swordResults1">
                                 <tr>
-                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">
                                         위의 스팩을 선택하고 계산하세요
                                     </td>
                                 </tr>
@@ -676,12 +679,13 @@
                                 <tr>
                                     <th>몬스터</th>
                                     <th>평균 방수</th>
+                                    <th>최소~최대 방수</th>
                                     <th>한방 경험치</th>
                                 </tr>
                             </thead>
                             <tbody id="swordResults2">
                                 <tr>
-                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">
                                         위의 스팩을 선택하고 계산하세요
                                     </td>
                                 </tr>
@@ -931,6 +935,7 @@
                     
                     results.push({
                         name: monster.name,
+                        isUndead: monster.undead,
                         shots: shots.toFixed(2),
                         shotsRounded: shotsRounded,
                         minShots: Math.ceil(monster.hp / maxDmg),
@@ -981,6 +986,7 @@
                     
                     results.push({
                         name: monster.name,
+                        isUndead: monster.undead,
                         shots: shots.toFixed(2),
                         shotsRounded: shotsRounded,
                         minShots: Math.ceil(monster.hp / maxDmg),
@@ -1003,7 +1009,7 @@
             // 결과가 없으면 메시지 표시
             if (results.length === 0) {
                 tbody.innerHTML = `<tr>
-                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">
+                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">
                         모든 항목을 선택하세요
                     </td>
                 </tr>`;
@@ -1016,10 +1022,20 @@
             // 결과를 HTML로 변환해서 테이블에 추가
             results.forEach(result => {
                 const row = document.createElement('tr');
-                const shotsRange = `${result.minShots}~${result.maxShots}방`;
+                
+                // 몬스터 이름에 언데드 표시 추가
+                let monsterDisplay = result.name;
+                if (result.isUndead) {
+                    monsterDisplay = `${result.name} <span style="color: var(--accent-gold); font-weight: bold; margin-left: 5px;">(언데드)</span>`;
+                }
+                
+                // 최소~최대 방수 표시
+                const rangeShots = `${result.minShots}~${result.maxShots}방`;
+                
                 row.innerHTML = `
-                    <td class="monster-name">${result.name}</td>
+                    <td class="monster-name">${monsterDisplay}</td>
                     <td class="damage-value">${result.shots}방</td>
+                    <td class="damage-value" style="color: var(--accent-orange);">${rangeShots}</td>
                     <td class="damage-value">${result.expPerHit.toLocaleString()} exp</td>
                 `;
                 tbody.appendChild(row);
