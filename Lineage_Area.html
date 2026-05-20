@@ -81,6 +81,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex-shrink: 0; /* 화면이 좁아져도 그룹이 압착되지 않도록 보호 */
         }
 
         .tree-stem {
@@ -94,6 +95,7 @@
             position: relative;
             padding-top: 25px;
             margin-top: -1px;
+            flex-wrap: nowrap; /* 줄바꿈 금지: 선 깨짐의 주원인 해결 */
         }
 
         .tree-node {
@@ -102,6 +104,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex-shrink: 0; /* 노드 크기 유지 */
         }
 
         .tree-node::before {
@@ -156,8 +159,16 @@
             border-color: #ebdcb8;
         }
         
-        .line-edit-btn:hover {
+        /* 라인 수정 및 삭제 버튼 호버 효과 */
+        .line-action-btn {
+            transition: all 0.2s;
+        }
+        .line-action-btn:hover.edit {
             color: #ebdcb8;
+            transform: scale(1.1);
+        }
+        .line-action-btn:hover.delete {
+            color: #ff6b6b;
             transform: scale(1.1);
         }
         
@@ -278,7 +289,7 @@
                     
                     <div class="flex gap-2 mt-4">
                         <button onclick="saveFactionDesc()" class="btn-lineage flex-grow py-2 rounded font-medium">기록 저장</button>
-                        <button onclick="deleteCurrentFaction()" class="btn-lineage-danger px-4 py-2 rounded hover:bg-red-900 transition-colors" title="혈맹 삭제">
+                        <button onclick="deleteCurrentFaction()" class="btn-lineage-danger px-4 py-2 rounded hover:bg-red-900 transition-colors" title="혈맹 개별 삭제">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -441,6 +452,20 @@
             }
         };
 
+        // 라인 전체 삭제 (신규 추가)
+        window.deleteLine = function(lineName) {
+            const factionsInLine = factions.filter(f => f.line === lineName);
+            if (factionsInLine.length === 0) return;
+
+            if (confirm(`⚠️ 경고: [${lineName}] 라인을 정말 삭제하시겠습니까?\n\n소속된 ${factionsInLine.length}개의 혈맹과 길드원, 그리고 기록 내역이 모두 함께 삭제되며 복구할 수 없습니다.`)) {
+                // 해당 라인에 속한 혈맹들을 모두 제거
+                factions = factions.filter(f => f.line !== lineName);
+                saveToLocalStorage();
+                renderOrgChart();
+                showToast(`[${lineName}] 라인과 소속 혈맹들이 모두 삭제되었습니다.`, true);
+            }
+        };
+
         // 세력 창설
         factionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -485,16 +510,22 @@
                 themeClass = 'theme-neutral';
             }
 
+            // 라인 수정 및 삭제 버튼이 포함된 헤더
             let html = `
                 <div class="tree-group min-w-[200px]">
                     <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2">
                         <h2 class="text-xl font-bold text-white tracking-widest drop-shadow-md">${lineName}</h2>
-                        <button onclick="editLineName('${lineName}')" class="line-edit-btn text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" title="라인명 수정">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex gap-1 bg-black/30 px-1 py-0.5 rounded">
+                            <button onclick="editLineName('${lineName}')" class="line-action-btn edit text-gray-400 p-0.5" title="라인명 수정">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="deleteLine('${lineName}')" class="line-action-btn delete text-gray-400 p-0.5" title="라인 통째로 삭제">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="tree-stem"></div>
-                    <div class="tree-branches flex-wrap justify-center px-4">
+                    <div class="tree-branches justify-center px-4">
             `;
 
             factionsInLine.forEach(faction => {
