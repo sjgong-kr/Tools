@@ -291,41 +291,41 @@
             window.renderOrgChart(); 
         });
 
-        async function saveToFirebase() {
-            try {
-                await setDoc(doc(db, "lineage_area", "main_data"), { factions: window.factions });
-            } catch (error) {
-                console.error("저장 실패:", error);
-                showToast('Firebase 저장 권한이 없습니다.', true);
-            }
+        function processImageToBase64(file) {
+            return new Promise((resolve) => {
+                if (!file) return resolve(null);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 32; canvas.height = 32;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, 32, 32);
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
         }
 
-        function updateStats() {
-            document.getElementById('total-factions').textContent = window.factions.length;
-            const totalMembers = window.factions.reduce((sum, f) => sum + f.members.length, 0);
-            document.getElementById('total-members').textContent = totalMembers;
-        }
-
-        window.showToast = function(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `px-5 py-3 rounded-md shadow-2xl text-white text-sm font-medium transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 ${isError ? 'bg-[#7d2222] border border-[#a33]' : 'bg-[#2a4365] border border-[#4299e1]'}`;
-            toast.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isError ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M5 13l4 4L19 7'}"></path></svg> ${message}`;
-            toastContainer.appendChild(toast);
-            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-
-        // 기존 Base64 변환 함수를 Cloudinary 업로드 API 함수로 교체
+        // 기존 Base64 변환 함수를 활용하여 이미지를 정제한 후 Cloudinary에 업로드
         async function uploadImageToCloudinary(file) {
             if (!file) return null;
             
+            // 1. 브라우저 캔버스를 통해 이미지를 강제로 규격화 (어떤 파일이든 무조건 표준 32x32 PNG로 변환)
+            const base64Data = await processImageToBase64(file);
+            if (!base64Data) {
+                showToast('이미지를 읽을 수 없습니다.', true);
+                return null;
+            }
+
             const formData = new FormData();
-            formData.append("file", file);
+            formData.append("file", base64Data); // 원본 파일(file) 대신 정제된 표준 데이터(base64Data)를 전송
             formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
             try {
