@@ -31,75 +31,38 @@
         ::-webkit-scrollbar-thumb:hover { background: #5d4a36; }
 
         /* ==========================================
-           🌲 조직도 트리 구조 및 선 그리기 CSS 복구
+           🌲 새로운 유연한 그룹 박스 (Zone) 레이아웃
            ========================================== */
-        .org-chart-container { 
-            padding: 2rem 0; 
-            width: 100%;
-        }
-        .tree-group { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            margin-bottom: 2rem;
-            flex-shrink: 0;
-        }
         
-        .tree-stem { width: 2px; height: 25px; background-color: #5d4a36; }
-        
-        /* 혈맹 박스들을 묶는 가로 라인 */
-        .tree-branches { 
-            display: flex; 
-            position: relative; 
-            padding-top: 25px; 
-            flex-wrap: nowrap; /* 줄바꿈 금지: 가로로 쭉 나열 */
-            justify-content: center;
-        }
-        
-        /* 개별 혈맹 노드와 연결선 */
-        .tree-node { 
-            position: relative; 
-            padding: 0 12px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        
-        .tree-node::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background-color: #5d4a36; }
-        .tree-node:first-child::before { left: 50%; width: 50%; }
-        .tree-node:last-child::before { width: 50%; }
-        .tree-node:only-child::before { display: none; }
-        .tree-node::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 25px; background-color: #5d4a36; transform: translateX(-50%); }
-
         /* 혈맹 박스와 멤버 리스트 일체화 디자인 */
         .faction-container { 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
             border-radius: 6px;
+            transition: transform 0.2s;
         }
+        .faction-container:hover { transform: translateY(-3px); }
+        
         .faction-box { 
             width: 150px; 
             background: linear-gradient(180deg, #1c3a5e 0%, #11223a 100%); 
             border: 1px solid #3b5a88; 
-            border-bottom: none; /* 하단 리스트와 자연스럽게 연결 */
+            border-bottom: none; 
             border-radius: 6px 6px 0 0; 
             padding: 12px; 
             text-align: center; 
             cursor: pointer; 
-            transition: 0.2s; 
         }
         .faction-box.theme-red { background: linear-gradient(180deg, #5e1c1c 0%, #3a1111 100%); border: 1px solid #8a2c2c; border-bottom: none;}
         .faction-box.theme-neutral { background: linear-gradient(180deg, #2a302a 0%, #151815 100%); border: 1px solid #4a584a; border-bottom: none;}
         .faction-box.theme-hostile { background: linear-gradient(180deg, #4a1c1c 0%, #2a0f0f 100%); border: 1px solid #6b2a2a; border-bottom: none;}
         .faction-box.theme-individual { background: linear-gradient(180deg, #222 0%, #111 100%); border: 1px solid #444; border-bottom: none;}
         
-        .faction-box:hover { filter: brightness(1.2); }
-        
         .member-list-area { 
             width: 150px; 
-            background: rgba(5,5,5,0.9); 
+            background: rgba(8,8,8,0.95); 
             border: 1px solid #333; 
             border-top: 1px solid #000; 
             border-radius: 0 0 6px 6px; 
@@ -116,13 +79,12 @@
         .emblem-upload-area::after { content: '변경'; position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white; font-size: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border-radius: inherit; }
         .emblem-upload-area:hover::after { opacity: 1; }
         
-        /* 캡처 모드 최적화 (글씨 잘림 방지 및 UI 숨김) */
+        /* 캡처 모드 최적화 (유연한 래핑 구조 유지) */
         .capture-mode .hide-on-capture { display: none !important; }
         .capture-mode { 
             padding: 40px !important; 
             background-color: #0f0f0f !important;
-            width: max-content !important; 
-            min-width: 100%;
+            width: 100% !important;
         }
         .capture-mode .truncate { white-space: normal; overflow: visible; }
     </style>
@@ -191,9 +153,9 @@
             </div>
         </details>
 
-        <!-- 조직도 시각화 영역 (가로 스크롤 허용) -->
-        <div class="overflow-x-auto custom-scrollbar border border-[#222] rounded-xl shadow-2xl bg-[#0f0f0f]">
-            <div id="org-chart-wrapper" class="flex flex-col w-full min-h-[400px]">
+        <!-- 조직도 시각화 영역 (가로 스크롤 대신 다단 줄바꿈 지원) -->
+        <div class="w-full border border-[#222] rounded-xl shadow-2xl bg-[#0f0f0f]">
+            <div id="org-chart-wrapper" class="w-full min-h-[400px]">
                 <div class="p-20 text-center text-gray-600">Firebase에서 데이터를 불러오는 중입니다...</div>
             </div>
         </div>
@@ -201,7 +163,7 @@
 
     <!-- 혈맹 상세 및 길드원 관리 모달 -->
     <div id="faction-detail-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
-        <div class="bg-[#151515] border border-[#4a3b2c] rounded-lg w-full max-w-5xl h-[85vh] md:h-[75vh] flex flex-col md:flex-row relative shadow-[0_0_30px_rgba(0,0,0,1)]">
+        <div class="bg-[#151515] border border-[#4a3b2c] rounded-lg w-full max-w-5xl h-[85vh] md:h-[75vh] flex flex-col md:flex-row relative shadow-[0_0_40px_rgba(0,0,0,1)]">
             <button onclick="closeFactionDetail()" class="absolute top-3 right-3 text-gray-400 hover:text-white z-20 bg-black/50 rounded-full p-1 border border-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -218,9 +180,9 @@
                 </div>
                 
                 <div class="p-6 flex-grow flex flex-col gap-4">
-                    <!-- 소속 이동 영역 추가 -->
+                    <!-- 소속 이동 영역 -->
                     <div class="bg-[#222] p-3 rounded border border-[#333]">
-                        <label class="block text-xs text-gray-400 mb-1">소속 라인 이동 (변경 시 즉시 이동)</label>
+                        <label class="block text-xs text-gray-400 mb-1">소속 라인 이동 (변경 시 즉시 위치 이동)</label>
                         <div class="flex gap-2">
                             <input type="text" id="detail-line-input" class="input-lineage w-full px-3 py-1.5 rounded text-sm flex-grow">
                             <button onclick="moveFactionLine()" class="bg-[#2c4a2c] hover:bg-[#3a653a] text-white px-3 py-1.5 rounded text-sm font-bold whitespace-nowrap border border-[#4a8a4a]">이동</button>
@@ -270,7 +232,7 @@
         </div>
     </div>
 
-    <!-- 알림 메시지 컨테이너 -->
+    <!-- 알림 메시지 -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2"></div>
 
     <!-- Firebase Modular SDK -->
@@ -279,7 +241,7 @@
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // 🔥 Firebase 설정 (제공해주신 Key 정보)
+        // 🔥 Firebase 설정
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -309,7 +271,7 @@
         const memberAddForm = document.getElementById('member-add-form');
         const toastContainer = document.getElementById('toast-container');
 
-        // --- Firebase 실시간 동기화 (로그인 없이) ---
+        // --- Firebase 실시간 동기화 ---
         onSnapshot(doc(db, "lineage_area", "main_data"), (docSnap) => {
             if (docSnap.exists()) {
                 window.factions = docSnap.data().factions || [];
@@ -318,8 +280,8 @@
             }
             window.renderOrgChart();
         }, (error) => {
-            console.error("Firestore 규칙 또는 연결 오류:", error);
-            showToast("데이터베이스 권한 오류. Firestore 규칙(Rule) 설정을 확인해주세요.", true);
+            console.error("Firestore 오류:", error);
+            showToast("데이터베이스 권한 오류. Firestore 설정을 확인해주세요.", true);
             window.renderOrgChart(); 
         });
 
@@ -427,27 +389,37 @@
             }
         };
 
-        // UI 렌더링 헬퍼 (트리 선 구조 및 일체형 카드 복원)
-        function createTreeGroupHTML(lineName, factionsInLine, themeType) {
-            let headerBg, themeClass;
-            if (themeType === 0) { headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]'; themeClass = ''; } 
-            else if (themeType === 1) { headerBg = 'from-[#5e1c1c] to-[#3a1111] border-[#8a2c2c]'; themeClass = 'theme-red'; } 
-            else if (themeType === 2) { headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]'; themeClass = 'theme-neutral'; }
-            else if (themeType === 3) { headerBg = 'from-[#4a1c1c] to-[#2a0f0f] border-[#6b2a2a]'; themeClass = 'theme-hostile'; }
-            else { headerBg = 'from-[#222] to-[#111] border-[#444]'; themeClass = 'theme-individual'; }
+        // 🎯 [핵심 변경] 다단(Grid/Wrap) 지원 Zone HTML 렌더러
+        function createZoneHTML(lineName, factionsInLine, themeType) {
+            let headerBg, headerBorder, zoneBorder, themeClass;
+            if (themeType === 0) { 
+                headerBg = 'from-[#1c3a5e] to-[#11223a]'; headerBorder = 'border-[#2c588a]'; zoneBorder = 'border-[#2c588a]'; themeClass = ''; 
+            } else if (themeType === 1) { 
+                headerBg = 'from-[#5e1c1c] to-[#3a1111]'; headerBorder = 'border-[#8a2c2c]'; zoneBorder = 'border-[#8a2c2c]'; themeClass = 'theme-red'; 
+            } else if (themeType === 2) { 
+                headerBg = 'from-[#2a302a] to-[#151815]'; headerBorder = 'border-[#4a584a]'; zoneBorder = 'border-[#4a584a]'; themeClass = 'theme-neutral'; 
+            } else if (themeType === 3) { 
+                headerBg = 'from-[#4a1c1c] to-[#2a0f0f]'; headerBorder = 'border-[#6b2a2a]'; zoneBorder = 'border-[#6b2a2a]'; themeClass = 'theme-hostile'; 
+            } else { 
+                headerBg = 'from-[#222] to-[#111]'; headerBorder = 'border-[#444]'; zoneBorder = 'border-[#444]'; themeClass = 'theme-individual'; 
+            }
 
-            // 조직도의 상단 라인과 연결 가지(branch) 렌더링
+            // 부모 컨테이너 크기 안에서 혈맹들이 자연스럽게 줄바꿈(flex-wrap) 되도록 설계
             let html = `
-                <div class="tree-group">
-                    <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2">
-                        <h2 class="text-xl font-bold text-white tracking-widest drop-shadow-md whitespace-nowrap">${lineName}</h2>
-                        <div class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex gap-1 bg-black/30 px-1 py-0.5 rounded hide-on-capture">
-                            <button onclick="editLineName('${lineName}')" class="line-action-btn edit text-gray-400 p-0.5" title="라인명 수정"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                            <button onclick="deleteLine('${lineName}')" class="line-action-btn delete text-gray-400 p-0.5" title="라인 통째로 삭제"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                <div class="relative w-full max-w-[1400px] mx-auto mt-10 mb-8 px-4">
+                    <!-- 중앙 상단 헤더 (배지) -->
+                    <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
+                        <div class="bg-gradient-to-r ${headerBg} border-2 ${headerBorder} rounded-full px-8 py-2 text-center shadow-[0_4px_12px_rgba(0,0,0,0.6)] group flex items-center gap-2">
+                            <h2 class="text-xl font-bold text-white tracking-widest drop-shadow-md whitespace-nowrap">${lineName}</h2>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex gap-1 bg-black/40 px-1 py-0.5 rounded hide-on-capture absolute -right-16">
+                                <button onclick="editLineName('${lineName}')" class="line-action-btn edit text-gray-400 p-0.5" title="라인명 수정"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                                <button onclick="deleteLine('${lineName}')" class="line-action-btn delete text-gray-400 p-0.5" title="라인 통째로 삭제"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                            </div>
                         </div>
                     </div>
-                    <div class="tree-stem"></div>
-                    <div class="tree-branches">
+                    
+                    <!-- 혈맹 카드들이 담기는 본문 박스 (다단 래핑 지원) -->
+                    <div class="border-t-2 border-l border-r border-b ${zoneBorder} rounded-2xl bg-[#080808]/80 pt-12 pb-8 px-4 sm:px-8 flex flex-wrap justify-center gap-6 shadow-inner">
             `;
 
             factionsInLine.forEach(faction => {
@@ -456,14 +428,13 @@
                     : `<div class="w-7 h-7 mx-auto mb-1 bg-[#111] border border-[#5d4a36] rounded-sm flex items-center justify-center text-[10px] text-gray-600 font-bold">無</div>`;
 
                 html += `
-                    <div class="tree-node">
-                        <div class="faction-container">
-                            <div class="faction-box ${themeClass}" onclick="openFactionDetail('${faction.id}')">
-                                ${emblemHTML}
-                                <div class="font-bold text-[#ebdcb8] text-sm mt-1 w-full text-center truncate px-1">${faction.name}</div>
-                                <div class="text-[10px] text-gray-400 mt-0.5 hide-on-capture">인원: ${faction.members.length}명</div>
-                            </div>
-                            <div class="member-list-area hide-on-capture">
+                    <div class="faction-container">
+                        <div class="faction-box ${themeClass}" onclick="openFactionDetail('${faction.id}')">
+                            ${emblemHTML}
+                            <div class="font-bold text-[#ebdcb8] text-sm mt-1 w-full text-center truncate px-1">${faction.name}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5 hide-on-capture">인원: ${faction.members.length}명</div>
+                        </div>
+                        <div class="member-list-area hide-on-capture">
                 `;
                 
                 const previewMembers = faction.members.slice(0, 10);
@@ -476,13 +447,14 @@
                     });
                     if (faction.members.length > 10) html += `<div class="text-[11px] text-gray-500 mt-1 pt-1 border-t border-[#333]">외 ${faction.members.length - 10}명</div>`;
                 }
-                html += `</div></div></div>`; // tree-node 종료
+                html += `</div></div>`; // faction-container 종료
             });
 
-            html += `</div></div>`; // tree-branches, tree-group 종료
+            html += `</div></div>`; // zone 본문 종료
             return html;
         }
 
+        // 전체 화면 레이아웃 조립 로직 (수직형 배치)
         window.renderOrgChart = function() {
             updateStats();
 
@@ -515,16 +487,16 @@
 
             let html = '';
 
-            // 1. 전투 라인 (VS) - flex-nowrap으로 가로 배치 보장
+            // 1. 전투 라인 (VS) - 상하단 넓은 영역 사용
             const combatNames = Object.keys(combatGroups);
             if (combatNames.length > 0) {
-                html += `<div class="org-chart-container flex flex-nowrap items-start justify-center gap-x-12 pb-8 min-w-max mx-auto px-10">`;
+                html += `<div class="flex flex-col w-full pb-8">`;
                 combatNames.forEach((lineName, index) => {
                     const themeType = index % 2 === 0 ? 0 : 1; 
-                    html += createTreeGroupHTML(lineName, combatGroups[lineName], themeType);
+                    html += createZoneHTML(lineName, combatGroups[lineName], themeType);
 
                     if (combatNames.length === 2 && index === 0) {
-                        html += `<div class="flex flex-col items-center flex-shrink-0" style="margin-top: 10px;"><div class="text-4xl md:text-5xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">VS</div></div>`;
+                        html += `<div class="flex justify-center my-2"><div class="text-5xl md:text-6xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">VS</div></div>`;
                     }
                 });
                 html += `</div>`;
@@ -535,12 +507,11 @@
             if (hostileNames.length > 0) {
                 const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
                 html += `
-                    <div class="w-full ${borderTop} bg-[#1a0f0f] pt-8 pb-12">
-                        <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#6b2a2a] rounded-full text-lg font-bold text-[#e67373] bg-[#2a0f0f]">⚔️ 적대 혈맹</h3></div>
-                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
+                    <div class="w-full ${borderTop} bg-[#1a0f0f] pt-10 pb-12 flex flex-col">
+                        <div class="text-center mb-2"><h3 class="inline-block px-4 py-1 border border-[#6b2a2a] rounded-full text-lg font-bold text-[#e67373] bg-[#2a0f0f]">⚔️ 적대 세력</h3></div>
                 `;
-                hostileNames.forEach(lineName => { html += createTreeGroupHTML(lineName, hostileGroups[lineName], 3); });
-                html += `</div></div>`;
+                hostileNames.forEach(lineName => { html += createZoneHTML(lineName, hostileGroups[lineName], 3); });
+                html += `</div>`;
             }
 
             // 3. 중립 라인
@@ -548,12 +519,11 @@
             if (neutralNames.length > 0) {
                 const borderTop = (combatNames.length > 0 || hostileNames.length > 0) ? 'border-t border-[#333]' : '';
                 html += `
-                    <div class="w-full ${borderTop} bg-[#141414] pt-8 pb-12">
-                        <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#4a584a] rounded-full text-lg font-bold text-[#8ba38b] bg-[#1a201a]">🏳️ 중립 혈맹</h3></div>
-                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
+                    <div class="w-full ${borderTop} bg-[#141414] pt-10 pb-12 flex flex-col">
+                        <div class="text-center mb-2"><h3 class="inline-block px-4 py-1 border border-[#4a584a] rounded-full text-lg font-bold text-[#8ba38b] bg-[#1a201a]">🏳️ 중립 세력</h3></div>
                 `;
-                neutralNames.forEach(lineName => { html += createTreeGroupHTML(lineName, neutralGroups[lineName], 2); });
-                html += `</div></div>`;
+                neutralNames.forEach(lineName => { html += createZoneHTML(lineName, neutralGroups[lineName], 2); });
+                html += `</div>`;
             }
 
             // 4. 개인/무소속 라인
@@ -561,12 +531,11 @@
             if (individualNames.length > 0) {
                 const borderTop = (combatNames.length > 0 || hostileNames.length > 0 || neutralNames.length > 0) ? 'border-t border-[#333]' : '';
                 html += `
-                    <div class="w-full ${borderTop} bg-[#111111] pt-8 pb-12">
-                        <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#444] rounded-full text-lg font-bold text-[#aaa] bg-[#222]">👤 개인 및 무소속</h3></div>
-                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
+                    <div class="w-full ${borderTop} bg-[#111111] pt-10 pb-12 flex flex-col">
+                        <div class="text-center mb-2"><h3 class="inline-block px-4 py-1 border border-[#444] rounded-full text-lg font-bold text-[#aaa] bg-[#222]">👤 개인 및 무소속</h3></div>
                 `;
-                individualNames.forEach(lineName => { html += createTreeGroupHTML(lineName, individualGroups[lineName], 4); });
-                html += `</div></div>`;
+                individualNames.forEach(lineName => { html += createZoneHTML(lineName, individualGroups[lineName], 4); });
+                html += `</div>`;
             }
 
             orgChartWrapper.innerHTML = html;
@@ -587,7 +556,6 @@
             document.getElementById('detail-name').textContent = faction.name;
             document.getElementById('detail-date').textContent = faction.createdAt || '-';
             
-            // 라인 및 설명 인풋 설정
             document.getElementById('detail-line-input').value = faction.line || '';
             document.getElementById('detail-desc-input').value = faction.description || '';
 
@@ -624,7 +592,6 @@
             }
         }; 
 
-        // [신규 기능] 혈맹 소속 라인 이동
         window.moveFactionLine = function() {
             if(!window.currentEditingFactionId) return;
             const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
@@ -638,7 +605,7 @@
             faction.line = newLine;
             window.renderOrgChart();
             saveToFirebase();
-            openFactionDetail(faction.id); // 상단 라인 배지 리프레시
+            openFactionDetail(faction.id); 
             showToast(`[${faction.name}] 혈맹이 [${newLine}](으)로 이동되었습니다.`);
         };
 
@@ -786,7 +753,6 @@
             if (e.target === detailModal) closeFactionDetail();
         });
 
-        // 캡처 최적화 기능 (잘림 방지)
         window.captureOrgChart = async function() {
             if (typeof html2canvas === 'undefined') {
                 showToast('캡처 라이브러리 로딩 중입니다. 잠시 후 시도해주세요.', true); return;
@@ -794,20 +760,17 @@
             const wrapper = document.getElementById('org-chart-wrapper');
             const originalBg = wrapper.style.backgroundColor;
             
-            // 캡처 전용 클래스 부여 (컨테이너 확장, truncate 말줄임 해제, 하위 명단 등 숨김)
             wrapper.classList.add('capture-mode');
             
             try {
                 showToast('고해상도로 세력도를 캡처하고 있습니다...', false);
-                await new Promise(resolve => setTimeout(resolve, 300)); // 렌더링 대기 시간
+                await new Promise(resolve => setTimeout(resolve, 300)); 
                 
                 const canvas = await html2canvas(wrapper, { 
                     backgroundColor: '#0f0f0f', 
-                    scale: 2, // 고해상도 옵션
+                    scale: 2,
                     useCORS: true, 
-                    logging: false,
-                    windowWidth: wrapper.scrollWidth, // 캡처 시 실제 컨텐츠 넓이 강제 지정하여 잘림 방지
-                    windowHeight: wrapper.scrollHeight 
+                    logging: false
                 });
                 
                 const link = document.createElement('a');
@@ -822,7 +785,6 @@
             }
         };
 
-        // 데이터 백업 기능
         window.exportData = function() {
             if (window.factions.length === 0) return showToast('내보낼 데이터가 없습니다.', true);
             const dataStr = JSON.stringify(window.factions, null, 2);
