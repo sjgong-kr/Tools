@@ -197,22 +197,53 @@
             
             <div class="w-full md:w-[55%] p-6 flex flex-col bg-[#111]">
                 <div class="flex justify-between items-end mb-4 border-b border-[#333] pb-2">
-                    <h3 class="text-xl font-bold text-[#ebdcb8]">길드원 명단</h3>
+                    <h3 class="text-xl font-bold text-[#ebdcb8]">길드원 명단 관리</h3>
                     <span class="bg-[#222] border border-[#444] px-3 py-1 rounded-full text-xs text-gray-300">
                         총 <span id="detail-member-count" class="text-white font-bold">0</span>명
                     </span>
                 </div>
                 
-                <form id="member-add-form" class="flex gap-2 mb-4 bg-[#1a1a1a] p-3 rounded border border-[#2a2a2a] shadow-inner items-center">
-                    <input type="text" id="mem-name" placeholder="캐릭터명" required class="input-lineage w-1/4 px-3 py-1.5 rounded text-sm">
-                    <select id="mem-class" class="input-lineage w-1/4 px-2 py-1.5 rounded text-sm">
-                        <option value="군주">군주</option><option value="기사">기사</option><option value="요정">요정</option>
-                        <option value="마법사">마법사</option><option value="다크엘프">다크엘프</option><option value="용기사">용기사</option><option value="환술사">환술사</option>
-                    </select>
-                    <input type="number" id="mem-level" placeholder="Lv" required min="1" max="99" class="input-lineage w-16 px-2 py-1.5 rounded text-sm text-center">
-                    <input type="text" id="mem-role" placeholder="직책/메모" class="input-lineage flex-grow px-3 py-1.5 rounded text-sm hidden md:block">
-                    <button type="submit" id="mem-submit-btn" class="btn-lineage px-4 py-1.5 rounded text-sm whitespace-nowrap font-bold">추가</button>
-                    <button type="button" id="mem-cancel-btn" onclick="cancelEditMember()" class="hidden bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-sm whitespace-nowrap border border-gray-600 transition-colors">취소</button>
+                <!-- 🎯 길드원 추가/수정 폼 레이아웃 완전 개선 -->
+                <form id="member-add-form" class="bg-[#1a1a1a] p-4 rounded border border-[#2a2a2a] shadow-inner mb-5">
+                    
+                    <!-- 1열: 캐릭터명(넓게) + 클래스 -->
+                    <div class="flex gap-3 mb-3">
+                        <div class="flex-grow">
+                            <input type="text" id="mem-name" placeholder="캐릭터명 (필수 입력)" required class="input-lineage w-full px-3 py-2 rounded text-sm font-bold">
+                        </div>
+                        <div class="w-32 shrink-0">
+                            <select id="mem-class" class="input-lineage w-full px-2 py-2 rounded text-sm">
+                                <option value="군주">군주</option><option value="기사">기사</option><option value="요정">요정</option>
+                                <option value="마법사">마법사</option><option value="다크엘프">다크엘프</option><option value="용기사">용기사</option><option value="환술사">환술사</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2열: 레벨(좁게) + 혈맹 이동(수정시에만 보임) -->
+                    <div class="flex gap-3 mb-3">
+                        <div class="flex items-center gap-2 w-32 shrink-0 bg-black border border-[#4a3b2c] rounded px-2">
+                            <span class="text-xs text-[#8c7358] font-bold">Lv</span>
+                            <input type="number" id="mem-level" value="1" required min="1" max="99" class="bg-transparent text-[#d0c0a0] w-full py-2 text-sm text-center outline-none">
+                        </div>
+                        
+                        <!-- 혈맹 이동 선택창 (수정 시 나타남) -->
+                        <div id="move-faction-container" class="flex-grow hidden">
+                            <select id="mem-faction-move" class="input-lineage w-full px-2 py-2 rounded text-sm border-[#5d4a36]">
+                                <option value="">-- 현재 혈맹 유지 --</option>
+                                <!-- JS에서 옵션 주입됨 -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3열: 직책 및 메모 + 버튼 -->
+                    <div class="flex gap-3 items-center">
+                        <input type="text" id="mem-role" placeholder="직책 및 추가 메모 (예: 부군주, 스파이 등)" class="input-lineage flex-grow px-3 py-2 rounded text-sm">
+                        
+                        <div class="flex gap-2 shrink-0">
+                            <button type="submit" id="mem-submit-btn" class="btn-lineage px-6 py-2 rounded text-sm font-bold shadow-md">추가</button>
+                            <button type="button" id="mem-cancel-btn" onclick="cancelEditMember()" class="hidden bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm border border-gray-500 transition-colors">취소</button>
+                        </div>
+                    </div>
                 </form>
                 
                 <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
@@ -248,7 +279,7 @@
         // ==========================================
         // ☁️ Cloudinary 설정
         // ==========================================
-        const CLOUDINARY_CLOUD_NAME = "dnps9dhys"; // <-- 본인의 Cloudinary Cloud Name
+        const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME"; 
         const CLOUDINARY_UPLOAD_PRESET = "lineage_area";
 
         // 전역 상태 변수
@@ -371,7 +402,7 @@
             `;
 
             factionsInLine.forEach(faction => {
-                const members = faction.members || []; // 안전 처리
+                const members = faction.members || []; 
                 const emblemHTML = faction.emblem 
                     ? `<img src="${faction.emblem}" class="w-7 h-7 mx-auto mb-1 border border-[#5d4a36] rounded-sm object-cover bg-black">` 
                     : `<div class="w-7 h-7 mx-auto mb-1 bg-[#111] border border-[#5d4a36] rounded-sm flex items-center justify-center text-[10px] text-gray-600 font-bold">無</div>`;
@@ -417,7 +448,7 @@
             const individualGroups = {};
 
             window.factions.forEach(f => {
-                const lineName = f.line || '무소속'; // 데이터 오류 방지
+                const lineName = f.line || '무소속';
                 if (lineName.includes('중립')) {
                     if (!neutralGroups[lineName]) neutralGroups[lineName] = [];
                     neutralGroups[lineName].push(f);
@@ -485,12 +516,28 @@
             orgChartWrapper.innerHTML = html;
         }
 
-        // --- 모달 제어 및 이벤트 액션들 ---
+        // --- 상세 관리 모달 및 폼 로직 ---
+        
+        // 🎯 길드원 이동용 동적 셀렉트 박스 생성
+        function updateFactionMoveSelect(currentFactionId) {
+            const select = document.getElementById('mem-faction-move');
+            select.innerHTML = '<option value="">-- 현재 혈맹 유지 --</option>';
+            window.factions.forEach(f => {
+                if (f.id !== currentFactionId) {
+                    const option = document.createElement('option');
+                    option.value = f.id;
+                    option.textContent = `[${f.line || '무소속'}] ${f.name}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
         window.openFactionDetail = function(factionId) {
             const faction = window.factions.find(f => f.id === factionId);
             if(!faction) return;
 
             window.currentEditingFactionId = faction.id;
+            updateFactionMoveSelect(faction.id); // 타 혈맹 리스트 채우기
 
             const emblemHTML = faction.emblem 
                 ? `<img src="${faction.emblem}" class="w-8 h-8 border border-[#5d4a36] rounded object-cover shadow emblem-upload-area" onclick="document.getElementById('detail-emblem-upload').click()" title="클릭하여 마크 변경">` 
@@ -503,7 +550,7 @@
             document.getElementById('detail-line-input').value = faction.line || '';
             document.getElementById('detail-desc-input').value = faction.description || '';
 
-            memberAddForm.reset();
+            cancelEditMember(); // 열 때 항상 초기 폼 상태 유지
             renderDetailMembers(faction);
 
             detailModal.classList.remove('hidden');
@@ -619,6 +666,7 @@
             });
         });
 
+        // 🎯 길드원 폼 Submit 로직 (수정 및 이동 처리)
         memberAddForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if(!window.currentEditingFactionId) return;
@@ -630,17 +678,37 @@
             const charClass = document.getElementById('mem-class').value;
             const level = parseInt(document.getElementById('mem-level').value);
             const role = document.getElementById('mem-role').value.trim();
+            const targetFactionId = document.getElementById('mem-faction-move').value;
 
             if (window.currentEditingMemberId) {
-                const member = members.find(m => m.id === window.currentEditingMemberId);
-                if (member) {
-                    if (member.name !== name && members.some(m => m.name === name)) {
-                        showToast('이미 등록된 캐릭터 이름입니다.', true); return;
-                    }
-                    member.name = name; member.class = charClass; member.level = level; member.role = role;
+                // 수정 모드
+                const memberIdx = members.findIndex(m => m.id === window.currentEditingMemberId);
+                const memberData = members[memberIdx];
+
+                if (memberData.name !== name && members.some(m => m.name === name)) {
+                    showToast('이미 등록된 캐릭터 이름입니다.', true); return;
+                }
+
+                memberData.name = name; memberData.class = charClass; memberData.level = level; memberData.role = role;
+
+                // 타 혈맹으로 이동 로직
+                if (targetFactionId) {
+                    members.splice(memberIdx, 1); // 기존 혈맹에서 삭제
+                    const targetFaction = window.factions.find(f => f.id === targetFactionId);
+                    if (!targetFaction.members) targetFaction.members = [];
+                    targetFaction.members.push(memberData);
+                    
+                    targetFaction.members.sort((a, b) => {
+                        if (a.class === '군주' && b.class !== '군주') return -1;
+                        if (b.class === '군주' && a.class !== '군주') return 1;
+                        return b.level - a.level;
+                    });
+                    showToast(`${name} 캐릭터가 [${targetFaction.name}] 혈맹으로 이동되었습니다.`);
+                } else {
                     showToast('캐릭터 정보가 수정되었습니다.');
                 }
             } else {
+                // 추가 모드
                 if (members.some(m => m.name === name)) {
                     showToast('이미 등록된 캐릭터입니다.', true); return;
                 }
@@ -648,6 +716,7 @@
                 showToast(`${name} 캐릭터 추가 완료.`);
             }
 
+            // 현재 혈맹 정렬 유지
             members.sort((a, b) => {
                 if (a.class === '군주' && b.class !== '군주') return -1;
                 if (b.class === '군주' && a.class !== '군주') return 1;
@@ -663,6 +732,7 @@
             document.getElementById('mem-name').focus();
         });
 
+        // 수정 모드로 변경
         window.editMember = function(memberId) {
             const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             if (!faction || !faction.members) return;
@@ -675,17 +745,25 @@
             document.getElementById('mem-level').value = member.level;
             document.getElementById('mem-role').value = member.role || '';
             
-            document.getElementById('mem-submit-btn').textContent = '수정 완료';
+            // UI 변경
+            document.getElementById('mem-submit-btn').textContent = '수정 및 저장';
             document.getElementById('mem-submit-btn').style.background = 'linear-gradient(to bottom, #2b4c7e, #1a2a47)';
             document.getElementById('mem-cancel-btn').classList.remove('hidden');
+            
+            // 혈맹 이동 셀렉트 창 보이기
+            document.getElementById('move-faction-container').classList.remove('hidden');
+            document.getElementById('mem-faction-move').value = '';
         };
 
+        // 수정 모드 취소 (초기화)
         window.cancelEditMember = function() {
             window.currentEditingMemberId = null;
             memberAddForm.reset();
+            document.getElementById('mem-level').value = 1; // 레벨 1 기본값 유지
             document.getElementById('mem-submit-btn').textContent = '추가';
             document.getElementById('mem-submit-btn').style.background = ''; 
             document.getElementById('mem-cancel-btn').classList.add('hidden');
+            document.getElementById('move-faction-container').classList.add('hidden'); // 이동창 숨기기
         };
 
         function renderDetailMembers(faction) {
@@ -718,7 +796,7 @@
                             </div>
                         </div>
                         <div class="flex gap-1 opacity-20 group-hover:opacity-100 transition-all">
-                            <button onclick="editMember('${m.id}')" class="text-gray-500 hover:text-[#ebdcb8] p-1" title="수정">
+                            <button onclick="editMember('${m.id}')" class="text-gray-500 hover:text-[#ebdcb8] p-1" title="수정 및 이동">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <button onclick="removeMember('${m.id}')" class="text-gray-600 hover:text-red-500 p-1" title="삭제">
@@ -758,6 +836,7 @@
             if (e.target === detailModal) closeFactionDetail();
         });
 
+        // 캡처 최적화 기능
         window.captureOrgChart = async function() {
             if (typeof html2canvas === 'undefined') {
                 showToast('캡처 라이브러리 로딩 중입니다. 잠시 후 시도해주세요.', true); return;
@@ -775,7 +854,9 @@
                     backgroundColor: '#0f0f0f', 
                     scale: 2,
                     useCORS: true, 
-                    logging: false
+                    logging: false,
+                    windowWidth: wrapper.scrollWidth, 
+                    windowHeight: wrapper.scrollHeight 
                 });
                 
                 const link = document.createElement('a');
@@ -823,26 +904,21 @@
         };
 
         // ==========================================
-        // 🔄 데이터 동기화 시작 (가장 마지막에 실행)
+        // 🔄 데이터 동기화 시작
         // ==========================================
         onSnapshot(doc(db, "lineage_area", "main_data"), (docSnap) => {
             if (docSnap.exists()) {
                 window.factions = docSnap.data().factions || [];
                 window.renderOrgChart();
             } else {
-                // Firebase에 데이터가 없을 때, 구버전의 localStorage 데이터가 있다면 복구(마이그레이션) 실행
                 const localData = localStorage.getItem('lineageFactionsOrg');
                 if (localData) {
                     try {
                         window.factions = JSON.parse(localData);
-                        saveToFirebase(); // 복구한 데이터를 Firebase로 저장
-                        showToast("🎉 로컬에 저장되어 있던 과거 데이터를 서버로 안전하게 복구했습니다!", false);
-                    } catch(e) {
-                        window.factions = [];
-                    }
-                } else {
-                    window.factions = [];
-                }
+                        saveToFirebase(); 
+                        showToast("🎉 과거 데이터를 복구했습니다!", false);
+                    } catch(e) { window.factions = []; }
+                } else { window.factions = []; }
                 window.renderOrgChart();
             }
         }, (error) => {
