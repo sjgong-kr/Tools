@@ -255,6 +255,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // ==========================================
+        // ☁️ Cloudinary 설정
+        // ==========================================
+        const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME"; // <-- 여기에 본인의 Cloudinary Cloud Name을 입력하세요!
+        const CLOUDINARY_UPLOAD_PRESET = "lineage_area";
+
         // 전역 상태 변수
         window.factions = [];
         window.currentEditingFactionId = null;
@@ -314,26 +320,33 @@
 
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
-        function processImageToBase64(file) {
-            return new Promise((resolve) => {
-                if (!file) return resolve(null);
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 32; canvas.height = 32;
-                        const ctx = canvas.getContext('2d');
-                        ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, 32, 32);
-                        ctx.drawImage(img, 0, 0, 32, 32);
-                        resolve(canvas.toDataURL('image/png'));
-                    };
-                    img.onerror = () => resolve(null);
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => resolve(null);
-                reader.readAsDataURL(file);
-            });
+        // 기존 Base64 변환 함수를 Cloudinary 업로드 API 함수로 교체
+        async function uploadImageToCloudinary(file) {
+            if (!file) return null;
+            
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.secure_url) {
+                    return data.secure_url; // Cloudinary에 업로드된 영구 이미지 URL 반환
+                } else {
+                    console.error("Cloudinary 업로드 실패:", data);
+                    showToast('이미지 업로드에 실패했습니다.', true);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Cloudinary 에러:", error);
+                showToast('이미지 서버 통신 에러가 발생했습니다.', true);
+                return null;
+            }
         }
 
         // --- 기능: 라인/혈맹 생성 및 수정 ---
@@ -353,7 +366,9 @@
                 return;
             }
 
-            const emblem = await processImageToBase64(file);
+            if (file) showToast('마크 이미지를 클라우드에 업로드 중입니다...', false);
+            const emblem = await uploadImageToCloudinary(file);
+
             window.factions.push({
                 id: generateId(), line: line || '무소속', name: name, description: '',
                 emblem: emblem, createdAt: new Date().toLocaleDateString(), members: []
@@ -584,11 +599,16 @@
 
             const faction = window.factions.find(f => f.id === window.currentEditingFactionId);
             if(faction) {
-                faction.emblem = await processImageToBase64(file);
-                window.renderOrgChart(); 
-                saveToFirebase(); 
-                openFactionDetail(faction.id); 
-                showToast('마크가 교체되었습니다.');
+                showToast('새로운 마크를 클라우드에 업로드 중입니다...', false);
+                const newEmblemUrl = await uploadImageToCloudinary(file);
+                
+                if (newEmblemUrl) {
+                    faction.emblem = newEmblemUrl;
+                    window.renderOrgChart(); 
+                    saveToFirebase(); 
+                    openFactionDetail(faction.id); 
+                    showToast('혈마크가 성공적으로 교체되었습니다.');
+                }
             }
         }; 
 
