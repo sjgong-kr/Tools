@@ -30,7 +30,9 @@
         ::-webkit-scrollbar-thumb { background: #4a3b2c; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #5d4a36; }
 
-        /* 세력도 구조 CSS */
+        /* ==========================================
+           🌲 조직도 트리 구조 및 선 그리기 CSS 복구
+           ========================================== */
         .org-chart-container { 
             padding: 2rem 0; 
             width: 100%;
@@ -39,41 +41,67 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            min-width: 180px; 
             margin-bottom: 2rem;
+            flex-shrink: 0;
         }
         
+        .tree-stem { width: 2px; height: 25px; background-color: #5d4a36; }
+        
+        /* 혈맹 박스들을 묶는 가로 라인 */
+        .tree-branches { 
+            display: flex; 
+            position: relative; 
+            padding-top: 25px; 
+            flex-wrap: nowrap; /* 줄바꿈 금지: 가로로 쭉 나열 */
+            justify-content: center;
+        }
+        
+        /* 개별 혈맹 노드와 연결선 */
+        .tree-node { 
+            position: relative; 
+            padding: 0 12px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        
+        .tree-node::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background-color: #5d4a36; }
+        .tree-node:first-child::before { left: 50%; width: 50%; }
+        .tree-node:last-child::before { width: 50%; }
+        .tree-node:only-child::before { display: none; }
+        .tree-node::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 25px; background-color: #5d4a36; transform: translateX(-50%); }
+
         /* 혈맹 박스와 멤버 리스트 일체화 디자인 */
         .faction-container { 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
+            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+            border-radius: 6px;
         }
         .faction-box { 
             width: 150px; 
             background: linear-gradient(180deg, #1c3a5e 0%, #11223a 100%); 
             border: 1px solid #3b5a88; 
+            border-bottom: none; /* 하단 리스트와 자연스럽게 연결 */
             border-radius: 6px 6px 0 0; 
             padding: 12px; 
             text-align: center; 
             cursor: pointer; 
             transition: 0.2s; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
         }
-        .faction-box.theme-red { background: linear-gradient(180deg, #5e1c1c 0%, #3a1111 100%); border: 1px solid #8a2c2c; }
-        .faction-box.theme-neutral { background: linear-gradient(180deg, #2a302a 0%, #151815 100%); border: 1px solid #4a584a; }
-        .faction-box.theme-hostile { background: linear-gradient(180deg, #4a1c1c 0%, #2a0f0f 100%); border: 1px solid #6b2a2a; }
-        .faction-box.theme-individual { background: linear-gradient(180deg, #222 0%, #111 100%); border: 1px solid #444; }
+        .faction-box.theme-red { background: linear-gradient(180deg, #5e1c1c 0%, #3a1111 100%); border: 1px solid #8a2c2c; border-bottom: none;}
+        .faction-box.theme-neutral { background: linear-gradient(180deg, #2a302a 0%, #151815 100%); border: 1px solid #4a584a; border-bottom: none;}
+        .faction-box.theme-hostile { background: linear-gradient(180deg, #4a1c1c 0%, #2a0f0f 100%); border: 1px solid #6b2a2a; border-bottom: none;}
+        .faction-box.theme-individual { background: linear-gradient(180deg, #222 0%, #111 100%); border: 1px solid #444; border-bottom: none;}
         
         .faction-box:hover { filter: brightness(1.2); }
         
-        .connector { width: 2px; height: 12px; background: #5d4a36; }
-        
         .member-list-area { 
             width: 150px; 
-            background: rgba(5,5,5,0.8); 
+            background: rgba(5,5,5,0.9); 
             border: 1px solid #333; 
-            border-top: none; 
+            border-top: 1px solid #000; 
             border-radius: 0 0 6px 6px; 
             padding: 8px; 
             font-size: 11px; 
@@ -93,10 +121,10 @@
         .capture-mode { 
             padding: 40px !important; 
             background-color: #0f0f0f !important;
-            width: max-content !important; /* 캡처 시 내부 컨텐츠 크기만큼 확장되어 잘림 방지 */
+            width: max-content !important; 
             min-width: 100%;
         }
-        .capture-mode .truncate { white-space: normal; overflow: visible; } /* 말줄임표 해제 */
+        .capture-mode .truncate { white-space: normal; overflow: visible; }
     </style>
 </head>
 <body class="p-2 md:p-6 text-sm">
@@ -249,7 +277,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // ==========================================
         // 🔥 Firebase 설정 (제공해주신 Key 정보)
@@ -260,12 +287,10 @@
             projectId: "openzeroc",
             storageBucket: "openzeroc.firebasestorage.app",
             messagingSenderId: "465944510778",
-            appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
-            measurementId: "G-M4K79K2XPG"
+            appId: "1:465944510778:web:df0d19b7c6b98d129f5003"
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
         // 전역 상태 변수
@@ -402,7 +427,7 @@
             }
         };
 
-        // UI 렌더링 헬퍼 (일체형 카드 디자인 적용)
+        // UI 렌더링 헬퍼 (트리 선 구조 및 일체형 카드 복원)
         function createTreeGroupHTML(lineName, factionsInLine, themeType) {
             let headerBg, themeClass;
             if (themeType === 0) { headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]'; themeClass = ''; } 
@@ -411,17 +436,18 @@
             else if (themeType === 3) { headerBg = 'from-[#4a1c1c] to-[#2a0f0f] border-[#6b2a2a]'; themeClass = 'theme-hostile'; }
             else { headerBg = 'from-[#222] to-[#111] border-[#444]'; themeClass = 'theme-individual'; }
 
-            // flex-wrap을 적용하여 박스들이 자연스럽게 줄바꿈 되도록 설정
+            // 조직도의 상단 라인과 연결 가지(branch) 렌더링
             let html = `
                 <div class="tree-group">
-                    <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2 mb-6">
+                    <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2">
                         <h2 class="text-xl font-bold text-white tracking-widest drop-shadow-md whitespace-nowrap">${lineName}</h2>
                         <div class="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex gap-1 bg-black/30 px-1 py-0.5 rounded hide-on-capture">
                             <button onclick="editLineName('${lineName}')" class="line-action-btn edit text-gray-400 p-0.5" title="라인명 수정"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
                             <button onclick="deleteLine('${lineName}')" class="line-action-btn delete text-gray-400 p-0.5" title="라인 통째로 삭제"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>
                     </div>
-                    <div class="flex flex-wrap justify-center gap-6 px-4">
+                    <div class="tree-stem"></div>
+                    <div class="tree-branches">
             `;
 
             factionsInLine.forEach(faction => {
@@ -430,14 +456,14 @@
                     : `<div class="w-7 h-7 mx-auto mb-1 bg-[#111] border border-[#5d4a36] rounded-sm flex items-center justify-center text-[10px] text-gray-600 font-bold">無</div>`;
 
                 html += `
-                    <div class="faction-container">
-                        <div class="faction-box ${themeClass}" onclick="openFactionDetail('${faction.id}')">
-                            ${emblemHTML}
-                            <div class="font-bold text-[#ebdcb8] text-sm mt-1 w-full text-center truncate px-1">${faction.name}</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5 hide-on-capture">인원: ${faction.members.length}명</div>
-                        </div>
-                        <div class="connector hide-on-capture"></div>
-                        <div class="member-list-area hide-on-capture">
+                    <div class="tree-node">
+                        <div class="faction-container">
+                            <div class="faction-box ${themeClass}" onclick="openFactionDetail('${faction.id}')">
+                                ${emblemHTML}
+                                <div class="font-bold text-[#ebdcb8] text-sm mt-1 w-full text-center truncate px-1">${faction.name}</div>
+                                <div class="text-[10px] text-gray-400 mt-0.5 hide-on-capture">인원: ${faction.members.length}명</div>
+                            </div>
+                            <div class="member-list-area hide-on-capture">
                 `;
                 
                 const previewMembers = faction.members.slice(0, 10);
@@ -450,10 +476,10 @@
                     });
                     if (faction.members.length > 10) html += `<div class="text-[11px] text-gray-500 mt-1 pt-1 border-t border-[#333]">외 ${faction.members.length - 10}명</div>`;
                 }
-                html += `</div></div>`;
+                html += `</div></div></div>`; // tree-node 종료
             });
 
-            html += `</div></div>`;
+            html += `</div></div>`; // tree-branches, tree-group 종료
             return html;
         }
 
@@ -489,55 +515,55 @@
 
             let html = '';
 
-            // 전투 라인 (VS)
+            // 1. 전투 라인 (VS) - flex-nowrap으로 가로 배치 보장
             const combatNames = Object.keys(combatGroups);
             if (combatNames.length > 0) {
-                html += `<div class="org-chart-container flex flex-wrap justify-center gap-x-12 gap-y-8 pb-8">`;
+                html += `<div class="org-chart-container flex flex-nowrap items-start justify-center gap-x-12 pb-8 min-w-max mx-auto px-10">`;
                 combatNames.forEach((lineName, index) => {
                     const themeType = index % 2 === 0 ? 0 : 1; 
                     html += createTreeGroupHTML(lineName, combatGroups[lineName], themeType);
 
                     if (combatNames.length === 2 && index === 0) {
-                        html += `<div class="flex flex-col items-center pt-8 flex-shrink-0"><div class="text-4xl md:text-5xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">VS</div></div>`;
+                        html += `<div class="flex flex-col items-center flex-shrink-0" style="margin-top: 10px;"><div class="text-4xl md:text-5xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">VS</div></div>`;
                     }
                 });
                 html += `</div>`;
             }
 
-            // 적대 라인
+            // 2. 적대 라인
             const hostileNames = Object.keys(hostileGroups);
             if (hostileNames.length > 0) {
                 const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
                 html += `
                     <div class="w-full ${borderTop} bg-[#1a0f0f] pt-8 pb-12">
                         <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#6b2a2a] rounded-full text-lg font-bold text-[#e67373] bg-[#2a0f0f]">⚔️ 적대 혈맹</h3></div>
-                        <div class="org-chart-container flex flex-wrap justify-center gap-8 pt-2 min-h-0">
+                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
                 `;
                 hostileNames.forEach(lineName => { html += createTreeGroupHTML(lineName, hostileGroups[lineName], 3); });
                 html += `</div></div>`;
             }
 
-            // 중립 라인
+            // 3. 중립 라인
             const neutralNames = Object.keys(neutralGroups);
             if (neutralNames.length > 0) {
                 const borderTop = (combatNames.length > 0 || hostileNames.length > 0) ? 'border-t border-[#333]' : '';
                 html += `
                     <div class="w-full ${borderTop} bg-[#141414] pt-8 pb-12">
                         <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#4a584a] rounded-full text-lg font-bold text-[#8ba38b] bg-[#1a201a]">🏳️ 중립 혈맹</h3></div>
-                        <div class="org-chart-container flex flex-wrap justify-center gap-8 pt-2 min-h-0">
+                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
                 `;
                 neutralNames.forEach(lineName => { html += createTreeGroupHTML(lineName, neutralGroups[lineName], 2); });
                 html += `</div></div>`;
             }
 
-            // 개인/무소속 라인
+            // 4. 개인/무소속 라인
             const individualNames = Object.keys(individualGroups);
             if (individualNames.length > 0) {
                 const borderTop = (combatNames.length > 0 || hostileNames.length > 0 || neutralNames.length > 0) ? 'border-t border-[#333]' : '';
                 html += `
                     <div class="w-full ${borderTop} bg-[#111111] pt-8 pb-12">
                         <div class="text-center mb-6"><h3 class="inline-block px-4 py-1 border border-[#444] rounded-full text-lg font-bold text-[#aaa] bg-[#222]">👤 개인 및 무소속</h3></div>
-                        <div class="org-chart-container flex flex-wrap justify-center gap-8 pt-2 min-h-0">
+                        <div class="org-chart-container flex flex-nowrap justify-center gap-12 pt-2 min-h-0 min-w-max mx-auto px-10">
                 `;
                 individualNames.forEach(lineName => { html += createTreeGroupHTML(lineName, individualGroups[lineName], 4); });
                 html += `</div></div>`;
@@ -760,7 +786,7 @@
             if (e.target === detailModal) closeFactionDetail();
         });
 
-        // 캡처 최적화 기능
+        // 캡처 최적화 기능 (잘림 방지)
         window.captureOrgChart = async function() {
             if (typeof html2canvas === 'undefined') {
                 showToast('캡처 라이브러리 로딩 중입니다. 잠시 후 시도해주세요.', true); return;
@@ -773,7 +799,7 @@
             
             try {
                 showToast('고해상도로 세력도를 캡처하고 있습니다...', false);
-                await new Promise(resolve => setTimeout(resolve, 300)); // 렌더링 대기 시간 약간 증가
+                await new Promise(resolve => setTimeout(resolve, 300)); // 렌더링 대기 시간
                 
                 const canvas = await html2canvas(wrapper, { 
                     backgroundColor: '#0f0f0f', 
