@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리니지 클래식 세력 및 내역 기록 툴</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            background-image: 
+                radial-gradient(circle at 100% 0%, #1a1515 0%, transparent 40%),
+                radial-gradient(circle at 0% 100%, #11181c 0%, transparent 40%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .lineage-border {
+            border: 1px solid #4a3b2c;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-lineage {
+            background: linear-gradient(to bottom, #5d4a36, #3b2c1f);
+            border: 1px solid #7a634a;
+            color: #ebdcb8;
+            transition: all 0.2s;
+        }
+
+        .btn-lineage:hover {
+            background: linear-gradient(to bottom, #6d5843, #4a3828);
+            border-color: #8c7358;
+            color: #fff;
+        }
+        
+        .btn-lineage-danger {
+            background: linear-gradient(to bottom, #6d2a2a, #4a1c1c);
+            border: 1px solid #8a3636;
+            color: #ffcccc;
+        }
+        
+        .btn-lineage-danger:hover {
+            background: linear-gradient(to bottom, #7d3333, #5a2222);
+        }
+
+        .input-lineage {
+            background-color: #0a0a0a;
+            border: 1px solid #4a3b2c;
+            color: #d0c0a0;
+        }
+        
+        .input-lineage:focus {
+            outline: none;
+            border-color: #7a634a;
+            box-shadow: 0 0 5px rgba(122, 99, 74, 0.5);
+        }
+
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #4a3b2c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5d4a36; }
+
+        /* 조직도 트리 (Org Chart) CSS */
+        .org-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+            gap: 2rem;
+            padding: 2rem 0;
+            overflow-x: auto;
+            min-height: 400px;
+        }
+
+        .tree-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree-stem {
+            width: 2px;
+            height: 25px;
+            background-color: #5d4a36;
+        }
+
+        .tree-branches {
+            display: flex;
+            position: relative;
+            padding-top: 25px;
+            margin-top: -1px;
+        }
+
+        .tree-node {
+            position: relative;
+            padding: 0 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #5d4a36;
+        }
+        .tree-node:first-child::before { left: 50%; width: 50%; }
+        .tree-node:last-child::before { width: 50%; }
+        .tree-node:only-child::before { display: none; }
+
+        .tree-node::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 25px;
+            background-color: #5d4a36;
+            transform: translateX(-50%);
+        }
+
+        .faction-box {
+            width: 130px;
+            background: linear-gradient(180deg, #2b4c7e 0%, #1a2a47 100%);
+            border: 1px solid #4a6b9a;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            margin-top: 25px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .faction-box.theme-red {
+            background: linear-gradient(180deg, #7e2b2b 0%, #471a1a 100%);
+            border: 1px solid #9a4a4a;
+        }
+        
+        .faction-box.theme-neutral {
+            background: linear-gradient(180deg, #3d4a3d 0%, #1f2a1f 100%);
+            border: 1px solid #5a6b5a;
+        }
+
+        .faction-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+            border-color: #ebdcb8;
+        }
+        
+        .line-edit-btn:hover {
+            color: #ebdcb8;
+            transform: scale(1.1);
+        }
+        
+        .emblem-upload-area {
+            cursor: pointer;
+            position: relative;
+        }
+        .emblem-upload-area::after {
+            content: '변경';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: inherit;
+        }
+        .emblem-upload-area:hover::after { opacity: 1; }
+    </style>
+</head>
+<body class="p-2 md:p-6 text-sm">
+
+    <div class="max-w-[1400px] mx-auto">
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-end border-b border-[#333] pb-4">
+            <div>
+                <h1 class="text-3xl font-black text-[#ebdcb8] tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                    LINEAGE CLASSIC
+                </h1>
+                <h2 class="text-gray-400 font-medium tracking-wide mt-1">세력 구도 및 일과 기록 시스템</h2>
+            </div>
+            <div class="flex flex-col items-end gap-2 mt-4 md:mt-0">
+                <div class="flex gap-2 mb-2">
+                    <button onclick="exportData()" class="bg-[#1c2e4a] hover:bg-[#2a4365] text-white px-3 py-1.5 rounded text-xs border border-[#2c588a] transition-colors flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        데이터 백업(JSON)
+                    </button>
+                    <label class="bg-[#4a2e1c] hover:bg-[#65432a] text-white px-3 py-1.5 rounded text-xs border border-[#8a582c] transition-colors cursor-pointer flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        데이터 복원
+                        <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                    </label>
+                </div>
+                <div class="flex gap-4 text-right">
+                    <div>
+                        <div class="text-gray-500 text-xs">총 세력</div>
+                        <div class="text-xl font-bold text-[#ebdcb8]" id="total-factions">0</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500 text-xs">총 인원</div>
+                        <div class="text-xl font-bold text-[#ebdcb8]" id="total-members">0</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 새로운 세력 창설 폼 -->
+        <details class="bg-[#1a1a1a] border border-[#333] rounded-lg mb-8 group" open>
+            <summary class="p-4 cursor-pointer font-semibold text-[#ebdcb8] list-none flex justify-between items-center bg-[#222] rounded-t-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-[#8c7358]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    새로운 혈맹 창설 (열기/닫기)
+                </div>
+                <svg class="w-5 h-5 transform group-open:rotate-180 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </summary>
+            <div class="p-5 border-t border-[#333]">
+                <form id="faction-form" class="flex flex-wrap gap-4 items-end">
+                    <div class="w-full md:w-auto flex-grow">
+                        <label class="block text-xs text-gray-400 mb-1">혈마크 이미지</label>
+                        <input type="file" id="faction-emblem" accept="image/*" class="input-lineage w-full px-2 py-1.5 rounded text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-[#3b2c1f] file:text-[#ebdcb8] hover:file:bg-[#4a3828]">
+                    </div>
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs text-gray-400 mb-1">소속 라인 (중립/기타 포함 시 자동분류)</label>
+                        <input type="text" id="faction-line" placeholder="예: 천하라인, 중립 등" required class="input-lineage w-full px-3 py-2 rounded">
+                    </div>
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs text-gray-400 mb-1">혈맹 이름</label>
+                        <input type="text" id="faction-name" placeholder="예: 천하" required class="input-lineage w-full px-3 py-2 rounded">
+                    </div>
+                    <button type="submit" class="btn-lineage px-6 py-2 rounded font-medium h-[38px] w-full md:w-auto">창설</button>
+                </form>
+            </div>
+        </details>
+
+        <!-- 조직도 시각화 영역 -->
+        <div id="org-chart-wrapper" class="bg-[#0f0f0f] border border-[#222] rounded-xl relative overflow-hidden shadow-2xl flex flex-col">
+            <!-- JavaScript로 트리가 그려집니다 -->
+        </div>
+    </div>
+
+    <!-- 혈맹 상세 및 길드원 관리 모달 -->
+    <div id="faction-detail-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#151515] lineage-border rounded-lg w-full max-w-5xl h-[85vh] md:h-[75vh] flex flex-col md:flex-row relative shadow-[0_0_30px_rgba(0,0,0,1)]">
+            <button onclick="closeFactionDetail()" class="absolute top-3 right-3 text-gray-400 hover:text-white z-20 bg-black/50 rounded-full p-1 border border-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <!-- 좌측: 혈맹 정보 및 내역 기록장 (웹툰 작가님 특화) -->
+            <div class="w-full md:w-[45%] bg-[#1a1a1a] flex flex-col border-b md:border-b-0 md:border-r border-[#333] z-10">
+                <div class="p-6 bg-gradient-to-b from-[#252525] to-[#1a1a1a] border-b border-[#333]">
+                    <div class="flex items-center gap-3 mb-2">
+                        <input type="file" id="detail-emblem-upload" accept="image/*" class="hidden" onchange="updateFactionEmblem(event)">
+                        <div id="detail-header-top" class="flex items-center gap-3"></div>
+                    </div>
+                    <h2 class="text-3xl font-black text-[#ebdcb8] drop-shadow-md" id="detail-name">혈맹이름</h2>
+                    <div class="text-gray-400 text-sm mt-1">창설/등록일: <span id="detail-date">-</span></div>
+                </div>
+                
+                <div class="p-6 flex-grow flex flex-col">
+                    <label class="block text-sm font-semibold text-[#8c7358] mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        기타 내역 및 일과 기록장
+                    </label>
+                    <textarea id="detail-desc-input" class="input-lineage w-full p-4 rounded flex-grow resize-none text-sm leading-relaxed" placeholder="이 혈맹과 관련된 주요 사건, 적대 변동, 오늘의 주요 일과 등을 일기처럼 자유롭게 기록하세요."></textarea>
+                    
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="saveFactionDesc()" class="btn-lineage flex-grow py-2 rounded font-medium">기록 저장</button>
+                        <button onclick="deleteCurrentFaction()" class="btn-lineage-danger px-4 py-2 rounded hover:bg-red-900 transition-colors" title="혈맹 삭제">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 우측: 길드원 관리 -->
+            <div class="w-full md:w-[55%] p-6 flex flex-col bg-[#111]">
+                <div class="flex justify-between items-end mb-4 border-b border-[#333] pb-2">
+                    <h3 class="text-xl font-bold text-[#ebdcb8]">길드원 명단</h3>
+                    <span class="bg-[#222] border border-[#444] px-3 py-1 rounded-full text-xs text-gray-300">
+                        총 <span id="detail-member-count" class="text-white font-bold">0</span>명
+                    </span>
+                </div>
+                
+                <form id="member-add-form" class="flex gap-2 mb-4 bg-[#1a1a1a] p-3 rounded border border-[#2a2a2a] shadow-inner">
+                    <input type="text" id="mem-name" placeholder="캐릭터명" required class="input-lineage w-1/4 px-3 py-1.5 rounded text-sm">
+                    <select id="mem-class" class="input-lineage w-1/4 px-2 py-1.5 rounded text-sm">
+                        <option value="군주">군주</option><option value="기사">기사</option>
+                        <option value="요정">요정</option><option value="마법사">마법사</option>
+                        <option value="다크엘프">다크엘프</option><option value="용기사">용기사</option>
+                        <option value="환술사">환술사</option>
+                    </select>
+                    <input type="number" id="mem-level" placeholder="Lv" required min="1" max="99" class="input-lineage w-16 px-2 py-1.5 rounded text-sm text-center">
+                    <input type="text" id="mem-role" placeholder="직책/메모 (선택)" class="input-lineage flex-grow px-3 py-1.5 rounded text-sm hidden md:block">
+                    <button type="submit" class="btn-lineage px-4 py-1.5 rounded text-sm whitespace-nowrap font-bold">추가</button>
+                </form>
+                
+                <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
+                    <div id="detail-member-list" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <!-- 멤버 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 알림 팝업 컨테이너 -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2"></div>
+
+    <script>
+        // Data & Variables
+        let factions = JSON.parse(localStorage.getItem('lineageFactionsOrg')) || [];
+        let currentEditingFactionId = null;
+
+        const classColors = {
+            '군주': 'text-yellow-400', '기사': 'text-red-400', '요정': 'text-green-400',
+            '마법사': 'text-blue-400', '다크엘프': 'text-purple-400', '용기사': 'text-orange-400', '환술사': 'text-pink-400'
+        };
+
+        const factionForm = document.getElementById('faction-form');
+        const orgChartWrapper = document.getElementById('org-chart-wrapper');
+        const detailModal = document.getElementById('faction-detail-modal');
+        const memberAddForm = document.getElementById('member-add-form');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Init
+        function init() {
+            renderOrgChart();
+            updateStats();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('lineageFactionsOrg', JSON.stringify(factions));
+            updateStats();
+        }
+
+        // --- JSON Backup / Restore ---
+        function exportData() {
+            if (factions.length === 0) {
+                showToast('내보낼 데이터가 없습니다.', true);
+                return;
+            }
+            const dataStr = JSON.stringify(factions, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = `lineage_record_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            showToast('데이터를 성공적으로 백업했습니다.');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm('기존 데이터를 덮어쓰고 복원하시겠습니까?')) {
+                            factions = importedData;
+                            saveToLocalStorage();
+                            renderOrgChart();
+                            showToast('데이터 복원이 완료되었습니다.');
+                        }
+                    } else {
+                        showToast('올바르지 않은 백업 파일입니다.', true);
+                    }
+                } catch (error) {
+                    showToast('파일을 읽는 중 오류가 발생했습니다.', true);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        function updateStats() {
+            document.getElementById('total-factions').textContent = factions.length;
+            const totalMembers = factions.reduce((sum, f) => sum + f.members.length, 0);
+            document.getElementById('total-members').textContent = totalMembers;
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `px-5 py-3 rounded-md shadow-2xl text-white text-sm font-medium transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 ${isError ? 'bg-[#7d2222] border border-[#a33]' : 'bg-[#2a4365] border border-[#4299e1]'}`;
+            toast.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isError ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M5 13l4 4L19 7'}"></path></svg> ${message}`;
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        function processImageToBase64(file) {
+            return new Promise((resolve) => {
+                if (!file) return resolve(null);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 32; canvas.height = 32;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, 32, 32);
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 라인명 수정
+        window.editLineName = function(oldLineName) {
+            const newLineName = prompt(`'${oldLineName}'의 새로운 라인 이름을 입력하세요:`, oldLineName);
+            if (newLineName && newLineName.trim() !== '' && newLineName !== oldLineName) {
+                const trimmedName = newLineName.trim();
+                factions.forEach(f => { if (f.line === oldLineName) f.line = trimmedName; });
+                saveToLocalStorage();
+                renderOrgChart();
+                showToast(`라인명이 [${trimmedName}](으)로 변경되었습니다.`);
+            }
+        };
+
+        // 세력 창설
+        factionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = factionForm.querySelector('button');
+            btn.disabled = true; btn.textContent = '...';
+
+            const line = document.getElementById('faction-line').value.trim();
+            const name = document.getElementById('faction-name').value.trim();
+            const file = document.getElementById('faction-emblem').files[0];
+
+            if (factions.some(f => f.name === name)) {
+                showToast('이미 존재하는 혈맹 이름입니다.', true);
+                btn.disabled = false; btn.textContent = '창설';
+                return;
+            }
+
+            const emblem = await processImageToBase64(file);
+            factions.push({
+                id: generateId(), line: line || '무소속', name: name, description: '',
+                emblem: emblem, createdAt: new Date().toLocaleDateString(), members: []
+            });
+
+            saveToLocalStorage();
+            renderOrgChart();
+            factionForm.reset();
+            btn.disabled = false; btn.textContent = '창설';
+            showToast(`[${name}] 혈맹이 등록되었습니다.`);
+        });
+
+        // HTML 조각 생성 (재사용)
+        function createTreeGroupHTML(lineName, factionsInLine, themeType) {
+            // 테마: 0(파랑-전투), 1(빨강-전투), 2(초록/회색-중립)
+            let headerBg, themeClass;
+            if (themeType === 0) {
+                headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]';
+                themeClass = '';
+            } else if (themeType === 1) {
+                headerBg = 'from-[#5e1c1c] to-[#3a1111] border-[#8a2c2c]';
+                themeClass = 'theme-red';
+            } else {
+                headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]';
+                themeClass = 'theme-neutral';
+            }
+
+            let html = `
+                <div class="tree-group min-w-[200px]">
+                    <div class="bg-gradient-to-r ${headerBg} border-2 rounded px-8 py-2.5 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10 relative group flex items-center gap-2">
+                        <h2 class="text-xl font-bold text-white tracking-widest drop-shadow-md">${lineName}</h2>
+                        <button onclick="editLineName('${lineName}')" class="line-edit-btn text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" title="라인명 수정">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="tree-stem"></div>
+                    <div class="tree-branches flex-wrap justify-center px-4">
+            `;
+
+            factionsInLine.forEach(faction => {
+                const emblemHTML = faction.emblem 
+                    ? `<img src="${faction.emblem}" class="w-7 h-7 border border-[#5d4a36] rounded-sm object-cover bg-black">` 
+                    : `<div class="w-7 h-7 bg-[#111] border border-[#5d4a36] rounded-sm flex items-center justify-center text-[10px] text-gray-600 font-bold">無</div>`;
+
+                html += `
+                    <div class="tree-node mb-8">
+                        <div class="faction-box ${themeClass}" onclick="openFactionDetail('${faction.id}')">
+                            <div class="px-2 py-3 flex flex-col items-center min-h-[65px]">
+                                ${emblemHTML}
+                                <div class="font-bold text-[#ebdcb8] text-sm mt-1.5 w-full text-center truncate px-1">${faction.name}</div>
+                            </div>
+                            <div class="bg-black/60 text-[10px] text-gray-300 py-1 text-center border-t border-black/50">인원: ${faction.members.length}명</div>
+                        </div>
+                        <div class="mt-3 w-full max-w-[120px] text-center flex flex-col gap-0.5 relative z-0">
+                            <div class="w-px h-4 bg-[#333] mx-auto mb-1"></div>
+                `;
+                
+                const previewMembers = faction.members.slice(0, 10);
+                if(previewMembers.length === 0) {
+                    html += `<span class="text-[11px] text-gray-600">-</span>`;
+                } else {
+                    previewMembers.forEach(m => {
+                        const color = classColors[m.class] || 'text-gray-400';
+                        html += `<div class="text-[12px] whitespace-nowrap overflow-hidden text-ellipsis"><span class="${color} font-medium">${m.name}</span> <span class="text-[9px] text-gray-500">Lv${m.level}</span></div>`;
+                    });
+                    if (faction.members.length > 10) html += `<div class="text-[11px] text-gray-500 mt-1">외 ${faction.members.length - 10}명</div>`;
+                }
+                html += `</div></div>`;
+            });
+
+            html += `</div></div>`;
+            return html;
+        }
+
+        // 트리 렌더링 (전투 라인 vs 중립 라인 분리)
+        function renderOrgChart() {
+            if (factions.length === 0) {
+                orgChartWrapper.innerHTML = `<div class="p-20 text-center text-gray-600">등록된 세력이 없습니다. 위 폼을 통해 혈맹을 등록하세요.</div>`;
+                return;
+            }
+
+            const combatGroups = {};
+            const neutralGroups = {};
+
+            // 중립/기타 키워드가 들어가면 중립 그룹으로 분류
+            factions.forEach(f => {
+                const isNeutral = f.line.includes('중립') || f.line.includes('기타') || f.line.includes('무소속');
+                if (isNeutral) {
+                    if (!neutralGroups[f.line]) neutralGroups[f.line] = [];
+                    neutralGroups[f.line].push(f);
+                } else {
+                    if (!combatGroups[f.line]) combatGroups[f.line] = [];
+                    combatGroups[f.line].push(f);
+                }
+            });
+
+            let html = '';
+
+            // 1. 전투 라인 렌더링 (상단부)
+            const combatNames = Object.keys(combatGroups);
+            if (combatNames.length > 0) {
+                html += `<div class="org-chart-container custom-scrollbar pb-8">`;
+                combatNames.forEach((lineName, index) => {
+                    const themeType = index % 2 === 0 ? 0 : 1; // 파랑 vs 빨강 교차
+                    html += createTreeGroupHTML(lineName, combatGroups[lineName], themeType);
+
+                    // 2개 라인일 때만 VS 출력
+                    if (combatNames.length === 2 && index === 0) {
+                        html += `<div class="flex flex-col items-center pt-8 px-8 flex-shrink-0"><div class="text-4xl md:text-5xl font-black text-[#4a3b2c] italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">VS</div></div>`;
+                    } else if (index < combatNames.length - 1 && combatNames.length !== 2) {
+                        html += `<div class="w-px bg-[#333] mt-8 mb-32 hidden md:block mx-8"></div>`;
+                    }
+                });
+                html += `</div>`;
+            }
+
+            // 2. 중립 및 기타 라인 렌더링 (하단부)
+            const neutralNames = Object.keys(neutralGroups);
+            if (neutralNames.length > 0) {
+                const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
+                html += `
+                    <div class="w-full ${borderTop} bg-[#141414] pt-8 pb-12">
+                        <div class="text-center mb-6">
+                            <h3 class="inline-block px-4 py-1 border border-[#4a584a] rounded-full text-lg font-bold text-[#8ba38b] bg-[#1a201a]">
+                                🏳️ 중립 및 기타 세력
+                            </h3>
+                        </div>
+                        <div class="org-chart-container custom-scrollbar pt-2 min-h-0 items-start justify-center flex-wrap">
+                `;
+                neutralNames.forEach(lineName => {
+                    html += createTreeGroupHTML(lineName, neutralGroups[lineName], 2); // 2 = 중립 테마
+                });
+                html += `</div></div>`;
+            }
+
+            orgChartWrapper.innerHTML = html;
+        }
+
+        // --- 모달 제어 및 상세 관리 ---
+        window.openFactionDetail = function(factionId) {
+            const faction = factions.find(f => f.id === factionId);
+            if(!faction) return;
+
+            currentEditingFactionId = faction.id;
+
+            const emblemHTML = faction.emblem 
+                ? `<img src="${faction.emblem}" class="w-8 h-8 border border-[#5d4a36] rounded object-cover shadow emblem-upload-area" onclick="document.getElementById('detail-emblem-upload').click()" title="클릭하여 마크 변경">` 
+                : `<div class="w-8 h-8 bg-black border border-[#5d4a36] rounded flex items-center justify-center text-xs text-gray-500 font-bold emblem-upload-area" onclick="document.getElementById('detail-emblem-upload').click()" title="클릭하여 마크 등록">無</div>`;
+            
+            document.getElementById('detail-header-top').innerHTML = `
+                ${emblemHTML}
+                <span class="bg-[#332] text-[#d0c0a0] border border-[#5a4a3a] px-2 py-0.5 rounded text-xs font-bold">${faction.line}</span>
+            `;
+            document.getElementById('detail-name').textContent = faction.name;
+            document.getElementById('detail-date').textContent = faction.createdAt || '-';
+            document.getElementById('detail-desc-input').value = faction.description || '';
+
+            memberAddForm.reset();
+            renderDetailMembers(faction);
+
+            detailModal.classList.remove('hidden');
+            detailModal.classList.add('flex');
+            setTimeout(() => {
+                detailModal.children[0].classList.add('scale-100', 'opacity-100');
+                detailModal.children[0].classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        };
+
+        window.closeFactionDetail = function() {
+            detailModal.classList.add('hidden');
+            detailModal.classList.remove('flex');
+            currentEditingFactionId = null;
+            document.getElementById('detail-emblem-upload').value = ''; 
+            renderOrgChart(); 
+        };
+
+        window.updateFactionEmblem = async function(event) {
+            const file = event.target.files[0];
+            if (!file || !currentEditingFactionId) return;
+
+            const faction = factions.find(f => f.id === currentEditingFactionId);
+            if(faction) {
+                faction.emblem = await processImageToBase64(file);
+                saveToLocalStorage();
+                openFactionDetail(faction.id); // UI 리프레시
+                showToast('마크가 업데이트되었습니다.');
+            }
+        };
+
+        window.saveFactionDesc = function() {
+            if(!currentEditingFactionId) return;
+            const faction = factions.find(f => f.id === currentEditingFactionId);
+            faction.description = document.getElementById('detail-desc-input').value;
+            saveToLocalStorage();
+            showToast('일과 및 기록이 저장되었습니다.');
+        };
+
+        // 멤버 추가 
+        memberAddForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(!currentEditingFactionId) return;
+            
+            const faction = factions.find(f => f.id === currentEditingFactionId);
+            const name = document.getElementById('mem-name').value.trim();
+            const charClass = document.getElementById('mem-class').value;
+            const level = parseInt(document.getElementById('mem-level').value);
+            const role = document.getElementById('mem-role').value.trim();
+
+            if (faction.members.some(m => m.name === name)) {
+                showToast('이미 등록된 캐릭터입니다.', true);
+                return;
+            }
+
+            faction.members.push({ id: generateId(), name, class: charClass, level, role });
+            faction.members.sort((a, b) => {
+                if (a.class === '군주' && b.class !== '군주') return -1;
+                if (b.class === '군주' && a.class !== '군주') return 1;
+                return b.level - a.level;
+            });
+
+            saveToLocalStorage();
+            renderDetailMembers(faction);
+            memberAddForm.reset();
+            document.getElementById('mem-name').focus();
+        });
+
+        // 멤버 리스트 렌더링
+        function renderDetailMembers(faction) {
+            document.getElementById('detail-member-count').textContent = faction.members.length;
+            const listEl = document.getElementById('detail-member-list');
+            
+            if(faction.members.length === 0) {
+                listEl.innerHTML = `<div class="col-span-full text-center py-10 text-gray-600 border border-dashed border-gray-800 rounded">등록된 캐릭터가 없습니다.</div>`;
+                return;
+            }
+
+            let html = '';
+            faction.members.forEach((m, idx) => {
+                const color = classColors[m.class] || 'text-gray-300';
+                const isLeader = m.class === '군주';
+                const borderClass = isLeader ? 'border-[#5a432b] bg-[#1a1612]' : 'border-[#222] bg-[#151515]';
+
+                html += `
+                    <div class="flex justify-between items-center p-2 rounded border ${borderClass} hover:border-[#444] transition-colors group">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <div class="text-[10px] text-gray-600 w-4 text-right">${idx + 1}</div>
+                            <div class="flex flex-col">
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-sm ${isLeader ? 'font-bold text-yellow-300' : 'text-gray-200'} truncate max-w-[80px]" title="${m.name}">${m.name}</span>
+                                    <span class="text-[10px] ${color}">[${m.class}]</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-[11px]">
+                                    <span class="text-gray-400">Lv.${m.level}</span>
+                                    ${m.role ? `<span class="text-[#8c7358] truncate max-w-[60px]" title="${m.role}">${m.role}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="removeMember('${m.id}')" class="text-gray-600 hover:text-red-500 opacity-20 group-hover:opacity-100 p-1 transition-all" title="삭제">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        window.removeMember = function(memberId) {
+            if(!currentEditingFactionId) return;
+            const faction = factions.find(f => f.id === currentEditingFactionId);
+            if(confirm('캐릭터를 삭제하시겠습니까?')) {
+                faction.members = faction.members.filter(m => m.id !== memberId);
+                saveToLocalStorage();
+                renderDetailMembers(faction);
+            }
+        };
+
+        window.deleteCurrentFaction = function() {
+            if(!currentEditingFactionId) return;
+            const faction = factions.find(f => f.id === currentEditingFactionId);
+            if(confirm(`[${faction.name}] 혈맹을 기록에서 완전히 삭제하시겠습니까?`)) {
+                factions = factions.filter(f => f.id !== currentEditingFactionId);
+                saveToLocalStorage();
+                closeFactionDetail();
+                showToast(`삭제 완료되었습니다.`, true);
+            }
+        };
+
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) closeFactionDetail();
+        });
+
+        init();
+    </script>
+</body>
+</html>
