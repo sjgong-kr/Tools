@@ -112,8 +112,8 @@
                         <input type="file" id="faction-emblem" accept="image/*" class="input-lineage w-full px-2 py-1.5 rounded text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-[#3b2c1f] file:text-[#ebdcb8] hover:file:bg-[#4a3828]">
                     </div>
                     <div class="w-full md:w-48">
-                        <label class="block text-xs text-gray-400 mb-1">소속 라인 (중립/기타 포함 시 자동분류)</label>
-                        <input type="text" id="faction-line" placeholder="예: 천하라인, 중립 등" required class="input-lineage w-full px-3 py-2 rounded">
+                        <label class="block text-xs text-gray-400 mb-1">소속 그룹 (키워드 자동분류: 중립, 적대, 개인)</label>
+                        <input type="text" id="faction-line" placeholder="예: 천하라인, 중립, 적대, 개인 등" required class="input-lineage w-full px-3 py-2 rounded">
                     </div>
                     <div class="w-full md:w-48">
                         <label class="block text-xs text-gray-400 mb-1">혈맹 이름</label>
@@ -349,7 +349,9 @@
             let headerBg, themeClass;
             if (themeType === 0) { headerBg = 'from-[#1c3a5e] to-[#11223a] border-[#2c588a]'; themeClass = ''; } 
             else if (themeType === 1) { headerBg = 'from-[#5e1c1c] to-[#3a1111] border-[#8a2c2c]'; themeClass = 'theme-red'; } 
-            else { headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]'; themeClass = 'theme-neutral'; }
+            else if (themeType === 2) { headerBg = 'from-[#2a302a] to-[#151815] border-[#4a584a]'; themeClass = 'theme-neutral'; }
+            else if (themeType === 3) { headerBg = 'from-[#4a1c1c] to-[#2a0f0f] border-[#6b2a2a]'; themeClass = 'theme-red'; } // 적대 테마
+            else { headerBg = 'from-[#2a2a2a] to-[#151515] border-[#4a4a4a]'; themeClass = 'theme-neutral'; } // 개인 테마
 
             let html = `
                 <div class="tree-group min-w-[200px]">
@@ -413,15 +415,23 @@
 
             const combatGroups = {};
             const neutralGroups = {};
+            const hostileGroups = {};
+            const individualGroups = {};
 
             window.factions.forEach(f => {
-                const isNeutral = f.line.includes('중립') || f.line.includes('기타') || f.line.includes('무소속');
-                if (isNeutral) {
-                    if (!neutralGroups[f.line]) neutralGroups[f.line] = [];
-                    neutralGroups[f.line].push(f);
+                const lineName = f.line;
+                if (lineName.includes('중립')) {
+                    if (!neutralGroups[lineName]) neutralGroups[lineName] = [];
+                    neutralGroups[lineName].push(f);
+                } else if (lineName.includes('적대')) {
+                    if (!hostileGroups[lineName]) hostileGroups[lineName] = [];
+                    hostileGroups[lineName].push(f);
+                } else if (lineName.includes('개인') || lineName.includes('무소속')) {
+                    if (!individualGroups[lineName]) individualGroups[lineName] = [];
+                    individualGroups[lineName].push(f);
                 } else {
-                    if (!combatGroups[f.line]) combatGroups[f.line] = [];
-                    combatGroups[f.line].push(f);
+                    if (!combatGroups[lineName]) combatGroups[lineName] = [];
+                    combatGroups[lineName].push(f);
                 }
             });
 
@@ -443,14 +453,32 @@
                 html += `</div>`;
             }
 
+            const hostileNames = Object.keys(hostileGroups);
+            if (hostileNames.length > 0) {
+                const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
+                html += `
+                    <div class="w-full ${borderTop} bg-[#1a0f0f] pt-8 pb-12">
+                        <div class="text-center mb-6">
+                            <h3 class="inline-block px-4 py-1 border border-[#6b2a2a] rounded-full text-lg font-bold text-[#e67373] bg-[#2a0f0f]">
+                                ⚔️ 적대 혈맹
+                            </h3>
+                        </div>
+                        <div class="org-chart-container custom-scrollbar pt-2 min-h-0 items-start justify-center flex-wrap">
+                `;
+                hostileNames.forEach(lineName => {
+                    html += createTreeGroupHTML(lineName, hostileGroups[lineName], 3);
+                });
+                html += `</div></div>`;
+            }
+
             const neutralNames = Object.keys(neutralGroups);
             if (neutralNames.length > 0) {
-                const borderTop = combatNames.length > 0 ? 'border-t border-[#333]' : '';
+                const borderTop = (combatNames.length > 0 || hostileNames.length > 0) ? 'border-t border-[#333]' : '';
                 html += `
                     <div class="w-full ${borderTop} bg-[#141414] pt-8 pb-12">
                         <div class="text-center mb-6">
                             <h3 class="inline-block px-4 py-1 border border-[#4a584a] rounded-full text-lg font-bold text-[#8ba38b] bg-[#1a201a]">
-                                🏳️ 중립 및 기타 세력
+                                🏳️ 중립 혈맹
                             </h3>
                         </div>
                         <div class="org-chart-container custom-scrollbar pt-2 min-h-0 items-start justify-center flex-wrap">
@@ -460,6 +488,25 @@
                 });
                 html += `</div></div>`;
             }
+
+            const individualNames = Object.keys(individualGroups);
+            if (individualNames.length > 0) {
+                const borderTop = (combatNames.length > 0 || hostileNames.length > 0 || neutralNames.length > 0) ? 'border-t border-[#333]' : '';
+                html += `
+                    <div class="w-full ${borderTop} bg-[#111111] pt-8 pb-12">
+                        <div class="text-center mb-6">
+                            <h3 class="inline-block px-4 py-1 border border-[#444] rounded-full text-lg font-bold text-[#aaa] bg-[#222]">
+                                👤 개인 및 무소속
+                            </h3>
+                        </div>
+                        <div class="org-chart-container custom-scrollbar pt-2 min-h-0 items-start justify-center flex-wrap">
+                `;
+                individualNames.forEach(lineName => {
+                    html += createTreeGroupHTML(lineName, individualGroups[lineName], 4);
+                });
+                html += `</div></div>`;
+            }
+
             orgChartWrapper.innerHTML = html;
         }
 
