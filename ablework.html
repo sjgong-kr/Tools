@@ -429,6 +429,16 @@
                <div id="db-week-sched" style="font-size:12px; max-height: 180px; overflow-y: auto;"></div>
              </div>
           </div>
+          
+          <!-- NEW: 월간 매출 TOTAL -->
+          <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
+             <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
+                 <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
+             </div>
+             <div style="font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1; margin-top: 12px;">
+                 <span id="dash-sales-month-val">0</span> <span style="font-size:13px; font-weight:normal; font-family:var(--sans); color:var(--muted);">백만원</span>
+             </div>
+          </div>
         </div>
 
         <!-- 우측 영역: 선택 날짜 타임라인 -->
@@ -438,12 +448,6 @@
           </div>
           <div id="daily-schedules" style="min-height: 250px; font-size:13px; flex-grow: 1;"></div>
           <button class="btn btn-secondary" style="width: 100%; margin-top: 15px; border-style: dashed;" onclick="window.openScheduleModal()">＋ 주요 일정 추가</button>
-          
-          <!-- 월간 예상 매출 TOTAL -->
-          <div style="margin-top: 20px; padding: 16px; background: rgba(168,120,56,0.06); border-radius: 6px; border-left: 3px solid var(--brass);">
-             <div style="font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px;" id="dash-sales-month-label">월간 예상 매출</div>
-             <div style="font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); line-height: 1;"><span id="dash-sales-month-val">0</span> <span style="font-size:12px; font-weight:normal; font-family:var(--sans); color:var(--muted);">백만원</span></div>
-          </div>
         </div>
       </div>
     </section>
@@ -585,7 +589,7 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">보고서 아카이브</div>
-          <div class="topbar-sub">과거 주간 업무보고 내역 모아보기</div>
+          <div class="topbar-sub">과거 주간 업무보고 내역 모아보기 (과거 데이터는 동기화 없이 영구 보존됩니다)</div>
         </div>
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
@@ -788,7 +792,7 @@
 
   const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-final";
 
-  // [방탄 로직 1] DB 오류 대비 하드코딩된 기본 계정들
+  // [방탄 로직 1] DB 오류/네트워크 단절 대비 하드코딩된 기본 계정
   const hardcodedUsers = {
       'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
       'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
@@ -866,7 +870,7 @@
 
   window.triggerSave = function() {
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
-    // [버그 해결 2] isFirebaseMode 스위치가 꺼져있어서 저장이 안 되던 문제 완벽 복구
+    // [핵심] 서버에 저장 권한이 있을 경우에만 Firestore 저장 수행
     if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
@@ -948,6 +952,9 @@
     }
     errEl.style.display = "none";
 
+    // [버그 해결] 로그인 버튼 누를 때 엔터키를 치면 커서가 남아있어 '데이터 동기화'를 차단하는 증상 강제 해제
+    if(document.activeElement) document.activeElement.blur();
+
     try {
         if (!db) throw new Error("DB Initialization failed");
         
@@ -989,7 +996,6 @@
   };
 
   function executeLoginSuccess(userData) {
-      if(document.activeElement) document.activeElement.blur(); // 포커스 꼬임 완벽 차단
       currentUser = userData;
       safeSetSession(currentUser);
       initApp();
@@ -1022,10 +1028,10 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      isFirebaseMode = true; // 서버 저장을 허가하는 필수 스위치
+      isFirebaseMode = true; // [중요] 서버 저장 스위치 ON
 
       if (db) {
-          // [데이터 불러오기 완벽 복구] 가장 최신 데이터가 모여있는 main 경로 (이전에 v1으로 잘못되었던 곳 복원)
+          // [핵심] 기존에 데이터가 원활하게 저장되었던 원본 경로(main)로 정확히 연결
           dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
           
           let isFirstLoad = true; // 최초 접속 시에는 데이터 무조건 덮어쓰기
@@ -1038,14 +1044,13 @@
                 if (snap.exists()) {
                   const serverData = snap.data();
                   
-                  // [버그 해결 1] 사용자가 타이핑 중일 때만 화면 새로고침(프리징) 방지. 첫 로딩 시에는 무조건 불러옴
+                  // 입력 중에 화면을 새로고침해버리면 깜빡이거나 글자가 날아가는 현상 차단
                   if (isFirstLoad || !isInputting) {
                       data = applyMigration({ ...data, ...serverData });
                       updateAllUI();
                       isFirstLoad = false;
                   }
                 } else {
-                  // DB에 데이터가 없으면 로컬 데이터로 신규 생성
                   window.triggerSave();
                   updateAllUI();
                 }
@@ -1220,7 +1225,7 @@
       `).join('');
     }
 
-    // Dashboard Sales Update
+    // [추가 기능] 대시보드 - 달력 선택 날짜의 월간 매출 TOTAL 표시
     const selY = calSelectedDate.getFullYear().toString();
     const selM = calSelectedDate.getMonth() + 1;
     const label = document.getElementById('dash-sales-month-label');
@@ -1317,16 +1322,27 @@
   // --- WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
+    const currentRange = getWeekRange(new Date());
+    const isCurrentWeek = (targetRange.id === currentRange.id); // 이번 주차인지 확인
 
     let arch = data.archives.find(a => a.id === targetRange.id);
+    let isNew = false;
     if (!arch) {
       arch = { id: targetRange.id, title: targetRange.title, start: targetRange.start, end: targetRange.end, categories: [] };
       data.archives.push(arch);
       data.archives.sort((a, b) => b.id.localeCompare(a.id));
+      isNew = true;
     }
     activeWeek = arch;
 
-    syncProjectsToSpecificWeek(activeWeek); 
+    // [아카이브 증발 버그 해결] 과거의 주간보고는 건드리지 않고, 오직 '현재 주차' 일때만 동기화!
+    if (isCurrentWeek) {
+        const changed = syncProjectsToSpecificWeek(activeWeek); 
+        if (isNew || changed) {
+            window.triggerSave();
+        }
+    }
+    
     renderWeeklyReport();
   }
 
@@ -1338,6 +1354,7 @@
   window.manualSaveWeek = function() { window.triggerSave(); window.showToast('보고서가 안전하게 저장되었습니다.'); };
   
   function syncProjectsToSpecificWeek(weekObj) {
+    let changed = false;
     const applicableProjs = data.projects.filter(p => {
       if (p.status === '진행' || p.status === '보류') return true;
       if (p.status === '완료' || p.status === '실주') {
@@ -1347,7 +1364,8 @@
       return false;
     });
 
-    if (!weekObj.categories) { weekObj.categories = []; }
+    if (!weekObj.categories) { weekObj.categories = []; changed = true; }
+    const originalCatStr = JSON.stringify(weekObj.categories);
 
     weekObj.categories.forEach(c => {
       c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
@@ -1399,6 +1417,9 @@
     });
 
     weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
+    
+    if (originalCatStr !== JSON.stringify(weekObj.categories)) changed = true;
+    return changed;
   }
 
   function renderWeeklyReport() {
@@ -1421,7 +1442,7 @@
     if(!container) return;
 
     if(activeWeek.categories.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">진행 상태인 사업이 없습니다. 프로젝트 관리에서 추가하세요.</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">이 주차에 해당하는 데이터가 없습니다.</div>`;
     } else {
       container.innerHTML = activeWeek.categories.map((cat, ci) => `
         <div class="category-block">
@@ -1754,7 +1775,13 @@
       data.projects.push(obj);
     }
     
-    if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
+    if(activeWeek) {
+        // [중요] 프로젝트 변동 시 '현재 주차'인 경우만 동기화하도록 안전하게 호출
+        const currentRange = getWeekRange(new Date());
+        if (activeWeek.id === currentRange.id) {
+            syncProjectsToSpecificWeek(activeWeek);
+        }
+    }
 
     window.triggerSave(); updateAllUI(); window.closeModal('modal-project');
   };
@@ -1762,7 +1789,12 @@
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
-      if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
+      if(activeWeek) {
+          const currentRange = getWeekRange(new Date());
+          if (activeWeek.id === currentRange.id) {
+              syncProjectsToSpecificWeek(activeWeek);
+          }
+      }
       window.triggerSave(); updateAllUI();
     });
   };
@@ -1901,7 +1933,7 @@
     window.triggerSave();
     window.renderSales();
     window.closeModal('modal-sales');
-    window.showToast('매출 데이터가 정상적으로 처리되었습니다.');
+    window.showToast('매출 데이터가 저장되었습니다.');
   };
 
   window.delSales = function() {
