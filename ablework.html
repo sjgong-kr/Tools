@@ -217,24 +217,27 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">주간 업무보고</div>
-          <div class="topbar-sub">이번 주(일~토) 기준, '진행' 중인 사업이 자동으로 나열됩니다.</div>
+          <div class="topbar-sub">주차 이동 및 이전 데이터 조회가 가능합니다. 진행 사업이 자동 연동됩니다.</div>
         </div>
         <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="manualSaveWeek()">💾 저장</button>
           <button class="btn btn-secondary" onclick="window.print()">🖨 인쇄</button>
         </div>
       </div>
 
       <div class="week-header">
-        <div class="week-info-box">
+        <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">◀ 이전 주</button>
+        <div class="week-info-box" style="text-align: center;">
           <div class="week-info-label">보고 주차</div>
           <div class="week-info-val" id="wk-title">로딩중...</div>
         </div>
-        <div class="week-info-box">
+        <div class="week-info-box" style="text-align: center;">
           <div class="week-info-label">대상 기간 (일~토)</div>
           <div class="week-info-val" id="wk-range">로딩중...</div>
         </div>
-        <div>
-          <button class="btn btn-ghost btn-sm" onclick="reSyncProjects()">↻ 진행 사업 다시 불러오기</button>
+        <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">다음 주 ▶</button>
+        <div style="margin-left: 15px;">
+          <button class="btn btn-ghost btn-sm" onclick="reSyncProjects()">↻ 사업 동기화</button>
         </div>
       </div>
 
@@ -346,9 +349,11 @@
   const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-v3";
   let dbRef = null;
 
-  // Calendar States
+  // Calendar & Week States
   let calRenderDate = new Date(); // 표시 중인 달력의 월
   let calSelectedDate = new Date(); // 사용자가 선택한 날짜
+  let displayWeekDate = new Date(); // 주간 보고서 표시 기준일
+  let activeWeek = null; // 현재 에디터에 열린 주간 데이터 포인터
 
   // 1. 초기화: 로컬 스토리지에서 먼저 빠르게 로드
   const localData = localStorage.getItem(appId);
@@ -360,7 +365,6 @@
   if(!data.schedules) data.schedules = [];
 
   // 초기 렌더링
-  initCurrentWeek(); 
   updateAllUI();
 
   // 2. Firebase 연결 설정
@@ -399,7 +403,6 @@
             data.currentWeek = serverData.currentWeek || null;
             data.archives = serverData.archives || [];
             
-            initCurrentWeek(); // 주가 바뀌었는지 체크
             updateAllUI();
           } else {
             // 서버에 데이터가 없으면 현재 로컬 데이터를 업로드
@@ -418,11 +421,18 @@
   }
 
   // --- 네비게이션 ---
-  window.goView = function(name) {
+  window.goView = function(name, resetWeekly = true) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
-    document.querySelector(`.nav-item[data-view="${name}"]`).classList.add('active');
+    
+    const navItem = document.querySelector(`.nav-item[data-view="${name}"]`);
+    if(navItem) navItem.classList.add('active');
+
+    // 메뉴 탭을 통해 주간보고 진입 시 이번 주를 기본으로 보여줌
+    if (name === 'weekly' && resetWeekly) {
+        displayWeekDate = new Date();
+    }
     updateAllUI();
   };
 
@@ -430,7 +440,7 @@
     renderCalendar();
     renderDailySchedules();
     renderProjects();
-    renderWeeklyReport();
+    loadWeek(displayWeekDate); 
     renderArchive();
   }
 
@@ -587,60 +597,94 @@
     };
   }
 
-  function initCurrentWeek() {
-    const range = getWeekRange();
-    
-    // 주가 바뀌었다면 기존 보고서를 아카이브로 이동
-    if (data.currentWeek && data.currentWeek.id !== range.id) {
+  function loadWeek(date) {
+    const targetRange = getWeekRange(date);
+    const currentRange = getWeekRange(new Date());
+
+    // 현재 주차인지 확인
+    if (targetRange.id === currentRange.id) {
+      if (!data.currentWeek || data.currentWeek.id !== currentRange.id) {
+        // 주차가 바뀌었다면 기존 것은 아카이브로
+        if (data.currentWeek) {
+          if (!data.archives) data.archives = [];
+          if (!data.archives.find(a => a.id === data.currentWeek.id)) {
+            data.archives.unshift(JSON.parse(JSON.stringify(data.currentWeek)));
+          }
+        }
+        data.currentWeek = {
+          id: currentRange.id,
+          title: currentRange.title,
+          start: currentRange.start,
+          end: currentRange.end,
+          categories: []
+        };
+        syncProjectsToSpecificWeek(data.currentWeek);
+      }
+      activeWeek = data.currentWeek;
+    } else {
+      // 과거나 미래 주차인 경우 아카이브(전체 내역)에서 찾기
       if (!data.archives) data.archives = [];
-      data.archives.unshift(JSON.parse(JSON.stringify(data.currentWeek)));
-      data.currentWeek = null; 
+      let arch = data.archives.find(a => a.id === targetRange.id);
+      
+      // 기록된 데이터가 없으면 빈 양식을 자동 생성하여 추가
+      if (!arch) {
+        arch = {
+          id: targetRange.id,
+          title: targetRange.title,
+          start: targetRange.start,
+          end: targetRange.end,
+          categories: []
+        };
+        syncProjectsToSpecificWeek(arch);
+        data.archives.push(arch);
+        data.archives.sort((a, b) => b.id.localeCompare(a.id)); // 최신순 정렬
+      }
+      activeWeek = arch;
     }
-
-    if (!data.currentWeek) {
-      data.currentWeek = {
-        id: range.id,
-        title: range.title,
-        start: range.start,
-        end: range.end,
-        categories: []
-      };
-    }
-
-    syncActiveProjectsToWeek();
+    renderWeeklyReport();
   }
 
-  window.reSyncProjects = function() {
-    syncActiveProjectsToWeek();
-    showToast('진행 사업 목록을 최신화했습니다.');
+  window.changeWeek = function(offset) {
+    displayWeekDate.setDate(displayWeekDate.getDate() + (offset * 7));
+    loadWeek(displayWeekDate);
   };
 
-  function syncActiveProjectsToWeek() {
-    // 프로젝트 마스터에서 '진행' 또는 '보류' 상태 동기화
+  window.manualSaveWeek = function() {
+    triggerSave();
+    showToast('주간 보고서가 성공적으로 저장되었습니다.');
+  };
+
+  window.reSyncProjects = function() {
+    if (activeWeek) {
+      syncProjectsToSpecificWeek(activeWeek);
+      showToast('해당 주차에 진행 사업 목록을 최신화했습니다.');
+      renderWeeklyReport();
+    }
+  };
+
+  function syncProjectsToSpecificWeek(weekObj) {
     const activeProjs = (data.projects || []).filter(p => p.status === '진행' || p.status === '보류');
+    if (!weekObj.categories) weekObj.categories = [];
     
     activeProjs.forEach(p => {
-      let cat = data.currentWeek.categories.find(c => c.name === p.cat);
+      let cat = weekObj.categories.find(c => c.name === p.cat);
       if (!cat) {
         cat = { name: p.cat, projects: [] };
-        data.currentWeek.categories.push(cat);
+        weekObj.categories.push(cat);
       }
       let cp = cat.projects.find(x => x.id === p.id);
       if (!cp) {
-        // 새 진행 프로젝트 추가
         cat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: '', plan: '' });
       } else {
-        // 이름/담당자만 최신화
         cp.name = p.name; cp.owner = p.owner;
       }
     });
-
     triggerSave();
   }
 
   function renderWeeklyReport() {
-    if (!data.currentWeek) return;
-    const cw = data.currentWeek;
+    if (!activeWeek) return;
+    const cw = activeWeek;
     
     document.getElementById('wk-title').textContent = cw.title;
     document.getElementById('wk-range').textContent = `${cw.start} ~ ${cw.end}`;
@@ -688,11 +732,11 @@
       `).join('');
     }
 
-    // 이번 주(일~토)에 속하는 주요 일정 렌더링
+    // 해당 주(일~토)에 속하는 주요 일정 렌더링
     const matched = data.schedules.filter(s => s.date >= cw.start && s.date <= cw.end).sort((a,b)=>a.date.localeCompare(b.date));
     const schWrap = document.getElementById('weekly-matched-schedules');
     if (matched.length === 0) {
-      schWrap.innerHTML = `<div style="padding:14px; font-size:12px; color:var(--muted);">이 주간(일~토)에 등록된 주요 일정이 없습니다. 대시보드 달력에서 등록하세요.</div>`;
+      schWrap.innerHTML = `<div style="padding:14px; font-size:12px; color:var(--muted);">해당 주차에 등록된 주요 일정이 없습니다. 대시보드 달력에서 등록하세요.</div>`;
     } else {
       schWrap.innerHTML = matched.map(s => `
         <div class="schedule-item">
@@ -705,17 +749,20 @@
 
   // --- 순서 변경 & 데이터 업데이트 ---
   window.updateWeekData = function(ci, pi, field, val) {
-    data.currentWeek.categories[ci].projects[pi][field] = val;
+    if (!activeWeek) return;
+    activeWeek.categories[ci].projects[pi][field] = val;
     triggerSave();
   };
   window.moveCat = function(ci, dir) {
-    const arr = data.currentWeek.categories;
+    if (!activeWeek) return;
+    const arr = activeWeek.categories;
     if (ci + dir < 0 || ci + dir >= arr.length) return;
     [arr[ci], arr[ci+dir]] = [arr[ci+dir], arr[ci]];
     triggerSave(); renderWeeklyReport();
   };
   window.moveProj = function(ci, pi, dir) {
-    const arr = data.currentWeek.categories[ci].projects;
+    if (!activeWeek) return;
+    const arr = activeWeek.categories[ci].projects;
     if (pi + dir < 0 || pi + dir >= arr.length) return;
     [arr[pi], arr[pi+dir]] = [arr[pi+dir], arr[pi]];
     triggerSave(); renderWeeklyReport();
@@ -802,6 +849,11 @@
   };
 
   // --- 아카이브 ---
+  window.viewArchivedWeek = function(dateStr) {
+    displayWeekDate = new Date(dateStr);
+    goView('weekly', false);
+  };
+
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
     const arch = data.archives || [];
@@ -817,7 +869,7 @@
           <td style="font-weight:600; font-family:var(--serif);">${a.title}</td>
           <td style="font-family:var(--mono); font-size:12px;">${a.start} ~ ${a.end}</td>
           <td>총 ${count}건</td>
-          <td><button class="btn btn-secondary btn-sm" onclick="alert('인쇄 미리보기 기능은 준비중입니다.')">보기</button></td>
+          <td><button class="btn btn-secondary btn-sm" onclick="viewArchivedWeek('${a.start}')">보기 및 수정</button></td>
         </tr>
       `;
     }).join('');
