@@ -44,9 +44,21 @@
   button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
   input, textarea, select { font-family: inherit; color: inherit; outline: none; }
 
+  /* ===== Login Screen ===== */
+  #login-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .login-box {
+    background: var(--bg-elev); padding: 40px 30px; border-radius: 8px;
+    box-shadow: var(--shadow-md); width: 100%; max-width: 360px; text-align: center;
+    border: 1px solid var(--line);
+  }
+  .login-box .form-group { text-align: left; margin-bottom: 16px; }
+
   /* ===== Layout ===== */
   .app {
-    display: grid;
+    display: none; /* hidden until logged in */
     grid-template-columns: 240px 1fr;
     min-height: 100vh;
   }
@@ -55,16 +67,17 @@
   .sidebar {
     background: var(--ink);
     color: #E8E4DC;
-    padding: 28px 0;
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
     border-right: 1px solid #0F1626;
+    display: flex;
+    flex-direction: column;
   }
 
   .brand {
-    padding: 0 24px 28px;
+    padding: 28px 24px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
   .brand-mark {
@@ -95,7 +108,7 @@
     font-weight: 500;
   }
 
-  .nav { padding: 18px 12px; }
+  .nav { padding: 18px 12px; flex: 1; }
   .nav-label {
     font-size: 10px;
     color: #6B6655;
@@ -255,7 +268,7 @@
   @media print {
     @page { size: A4 landscape; margin: 15mm; }
     body, html { background: white !important; height: auto !important; overflow: visible !important; }
-    .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #weekly-container, .card, #header-actions { display: none !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #weekly-container, .card, #header-actions { display: none !important; }
     #view-weekly { display: block !important; padding: 0 !important; margin: 0 !important; }
 
     #print-area { display: block !important; width: 100%; color: black; }
@@ -277,6 +290,23 @@
 </head>
 <body>
 
+<!-- LOGIN VIEW -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="brand-mark" style="color:var(--ink); font-size:24px; margin-bottom:24px;">에이블컴 업무관리</div>
+    <div class="form-group">
+      <label>아이디</label>
+      <input type="text" id="login-id" placeholder="아이디 입력" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <input type="password" id="login-pw" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') window.handleLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:10px; font-size:14px;" onclick="window.handleLogin()">로그인</button>
+    <div id="login-error" style="color:var(--accent); font-size:12px; margin-top:14px; display:none; font-weight:500;"></div>
+  </div>
+</div>
+
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -288,10 +318,15 @@
       <div class="nav-label">Menu</div>
       <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
       <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
-      <!-- 명칭 변경: 프로젝트 마스터 -> 프로젝트 관리 -->
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
+      <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
+      <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
     </nav>
+    <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
+      <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
+      <button class="btn btn-secondary btn-sm" style="width:100%; background:rgba(255,255,255,0.05); color:#E8E4DC; border:none;" onclick="window.doLogout()">로그아웃</button>
+    </div>
   </aside>
 
   <!-- MAIN CONTENT -->
@@ -302,7 +337,7 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">대시보드</div>
-          <div class="topbar-sub">일일 주요 일정 및 주간 업무 요약</div>
+          <div class="topbar-sub">일일 주요 일정 및 주간 업무 요약 (사내 공용 데이터)</div>
         </div>
       </div>
 
@@ -450,6 +485,25 @@
       </div>
     </section>
 
+    <!-- 5. ACCOUNT MANAGEMENT VIEW (Admin Only) -->
+    <section class="view" id="view-accounts">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">계정 관리</div>
+          <div class="topbar-sub">시스템 접속 계정을 추가하거나 삭제합니다. (최고관리자 전용)</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="window.openAccountModal()">＋ 계정 추가</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="table">
+          <thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead>
+          <tbody id="accounts-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -465,7 +519,29 @@
   </div>
 </div>
 
-<!-- 카테고리 관리 모달 추가 -->
+<!-- 계정 관리 모달 -->
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <h3 id="acc-title">새 계정 추가</h3>
+    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;">아이디는 영문/숫자 조합입니다. 초기 비밀번호를 설정해주세요.</p>
+    <div class="form-group"><label>아이디</label><input id="acc-id" type="text" placeholder="예: user01"></div>
+    <div class="form-group"><label>사용자 이름</label><input id="acc-name" type="text" placeholder="예: 홍길동"></div>
+    <div class="form-group"><label>비밀번호</label><input id="acc-pw" type="password" placeholder="6자리 이상 입력"></div>
+    <div class="form-group">
+      <label>권한</label>
+      <select id="acc-role">
+        <option value="user">일반 사용자</option>
+        <option value="admin">관리자</option>
+      </select>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-account')">취소</button>
+      <button class="btn btn-primary" onclick="window.saveAccount()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카테고리 관리 모달 -->
 <div class="modal-overlay" id="modal-category">
   <div class="modal" style="max-width: 360px;">
     <h3>카테고리 관리</h3>
@@ -474,9 +550,7 @@
       <button class="btn btn-primary" id="btn-add-cat" onclick="window.saveCategory()">추가</button>
       <button class="btn btn-secondary" id="btn-cancel-cat" style="display:none;" onclick="window.cancelEditCategory()">취소</button>
     </div>
-    <div id="cat-list" style="max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:4px; padding:4px;">
-      <!-- 카테고리 목록 렌더링 영역 -->
-    </div>
+    <div id="cat-list" style="max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:4px; padding:4px;"></div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
       <button class="btn btn-ghost" onclick="window.closeModal('modal-category')">닫기</button>
     </div>
@@ -489,7 +563,6 @@
     <h3 id="pm-title">프로젝트 추가</h3>
     <div class="form-group">
       <label>카테고리</label>
-      <!-- text 인풋을 select로 변경 -->
       <select id="pm-cat"></select>
     </div>
     <div class="form-group"><label>사업명</label><input id="pm-name" type="text" placeholder="예: 한국도로공사 전국망"></div>
@@ -527,8 +600,8 @@
 <!-- ============ JAVASCRIPT ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   // 기본 데이터 구조
   let data = {
@@ -536,15 +609,17 @@
       { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '홍길동', status: '진행' },
       { id: 'p2', cat: '금융', name: '코스콤 백본 증설', owner: '김영업', status: '진행' }
     ],
-    categories: ['공공/기업', '금융', '국방', '유지보수', '기타'], // 카테고리 데이터 추가
+    categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
     currentWeek: null,
     archives: []
   };
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v6";
+  const domain = "@ablecom.com"; // 가상 이메일 도메인 처리용
+  let isAdmin = false;
+  let accountList = [];
+
   let dbRef = null;
-  let isFirebaseMode = false;
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
@@ -553,56 +628,194 @@
   let pmEditId = null;
   let editingCatIdx = null;
 
-  // 로컬 로드
-  const localData = localStorage.getItem(appId);
-  if (localData) { try { data = { ...data, ...JSON.parse(localData) }; } catch(e) {} }
-  if(!data.schedules) data.schedules = [];
-  
-  // 카테고리가 없는 기존 유저 마이그레이션 방어코드
-  if(!data.categories || data.categories.length === 0) {
-     const existingCats = data.projects.map(p => p.cat);
-     data.categories = [...new Set(existingCats)];
-     if(data.categories.length === 0) data.categories = ['공공/기업', '금융', '국방', '기타'];
-  }
+  // 사용자 제공 Firebase 환경 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+    authDomain: "openzeroc.firebaseapp.com",
+    projectId: "openzeroc",
+    storageBucket: "openzeroc.firebasestorage.app",
+    messagingSenderId: "465944510778",
+    appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+    measurementId: "G-M4K79K2XPG"
+  };
 
-  updateAllUI();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  // Firebase Init
-  const fbConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-  if(fbConfigStr) {
+  // 계정 생성을 위한 서브 앱 (메인 계정 로그아웃 방지용)
+  let secondaryApp;
+  try { secondaryApp = initializeApp(firebaseConfig, "SecondaryApp"); } catch(e) {}
+  const secondaryAuth = getAuth(secondaryApp);
+
+  // --- 로그인 및 인증 시스템 ---
+  window.handleLogin = async function() {
+    const idInput = document.getElementById('login-id').value.trim();
+    const pwInput = document.getElementById('login-pw').value;
+    const errEl = document.getElementById('login-error');
+
+    if(!idInput || !pwInput) {
+      errEl.textContent = "아이디와 비밀번호를 모두 입력해주세요.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const email = idInput.includes('@') ? idInput : idInput + domain;
+
     try {
-      const app = initializeApp(JSON.parse(fbConfigStr));
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+      await signInWithEmailAndPassword(auth, email, pwInput);
+      errEl.style.display = "none";
+    } catch (e) {
+      // 자동 최고관리자 생성 로직 (부트스트랩)
+      if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found')) {
+        try {
+           await createUserWithEmailAndPassword(auth, email, pwInput);
+           await setDoc(doc(db, 'ablework/company_main/accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
+           errEl.style.display = "none";
+        } catch(err2) {
+           errEl.textContent = "로그인 실패: " + err2.message;
+           errEl.style.display = "block";
+        }
+      } else {
+         errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
+         errEl.style.display = "block";
+      }
+    }
+  };
+
+  window.doLogout = function() { signOut(auth); };
+
+  onAuthStateChanged(auth, async (user) => {
+    const loginView = document.getElementById('login-overlay');
+    const appView = document.querySelector('.app');
+
+    if (user) {
+      const email = user.email;
+      const baseId = email.replace(domain, '');
+      let role = 'user';
+      let userName = baseId;
+
+      // 관리자 강제 세팅을 제외한 일반 유저의 권한 체크
+      if (baseId !== 'ablecom') {
+        const accDoc = await getDoc(doc(db, 'ablework/company_main/accounts', email));
+        if (!accDoc.exists()) {
+           alert('삭제되었거나 권한이 없는 계정입니다.');
+           signOut(auth);
+           return;
+        }
+        role = accDoc.data().role;
+        userName = accDoc.data().name;
+      } else {
+        role = 'admin';
+        userName = '최고관리자';
+      }
+
+      isAdmin = (role === 'admin');
       
-      signInAnonymously(auth).then(() => {
-        isFirebaseMode = true;
-        onAuthStateChanged(auth, user => {
-          if(user) {
-            dbRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data');
-            onSnapshot(dbRef, (snap) => {
-              if (snap.exists()) {
-                const serverData = snap.data();
-                data = { ...data, ...serverData };
-                if(!data.schedules) data.schedules = [];
-                if(!data.categories) data.categories = ['공공/기업', '금융', '국방', '기타'];
-                updateAllUI();
-              } else {
-                triggerSave();
-              }
-            });
-          }
-        });
+      // UI 설정
+      document.getElementById('current-user-name').textContent = `${userName} (${baseId})`;
+      loginView.style.display = 'none';
+      appView.style.display = 'grid';
+
+      if (isAdmin) {
+        document.getElementById('nav-accounts').style.display = 'flex';
+        document.getElementById('nav-label-admin').style.display = 'block';
+        loadAccounts();
+      } else {
+        document.getElementById('nav-accounts').style.display = 'none';
+        document.getElementById('nav-label-admin').style.display = 'none';
+      }
+
+      // 전사 공유 데이터 (Company Shared Data) 동기화
+      dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
+      onSnapshot(dbRef, (snap) => {
+        if (snap.exists()) {
+          const serverData = snap.data();
+          data = { ...data, ...serverData };
+          if(!data.schedules) data.schedules = [];
+          if(!data.categories) data.categories = ['공공/기업', '금융', '국방', '기타'];
+          updateAllUI();
+        } else {
+          // 최초 빈 데이터 업로드
+          triggerSave();
+        }
       });
-    } catch(e) { console.error("Firebase init fail", e); }
-  }
+    } else {
+      // 비로그인 상태
+      loginView.style.display = 'flex';
+      appView.style.display = 'none';
+    }
+  });
 
   function triggerSave() {
-    localStorage.setItem(appId, JSON.stringify(data));
-    if (isFirebaseMode && dbRef) setDoc(dbRef, data).catch(e=>{});
+    if (dbRef) setDoc(dbRef, data, {merge: true}).catch(e=>{});
   }
 
-  // UI Utilities
+  // --- 관리자: 계정 관리 ---
+  function loadAccounts() {
+    onSnapshot(collection(db, 'ablework/company_main/accounts'), (snap) => {
+      accountList = snap.docs.map(d => ({ email: d.id, ...d.data() }));
+      renderAccounts();
+    });
+  }
+
+  function renderAccounts() {
+    const tbody = document.getElementById('accounts-tbody');
+    tbody.innerHTML = accountList.map(a => `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(a.id)}</td>
+        <td>${escapeHtml(a.name)}</td>
+        <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
+        <td>
+          ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
+            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.email}')">삭제</button>
+          `}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.openAccountModal = function() {
+    document.getElementById('acc-id').value = '';
+    document.getElementById('acc-name').value = '';
+    document.getElementById('acc-pw').value = '';
+    document.getElementById('acc-role').value = 'user';
+    window.openModal('modal-account');
+  };
+
+  window.saveAccount = async function() {
+    const id = document.getElementById('acc-id').value.trim();
+    const name = document.getElementById('acc-name').value.trim();
+    const pw = document.getElementById('acc-pw').value;
+    const role = document.getElementById('acc-role').value;
+
+    if(!id || !name || !pw) return window.showToast('모든 항목을 입력해주세요.');
+    if(pw.length < 6) return window.showToast('비밀번호는 6자리 이상이어야 합니다.');
+    const email = id + domain;
+
+    const exists = accountList.find(a => a.id === id);
+    if (exists) return window.showToast('이미 존재하는 아이디입니다.');
+
+    try {
+      await createUserWithEmailAndPassword(secondaryAuth, email, pw);
+      await signOut(secondaryAuth);
+      await setDoc(doc(db, 'ablework/company_main/accounts', email), { id, name, role });
+      window.closeModal('modal-account');
+      window.showToast('계정이 성공적으로 추가되었습니다.');
+    } catch (e) {
+      window.showToast('계정 생성 실패: ' + e.message);
+    }
+  };
+
+  window.delAccount = async function(email) {
+    if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
+    try {
+      await deleteDoc(doc(db, 'ablework/company_main/accounts', email));
+      window.showToast('계정이 삭제되었습니다.');
+    } catch (e) { console.error(e); }
+  };
+
+  // --- UI Utilities ---
   window.showToast = function(msg) {
     const el = document.getElementById('toast');
     el.textContent = msg; el.classList.add('show');
@@ -665,7 +878,7 @@
     renderCalendar();
   };
   window.selectDate = function(dStr) {
-    calSelectedDate = new Date(dStr);
+    calSelectedDate = new Date(dStr + "T00:00:00"); 
     renderCalendar(); renderDailySchedules();
   };
 
@@ -764,7 +977,6 @@
     document.getElementById('db-stat-plan').textContent = planCnt;
     document.getElementById('db-stat-prev').textContent = prevCnt;
 
-    // Cat Dist
     const cdWrap = document.getElementById('db-cat-dist');
     if(activeProjs.length === 0) cdWrap.innerHTML = '<div style="color:var(--muted);">사업 없음</div>';
     else {
@@ -781,7 +993,6 @@
       `).join('');
     }
 
-    // Week Schedules
     const wsWrap = document.getElementById('db-week-sched');
     const wsList = data.schedules.filter(s => s.date >= curRange.start && s.date <= curRange.end).sort((a,b)=>a.date.localeCompare(b.date));
     if(wsList.length === 0) wsWrap.innerHTML = '<div style="color:var(--muted);">일정 없음</div>';
@@ -830,17 +1041,45 @@
   };
   window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
+  // 동기화 시 기존 내용(prev, plan) 보존 처리
   function syncProjectsToSpecificWeek(weekObj) {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     if (!weekObj.categories) weekObj.categories = [];
     
+    // 1. 활성 프로젝트를 카테고리별로 분류하면서 기존 내용 병합
     activeProjs.forEach(p => {
-      let cat = weekObj.categories.find(c => c.name === p.cat);
-      if (!cat) { cat = { name: p.cat, projects: [] }; weekObj.categories.push(cat); }
-      let cp = cat.projects.find(x => x.id === p.id);
-      if (!cp) cat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: '', plan: '' });
-      else { cp.name = p.name; cp.owner = p.owner; }
+      // 기존에 이 프로젝트가 어느 카테고리에 있었든 내용을 백업
+      let existingPrev = '';
+      let existingPlan = '';
+      weekObj.categories.forEach(c => {
+        const idx = c.projects.findIndex(x => x.id === p.id);
+        if (idx !== -1) {
+          existingPrev = c.projects[idx].prev;
+          existingPlan = c.projects[idx].plan;
+          // 카테고리가 달라졌다면 예전 카테고리에서 제거
+          if (c.name !== p.cat) c.projects.splice(idx, 1);
+        }
+      });
+
+      // 올바른 타겟 카테고리 찾기 (없으면 생성)
+      let targetCat = weekObj.categories.find(c => c.name === p.cat);
+      if (!targetCat) {
+        targetCat = { name: p.cat, projects: [] };
+        weekObj.categories.push(targetCat);
+      }
+      
+      // 타겟 카테고리 안에 해당 프로젝트 갱신 또는 추가
+      let cp = targetCat.projects.find(x => x.id === p.id);
+      if (!cp) {
+        targetCat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: existingPrev, plan: existingPlan });
+      } else {
+        cp.name = p.name; 
+        cp.owner = p.owner;
+      }
     });
+
+    // 2. 프로젝트가 하나도 없는 빈 카테고리 청소
+    weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
     triggerSave();
   }
 
@@ -916,7 +1155,6 @@
     triggerSave(); renderWeeklyReport();
   };
 
-  // --- 인쇄 처리 로직 수정 (오작동 해결) ---
   window.executePrint = function() {
     if (!activeWeek || activeWeek.categories.length === 0) {
       return window.showToast('인쇄할 데이터가 없습니다.');
@@ -986,14 +1224,8 @@
     const printArea = document.getElementById('print-area');
     printArea.innerHTML = printHtml;
     
-    // DOM 업데이트 후 즉시(동기식으로) 프린트 호출하여 브라우저 팝업차단을 우회합니다.
-    printArea.getBoundingClientRect(); // 강제 reflow를 발생시켜 레이아웃을 즉시 반영
-    
-    try {
-        window.print();
-    } catch(e) {
-        window.showToast("브라우저 설정으로 자동 인쇄창이 막혔습니다. Ctrl+P 또는 Cmd+P를 눌러주세요.");
-    }
+    printArea.getBoundingClientRect(); 
+    try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
 
@@ -1037,19 +1269,14 @@
     if(!val) return;
 
     if (editingCatIdx !== null) {
-      // 카테고리 수정 로직
       if (data.categories[editingCatIdx] !== val && data.categories.includes(val)) {
         return window.showToast('이미 존재하는 카테고리입니다.');
       }
       const oldCatName = data.categories[editingCatIdx];
       data.categories[editingCatIdx] = val;
 
-      // 1. 연관된 모든 프로젝트의 카테고리명 일괄 업데이트
-      data.projects.forEach(p => {
-        if (p.cat === oldCatName) p.cat = val;
-      });
+      data.projects.forEach(p => { if (p.cat === oldCatName) p.cat = val; });
       
-      // 2. 주간 업무보고에 연동된 카테고리명 일괄 업데이트
       if (activeWeek) {
         const wCat = activeWeek.categories.find(c => c.name === oldCatName);
         if (wCat) wCat.name = val;
@@ -1058,11 +1285,15 @@
         const cwCat = data.currentWeek.categories.find(c => c.name === oldCatName);
         if (cwCat) cwCat.name = val;
       }
+      // 과거 아카이브 전체 카테고리 이름 일괄 변경 (선택사항이나, 동기화를 위해)
+      data.archives.forEach(arch => {
+        const aCat = arch.categories.find(c => c.name === oldCatName);
+        if(aCat) aCat.name = val;
+      });
 
       window.showToast('카테고리가 수정되었습니다.');
       window.cancelEditCategory();
     } else {
-      // 카테고리 추가 로직
       if(data.categories.includes(val)) return window.showToast('이미 존재하는 카테고리입니다.');
       data.categories.push(val);
       input.value = '';
@@ -1071,7 +1302,8 @@
 
     triggerSave();
     renderCategoryList();
-    updateAllUI(); // 관련된 모든 화면(프로젝트 테이블, 주간보고 등) 즉시 갱신
+    populateCatSelect();
+    updateAllUI(); 
   };
 
   window.delCategory = function(idx) {
@@ -1085,19 +1317,17 @@
     data.categories.splice(idx, 1);
     triggerSave();
     renderCategoryList();
+    populateCatSelect();
   };
 
   function populateCatSelect(selectedVal = null) {
     const sel = document.getElementById('pm-cat');
-    // 사용 중이지만 리스트에 없는 과거 카테고리 보호 처리
     const options = new Set(data.categories);
     if(selectedVal) options.add(selectedVal);
-    
     sel.innerHTML = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
 
-
-  // --- 4. PROJECTS MASTER (프로젝트 관리) ---
+  // --- 4. PROJECTS MASTER ---
   function renderProjects() {
     const tbody = document.getElementById('projects-tbody');
     if(data.projects.length === 0) {
@@ -1158,12 +1388,17 @@
       obj.id = 'p_'+Date.now();
       data.projects.push(obj);
     }
+    
+    // 진행/보류로 변경 시 해당 주간보고에도 실시간 동기화
+    if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
+
     triggerSave(); updateAllUI(); window.closeModal('modal-project');
   };
   
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
+      if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
       triggerSave(); updateAllUI();
     });
   };
@@ -1186,7 +1421,7 @@
     }).join('');
   }
   window.viewArchivedWeek = function(dStr) {
-    displayWeekDate = new Date(dStr);
+    displayWeekDate = new Date(dStr + "T00:00:00");
     window.goView('weekly', false);
   };
 </script>
