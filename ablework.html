@@ -852,8 +852,13 @@
       await signInWithEmailAndPassword(auth, email, pwInput);
       errEl.style.display = "none";
     } catch (e) {
-      if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found')) {
+      // Firebase 설정 오류 체크
+      if (e.code === 'auth/operation-not-allowed') {
+         errEl.innerHTML = "Firebase 콘솔에서 <b>[Authentication > Sign-in method > 이메일/비밀번호]</b>를 먼저 '사용'으로 설정해주세요.";
+         errEl.style.display = "block";
+      } else if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password')) {
         try {
+           // 최고 관리자 계정 최초 생성
            await createUserWithEmailAndPassword(auth, email, pwInput);
            await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
            errEl.style.display = "none";
@@ -875,6 +880,12 @@
     const appView = document.querySelector('.app');
 
     if (user) {
+      // [핵심 버그 수정] 이전 테스트로 남은 '익명 로그인' 정보일 경우 강제 로그아웃
+      if (!user.email) {
+         signOut(auth);
+         return;
+      }
+
       isFirebaseMode = true; 
 
       const email = user.email;
