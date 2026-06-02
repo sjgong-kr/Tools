@@ -916,8 +916,8 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      // Shared Company Path
-      dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
+      // Shared Company Path (기존 데이터가 저장된 v1 경로로 복구)
+      dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
       isFirebaseMode = true;
 
       onSnapshot(dbRef, (snap) => {
