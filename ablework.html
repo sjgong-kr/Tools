@@ -263,7 +263,6 @@
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
 
-  /* 클릭 가능한 테이블 행 스타일 추가 */
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
@@ -274,7 +273,6 @@
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
     #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #weekly-container, .card, #header-actions, .toast { display: none !important; }
     
-    /* 레이아웃 쏠림 현상 방지: 화면용 Grid 무력화 */
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
 
@@ -615,7 +613,6 @@
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  // 기본 데이터 구조
   let data = {
     projects: [
       { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '홍길동', status: '진행' },
@@ -623,15 +620,16 @@
     ],
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
-    archives: [] // 이제 currentWeek를 별도로 관리하지 않고 전부 archives에서 관리합니다.
+    archives: [] 
   };
 
-  const domain = "@ablecom.com"; // 가상 이메일 도메인 처리용
+  const domain = "@ablecom.com"; 
   let isAdmin = false;
   let accountList = [];
   let accEditEmail = null;
 
   let dbRef = null;
+  let isFirebaseMode = false; // Firebase 쓰기 권한 상태 변수
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
@@ -640,12 +638,10 @@
   let pmEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v8";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v9";
 
-  // 기존 구조 마이그레이션 및 적용 함수
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
-    // currentWeek 구조를 버리고 무조건 archives 배열에 통합
     if (migrated.currentWeek) {
       if (!migrated.archives) migrated.archives = [];
       if (!migrated.archives.find(a => a.id === migrated.currentWeek.id)) {
@@ -663,7 +659,6 @@
     return migrated;
   }
 
-  // 로컬 로드 (초기 렌더링용)
   const localData = localStorage.getItem(appId);
   if (localData) { 
     try { data = applyMigration({ ...data, ...JSON.parse(localData) }); } catch(e) {} 
@@ -671,7 +666,6 @@
 
   updateAllUI();
 
-  // 사용자 제공 Firebase 환경 설정
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
     authDomain: "openzeroc.firebaseapp.com",
@@ -729,23 +723,30 @@
     const appView = document.querySelector('.app');
 
     if (user) {
+      isFirebaseMode = true; // [버그 수정 1] Firebase 저장 허가 ON
+
       const email = user.email;
       const baseId = email.replace(domain, '');
       let role = 'user';
       let userName = baseId;
 
-      if (baseId !== 'ablecom') {
-        const accDoc = await getDoc(doc(db, 'ablework/company_main/accounts', email));
-        if (!accDoc.exists()) {
-           alert('삭제되었거나 권한이 없는 계정입니다.');
-           signOut(auth);
-           return;
-        }
-        role = accDoc.data().role;
-        userName = accDoc.data().name;
-      } else {
-        role = 'admin';
-        userName = '최고관리자';
+      try {
+          if (baseId !== 'ablecom') {
+            const accDoc = await getDoc(doc(db, 'ablework/company_main/accounts', email));
+            if (accDoc.exists()) {
+               role = accDoc.data().role;
+               userName = accDoc.data().name;
+            } else {
+               alert('삭제되었거나 권한이 없는 계정입니다.');
+               signOut(auth);
+               return;
+            }
+          } else {
+            role = 'admin';
+            userName = '최고관리자';
+          }
+      } catch (err) {
+          console.warn("Account validation error, continuing", err);
       }
 
       isAdmin = (role === 'admin');
@@ -762,7 +763,6 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      // 서버 연결 경로 적용
       const isCanvas = typeof __firebase_config !== 'undefined';
       if (isCanvas) {
           dbRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data');
@@ -771,25 +771,36 @@
       }
 
       onSnapshot(dbRef, (snap) => {
+        // [버그 수정 2] 로컬에서 수정한 직후 발생하는 서버 에코(메아리) 이벤트 무시하여 텍스트 포커스 증발 방지
+        if (snap.metadata.hasPendingWrites) return;
+
         if (snap.exists()) {
           const serverData = snap.data();
           data = applyMigration({ ...data, ...serverData });
-          updateAllUI();
+          
+          // 사용자가 입력 중(텍스트 상자 커서 활성화)일 때는 전체 렌더링을 보류하여 먹통 현상 완전 차단
+          const activeEl = document.activeElement;
+          const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+          
+          if (!isInputting) {
+              updateAllUI();
+          }
         } else {
           triggerSave();
         }
       });
     } else {
+      isFirebaseMode = false;
       loginView.style.display = 'flex';
       appView.style.display = 'none';
     }
   });
 
-  // ===== 핵심: Firebase 실시간 저장 통로 (버그 수정됨) =====
+  // DB 실시간 저장 통로
   function triggerSave() {
     localStorage.setItem(appId, JSON.stringify(data));
-    if (dbRef) {
-      setDoc(dbRef, data).catch(e => console.error("Firebase Save Error:", e));
+    if (isFirebaseMode && dbRef) {
+      setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
   }
 
@@ -912,7 +923,6 @@
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // 주차 산정 로직 (목요일 기준)
   function getWeekRange(dateObj) {
     const d = new Date(dateObj);
     const day = d.getDay(); 
@@ -1098,7 +1108,6 @@
     }
     activeWeek = arch;
 
-    // 현재 주차를 열었을 때만 프로젝트 마스터에서 신규 추가된 내용을 동기화
     if (targetRange.id === currentRange.id) {
        syncProjectsToSpecificWeek(activeWeek, true); 
     }
@@ -1111,10 +1120,8 @@
     loadWeek(displayWeekDate);
   };
   
-  // 버튼 클릭 시 수동 저장이지만, 이미 activeWeek 변경사항은 실시간 반영 중임
-  window.manualSaveWeek = function() { triggerSave(); window.showToast('보고서가 영구적으로 아카이브에 저장되었습니다.'); };
+  window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
-  // 이전 주(N-1) 금주 계획 -> 이번 주(N) 전주 실적으로 자동 이관
   function syncProjectsToSpecificWeek(weekObj, isCurrentWeek = false) {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     if (!weekObj.categories) weekObj.categories = [];
