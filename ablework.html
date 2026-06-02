@@ -337,7 +337,7 @@
     <div class="brand-mark" style="color:var(--ink); font-size:24px; margin-bottom:24px;">에이블컴 업무관리</div>
     <div class="form-group">
       <label>아이디</label>
-      <input type="text" id="login-id" placeholder="예: jhjung" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+      <input type="text" id="login-id" placeholder="예: ablecom" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
     </div>
     <div class="form-group">
       <label>비밀번호</label>
@@ -626,8 +626,8 @@
 <div class="modal-overlay" id="modal-account">
   <div class="modal">
     <h3 id="acc-title">새 계정 추가</h3>
-    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;" id="acc-desc">사용할 접속 아이디와 초기 비밀번호를 설정해주세요.</p>
-    <div class="form-group"><label>아이디</label><input id="acc-id" type="text" placeholder="예: jhjung"></div>
+    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;" id="acc-desc">아이디와 초기 비밀번호를 설정해주세요.</p>
+    <div class="form-group"><label>아이디</label><input id="acc-id" type="text" placeholder="예: user01"></div>
     <div class="form-group"><label>사용자 이름</label><input id="acc-name" type="text" placeholder="예: 홍길동"></div>
     <div class="form-group"><label>비밀번호</label><input id="acc-pw" type="password" placeholder="비밀번호 입력"></div>
     <div class="form-group">
@@ -752,9 +752,9 @@
 <!-- ============ JAVASCRIPT ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  // --- 1. Data Definitions ---
   let data = {
     projects: [],
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
@@ -763,13 +763,14 @@
     sales: [] 
   };
 
-  let currentUser = null;
+  const domain = "@ablecom.com"; 
   let isAdmin = false;
   let accountList = [];
-  let accEditId = null;
+  let accEditEmail = null;
 
   let dbRef = null;
-  let isFirebaseMode = false;
+  let isFirebaseMode = false; 
+  let isRendering = false; // 무한 루프 방지 플래그
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
@@ -779,7 +780,7 @@
   let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v20";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v19";
 
   // Data Migration
   function applyMigration(sourceData) {
@@ -816,8 +817,9 @@
     if(mSel) mSel.innerHTML = opts;
   }
   initSalesYears();
+  updateAllUI(); // Local render fallback
 
-  // Firebase Init (Auth module is completely removed to fit allow read, write: if true;)
+  // --- Firebase Setup ---
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
     authDomain: "openzeroc.firebaseapp.com",
@@ -829,19 +831,12 @@
   };
 
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Custom Authentication Check
-  function checkSession() {
-      const sessionStr = sessionStorage.getItem('ablework_session');
-      if (sessionStr) {
-          currentUser = JSON.parse(sessionStr);
-          initApp();
-      } else {
-          document.getElementById('login-overlay').style.display = 'flex';
-          document.querySelector('.app').style.display = 'none';
-      }
-  }
+  let secondaryApp;
+  try { secondaryApp = initializeApp(firebaseConfig, "SecondaryApp"); } catch(e) {}
+  const secondaryAuth = getAuth(secondaryApp);
 
   window.handleLogin = async function() {
     const idInput = document.getElementById('login-id').value.trim();
@@ -853,59 +848,65 @@
       errEl.style.display = "block";
       return;
     }
+    const email = idInput.includes('@') ? idInput : idInput + domain;
 
     try {
-      const accRef = doc(db, 'ablework', 'company_main', 'accounts', idInput);
-      const accSnap = await getDoc(accRef);
-
-      if (!accSnap.exists()) {
-          // If ablecom tries to log in and doesn't exist, we auto-seed the DB
-          if (idInput === 'ablecom' && pwInput === 'ablecom+123') {
-              const adminData = { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' };
-              await setDoc(accRef, adminData);
-              
-              // [요청사항 반영] 자동 계정 셋업
-              const usersToSeed = ['jhjung', 'jwpark', 'kcw75', 'mikey', 'sean.lee', 'sunwoo.choi'];
-              for(let u of usersToSeed) {
-                 await setDoc(doc(db, 'ablework', 'company_main', 'accounts', u), { id: u, pw: 'ablecom+123', name: u, role: 'user' });
-              }
-
-              currentUser = adminData;
-              sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
-              errEl.style.display = "none";
-              initApp();
-          } else {
-              errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
-              errEl.style.display = "block";
-          }
-      } else {
-          const userData = accSnap.data();
-          if (userData.pw === pwInput) {
-              currentUser = userData;
-              sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
-              errEl.style.display = "none";
-              initApp();
-          } else {
-              errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
-              errEl.style.display = "block";
-          }
-      }
+      await signInWithEmailAndPassword(auth, email, pwInput);
+      errEl.style.display = "none";
     } catch (e) {
-      errEl.textContent = "로그인 오류: 서버 연결에 실패했습니다.";
-      errEl.style.display = "block";
+      if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password')) {
+        try {
+           await createUserWithEmailAndPassword(auth, email, pwInput);
+           await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
+           errEl.style.display = "none";
+        } catch(err2) {
+           errEl.textContent = "로그인 실패: " + err2.message;
+           errEl.style.display = "block";
+        }
+      } else {
+         errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
+         errEl.style.display = "block";
+      }
     }
   };
 
-  window.doLogout = function() {
-      sessionStorage.removeItem('ablework_session');
-      location.reload();
-  };
+  window.doLogout = function() { signOut(auth); };
 
-  function initApp() {
-      isAdmin = (currentUser.role === 'admin');
-      document.getElementById('current-user-name').textContent = `${currentUser.name} (${currentUser.id})`;
-      document.getElementById('login-overlay').style.display = 'none';
-      document.querySelector('.app').style.display = 'grid';
+  onAuthStateChanged(auth, async (user) => {
+    const loginView = document.getElementById('login-overlay');
+    const appView = document.querySelector('.app');
+
+    if (user) {
+      if (!user.email) {
+         signOut(auth);
+         return;
+      }
+
+      isFirebaseMode = true; 
+      const email = user.email;
+      const baseId = email.replace(domain, '');
+      let role = 'user';
+      let userName = baseId;
+
+      try {
+          if (baseId !== 'ablecom') {
+            const accDoc = await getDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
+            if (accDoc.exists()) {
+               role = accDoc.data().role;
+               userName = accDoc.data().name;
+            }
+          } else {
+            role = 'admin';
+            userName = '최고관리자';
+          }
+      } catch (err) {
+          console.warn("Account fetch warning", err);
+      }
+
+      isAdmin = (role === 'admin');
+      document.getElementById('current-user-name').textContent = `${userName} (${baseId})`;
+      loginView.style.display = 'none';
+      appView.style.display = 'grid';
 
       if (isAdmin) {
         document.getElementById('nav-accounts').style.display = 'flex';
@@ -916,9 +917,8 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      // Shared Company Path (기존 데이터가 저장된 v1 경로로 복구)
+      // 공용 데이터 연결
       dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
-      isFirebaseMode = true;
 
       onSnapshot(dbRef, (snap) => {
         if (snap.metadata.hasPendingWrites) return;
@@ -934,27 +934,30 @@
               updateAllUI();
           }
         } else {
-          triggerSave();
+          window.triggerSave();
         }
       });
-      
-      updateAllUI(); // Initial UI trigger
-  }
+    } else {
+      isFirebaseMode = false;
+      loginView.style.display = 'flex';
+      appView.style.display = 'none';
+    }
+  });
 
-  function triggerSave() {
+  // DB 실시간 자동 저장 
+  window.triggerSave = function() {
+    if (isRendering) return; // 렌더링 중 저장 무시 (무한 루프 방지)
+    
     localStorage.setItem(appId, JSON.stringify(data));
     if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
-  }
-
-  // Session Boot
-  checkSession();
+  };
 
   // --- 관리자: 계정 관리 ---
   function loadAccounts() {
     onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
-      accountList = snap.docs.map(d => d.data());
+      accountList = snap.docs.map(d => ({ email: d.id, ...d.data() }));
       renderAccounts();
     });
   }
@@ -968,8 +971,8 @@
         <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
         <td>
           ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
-            <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
-            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.id}')">삭제</button>
+            <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.email}')">수정</button>
+            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.email}')">삭제</button>
           `}
         </td>
       </tr>
@@ -977,30 +980,32 @@
   }
 
   window.openAccountModal = function() {
-    accEditId = null;
+    accEditEmail = null;
     document.getElementById('acc-title').textContent = '새 계정 추가';
-    document.getElementById('acc-desc').textContent = '아이디와 초기 비밀번호를 설정해주세요.';
+    document.getElementById('acc-desc').textContent = '아이디는 영문/숫자 조합입니다. 초기 비밀번호를 설정해주세요.';
     document.getElementById('acc-id').value = '';
     document.getElementById('acc-id').disabled = false;
     document.getElementById('acc-name').value = '';
     document.getElementById('acc-pw').value = '';
-    document.getElementById('acc-pw').placeholder = "비밀번호 입력";
+    document.getElementById('acc-pw').disabled = false;
+    document.getElementById('acc-pw').placeholder = "6자리 이상 입력";
     document.getElementById('acc-role').value = 'user';
     document.getElementById('btn-save-acc').textContent = '추가';
     window.openModal('modal-account');
   };
 
-  window.editAccount = function(id) {
-    const acc = accountList.find(a => a.id === id);
+  window.editAccount = function(email) {
+    const acc = accountList.find(a => a.email === email);
     if(!acc) return;
-    accEditId = id;
+    accEditEmail = email;
     document.getElementById('acc-title').textContent = '계정 수정';
-    document.getElementById('acc-desc').textContent = '사용자의 정보 및 비밀번호를 재설정할 수 있습니다.';
+    document.getElementById('acc-desc').textContent = '사용자의 이름 및 권한을 수정할 수 있습니다. (아이디/비밀번호 변경 불가)';
     document.getElementById('acc-id').value = acc.id;
     document.getElementById('acc-id').disabled = true;
     document.getElementById('acc-name').value = acc.name;
-    document.getElementById('acc-pw').value = acc.pw; 
-    document.getElementById('acc-pw').placeholder = "새 비밀번호 입력";
+    document.getElementById('acc-pw').value = '';
+    document.getElementById('acc-pw').disabled = true;
+    document.getElementById('acc-pw').placeholder = "(보안상 변경 불가)";
     document.getElementById('acc-role').value = acc.role;
     document.getElementById('btn-save-acc').textContent = '저장';
     window.openModal('modal-account');
@@ -1012,22 +1017,34 @@
     const pw = document.getElementById('acc-pw').value;
     const role = document.getElementById('acc-role').value;
 
-    if(!id || !name || !pw) return window.showToast('모든 항목을 입력해주세요.');
+    if(!id || !name) return window.showToast('아이디와 이름을 입력해주세요.');
+    const email = id + domain;
 
-    try {
-      const accRef = doc(db, 'ablework', 'company_main', 'accounts', id);
-      await setDoc(accRef, { id, pw, name, role }, {merge: true});
-      window.closeModal('modal-account');
-      window.showToast(accEditId ? '계정이 성공적으로 수정되었습니다.' : '계정이 생성되었습니다.');
-    } catch (e) {
-      window.showToast('저장 실패: ' + e.message);
+    if (accEditEmail) {
+      try {
+        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', accEditEmail), { name, role }, {merge: true});
+        window.closeModal('modal-account');
+        window.showToast('계정이 성공적으로 수정되었습니다.');
+      } catch (e) { window.showToast('수정 실패: ' + e.message); }
+    } else {
+      if(!pw || pw.length < 6) return window.showToast('비밀번호는 6자리 이상이어야 합니다.');
+      const exists = accountList.find(a => a.id === id);
+      if (exists) return window.showToast('이미 존재하는 아이디입니다.');
+
+      try {
+        await createUserWithEmailAndPassword(secondaryAuth, email, pw);
+        await signOut(secondaryAuth);
+        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id, name, role });
+        window.closeModal('modal-account');
+        window.showToast('계정이 성공적으로 추가되었습니다.');
+      } catch (e) { window.showToast('계정 생성 실패: ' + e.message); }
     }
   };
 
-  window.delAccount = async function(id) {
+  window.delAccount = async function(email) {
     if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
     try {
-      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
+      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
       window.showToast('계정이 삭제되었습니다.');
     } catch (e) { console.error(e); }
   };
@@ -1080,8 +1097,7 @@
   // --- NAVIGATION ---
   window.goView = function(name, resetWeekly = true) {
     document.querySelectorAll('.view, .nav-item').forEach(v => v.classList.remove('active'));
-    const viewEl = document.getElementById('view-' + name);
-    if(viewEl) viewEl.classList.add('active');
+    document.getElementById('view-' + name).classList.add('active');
     const nav = document.querySelector(`.nav-item[data-view="${name}"]`);
     if(nav) nav.classList.add('active');
     
@@ -1090,13 +1106,19 @@
   };
 
   function updateAllUI() {
-    renderCalendar();
-    renderDailySchedules();
-    renderDashboardStats();
-    renderProjects();
-    loadWeek(displayWeekDate);
-    renderArchive();
-    renderSales();
+    if (isRendering) return;
+    isRendering = true;
+    try {
+        renderCalendar();
+        renderDailySchedules();
+        renderDashboardStats();
+        renderProjects();
+        loadWeek(displayWeekDate);
+        renderArchive();
+        renderSales();
+    } finally {
+        isRendering = false;
+    }
   }
 
   // --- 1. DASHBOARD & CALENDAR ---
@@ -1111,11 +1133,8 @@
 
   function renderCalendar() {
     const y = calRenderDate.getFullYear(), m = calRenderDate.getMonth();
-    const titleEl = document.getElementById('cal-month-title');
-    if(titleEl) titleEl.textContent = `${y}.${String(m+1).padStart(2,'0')}`;
-    
+    document.getElementById('cal-month-title').textContent = `${y}.${String(m+1).padStart(2,'0')}`;
     const grid = document.getElementById('calendar-grid');
-    if(!grid) return;
     grid.innerHTML = '';
     
     const firstDay = new Date(y, m, 1).getDay();
@@ -1149,11 +1168,9 @@
   function renderDailySchedules() {
     const dStr = fmtDate(calSelectedDate);
     const opts = { month:'long', day:'numeric', weekday:'short' };
-    const tEl = document.getElementById('daily-title');
-    if(tEl) tEl.textContent = calSelectedDate.toLocaleDateString('ko-KR', opts) + ' 일정';
+    document.getElementById('daily-title').textContent = calSelectedDate.toLocaleDateString('ko-KR', opts) + ' 일정';
     
     const wrap = document.getElementById('daily-schedules');
-    if(!wrap) return;
     const list = data.schedules.filter(s => s.date === dStr);
     
     if(list.length === 0) {
@@ -1178,12 +1195,12 @@
     const t = document.getElementById('sch-text').value.trim();
     if(!d || !t) return window.showToast('내용을 입력하세요');
     data.schedules.push({ id:'sch_'+Date.now(), date:d, text:t });
-    triggerSave(); updateAllUI(); window.closeModal('modal-schedule');
+    window.triggerSave(); updateAllUI(); window.closeModal('modal-schedule');
   };
   window.delSchedule = function(id) {
     window.showConfirm('일정 삭제', '삭제하시겠습니까?', () => {
       data.schedules = data.schedules.filter(s => s.id !== id);
-      triggerSave(); updateAllUI();
+      window.triggerSave(); updateAllUI();
     });
   };
 
@@ -1268,7 +1285,7 @@
     loadWeek(displayWeekDate);
   };
   
-  window.manualSaveWeek = function() { triggerSave(); window.showToast('보고서가 영구 저장되었습니다.'); };
+  window.manualSaveWeek = function() { window.triggerSave(); window.showToast('보고서가 영구 저장되었습니다.'); };
   
   function syncProjectsToSpecificWeek(weekObj) {
     const applicableProjs = data.projects.filter(p => {
@@ -1333,7 +1350,6 @@
     });
 
     weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
-    triggerSave();
   }
 
   function renderWeeklyReport() {
@@ -1403,18 +1419,18 @@
     }
   }
 
-  window.updateWeekData = function(ci, pi, field, val) { activeWeek.categories[ci].projects[pi][field] = val; triggerSave(); };
+  window.updateWeekData = function(ci, pi, field, val) { activeWeek.categories[ci].projects[pi][field] = val; window.triggerSave(); };
   window.moveCat = function(ci, dir) {
     const arr = activeWeek.categories;
     if (ci+dir < 0 || ci+dir >= arr.length) return;
     [arr[ci], arr[ci+dir]] = [arr[ci+dir], arr[ci]];
-    triggerSave(); renderWeeklyReport();
+    window.triggerSave(); renderWeeklyReport();
   };
   window.moveProj = function(ci, pi, dir) {
     const arr = activeWeek.categories[ci].projects;
     if (pi+dir < 0 || pi+dir >= arr.length) return;
     [arr[pi], arr[pi+dir]] = [arr[pi+dir], arr[pi]];
-    triggerSave(); renderWeeklyReport();
+    window.triggerSave(); renderWeeklyReport();
   };
 
   window.executePrint = function() {
@@ -1502,7 +1518,7 @@
   };
 
 
-  // --- 3. 카테고리 관리 기능 ---
+  // --- 3. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
     window.cancelEditCategory();
     renderCategoryList();
@@ -1565,7 +1581,7 @@
       window.showToast('카테고리가 추가되었습니다.');
     }
 
-    triggerSave();
+    window.triggerSave();
     renderCategoryList();
     populateCatSelects();
     updateAllUI(); 
@@ -1580,7 +1596,7 @@
     }
     
     data.categories.splice(idx, 1);
-    triggerSave();
+    window.triggerSave();
     renderCategoryList();
     populateCatSelects();
   };
@@ -1590,11 +1606,8 @@
     if(selectedVal) options.add(selectedVal);
     const html = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     
-    const pCat = document.getElementById('pm-cat');
-    if(pCat) pCat.innerHTML = html;
-    
-    const sCat = document.getElementById('sm-cat');
-    if(sCat) sCat.innerHTML = html;
+    if(document.getElementById('pm-cat')) document.getElementById('pm-cat').innerHTML = html;
+    if(document.getElementById('sm-cat')) document.getElementById('sm-cat').innerHTML = html;
   }
 
   // --- 4. PROJECTS MASTER ---
@@ -1691,14 +1704,14 @@
     
     if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
 
-    triggerSave(); updateAllUI(); window.closeModal('modal-project');
+    window.triggerSave(); updateAllUI(); window.closeModal('modal-project');
   };
   
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
       if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
-      triggerSave(); updateAllUI();
+      window.triggerSave(); updateAllUI();
     });
   };
 
@@ -1833,16 +1846,17 @@
       data.sales.push(obj);
     }
     
-    triggerSave();
+    window.triggerSave();
     window.renderSales();
     window.closeModal('modal-sales');
+    window.showToast('매출 데이터가 정상적으로 처리되었습니다.');
   };
 
   window.delSales = function() {
     if(!smEditId) return;
     window.showConfirm('매출 데이터 삭제', '이 사업의 모든 매출 계획을 삭제하시겠습니까?', () => {
       data.sales = data.sales.filter(s => s.id !== smEditId);
-      triggerSave();
+      window.triggerSave();
       window.renderSales();
       window.closeModal('modal-sales');
     });
