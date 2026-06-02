@@ -579,12 +579,16 @@
     <div class="form-group"><label>담당자</label><input id="pm-owner" type="text" placeholder="담당자 이름"></div>
     <div class="form-group">
       <label>상태</label>
-      <select id="pm-status">
+      <select id="pm-status" onchange="window.toggleCompletedDate()">
         <option value="진행">진행 (주간보고 연동)</option>
         <option value="보류">보류 (주간보고 연동)</option>
-        <option value="완료">완료 (주간보고 제외)</option>
-        <option value="실주">실주 (주간보고 제외)</option>
+        <option value="완료">완료 (완료일 기준 주간보고 제외)</option>
+        <option value="실주">실주 (완료일 기준 주간보고 제외)</option>
       </select>
+    </div>
+    <div class="form-group" id="group-completed-date" style="display:none;">
+      <label>완료/종료 일자</label>
+      <input id="pm-completed-date" type="date">
     </div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
       <button class="btn btn-ghost" onclick="window.closeModal('modal-project')">취소</button>
@@ -1086,7 +1090,6 @@
   // --- 2. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
-    const currentRange = getWeekRange(new Date());
 
     let arch = data.archives.find(a => a.id === targetRange.id);
     if (!arch) {
@@ -1096,9 +1099,8 @@
     }
     activeWeek = arch;
 
-    if (targetRange.id === currentRange.id) {
-       syncProjectsToSpecificWeek(activeWeek, true); 
-    }
+    // 모든 주차에서 항상 프로젝트 마스터 데이터를 기준으로 최신화 및 동기화 (진행중인 건 모두 포함)
+    syncProjectsToSpecificWeek(activeWeek); 
     
     renderWeeklyReport();
   }
@@ -1110,16 +1112,25 @@
   
   window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
-  // N-1주의 계획을 N주의 실적으로 완벽하게 이관
-  function syncProjectsToSpecificWeek(weekObj, isCurrentWeek = false) {
-    const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
+  function syncProjectsToSpecificWeek(weekObj) {
+    // 해당 주차에 표시될 유효한 프로젝트 필터링
+    const applicableProjs = data.projects.filter(p => {
+      // 진행, 보류는 무조건 모든 주차에 포함
+      if (p.status === '진행' || p.status === '보류') return true;
+      // 완료, 실주 처리된 건은 완료 일자가 해당 주차 시작일 이후인 경우에만 포함 (이전이면 제외)
+      if (p.status === '완료' || p.status === '실주') {
+        if (p.completedDate && p.completedDate >= weekObj.start) return true;
+        return false;
+      }
+      return false;
+    });
+
     if (!weekObj.categories) weekObj.categories = [];
     
-    if (isCurrentWeek) {
-      weekObj.categories.forEach(c => {
-        c.projects = c.projects.filter(cp => activeProjs.some(ap => ap.id === cp.id));
-      });
-    }
+    // 조건에 맞지 않는(과거에 이미 종료된) 프로젝트 제거
+    weekObj.categories.forEach(c => {
+      c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
+    });
 
     const [sy, sm, sd] = weekObj.start.split('-');
     const prevWeekSun = new Date(sy, sm - 1, sd - 7);
@@ -1127,7 +1138,7 @@
 
     const prevWeekObj = data.archives.find(a => a.id === prevWeekId);
 
-    activeProjs.forEach(p => {
+    applicableProjs.forEach(p => {
       let existingPrev = '';
       let existingPlan = '';
       let foundInCurrent = false;
@@ -1417,6 +1428,17 @@
     sel.innerHTML = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
 
+  // 상태 변경 시 완료일자 항목 토글
+  window.toggleCompletedDate = function() {
+    const status = document.getElementById('pm-status').value;
+    const group = document.getElementById('group-completed-date');
+    if (status === '완료' || status === '실주') {
+      group.style.display = 'block';
+    } else {
+      group.style.display = 'none';
+    }
+  };
+
   // --- 4. PROJECTS MASTER ---
   function renderProjects() {
     const tbody = document.getElementById('projects-tbody');
@@ -1429,7 +1451,7 @@
         <td><span style="background:var(--paper); padding:3px 6px; border-radius:3px; font-size:11px;">${escapeHtml(p.cat)}</span></td>
         <td style="font-weight:600;">${escapeHtml(p.name)}</td>
         <td>${escapeHtml(p.owner)}</td>
-        <td>${p.status}</td>
+        <td>${p.status}${p.completedDate ? ` <span style="font-size:10.5px;color:var(--muted);margin-left:4px;">(${p.completedDate})</span>` : ''}</td>
         <td>
           <button class="btn-ghost btn-sm" onclick="window.editProject('${p.id}')">편집</button>
           <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delProject('${p.id}')">삭제</button>
@@ -1446,6 +1468,8 @@
     document.getElementById('pm-name').value = '';
     document.getElementById('pm-owner').value = '';
     document.getElementById('pm-status').value = '진행';
+    document.getElementById('group-completed-date').style.display = 'none';
+    document.getElementById('pm-completed-date').value = '';
     window.openModal('modal-project');
   };
   
@@ -1459,18 +1483,34 @@
     document.getElementById('pm-name').value = p.name;
     document.getElementById('pm-owner').value = p.owner;
     document.getElementById('pm-status').value = p.status;
+    if (p.status === '완료' || p.status === '실주') {
+      document.getElementById('group-completed-date').style.display = 'block';
+      document.getElementById('pm-completed-date').value = p.completedDate || '';
+    } else {
+      document.getElementById('group-completed-date').style.display = 'none';
+      document.getElementById('pm-completed-date').value = '';
+    }
     window.openModal('modal-project');
   };
   
   window.saveProject = function() {
     const c = document.getElementById('pm-cat').value;
     const n = document.getElementById('pm-name').value.trim();
+    const status = document.getElementById('pm-status').value;
+    const completedDate = document.getElementById('pm-completed-date').value;
+
     if(!c || !n) return window.showToast('카테고리와 사업명을 입력하세요');
+    if((status === '완료' || status === '실주') && !completedDate) {
+      return window.showToast('완료/종료 일자를 선택해주세요.');
+    }
+
     const obj = {
       cat: c, name: n,
       owner: document.getElementById('pm-owner').value.trim(),
-      status: document.getElementById('pm-status').value
+      status: status,
+      completedDate: (status === '완료' || status === '실주') ? completedDate : ''
     };
+
     if(pmEditId) {
       const idx = data.projects.findIndex(x => x.id === pmEditId);
       if(idx>=0) data.projects[idx] = { ...data.projects[idx], ...obj };
