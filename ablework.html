@@ -2016,6 +2016,7 @@
     const sList = data.sales.filter(s => s.year === year);
     
     let tYr=0, tH1=0, tH2=0, tProf=0;
+    let globalM = Array(12).fill(0); // 전체 월별 TOTAL 변수 추가
     
     const grouped = {};
     data.categories.forEach(c => grouped[c] = []);
@@ -2036,6 +2037,7 @@
           for(let m=1; m<=12; m++) {
              const v = parseFloat(i['m'+m]) || 0;
              cM[m-1] += v;
+             globalM[m-1] += v; // 전체 월별 합계 누적
              cYr += v;
              tYr += v;
              if(m<=6) tH1 += v; else tH2 += v;
@@ -2069,6 +2071,16 @@
     if(tbody) {
         if(html === '') {
            html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
+        } else {
+           // 전체 TOTAL 행을 표 최상단에 삽입
+           const totalHtml = `
+             <tr style="background:var(--ink); color:var(--bg-elev); font-weight:700;">
+               <td colspan="3" style="text-align:center; padding:12px;">${year}년 전체 매출 TOTAL</td>
+               <td style="color:var(--brass-soft);">${fmtNum(tYr)}</td>
+               ${globalM.map(v => `<td>${fmtNum(v)}</td>`).join('')}
+             </tr>
+           `;
+           html = totalHtml + html;
         }
         tbody.innerHTML = html;
     }
