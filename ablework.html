@@ -428,20 +428,25 @@
 
       <div class="week-header">
         <button class="btn btn-secondary btn-sm" onclick="window.changeWeek(-1)">◀ 이전 주</button>
-        <div style="text-align: center; display:flex; gap:20px; align-items:center;">
-          <div>
+        
+        <!-- 중앙 정렬 및 순서 변경: 전주(실적) - 주차 - 금주(계획) -->
+        <div style="flex: 1; display: flex; justify-content: center; gap: 20px; align-items: center;">
+          <div style="text-align: right; width: 130px;">
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">전주 기간 (실적)</div>
             <div id="wk-prev-range" style="font-family:var(--mono); font-size:14px; font-weight:500; color:var(--muted); margin-top:2px;">로딩중...</div>
           </div>
-          <div style="padding: 0 20px; border-left: 1px solid var(--line); border-right: 1px solid var(--line);">
+          
+          <div style="padding: 0 24px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center;">
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">보고 주차</div>
-            <div id="wk-title" style="font-family:var(--serif); font-size:17px; font-weight:600; color:var(--ink);">로딩중...</div>
+            <div id="wk-title" style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-top:2px;">로딩중...</div>
           </div>
-          <div>
+          
+          <div style="text-align: left; width: 130px;">
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">금주 기간 (계획)</div>
             <div id="wk-range" style="font-family:var(--mono); font-size:14px; font-weight:500; color:var(--ink-2); margin-top:2px;">로딩중...</div>
           </div>
         </div>
+
         <button class="btn btn-secondary btn-sm" onclick="window.changeWeek(1)">다음 주 ▶</button>
       </div>
 
@@ -460,7 +465,7 @@
       <div id="print-area"></div>
     </section>
 
-    <!-- 3. PROJECTS MASTER VIEW (명칭 변경: 프로젝트 관리) -->
+    <!-- 3. PROJECTS MASTER VIEW -->
     <section class="view" id="view-projects">
       <div class="topbar">
         <div>
@@ -492,7 +497,6 @@
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
         <table class="table">
-          <!-- '관리' 열 제거 -->
           <thead><tr><th>보고 주차</th><th>대상 기간</th><th>사업 건수</th></tr></thead>
           <tbody id="archive-tbody"></tbody>
         </table>
@@ -632,7 +636,7 @@
   const domain = "@ablecom.com"; // 가상 이메일 도메인 처리용
   let isAdmin = false;
   let accountList = [];
-  let accEditEmail = null; // 계정 수정 상태 관리 변수 추가
+  let accEditEmail = null; // 계정 수정 상태 관리 변수
 
   let dbRef = null;
   
@@ -681,7 +685,6 @@
       await signInWithEmailAndPassword(auth, email, pwInput);
       errEl.style.display = "none";
     } catch (e) {
-      // 자동 최고관리자 생성 로직 (부트스트랩)
       if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found')) {
         try {
            await createUserWithEmailAndPassword(auth, email, pwInput);
@@ -710,7 +713,6 @@
       let role = 'user';
       let userName = baseId;
 
-      // 관리자 강제 세팅을 제외한 일반 유저의 권한 체크
       if (baseId !== 'ablecom') {
         const accDoc = await getDoc(doc(db, 'ablework/company_main/accounts', email));
         if (!accDoc.exists()) {
@@ -727,7 +729,6 @@
 
       isAdmin = (role === 'admin');
       
-      // UI 설정
       document.getElementById('current-user-name').textContent = `${userName} (${baseId})`;
       loginView.style.display = 'none';
       appView.style.display = 'grid';
@@ -741,7 +742,7 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      // 전사 공유 데이터 (Company Shared Data) 동기화
+      // 전사 공유 데이터 동기화
       dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
       onSnapshot(dbRef, (snap) => {
         if (snap.exists()) {
@@ -751,12 +752,10 @@
           if(!data.categories) data.categories = ['공공/기업', '금융', '국방', '기타'];
           updateAllUI();
         } else {
-          // 최초 빈 데이터 업로드
           triggerSave();
         }
       });
     } else {
-      // 비로그인 상태
       loginView.style.display = 'flex';
       appView.style.display = 'none';
     }
@@ -806,7 +805,6 @@
     window.openModal('modal-account');
   };
 
-  // 계정 수정 모달 열기 함수 추가
   window.editAccount = function(email) {
     const acc = accountList.find(a => a.email === email);
     if(!acc) return;
@@ -834,7 +832,6 @@
     const email = id + domain;
 
     if (accEditEmail) {
-      // 수정 로직
       try {
         await setDoc(doc(db, 'ablework/company_main/accounts', accEditEmail), { name, role }, {merge: true});
         window.closeModal('modal-account');
@@ -843,7 +840,6 @@
         window.showToast('수정 실패: ' + e.message);
       }
     } else {
-      // 추가 로직
       if(!pw || pw.length < 6) return window.showToast('비밀번호는 6자리 이상이어야 합니다.');
       const exists = accountList.find(a => a.id === id);
       if (exists) return window.showToast('이미 존재하는 아이디입니다.');
@@ -892,16 +888,30 @@
   function escapeHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  // ==== [개선 1] 정확한 주차 산정 로직 (목요일 기준 ISO 8601 변형) ====
   function getWeekRange(dateObj) {
     const d = new Date(dateObj);
-    const day = d.getDay();
+    const day = d.getDay(); // 0(Sun) ~ 6(Sat)
+    
+    // 해당 주의 일요일과 토요일 계산
     const sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
     const sat = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 6);
-    const firstDayOfMonth = new Date(sun.getFullYear(), sun.getMonth(), 1);
-    const weekNum = Math.ceil((sun.getDate() + firstDayOfMonth.getDay()) / 7);
+
+    // 해당 주의 "목요일"이 속한 월을 기준으로 삼음
+    const thu = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 4);
+    const targetYear = thu.getFullYear();
+    const targetMonth = thu.getMonth(); // 0-based
+    
+    // 타겟 월의 1일
+    const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
+    
+    // 목요일의 날짜에 해당 월 1일의 요일 오프셋을 더해 주차 계산
+    const weekNum = Math.ceil((thu.getDate() + firstDayOfMonth.getDay()) / 7);
+
     return {
       id: fmtDate(sun), start: fmtDate(sun), end: fmtDate(sat),
-      title: `${sun.getFullYear()}년 ${sun.getMonth()+1}월 ${weekNum}주차`
+      title: `${targetYear}년 ${targetMonth + 1}월 ${weekNum}주차`
     };
   }
 
@@ -1072,14 +1082,14 @@
           }
         }
         data.currentWeek = { id: currentRange.id, title: currentRange.title, start: currentRange.start, end: currentRange.end, categories: [] };
-        syncProjectsToSpecificWeek(data.currentWeek);
       }
       activeWeek = data.currentWeek;
+      syncProjectsToSpecificWeek(activeWeek, true); 
     } else {
       let arch = data.archives.find(a => a.id === targetRange.id);
       if (!arch) {
         arch = { id: targetRange.id, title: targetRange.title, start: targetRange.start, end: targetRange.end, categories: [] };
-        syncProjectsToSpecificWeek(arch);
+        syncProjectsToSpecificWeek(arch, false); 
         data.archives.push(arch);
         data.archives.sort((a, b) => b.id.localeCompare(a.id));
       }
@@ -1094,44 +1104,72 @@
   };
   window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
-  // 동기화 시 기존 내용(prev, plan) 보존 처리
-  function syncProjectsToSpecificWeek(weekObj) {
+  // ==== [개선 2] 이전 주(N-1) 금주 계획 -> 이번 주(N) 전주 실적으로 자동 이관 ====
+  function syncProjectsToSpecificWeek(weekObj, isCurrentWeek = false) {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     if (!weekObj.categories) weekObj.categories = [];
     
-    // 1. 활성 프로젝트를 카테고리별로 분류하면서 기존 내용 병합
+    if (isCurrentWeek) {
+      weekObj.categories.forEach(c => {
+        c.projects = c.projects.filter(cp => activeProjs.some(ap => ap.id === cp.id));
+      });
+    }
+
+    // N-1(이전 주) 데이터 탐색
+    const [sy, sm, sd] = weekObj.start.split('-');
+    const prevWeekSun = new Date(sy, sm - 1, sd - 7);
+    const prevWeekId = fmtDate(prevWeekSun);
+
+    let prevWeekObj = null;
+    if (data.currentWeek && data.currentWeek.id === prevWeekId) {
+      prevWeekObj = data.currentWeek;
+    } else if (data.archives) {
+      prevWeekObj = data.archives.find(a => a.id === prevWeekId);
+    }
+
     activeProjs.forEach(p => {
-      // 기존에 이 프로젝트가 어느 카테고리에 있었든 내용을 백업
       let existingPrev = '';
       let existingPlan = '';
+
+      // 타겟(현재 열려있는) 주차에서 기존 입력 내용 찾기
+      let foundInCurrent = false;
       weekObj.categories.forEach(c => {
         const idx = c.projects.findIndex(x => x.id === p.id);
         if (idx !== -1) {
+          foundInCurrent = true;
           existingPrev = c.projects[idx].prev;
           existingPlan = c.projects[idx].plan;
-          // 카테고리가 달라졌다면 예전 카테고리에서 제거
+          // 혹시 프로젝트 카테고리가 마스터에서 변경되었다면 옛날 카테고리에서 제거
           if (c.name !== p.cat) c.projects.splice(idx, 1);
         }
       });
 
-      // 올바른 타겟 카테고리 찾기 (없으면 생성)
+      // 만약 방금 생성된 주차이거나 기존 전주실적이 완전히 비어있을 경우에만 N-1 계획을 끌어옴
+      if ((!foundInCurrent || !existingPrev) && prevWeekObj) {
+        prevWeekObj.categories.forEach(pc => {
+           const prevProj = pc.projects.find(x => x.id === p.id);
+           if (prevProj && prevProj.plan) {
+             existingPrev = prevProj.plan; // 계획 -> 실적으로 자동 세팅
+           }
+        });
+      }
+
       let targetCat = weekObj.categories.find(c => c.name === p.cat);
       if (!targetCat) {
         targetCat = { name: p.cat, projects: [] };
         weekObj.categories.push(targetCat);
       }
       
-      // 타겟 카테고리 안에 해당 프로젝트 갱신 또는 추가
       let cp = targetCat.projects.find(x => x.id === p.id);
       if (!cp) {
         targetCat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: existingPrev, plan: existingPlan });
       } else {
         cp.name = p.name; 
         cp.owner = p.owner;
+        if (!cp.prev) cp.prev = existingPrev; // 혹시라도 비어있으면 덮어씀
       }
     });
 
-    // 2. 프로젝트가 하나도 없는 빈 카테고리 청소
     weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
     triggerSave();
   }
@@ -1349,7 +1387,6 @@
         const cwCat = data.currentWeek.categories.find(c => c.name === oldCatName);
         if (cwCat) cwCat.name = val;
       }
-      // 과거 아카이브 전체 카테고리 이름 일괄 변경 (선택사항이나, 동기화를 위해)
       data.archives.forEach(arch => {
         const aCat = arch.categories.find(c => c.name === oldCatName);
         if(aCat) aCat.name = val;
@@ -1453,7 +1490,6 @@
       data.projects.push(obj);
     }
     
-    // 진행/보류로 변경 시 해당 주간보고에도 실시간 동기화
     if(activeWeek) syncProjectsToSpecificWeek(activeWeek);
 
     triggerSave(); updateAllUI(); window.closeModal('modal-project');
@@ -1471,7 +1507,6 @@
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
     
-    // 이번 주(진행 중)와 과거 아카이브를 합침
     let combinedList = [];
     if (data.currentWeek) combinedList.push(data.currentWeek);
     if (data.archives) combinedList = combinedList.concat(data.archives);
@@ -1485,7 +1520,6 @@
       let cnt = 0; 
       if (a.categories) a.categories.forEach(c => cnt += c.projects.length);
       
-      // 현재 이번 주 보고서인지 판별하여 스타일링 적용
       const isCurrent = (data.currentWeek && a.id === data.currentWeek.id);
       const rowStyle = isCurrent ? 'background: rgba(201,163,94,0.05);' : '';
       const titleColor = isCurrent ? 'color: var(--brass);' : 'color: inherit;';
