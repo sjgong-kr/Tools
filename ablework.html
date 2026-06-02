@@ -503,7 +503,7 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">계정 관리</div>
-          <div class="topbar-sub">시스템 접속 계정을 추가하거나 삭제합니다. (최고관리자 전용)</div>
+          <div class="topbar-sub">시스템 접속 계정을 추가하거나 삭제합니다.</div>
         </div>
         <div class="topbar-actions">
           <button class="btn btn-primary" onclick="window.openAccountModal()">＋ 계정 추가</button>
@@ -614,10 +614,7 @@
   import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   let data = {
-    projects: [
-      { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '홍길동', status: '진행' },
-      { id: 'p2', cat: '금융', name: '코스콤 백본 증설', owner: '김영업', status: '진행' }
-    ],
+    projects: [],
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
     archives: [] 
@@ -629,7 +626,7 @@
   let accEditEmail = null;
 
   let dbRef = null;
-  let isFirebaseMode = false; // Firebase 쓰기 권한 상태 변수
+  let isFirebaseMode = false; 
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
@@ -638,7 +635,7 @@
   let pmEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v9";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v11";
 
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
@@ -649,13 +646,10 @@
       }
       delete migrated.currentWeek;
     }
-    if (migrated.archives) {
-      migrated.archives.sort((a, b) => b.id.localeCompare(a.id));
-    }
-    if (!migrated.categories || migrated.categories.length === 0) {
-      migrated.categories = ['공공/기업', '금융', '국방', '기타'];
-    }
+    if (migrated.archives) migrated.archives.sort((a, b) => b.id.localeCompare(a.id));
+    if (!migrated.categories || migrated.categories.length === 0) migrated.categories = ['공공/기업', '금융', '국방', '기타'];
     if (!migrated.schedules) migrated.schedules = [];
+    if (!migrated.projects) migrated.projects = [];
     return migrated;
   }
 
@@ -703,7 +697,8 @@
       if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found')) {
         try {
            await createUserWithEmailAndPassword(auth, email, pwInput);
-           await setDoc(doc(db, 'ablework/company_main/accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
+           // 공용 공간(company_main)에 최고관리자 계정 생성
+           await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
            errEl.style.display = "none";
         } catch(err2) {
            errEl.textContent = "로그인 실패: " + err2.message;
@@ -723,7 +718,7 @@
     const appView = document.querySelector('.app');
 
     if (user) {
-      isFirebaseMode = true; // [버그 수정 1] Firebase 저장 허가 ON
+      isFirebaseMode = true; 
 
       const email = user.email;
       const baseId = email.replace(domain, '');
@@ -732,14 +727,11 @@
 
       try {
           if (baseId !== 'ablecom') {
-            const accDoc = await getDoc(doc(db, 'ablework/company_main/accounts', email));
+            // 모든 계정 정보를 공용 공간(company_main)에서 가져옵니다.
+            const accDoc = await getDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
             if (accDoc.exists()) {
                role = accDoc.data().role;
                userName = accDoc.data().name;
-            } else {
-               alert('삭제되었거나 권한이 없는 계정입니다.');
-               signOut(auth);
-               return;
             }
           } else {
             role = 'admin';
@@ -763,22 +755,17 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      const isCanvas = typeof __firebase_config !== 'undefined';
-      if (isCanvas) {
-          dbRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data');
-      } else {
-          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
-      }
+      // 파이어베이스 규칙에 맞춘 공용 데이터 경로(company_main)
+      dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
 
       onSnapshot(dbRef, (snap) => {
-        // [버그 수정 2] 로컬에서 수정한 직후 발생하는 서버 에코(메아리) 이벤트 무시하여 텍스트 포커스 증발 방지
+        // 입력 중 포커스 잃음 방지
         if (snap.metadata.hasPendingWrites) return;
 
         if (snap.exists()) {
           const serverData = snap.data();
           data = applyMigration({ ...data, ...serverData });
           
-          // 사용자가 입력 중(텍스트 상자 커서 활성화)일 때는 전체 렌더링을 보류하여 먹통 현상 완전 차단
           const activeEl = document.activeElement;
           const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
           
@@ -796,7 +783,7 @@
     }
   });
 
-  // DB 실시간 저장 통로
+  // 공용 데이터 저장 함수
   function triggerSave() {
     localStorage.setItem(appId, JSON.stringify(data));
     if (isFirebaseMode && dbRef) {
@@ -804,9 +791,9 @@
     }
   }
 
-  // --- 관리자: 계정 관리 ---
+  // --- 관리자: 계정 관리 (공용 경로 적용) ---
   function loadAccounts() {
-    onSnapshot(collection(db, 'ablework/company_main/accounts'), (snap) => {
+    onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
       accountList = snap.docs.map(d => ({ email: d.id, ...d.data() }));
       renderAccounts();
     });
@@ -872,7 +859,7 @@
 
     if (accEditEmail) {
       try {
-        await setDoc(doc(db, 'ablework/company_main/accounts', accEditEmail), { name, role }, {merge: true});
+        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', accEditEmail), { name, role }, {merge: true});
         window.closeModal('modal-account');
         window.showToast('계정이 성공적으로 수정되었습니다.');
       } catch (e) { window.showToast('수정 실패: ' + e.message); }
@@ -884,7 +871,7 @@
       try {
         await createUserWithEmailAndPassword(secondaryAuth, email, pw);
         await signOut(secondaryAuth);
-        await setDoc(doc(db, 'ablework/company_main/accounts', email), { id, name, role });
+        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id, name, role });
         window.closeModal('modal-account');
         window.showToast('계정이 성공적으로 추가되었습니다.');
       } catch (e) { window.showToast('계정 생성 실패: ' + e.message); }
@@ -894,7 +881,7 @@
   window.delAccount = async function(email) {
     if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
     try {
-      await deleteDoc(doc(db, 'ablework/company_main/accounts', email));
+      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
       window.showToast('계정이 삭제되었습니다.');
     } catch (e) { console.error(e); }
   };
@@ -930,6 +917,7 @@
     const sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
     const sat = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 6);
 
+    // 목요일 기준으로 해당 월의 주차 판별
     const thu = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 4);
     const targetYear = thu.getFullYear();
     const targetMonth = thu.getMonth(); 
@@ -1122,6 +1110,7 @@
   
   window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
+  // N-1주의 계획을 N주의 실적으로 완벽하게 이관
   function syncProjectsToSpecificWeek(weekObj, isCurrentWeek = false) {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     if (!weekObj.categories) weekObj.categories = [];
@@ -1141,8 +1130,8 @@
     activeProjs.forEach(p => {
       let existingPrev = '';
       let existingPlan = '';
-
       let foundInCurrent = false;
+
       weekObj.categories.forEach(c => {
         const idx = c.projects.findIndex(x => x.id === p.id);
         if (idx !== -1) {
@@ -1153,10 +1142,10 @@
         }
       });
 
-      if ((!foundInCurrent || !existingPrev) && prevWeekObj) {
+      if ((!foundInCurrent || existingPrev.trim() === '') && prevWeekObj) {
         prevWeekObj.categories.forEach(pc => {
            const prevProj = pc.projects.find(x => x.id === p.id);
-           if (prevProj && prevProj.plan) {
+           if (prevProj && prevProj.plan && prevProj.plan.trim() !== '') {
              existingPrev = prevProj.plan; 
            }
         });
@@ -1174,7 +1163,7 @@
       } else {
         cp.name = p.name; 
         cp.owner = p.owner;
-        if (!cp.prev) cp.prev = existingPrev; 
+        if (!cp.prev || cp.prev.trim() === '') cp.prev = existingPrev; 
       }
     });
 
