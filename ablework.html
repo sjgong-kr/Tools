@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이블컴 전략영업본부 · 업무 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F4ED;
+    --bg-elev: #FFFFFF;
+    --paper: #FBFAF6;
+    --ink: #1A2238;
+    --ink-2: #3A4358;
+    --muted: #707788;
+    --line: #DDD6C8;
+    --line-strong: #B8AE99;
+    --brass: #A87838;
+    --brass-soft: #C9A35E;
+    --accent: #8B2A2A;
+    --good: #2F6A4A;
+    --warn: #B86A1A;
+    --shadow-sm: 0 1px 2px rgba(26,34,56,0.04), 0 1px 1px rgba(26,34,56,0.02);
+    --shadow-md: 0 6px 24px rgba(26,34,56,0.06), 0 2px 6px rgba(26,34,56,0.04);
+    --serif: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+    --sans: 'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', 'D2Coding', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--sans); color: var(--ink); background: var(--bg);
+    font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, textarea, select { font-family: inherit; color: inherit; outline: none; }
+
+  /* ===== Layout & Nav ===== */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--ink); color: #E8E4DC; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .brand { padding: 0 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .brand-mark { font-family: var(--serif); font-weight: 700; font-size: 19px; color: #F4EFE3; }
+  .brand-mark::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--brass-soft); border-radius: 50%; margin-right: 10px; }
+  .brand-sub { font-size: 11px; color: #9A9384; margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .nav { padding: 18px 12px; }
+  .nav-label { font-size: 10px; color: #6B6655; letter-spacing: 0.18em; text-transform: uppercase; padding: 14px 14px 8px; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 14px; color: #C7C0B2; font-size: 13.5px; border-radius: 6px; cursor: pointer; margin: 1px 0; border-left: 2px solid transparent; }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: #F4EFE3; }
+  .nav-item.active { background: rgba(201,163,94,0.10); color: #F4EFE3; border-left-color: var(--brass-soft); font-weight: 500; }
+  
+  .main { padding: 36px 44px 60px; max-width: 100%; overflow-x: hidden; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .topbar-title { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); }
+  .topbar-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ===== Components ===== */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500; transition: all .15s ease; border: 1px solid transparent; }
+  .btn-primary { background: var(--ink); color: #F4EFE3; }
+  .btn-primary:hover { background: #28324B; }
+  .btn-secondary { background: var(--bg-elev); color: var(--ink); border-color: var(--line-strong); }
+  .btn-secondary:hover { background: var(--paper); border-color: var(--ink-2); }
+  .btn-ghost { color: var(--ink-2); padding: 6px 10px; }
+  .btn-ghost:hover { background: rgba(26,34,56,0.04); color: var(--ink); }
+  .btn-sm { padding: 4px 8px; font-size: 11.5px; }
+
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm); margin-bottom: 18px; }
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .section-title { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--ink); }
+
+  /* ===== Calendar & Dashboard ===== */
+  .dash-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
+  
+  .cal-controls { display: flex; gap: 10px; align-items: center; }
+  .cal-controls button { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--line); font-size: 12px; }
+  .cal-controls button:hover { background: var(--paper); }
+  
+  .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+  .cal-header .sun { color: var(--accent); }
+  .cal-header .sat { color: #2A5B8B; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-cell { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; min-height: 80px; padding: 8px; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; }
+  .cal-cell:hover { border-color: var(--brass-soft); background: var(--paper); }
+  .cal-cell.active { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); background: rgba(168,120,56,0.05); }
+  .cal-cell.other-month { opacity: 0.3; background: transparent; }
+  .cal-date { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: inline-block;}
+  .cal-date.sun { color: var(--accent); }
+  .cal-date.sat { color: #2A5B8B; }
+  .cal-date.today { background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; margin-left:-4px;}
+  .cal-dots { display: flex; flex-wrap: wrap; gap: 3px; }
+  .cal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brass); }
+
+  /* ===== Weekly Report ===== */
+  .week-header { display: flex; gap: 30px; background: var(--paper); padding: 16px 20px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 20px; align-items: center; }
+  .week-info-box { flex: 1; }
+  .week-info-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+  .week-info-val { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); }
+  
+  .category-block { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 16px; }
+  .cat-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .cat-title { font-family: var(--serif); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  
+  .proj-row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .proj-row:last-child { border-bottom: none; }
+  .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .proj-name { font-weight: 600; color: var(--ink); font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .proj-name::before { content: "■"; color: var(--brass); font-size: 10px; }
+  
+  .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .proj-grid textarea { width: 100%; height: 80px; border: 1px solid var(--line); border-radius: 4px; padding: 10px; font-size: 12.5px; resize: vertical; background: var(--paper); transition: border .2s; }
+  .proj-grid textarea:focus { border-color: var(--brass); background: var(--bg-elev); }
+  .proj-grid label { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+
+  /* ===== Data Table & Misc ===== */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .data-table th { text-align: left; padding: 12px; background: var(--paper); border-bottom: 2px solid var(--ink); font-weight: 600; font-size: 11.5px; color: var(--ink); }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .data-table tr:hover td { background: rgba(168,120,56,0.03); }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .bg-progress { background: rgba(168,120,56,0.15); color: var(--brass); }
+  .bg-done { background: rgba(47,106,74,0.15); color: var(--good); }
+  .bg-hold { background: rgba(112,119,136,0.15); color: var(--muted); }
+
+  .schedule-list { display: flex; flex-direction: column; gap: 10px; }
+  .schedule-item { display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); }
+  .schedule-date { font-family: var(--mono); font-size: 12px; color: var(--brass); font-weight: 600; background: rgba(168,120,56,0.1); padding: 4px 8px; border-radius: 4px; min-width: 80px; text-align: center;}
+  
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,34,56,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 480px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; }
+  .form-group input:focus { border-color: var(--brass); }
+
+  .toast { position: fixed; bottom: 30px; right: 30px; background: var(--ink); color: white; padding: 12px 20px; border-radius: 5px; font-size: 13px; transform: translateY(100px); opacity: 0; transition: all .3s; z-index: 200; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media print {
+    .sidebar, .topbar, .btn { display: none !important; }
+    .app { display: block; }
+    .main { padding: 0; }
+    .card { border: none; box-shadow: none; padding: 0; margin: 0; }
+    .cal-grid { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">에이블컴 전략영업본부</div>
+      <div class="brand-sub">Management Suite</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Reporting</div>
+      <div class="nav-item active" onclick="goView('dashboard')" data-view="dashboard">◐ 대시보드 (달력)</div>
+      <div class="nav-item" onclick="goView('weekly')" data-view="weekly">▤ 주간 업무보고</div>
+      <div class="nav-item" onclick="goView('archive')" data-view="archive">⊞ 보고서 아카이브</div>
+
+      <div class="nav-label">Pipeline</div>
+      <div class="nav-item" onclick="goView('projects')" data-view="projects">◆ 프로젝트 마스터</div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    
+    <section class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">대시보드</div>
+          <div class="topbar-sub">주요 일정을 달력에서 확인하고 관리하세요.</div>
+        </div>
+      </div>
+
+      <div class="dash-layout">
+        <!-- 달력 영역 -->
+        <div class="card" style="padding: 20px;">
+          <div class="section-head">
+            <div class="section-title" id="cal-month-title">로딩중...</div>
+            <div class="cal-controls">
+              <button onclick="changeMonth(-1)">◀ 이전</button>
+              <button onclick="resetCalToToday()">오늘</button>
+              <button onclick="changeMonth(1)">다음 ▶</button>
+            </div>
+          </div>
+          <div class="cal-header">
+            <div class="sun">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="sat">토</div>
+          </div>
+          <div class="cal-grid" id="calendar-grid">
+            <!-- JS 렌더링 -->
+          </div>
+        </div>
+
+        <!-- 선택된 날짜 주요 일정 영역 -->
+        <div class="card" style="padding: 20px; display: flex; flex-direction: column;">
+          <div class="section-head">
+            <div class="section-title" id="sel-date-title">선택된 날짜 일정</div>
+            <button class="btn btn-secondary btn-sm" onclick="openScheduleModal()">＋ 일정 등록</button>
+          </div>
+          <div id="daily-schedule-list" class="schedule-list" style="flex:1; overflow-y: auto;">
+             <!-- JS 렌더링 -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-weekly">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">주간 업무보고</div>
+          <div class="topbar-sub">이번 주(일~토) 기준, '진행' 중인 사업이 자동으로 나열됩니다.</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="window.print()">🖨 인쇄</button>
+        </div>
+      </div>
+
+      <div class="week-header">
+        <div class="week-info-box">
+          <div class="week-info-label">보고 주차</div>
+          <div class="week-info-val" id="wk-title">로딩중...</div>
+        </div>
+        <div class="week-info-box">
+          <div class="week-info-label">대상 기간 (일~토)</div>
+          <div class="week-info-val" id="wk-range">로딩중...</div>
+        </div>
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="reSyncProjects()">↻ 진행 사업 다시 불러오기</button>
+        </div>
+      </div>
+
+      <div id="weekly-container"></div>
+      
+      <!-- 해당 주차 주요 일정 표기 영역 -->
+      <div class="card" style="margin-top: 24px; border-left: 3px solid var(--ink);">
+        <div class="section-head">
+          <div class="section-title">금주 주요 일정</div>
+          <div class="section-meta">대시보드 달력에 등록된 일정 중 이번 주에 해당되는 내역</div>
+        </div>
+        <div id="weekly-matched-schedules" class="schedule-list"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-archive">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">보고서 아카이브</div>
+          <div class="topbar-sub">지난 주차의 보고서 목록입니다. (주가 바뀌면 자동 보관됨)</div>
+        </div>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>주차</th><th>기간</th><th>프로젝트 수</th><th>액션</th></tr></thead>
+          <tbody id="archive-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="view-projects">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">프로젝트 마스터</div>
+          <div class="topbar-sub">사업 현황을 관리합니다. '진행' 또는 '보류' 상태인 사업은 주간보고에 자동 반영됩니다.</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openProjectModal()">＋ 새 사업 등록</button>
+        </div>
+      </div>
+      <div class="card" style="padding: 0;">
+        <table class="data-table">
+          <thead><tr><th>분류</th><th>사업명</th><th>담당자</th><th>상태</th><th class="num">예상매출</th><th>액션</th></tr></thead>
+          <tbody id="projects-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal-schedule">
+  <div class="modal">
+    <h3>주요 일정 등록</h3>
+    <div class="form-group"><label>날짜</label><input type="date" id="sch-date"></div>
+    <div class="form-group"><label>일정 내용</label><input type="text" id="sch-text" placeholder="예: 한국도로공사 미팅"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">취소</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">등록</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <h3 id="pm-title">사업 등록</h3>
+    <input type="hidden" id="pm-id">
+    <div class="form-group">
+      <label>카테고리</label>
+      <input type="text" id="pm-cat" placeholder="예: 공공/기업, 금융, 유지보수..." list="cat-suggestions">
+      <datalist id="cat-suggestions">
+        <option value="공공/기업"><option value="금융"><option value="유지보수"><option value="기타">
+      </datalist>
+    </div>
+    <div class="form-group"><label>사업명</label><input type="text" id="pm-name"></div>
+    <div class="form-group"><label>담당자</label><input type="text" id="pm-owner"></div>
+    <div class="form-group">
+      <label>상태</label>
+      <select id="pm-status"><option value="진행">진행</option><option value="완료">완료</option><option value="보류">보류</option><option value="실주">실주</option></select>
+    </div>
+    <div class="form-group"><label>예상매출 (백만)</label><input type="number" id="pm-rev" value="0"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-project')">취소</button>
+      <button class="btn btn-primary" onclick="saveProject()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // 기본 데이터 구조
+  let data = {
+    projects: [
+      { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '정정헌', status: '진행', rev: 0 },
+      { id: 'p2', cat: '금융', name: '코스콤 백본 증설', owner: '최선우', status: '진행', rev: 180 }
+    ],
+    schedules: [],
+    currentWeek: null,
+    archives: []
+  };
+
+  let isFirebaseMode = false;
+  let currentUser = null;
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-v3";
+  let dbRef = null;
+
+  // Calendar States
+  let calRenderDate = new Date(); // 표시 중인 달력의 월
+  let calSelectedDate = new Date(); // 사용자가 선택한 날짜
+
+  // 1. 초기화: 로컬 스토리지에서 먼저 빠르게 로드
+  const localData = localStorage.getItem(appId);
+  if (localData) {
+    try { data = JSON.parse(localData); } catch(e) {}
+  }
+  
+  // 데이터 검증 (스케줄 구조 보장)
+  if(!data.schedules) data.schedules = [];
+
+  // 초기 렌더링
+  initCurrentWeek(); 
+  updateAllUI();
+
+  // 2. Firebase 연결 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+    authDomain: "openzeroc.firebaseapp.com",
+    projectId: "openzeroc",
+    storageBucket: "openzeroc.firebasestorage.app",
+    messagingSenderId: "465944510778",
+    appId: "1:465944510778:web:df0d19b7c6b98d129f5003"
+  };
+
+  try {
+    const app = initializeApp(typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    signInAnonymously(auth).catch(err => {
+      console.warn("Firebase 연결 실패 (로컬 모드 유지)", err);
+    });
+
+    onAuthStateChanged(auth, user => {
+      if(user) {
+        currentUser = user;
+        isFirebaseMode = true;
+        showToast("서버 실시간 동기화 완료");
+        
+        // Firestore 실시간 구독
+        dbRef = doc(db, 'artifacts', appId, 'users', user.uid, 'main');
+        onSnapshot(dbRef, (snap) => {
+          if (snap.exists()) {
+            const serverData = snap.data();
+            // 서버 데이터를 로컬과 병합 (서버 우선)
+            data.projects = serverData.projects || [];
+            data.schedules = serverData.schedules || [];
+            data.currentWeek = serverData.currentWeek || null;
+            data.archives = serverData.archives || [];
+            
+            initCurrentWeek(); // 주가 바뀌었는지 체크
+            updateAllUI();
+          } else {
+            // 서버에 데이터가 없으면 현재 로컬 데이터를 업로드
+            triggerSave();
+          }
+        });
+      }
+    });
+  } catch(e) { console.error("Firebase 초기화 에러", e); }
+
+  function triggerSave() {
+    localStorage.setItem(appId, JSON.stringify(data));
+    if (isFirebaseMode && dbRef) {
+      setDoc(dbRef, data).catch(e=>console.error("Firestore 저장 에러:", e));
+    }
+  }
+
+  // --- 네비게이션 ---
+  window.goView = function(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelector(`.nav-item[data-view="${name}"]`).classList.add('active');
+    updateAllUI();
+  };
+
+  function updateAllUI() {
+    renderCalendar();
+    renderDailySchedules();
+    renderProjects();
+    renderWeeklyReport();
+    renderArchive();
+  }
+
+  // --- 유틸 및 모달 ---
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  window.openModal = function(id) { document.getElementById(id).classList.add('active'); }
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); }
+
+  // --- 달력 렌더링 로직 ---
+  function fmtDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  window.changeMonth = function(offset) {
+    calRenderDate.setMonth(calRenderDate.getMonth() + offset);
+    renderCalendar();
+  };
+
+  window.resetCalToToday = function() {
+    calRenderDate = new Date();
+    calSelectedDate = new Date();
+    renderCalendar();
+    renderDailySchedules();
+  };
+
+  window.selectCalDate = function(dateStr) {
+    calSelectedDate = new Date(dateStr);
+    renderCalendar();
+    renderDailySchedules();
+  };
+
+  function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    grid.innerHTML = '';
+    
+    const year = calRenderDate.getFullYear();
+    const month = calRenderDate.getMonth();
+    document.getElementById('cal-month-title').textContent = `${year}년 ${month + 1}월`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const todayStr = fmtDate(new Date());
+    const selStr = fmtDate(calSelectedDate);
+
+    // 이전 달 빈 칸 채우기
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = firstDay - 1; i >= 0; i--) {
+        grid.innerHTML += `<div class="cal-cell other-month"><div class="cal-date">${prevMonthDays - i}</div></div>`;
+    }
+
+    // 이번 달 날짜 그리기
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cellDate = new Date(year, month, day);
+      const dateStr = fmtDate(cellDate);
+      const dayOfWeek = cellDate.getDay();
+      
+      let dateClass = 'cal-date';
+      if (dayOfWeek === 0) dateClass += ' sun';
+      if (dayOfWeek === 6) dateClass += ' sat';
+      if (dateStr === todayStr) dateClass += ' today';
+
+      const isActive = dateStr === selStr ? 'active' : '';
+
+      // 일정(점) 표시
+      const daySchedules = data.schedules.filter(s => s.date === dateStr);
+      let dotsHtml = '';
+      if(daySchedules.length > 0) {
+          dotsHtml = daySchedules.map(() => `<div class="cal-dot"></div>`).join('');
+      }
+
+      grid.innerHTML += `
+        <div class="cal-cell ${isActive}" onclick="selectCalDate('${dateStr}')">
+          <div class="${dateClass}">${day}</div>
+          <div class="cal-dots">${dotsHtml}</div>
+        </div>
+      `;
+    }
+  }
+
+  // --- 선택된 날짜 주요 일정 ---
+  function renderDailySchedules() {
+    const selStr = fmtDate(calSelectedDate);
+    const dayNames = ['일','월','화','수','목','금','토'];
+    document.getElementById('sel-date-title').textContent = `${calSelectedDate.getMonth()+1}월 ${calSelectedDate.getDate()}일 (${dayNames[calSelectedDate.getDay()]}) 일정`;
+
+    const list = document.getElementById('daily-schedule-list');
+    const daySch = data.schedules.filter(s => s.date === selStr);
+
+    if(daySch.length === 0) {
+      list.innerHTML = `<div style="text-align:center; padding:30px 0; color:var(--muted); font-size:12px;">등록된 일정이 없습니다.</div>`;
+      return;
+    }
+
+    list.innerHTML = daySch.map(s => `
+      <div class="schedule-item" style="display:flex; justify-content:space-between;">
+        <div style="font-size:13px; font-weight:500;">${escapeHtml(s.text)}</div>
+        <button class="btn btn-ghost btn-sm" onclick="delScheduleObj('${s.id}')" style="color:var(--accent);">삭제</button>
+      </div>
+    `).join('');
+  }
+
+  window.openScheduleModal = function() {
+    // 선택된 달력 날짜를 기본값으로
+    document.getElementById('sch-date').value = fmtDate(calSelectedDate);
+    document.getElementById('sch-text').value = '';
+    openModal('modal-schedule');
+  };
+
+  window.saveSchedule = function() {
+    const dt = document.getElementById('sch-date').value;
+    const txt = document.getElementById('sch-text').value.trim();
+    if(!dt || !txt) { showToast('날짜와 내용을 입력하세요.'); return; }
+    
+    data.schedules.push({ id: 'sch_'+Date.now(), date: dt, text: txt });
+    
+    // 모달을 닫고, 추가한 날짜를 달력에서 선택 상태로 변경
+    calSelectedDate = new Date(dt);
+    calRenderDate = new Date(dt);
+
+    triggerSave(); updateAllUI(); closeModal('modal-schedule');
+  };
+
+  window.delScheduleObj = function(id) {
+    if(!confirm('일정을 삭제하시겠습니까?')) return;
+    data.schedules = data.schedules.filter(s => s.id !== id);
+    triggerSave(); updateAllUI();
+  };
+
+  // --- 주간 보고 로직 (일~토 기준) ---
+  function getWeekRange(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0:Sun ~ 6:Sat
+    const diff = d.getDate() - day; // Move to Sunday
+    
+    const sun = new Date(d.getFullYear(), d.getMonth(), diff);
+    const sat = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 6);
+    
+    // Week Number
+    const firstDayOfMonth = new Date(sun.getFullYear(), sun.getMonth(), 1);
+    const weekNum = Math.ceil((sun.getDate() + firstDayOfMonth.getDay()) / 7);
+
+    return {
+      id: fmtDate(sun),
+      start: fmtDate(sun),
+      end: fmtDate(sat),
+      title: `${sun.getFullYear()}년 ${sun.getMonth()+1}월 ${weekNum}주차`
+    };
+  }
+
+  function initCurrentWeek() {
+    const range = getWeekRange();
+    
+    // 주가 바뀌었다면 기존 보고서를 아카이브로 이동
+    if (data.currentWeek && data.currentWeek.id !== range.id) {
+      if (!data.archives) data.archives = [];
+      data.archives.unshift(JSON.parse(JSON.stringify(data.currentWeek)));
+      data.currentWeek = null; 
+    }
+
+    if (!data.currentWeek) {
+      data.currentWeek = {
+        id: range.id,
+        title: range.title,
+        start: range.start,
+        end: range.end,
+        categories: []
+      };
+    }
+
+    syncActiveProjectsToWeek();
+  }
+
+  window.reSyncProjects = function() {
+    syncActiveProjectsToWeek();
+    showToast('진행 사업 목록을 최신화했습니다.');
+  };
+
+  function syncActiveProjectsToWeek() {
+    // 프로젝트 마스터에서 '진행' 또는 '보류' 상태 동기화
+    const activeProjs = (data.projects || []).filter(p => p.status === '진행' || p.status === '보류');
+    
+    activeProjs.forEach(p => {
+      let cat = data.currentWeek.categories.find(c => c.name === p.cat);
+      if (!cat) {
+        cat = { name: p.cat, projects: [] };
+        data.currentWeek.categories.push(cat);
+      }
+      let cp = cat.projects.find(x => x.id === p.id);
+      if (!cp) {
+        // 새 진행 프로젝트 추가
+        cat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: '', plan: '' });
+      } else {
+        // 이름/담당자만 최신화
+        cp.name = p.name; cp.owner = p.owner;
+      }
+    });
+
+    triggerSave();
+  }
+
+  function renderWeeklyReport() {
+    if (!data.currentWeek) return;
+    const cw = data.currentWeek;
+    
+    document.getElementById('wk-title').textContent = cw.title;
+    document.getElementById('wk-range').textContent = `${cw.start} ~ ${cw.end}`;
+
+    const container = document.getElementById('weekly-container');
+    if(cw.categories.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); border:1px dashed var(--line); border-radius:6px;">프로젝트 마스터에서 '진행' 상태인 사업이 없습니다.</div>`;
+    } else {
+      container.innerHTML = cw.categories.map((cat, ci) => `
+        <div class="category-block">
+          <div class="cat-head">
+            <div class="cat-title">
+              <span class="badge" style="background:var(--ink); color:white;">${(ci+1).toString().padStart(2,'0')}</span>
+              ${escapeHtml(cat.name)} <span style="font-size:11px; color:var(--muted); font-weight:400;">(${cat.projects.length}개)</span>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-ghost btn-sm" onclick="moveCat(${ci}, -1)">↑</button>
+              <button class="btn btn-ghost btn-sm" onclick="moveCat(${ci}, 1)">↓</button>
+            </div>
+          </div>
+          <div>
+            ${cat.projects.map((p, pi) => `
+              <div class="proj-row">
+                <div class="proj-header">
+                  <div class="proj-name">${escapeHtml(p.name)} <span style="font-size:11px; color:var(--muted); font-weight:400;">담당: ${escapeHtml(p.owner||'-')}</span></div>
+                  <div style="display:flex; gap:4px;">
+                    <button class="btn btn-ghost btn-sm" onclick="moveProj(${ci}, ${pi}, -1)">↑</button>
+                    <button class="btn btn-ghost btn-sm" onclick="moveProj(${ci}, ${pi}, 1)">↓</button>
+                  </div>
+                </div>
+                <div class="proj-grid">
+                  <div>
+                    <label>전주 실적</label>
+                    <textarea onchange="updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료된 내역 입력">${escapeHtml(p.prev)}</textarea>
+                  </div>
+                  <div>
+                    <label>금주 계획</label>
+                    <textarea onchange="updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 진행 예정 내역 입력">${escapeHtml(p.plan)}</textarea>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 이번 주(일~토)에 속하는 주요 일정 렌더링
+    const matched = data.schedules.filter(s => s.date >= cw.start && s.date <= cw.end).sort((a,b)=>a.date.localeCompare(b.date));
+    const schWrap = document.getElementById('weekly-matched-schedules');
+    if (matched.length === 0) {
+      schWrap.innerHTML = `<div style="padding:14px; font-size:12px; color:var(--muted);">이 주간(일~토)에 등록된 주요 일정이 없습니다. 대시보드 달력에서 등록하세요.</div>`;
+    } else {
+      schWrap.innerHTML = matched.map(s => `
+        <div class="schedule-item">
+          <div class="schedule-date">${s.date}</div>
+          <div style="font-size:13px; font-weight:500;">${escapeHtml(s.text)}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // --- 순서 변경 & 데이터 업데이트 ---
+  window.updateWeekData = function(ci, pi, field, val) {
+    data.currentWeek.categories[ci].projects[pi][field] = val;
+    triggerSave();
+  };
+  window.moveCat = function(ci, dir) {
+    const arr = data.currentWeek.categories;
+    if (ci + dir < 0 || ci + dir >= arr.length) return;
+    [arr[ci], arr[ci+dir]] = [arr[ci+dir], arr[ci]];
+    triggerSave(); renderWeeklyReport();
+  };
+  window.moveProj = function(ci, pi, dir) {
+    const arr = data.currentWeek.categories[ci].projects;
+    if (pi + dir < 0 || pi + dir >= arr.length) return;
+    [arr[pi], arr[pi+dir]] = [arr[pi+dir], arr[pi]];
+    triggerSave(); renderWeeklyReport();
+  };
+
+  // --- 프로젝트 마스터 ---
+  function renderProjects() {
+    const tbody = document.getElementById('projects-tbody');
+    const projs = data.projects || [];
+    if(projs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--muted);">등록된 사업이 없습니다.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = projs.map(p => {
+      let bClass = 'bg-progress';
+      if(p.status==='완료') bClass='bg-done'; else if(p.status!=='진행') bClass='bg-hold';
+      return `
+        <tr>
+          <td><span style="font-size:11px; background:var(--paper); padding:3px 6px; border-radius:3px;">${escapeHtml(p.cat)}</span></td>
+          <td style="font-weight:600;">${escapeHtml(p.name)}</td>
+          <td>${escapeHtml(p.owner||'-')}</td>
+          <td><span class="badge ${bClass}">${p.status}</span></td>
+          <td class="num">${Number(p.rev||0).toLocaleString()}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="editProjMaster('${p.id}')">수정</button>
+            <button class="btn btn-ghost btn-sm" onclick="delProjMaster('${p.id}')" style="color:var(--accent);">삭제</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.openProjectModal = function() {
+    document.getElementById('pm-id').value = '';
+    document.getElementById('pm-cat').value = '';
+    document.getElementById('pm-name').value = '';
+    document.getElementById('pm-owner').value = '';
+    document.getElementById('pm-status').value = '진행';
+    document.getElementById('pm-rev').value = '0';
+    document.getElementById('pm-title').textContent = '새 사업 등록';
+    openModal('modal-project');
+  };
+
+  window.editProjMaster = function(id) {
+    const p = data.projects.find(x => x.id === id);
+    if(!p) return;
+    document.getElementById('pm-id').value = p.id;
+    document.getElementById('pm-cat').value = p.cat;
+    document.getElementById('pm-name').value = p.name;
+    document.getElementById('pm-owner').value = p.owner;
+    document.getElementById('pm-status').value = p.status;
+    document.getElementById('pm-rev').value = p.rev;
+    document.getElementById('pm-title').textContent = '사업 수정';
+    openModal('modal-project');
+  };
+
+  window.saveProject = function() {
+    const id = document.getElementById('pm-id').value;
+    const obj = {
+      cat: document.getElementById('pm-cat').value.trim() || '미분류',
+      name: document.getElementById('pm-name').value.trim(),
+      owner: document.getElementById('pm-owner').value.trim(),
+      status: document.getElementById('pm-status').value,
+      rev: Number(document.getElementById('pm-rev').value) || 0
+    };
+    if(!obj.name) { showToast('사업명을 입력하세요.'); return; }
+
+    if(!data.projects) data.projects = [];
+    if(id) {
+      const idx = data.projects.findIndex(x => x.id === id);
+      if(idx > -1) data.projects[idx] = { id, ...obj };
+    } else {
+      data.projects.push({ id: 'p_'+Date.now(), ...obj });
+    }
+    
+    syncActiveProjectsToWeek(); 
+    triggerSave(); updateAllUI(); closeModal('modal-project');
+  };
+
+  window.delProjMaster = function(id) {
+    if(!confirm('사업을 삭제하시겠습니까? (주간 보고서에는 남아있을 수 있습니다)')) return;
+    data.projects = data.projects.filter(x => x.id !== id);
+    triggerSave(); updateAllUI();
+  };
+
+  // --- 아카이브 ---
+  function renderArchive() {
+    const tbody = document.getElementById('archive-tbody');
+    const arch = data.archives || [];
+    if(arch.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 보고서가 없습니다. 주(일요일)가 바뀌면 이전 주 보고서는 자동 보관됩니다.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = arch.map((a, i) => {
+      let count = 0;
+      a.categories.forEach(c => count += c.projects.length);
+      return `
+        <tr>
+          <td style="font-weight:600; font-family:var(--serif);">${a.title}</td>
+          <td style="font-family:var(--mono); font-size:12px;">${a.start} ~ ${a.end}</td>
+          <td>총 ${count}건</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="alert('인쇄 미리보기 기능은 준비중입니다.')">보기</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Util
+  function escapeHtml(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+</script>
+</body>
+</html>
