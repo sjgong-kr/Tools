@@ -337,7 +337,7 @@
     <div class="brand-mark" style="color:var(--ink); font-size:24px; margin-bottom:24px;">에이블컴 업무관리</div>
     <div class="form-group">
       <label>아이디</label>
-      <input type="text" id="login-id" placeholder="아이디 입력" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+      <input type="text" id="login-id" placeholder="예: ablecom" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
     </div>
     <div class="form-group">
       <label>비밀번호</label>
@@ -626,10 +626,10 @@
 <div class="modal-overlay" id="modal-account">
   <div class="modal">
     <h3 id="acc-title">새 계정 추가</h3>
-    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;" id="acc-desc">아이디는 영문/숫자 조합입니다. 초기 비밀번호를 설정해주세요.</p>
+    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;" id="acc-desc">아이디와 초기 비밀번호를 설정해주세요.</p>
     <div class="form-group"><label>아이디</label><input id="acc-id" type="text" placeholder="예: user01"></div>
     <div class="form-group"><label>사용자 이름</label><input id="acc-name" type="text" placeholder="예: 홍길동"></div>
-    <div class="form-group"><label>비밀번호</label><input id="acc-pw" type="password" placeholder="6자리 이상 입력"></div>
+    <div class="form-group"><label>비밀번호</label><input id="acc-pw" type="password" placeholder="비밀번호 입력"></div>
     <div class="form-group">
       <label>권한</label>
       <select id="acc-role">
@@ -752,7 +752,6 @@
 <!-- ============ JAVASCRIPT ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   let data = {
@@ -760,26 +759,26 @@
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
     archives: [],
-    sales: [] // 매출 데이터 추가
+    sales: [] 
   };
 
-  const domain = "@ablecom.com"; 
+  let currentUser = null;
   let isAdmin = false;
   let accountList = [];
-  let accEditEmail = null;
+  let accEditId = null;
 
   let dbRef = null;
-  let isFirebaseMode = false; 
+  let isFirebaseMode = false;
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
   let displayWeekDate = new Date(); 
   let activeWeek = null; 
   let pmEditId = null;
-  let smEditId = null; // 매출 수정 ID
+  let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v12";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v14";
 
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
@@ -803,7 +802,6 @@
     try { data = applyMigration({ ...data, ...JSON.parse(localData) }); } catch(e) {} 
   }
 
-  // 초기 연도 설정 (매출 관리용)
   function initSalesYears() {
     const sel = document.getElementById('sales-year-select');
     const mSel = document.getElementById('sm-year');
@@ -812,12 +810,13 @@
     for(let y = curYear - 2; y <= curYear + 4; y++) {
        opts += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}년</option>`;
     }
-    sel.innerHTML = opts;
-    mSel.innerHTML = opts;
+    if(sel) sel.innerHTML = opts;
+    if(mSel) mSel.innerHTML = opts;
   }
   initSalesYears();
   updateAllUI();
 
+  // Firebase Setup (No Auth module required)
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
     authDomain: "openzeroc.firebaseapp.com",
@@ -829,12 +828,19 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  let secondaryApp;
-  try { secondaryApp = initializeApp(firebaseConfig, "SecondaryApp"); } catch(e) {}
-  const secondaryAuth = getAuth(secondaryApp);
+  // Custom Local DB Auth
+  function checkSession() {
+      const sessionStr = sessionStorage.getItem('ablework_session');
+      if (sessionStr) {
+          currentUser = JSON.parse(sessionStr);
+          initApp();
+      } else {
+          document.getElementById('login-overlay').style.display = 'flex';
+          document.querySelector('.app').style.display = 'none';
+      }
+  }
 
   window.handleLogin = async function() {
     const idInput = document.getElementById('login-id').value.trim();
@@ -846,72 +852,60 @@
       errEl.style.display = "block";
       return;
     }
-    const email = idInput.includes('@') ? idInput : idInput + domain;
 
-    try {
-      await signInWithEmailAndPassword(auth, email, pwInput);
-      errEl.style.display = "none";
-    } catch (e) {
-      // Firebase 설정 오류 체크
-      if (e.code === 'auth/operation-not-allowed') {
-         errEl.innerHTML = "Firebase 콘솔에서 <b>[Authentication > Sign-in method > 이메일/비밀번호]</b>를 먼저 '사용'으로 설정해주세요.";
-         errEl.style.display = "block";
-      } else if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password')) {
+    // 마스터 관리자 접속 하드코딩 우회 (어떠한 경우에도 무조건 접속 보장)
+    if (idInput === 'ablecom' && pwInput === 'ablecom+123') {
+        const adminData = { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' };
+        currentUser = adminData;
+        sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
+        errEl.style.display = "none";
+        initApp();
+        
         try {
-           // 최고 관리자 계정 최초 생성
-           await createUserWithEmailAndPassword(auth, email, pwInput);
-           await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
-           errEl.style.display = "none";
-        } catch(err2) {
-           errEl.textContent = "로그인 실패: " + err2.message;
-           errEl.style.display = "block";
-        }
+            const accRef = doc(db, 'ablework', 'company_main', 'accounts', idInput);
+            setDoc(accRef, adminData, {merge: true});
+        } catch(e) {}
+        return;
+    }
+
+    // 일반 계정 로그인 처리 (에러 방어)
+    try {
+      const accRef = doc(db, 'ablework', 'company_main', 'accounts', idInput);
+      const accSnap = await getDoc(accRef);
+
+      if (!accSnap.exists()) {
+          errEl.textContent = "등록되지 않은 아이디입니다.";
+          errEl.style.display = "block";
       } else {
-         errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
-         errEl.style.display = "block";
+          const userData = accSnap.data();
+          if (userData.pw === pwInput) {
+              currentUser = userData;
+              sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
+              errEl.style.display = "none";
+              initApp();
+          } else {
+              errEl.textContent = "비밀번호가 일치하지 않습니다.";
+              errEl.style.display = "block";
+          }
       }
+    } catch (e) {
+      errEl.innerHTML = `서버 통신 오류가 발생했습니다.<br><span style="font-size:10px;">(${e.message})</span>`;
+      errEl.style.display = "block";
     }
   };
 
-  window.doLogout = function() { signOut(auth); };
+  window.doLogout = function() {
+      sessionStorage.removeItem('ablework_session');
+      location.reload();
+  };
 
-  onAuthStateChanged(auth, async (user) => {
-    const loginView = document.getElementById('login-overlay');
-    const appView = document.querySelector('.app');
+  function initApp() {
+      isAdmin = (currentUser.role === 'admin');
+      isFirebaseMode = true;
 
-    if (user) {
-      // [핵심 버그 수정] 이전 테스트로 남은 '익명 로그인' 정보일 경우 강제 로그아웃
-      if (!user.email) {
-         signOut(auth);
-         return;
-      }
-
-      isFirebaseMode = true; 
-
-      const email = user.email;
-      const baseId = email.replace(domain, '');
-      let role = 'user';
-      let userName = baseId;
-
-      try {
-          if (baseId !== 'ablecom') {
-            const accDoc = await getDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
-            if (accDoc.exists()) {
-               role = accDoc.data().role;
-               userName = accDoc.data().name;
-            }
-          } else {
-            role = 'admin';
-            userName = '최고관리자';
-          }
-      } catch (err) {
-          console.warn("Account validation error, continuing", err);
-      }
-
-      isAdmin = (role === 'admin');
-      document.getElementById('current-user-name').textContent = `${userName} (${baseId})`;
-      loginView.style.display = 'none';
-      appView.style.display = 'grid';
+      document.getElementById('current-user-name').textContent = `${currentUser.name} (${currentUser.id})`;
+      document.getElementById('login-overlay').style.display = 'none';
+      document.querySelector('.app').style.display = 'grid';
 
       if (isAdmin) {
         document.getElementById('nav-accounts').style.display = 'flex';
@@ -925,7 +919,7 @@
       dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
 
       onSnapshot(dbRef, (snap) => {
-        if (snap.metadata.hasPendingWrites) return;
+        if (snap.metadata.hasPendingWrites) return; 
 
         if (snap.exists()) {
           const serverData = snap.data();
@@ -940,13 +934,12 @@
         } else {
           triggerSave();
         }
+      }, (error) => {
+          console.warn("Firestore 실시간 동기화 오류 (권한 부족 등):", error);
+          // 서버 통신에 실패해도 로컬 데이터 기반으로 화면 작동 보장
+          updateAllUI();
       });
-    } else {
-      isFirebaseMode = false;
-      loginView.style.display = 'flex';
-      appView.style.display = 'none';
-    }
-  });
+  }
 
   function triggerSave() {
     localStorage.setItem(appId, JSON.stringify(data));
@@ -955,11 +948,15 @@
     }
   }
 
+  checkSession();
+
   // --- 관리자: 계정 관리 ---
   function loadAccounts() {
     onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
-      accountList = snap.docs.map(d => ({ email: d.id, ...d.data() }));
+      accountList = snap.docs.map(d => d.data());
       renderAccounts();
+    }, (error) => {
+      console.warn("Accounts load error:", error);
     });
   }
 
@@ -972,8 +969,8 @@
         <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
         <td>
           ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
-            <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.email}')">수정</button>
-            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.email}')">삭제</button>
+            <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
+            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.id}')">삭제</button>
           `}
         </td>
       </tr>
@@ -981,32 +978,30 @@
   }
 
   window.openAccountModal = function() {
-    accEditEmail = null;
+    accEditId = null;
     document.getElementById('acc-title').textContent = '새 계정 추가';
-    document.getElementById('acc-desc').textContent = '아이디는 영문/숫자 조합입니다. 초기 비밀번호를 설정해주세요.';
+    document.getElementById('acc-desc').textContent = '아이디와 초기 비밀번호를 설정해주세요.';
     document.getElementById('acc-id').value = '';
     document.getElementById('acc-id').disabled = false;
     document.getElementById('acc-name').value = '';
     document.getElementById('acc-pw').value = '';
-    document.getElementById('acc-pw').disabled = false;
-    document.getElementById('acc-pw').placeholder = "6자리 이상 입력";
+    document.getElementById('acc-pw').placeholder = "비밀번호 입력";
     document.getElementById('acc-role').value = 'user';
     document.getElementById('btn-save-acc').textContent = '추가';
     window.openModal('modal-account');
   };
 
-  window.editAccount = function(email) {
-    const acc = accountList.find(a => a.email === email);
+  window.editAccount = function(id) {
+    const acc = accountList.find(a => a.id === id);
     if(!acc) return;
-    accEditEmail = email;
+    accEditId = id;
     document.getElementById('acc-title').textContent = '계정 수정';
-    document.getElementById('acc-desc').textContent = '사용자의 이름 및 권한을 수정할 수 있습니다. (아이디/비밀번호 변경 불가)';
+    document.getElementById('acc-desc').textContent = '사용자의 정보 및 비밀번호를 재설정할 수 있습니다.';
     document.getElementById('acc-id').value = acc.id;
     document.getElementById('acc-id').disabled = true;
     document.getElementById('acc-name').value = acc.name;
-    document.getElementById('acc-pw').value = '';
-    document.getElementById('acc-pw').disabled = true;
-    document.getElementById('acc-pw').placeholder = "(보안상 변경 불가)";
+    document.getElementById('acc-pw').value = acc.pw; 
+    document.getElementById('acc-pw').placeholder = "새 비밀번호 입력";
     document.getElementById('acc-role').value = acc.role;
     document.getElementById('btn-save-acc').textContent = '저장';
     window.openModal('modal-account');
@@ -1018,34 +1013,22 @@
     const pw = document.getElementById('acc-pw').value;
     const role = document.getElementById('acc-role').value;
 
-    if(!id || !name) return window.showToast('아이디와 이름을 입력해주세요.');
-    const email = id + domain;
+    if(!id || !name || !pw) return window.showToast('모든 항목을 입력해주세요.');
 
-    if (accEditEmail) {
-      try {
-        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', accEditEmail), { name, role }, {merge: true});
-        window.closeModal('modal-account');
-        window.showToast('계정이 성공적으로 수정되었습니다.');
-      } catch (e) { window.showToast('수정 실패: ' + e.message); }
-    } else {
-      if(!pw || pw.length < 6) return window.showToast('비밀번호는 6자리 이상이어야 합니다.');
-      const exists = accountList.find(a => a.id === id);
-      if (exists) return window.showToast('이미 존재하는 아이디입니다.');
-
-      try {
-        await createUserWithEmailAndPassword(secondaryAuth, email, pw);
-        await signOut(secondaryAuth);
-        await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id, name, role });
-        window.closeModal('modal-account');
-        window.showToast('계정이 성공적으로 추가되었습니다.');
-      } catch (e) { window.showToast('계정 생성 실패: ' + e.message); }
+    try {
+      const accRef = doc(db, 'ablework', 'company_main', 'accounts', id);
+      await setDoc(accRef, { id, pw, name, role }, {merge: true});
+      window.closeModal('modal-account');
+      window.showToast(accEditId ? '계정이 성공적으로 수정되었습니다.' : '계정이 생성되었습니다.');
+    } catch (e) {
+      window.showToast('저장 실패: ' + e.message);
     }
   };
 
-  window.delAccount = async function(email) {
+  window.delAccount = async function(id) {
     if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
     try {
-      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
+      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
       window.showToast('계정이 삭제되었습니다.');
     } catch (e) { console.error(e); }
   };
@@ -1750,7 +1733,6 @@
 
     document.getElementById('sales-tbody').innerHTML = html;
 
-    // Update Cards
     document.getElementById('sales-stat-total').textContent = fmtNum(tYr);
     document.getElementById('sales-stat-h1').textContent = fmtNum(tH1);
     document.getElementById('sales-stat-h2').textContent = fmtNum(tH2);
@@ -1832,7 +1814,6 @@
     const sList = data.sales.filter(s => s.year === year);
     if(sList.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
-    // UTF-8 BOM for Excel compatibility
     let csv = '\uFEFF구분,사업명,담당자,이익율(%),계,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월\n';
     
     sList.forEach(s => {
@@ -1850,7 +1831,6 @@
     link.click();
     document.body.removeChild(link);
   };
-
 
   // --- 5. ARCHIVE ---
   function renderArchive() {
