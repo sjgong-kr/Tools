@@ -157,6 +157,8 @@
   .btn-primary:hover { background: #28324B; }
   .btn-secondary { background: var(--bg-elev); color: var(--ink); border-color: var(--line-strong); }
   .btn-secondary:hover { background: var(--paper); border-color: var(--ink-2); }
+  .btn-danger { background: #E53E3E; color: white; }
+  .btn-danger:hover { background: #C53030; }
   .btn-ghost { color: var(--ink-2); padding: 6px 10px; }
   .btn-ghost:hover { background: rgba(26,34,56,0.04); color: var(--ink); }
   .btn-sm { padding: 5px 10px; font-size: 11.5px; }
@@ -247,6 +249,30 @@
   .table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
+
+  /* ===== Print Styles ===== */
+  #print-area { display: none; }
+  @media print {
+    @page { size: A4 landscape; margin: 15mm; }
+    body, html { background: white !important; height: auto !important; overflow: visible !important; }
+    .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #weekly-container, .card, #header-actions { display: none !important; }
+    #view-weekly { display: block !important; padding: 0 !important; margin: 0 !important; }
+
+    #print-area { display: block !important; width: 100%; color: black; }
+    .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; position: relative; }
+    .print-header h1 { font-family: var(--serif); font-size: 24pt; font-weight: bold; margin: 0 0 5px 0; }
+    .print-meta { font-size: 11pt; color: #333; }
+    
+    .print-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; table-layout: fixed; }
+    .print-table th, .print-table td { border: 1px solid #444; padding: 10px; vertical-align: top; word-break: break-word; }
+    .print-table th { background: #f0f0f0 !important; font-weight: bold; text-align: center; font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-cat { text-align: center; vertical-align: middle; font-weight: bold; background: #f9f9f9 !important; font-family: var(--serif); font-size: 12pt; width: 12%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-content { line-height: 1.5; width: 44%; }
+    .print-proj-name { font-weight: bold; margin-bottom: 5px; border-bottom: 1px dotted #ccc; padding-bottom: 3px; font-size: 11pt;}
+    .print-owner { font-weight: normal; font-size: 9.5pt; color: #555; }
+    .print-text { padding-left: 10px; text-indent: -10px; margin-bottom: 4px; }
+    tr { page-break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -260,10 +286,11 @@
     </div>
     <nav class="nav">
       <div class="nav-label">Menu</div>
-      <div class="nav-item active" data-view="dashboard" onclick="goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
-      <div class="nav-item" data-view="weekly" onclick="goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
-      <div class="nav-item" data-view="projects" onclick="goView('projects')"><span class="nav-icon">◆</span> 프로젝트 마스터</div>
-      <div class="nav-item" data-view="archive" onclick="goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
+      <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
+      <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
+      <!-- 명칭 변경: 프로젝트 마스터 -> 프로젝트 관리 -->
+      <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
+      <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
     </nav>
   </aside>
 
@@ -287,9 +314,9 @@
             <div class="section-head">
               <div class="section-title">주요 일정 달력</div>
               <div class="section-meta">
-                <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(-1)">◀</button>
+                <button class="btn btn-ghost btn-sm" onclick="window.changeCalMonth(-1)">◀</button>
                 <span id="cal-month-title" style="font-weight:bold; margin:0 10px; font-size:14px; color:var(--ink);"></span>
-                <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(1)">▶</button>
+                <button class="btn btn-ghost btn-sm" onclick="window.changeCalMonth(1)">▶</button>
               </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: bold; color: var(--muted); margin-bottom: 8px;">
@@ -333,7 +360,7 @@
             <div class="section-title" id="daily-title">선택된 날짜 일정</div>
           </div>
           <div id="daily-schedules" style="min-height: 250px; font-size:13px;"></div>
-          <button class="btn btn-secondary" style="width: 100%; margin-top: 15px; border-style: dashed;" onclick="openScheduleModal()">＋ 주요 일정 추가</button>
+          <button class="btn btn-secondary" style="width: 100%; margin-top: 15px; border-style: dashed;" onclick="window.openScheduleModal()">＋ 주요 일정 추가</button>
         </div>
       </div>
     </section>
@@ -343,15 +370,16 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">주간 업무보고</div>
-          <div class="topbar-sub">일요일~토요일 기준. 프로젝트 마스터와 자동 연동됩니다.</div>
+          <div class="topbar-sub">일요일~토요일 기준. 프로젝트 관리와 자동 연동됩니다.</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-primary" onclick="manualSaveWeek()">💾 보고서 저장</button>
+          <button class="btn btn-primary" onclick="window.manualSaveWeek()">💾 보고서 저장</button>
+          <button class="btn btn-secondary" onclick="window.executePrint()">🖨 인쇄</button>
         </div>
       </div>
 
       <div class="week-header">
-        <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">◀ 이전 주</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.changeWeek(-1)">◀ 이전 주</button>
         <div style="text-align: center; display:flex; gap:30px;">
           <div>
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">보고 주차</div>
@@ -366,7 +394,7 @@
             <div id="wk-range" style="font-family:var(--mono); font-size:14px; font-weight:500; color:var(--ink-2); margin-top:2px;">로딩중...</div>
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">다음 주 ▶</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.changeWeek(1)">다음 주 ▶</button>
       </div>
 
       <div id="weekly-container"></div>
@@ -379,17 +407,21 @@
           </div>
           <div id="weekly-matched-schedules" style="font-size:13px; color:var(--ink-2);"></div>
       </div>
+
+      <!-- 인쇄 전용 영역 (화면에서는 숨김 처리됨) -->
+      <div id="print-area"></div>
     </section>
 
-    <!-- 3. PROJECTS MASTER VIEW -->
+    <!-- 3. PROJECTS MASTER VIEW (명칭 변경: 프로젝트 관리) -->
     <section class="view" id="view-projects">
       <div class="topbar">
         <div>
-          <div class="topbar-title">프로젝트 마스터</div>
+          <div class="topbar-title">프로젝트 관리</div>
           <div class="topbar-sub">전체 프로젝트 상태 관리. '진행' 사업은 주간보고에 자동 연동됩니다.</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-primary" onclick="openProjectModal()">＋ 사업 추가</button>
+          <button class="btn btn-secondary" onclick="window.openCategoryModal()">카테고리 관리</button>
+          <button class="btn btn-primary" onclick="window.openProjectModal()">＋ 사업 추가</button>
         </div>
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
@@ -427,16 +459,39 @@
     <h3 id="confirm-title" style="margin-bottom:10px;">확인</h3>
     <p id="confirm-text" style="color:var(--muted); font-size:13px; margin-bottom:20px;">진행하시겠습니까?</p>
     <div style="display:flex; gap:10px; justify-content:center;">
-      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">취소</button>
+      <button class="btn btn-secondary" onclick="window.closeModal('modal-confirm')">취소</button>
       <button class="btn btn-danger" id="confirm-ok">확인</button>
     </div>
   </div>
 </div>
 
+<!-- 카테고리 관리 모달 추가 -->
+<div class="modal-overlay" id="modal-category">
+  <div class="modal" style="max-width: 360px;">
+    <h3>카테고리 관리</h3>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <input id="new-cat-name" type="text" placeholder="새 카테고리명" style="flex:1; border:1px solid var(--line); padding:8px 12px; border-radius:4px; font-size:13px;">
+      <button class="btn btn-primary" id="btn-add-cat" onclick="window.saveCategory()">추가</button>
+      <button class="btn btn-secondary" id="btn-cancel-cat" style="display:none;" onclick="window.cancelEditCategory()">취소</button>
+    </div>
+    <div id="cat-list" style="max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:4px; padding:4px;">
+      <!-- 카테고리 목록 렌더링 영역 -->
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-category')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 프로젝트 추가/편집 모달 -->
 <div class="modal-overlay" id="modal-project">
   <div class="modal">
     <h3 id="pm-title">프로젝트 추가</h3>
-    <div class="form-group"><label>카테고리</label><input id="pm-cat" type="text" placeholder="예: 공공/기업"></div>
+    <div class="form-group">
+      <label>카테고리</label>
+      <!-- text 인풋을 select로 변경 -->
+      <select id="pm-cat"></select>
+    </div>
     <div class="form-group"><label>사업명</label><input id="pm-name" type="text" placeholder="예: 한국도로공사 전국망"></div>
     <div class="form-group"><label>담당자</label><input id="pm-owner" type="text" placeholder="담당자 이름"></div>
     <div class="form-group">
@@ -449,8 +504,8 @@
       </select>
     </div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-project')">취소</button>
-      <button class="btn btn-primary" onclick="saveProject()">저장</button>
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-project')">취소</button>
+      <button class="btn btn-primary" onclick="window.saveProject()">저장</button>
     </div>
   </div>
 </div>
@@ -461,14 +516,15 @@
     <div class="form-group"><label>날짜</label><input id="sch-date" type="date"></div>
     <div class="form-group"><label>내용</label><input id="sch-text" type="text" placeholder="일정 내용을 입력하세요"></div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">취소</button>
-      <button class="btn btn-primary" onclick="saveSchedule()">저장</button>
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-schedule')">취소</button>
+      <button class="btn btn-primary" onclick="window.saveSchedule()">저장</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<!-- ============ JAVASCRIPT ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -477,15 +533,16 @@
   // 기본 데이터 구조
   let data = {
     projects: [
-      { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '정정헌', status: '진행' },
-      { id: 'p2', cat: '금융', name: '코스콤 백본 증설', owner: '최선우', status: '진행' }
+      { id: 'p1', cat: '공공/기업', name: '한국도로공사 전국망', owner: '홍길동', status: '진행' },
+      { id: 'p2', cat: '금융', name: '코스콤 백본 증설', owner: '김영업', status: '진행' }
     ],
+    categories: ['공공/기업', '금융', '국방', '유지보수', '기타'], // 카테고리 데이터 추가
     schedules: [],
     currentWeek: null,
     archives: []
   };
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v4";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v6";
   let dbRef = null;
   let isFirebaseMode = false;
   
@@ -494,11 +551,19 @@
   let displayWeekDate = new Date(); 
   let activeWeek = null; 
   let pmEditId = null;
+  let editingCatIdx = null;
 
   // 로컬 로드
   const localData = localStorage.getItem(appId);
-  if (localData) { try { data = JSON.parse(localData); } catch(e) {} }
+  if (localData) { try { data = { ...data, ...JSON.parse(localData) }; } catch(e) {} }
   if(!data.schedules) data.schedules = [];
+  
+  // 카테고리가 없는 기존 유저 마이그레이션 방어코드
+  if(!data.categories || data.categories.length === 0) {
+     const existingCats = data.projects.map(p => p.cat);
+     data.categories = [...new Set(existingCats)];
+     if(data.categories.length === 0) data.categories = ['공공/기업', '금융', '국방', '기타'];
+  }
 
   updateAllUI();
 
@@ -520,6 +585,7 @@
                 const serverData = snap.data();
                 data = { ...data, ...serverData };
                 if(!data.schedules) data.schedules = [];
+                if(!data.categories) data.categories = ['공공/기업', '금융', '국방', '기타'];
                 updateAllUI();
               } else {
                 triggerSave();
@@ -549,8 +615,8 @@
   window.showConfirm = function(title, text, onOk) {
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-text').textContent = text;
-    document.getElementById('confirm-ok').onclick = () => { closeModal('modal-confirm'); if(onOk) onOk(); };
-    openModal('modal-confirm');
+    document.getElementById('confirm-ok').onclick = () => { window.closeModal('modal-confirm'); if(onOk) onOk(); };
+    window.openModal('modal-confirm');
   };
 
   // Date Utils
@@ -631,7 +697,7 @@
       const dot = hasSch ? `<div style="width:4px;height:4px;background:var(--brass);border-radius:50%;margin-top:2px;"></div>` : '';
       const tdy = isToday ? `<div style="position:absolute;top:3px;right:3px;width:4px;height:4px;background:var(--accent);border-radius:50%;"></div>` : '';
       
-      grid.innerHTML += `<div class="${cls}" style="color:${color}; position:relative;" onclick="selectDate('${dStr}')">
+      grid.innerHTML += `<div class="${cls}" style="color:${color}; position:relative;" onclick="window.selectDate('${dStr}')">
         ${tdy}<span>${d}</span>${dot}
       </div>`;
     }
@@ -652,7 +718,7 @@
     wrap.innerHTML = list.map(s => `
       <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-bottom:1px solid var(--line); background:var(--paper); border-radius:4px; margin-bottom:8px;">
         <div style="flex:1; line-height:1.4;">${escapeHtml(s.text)}</div>
-        <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="delSchedule('${s.id}')">×</button>
+        <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="window.delSchedule('${s.id}')">×</button>
       </div>
     `).join('');
   }
@@ -660,17 +726,17 @@
   window.openScheduleModal = function() {
     document.getElementById('sch-date').value = fmtDate(calSelectedDate);
     document.getElementById('sch-text').value = '';
-    openModal('modal-schedule');
+    window.openModal('modal-schedule');
   };
   window.saveSchedule = function() {
     const d = document.getElementById('sch-date').value;
     const t = document.getElementById('sch-text').value.trim();
-    if(!d || !t) return showToast('내용을 입력하세요');
+    if(!d || !t) return window.showToast('내용을 입력하세요');
     data.schedules.push({ id:'sch_'+Date.now(), date:d, text:t });
-    triggerSave(); updateAllUI(); closeModal('modal-schedule');
+    triggerSave(); updateAllUI(); window.closeModal('modal-schedule');
   };
   window.delSchedule = function(id) {
-    showConfirm('일정 삭제', '삭제하시겠습니까?', () => {
+    window.showConfirm('일정 삭제', '삭제하시겠습니까?', () => {
       data.schedules = data.schedules.filter(s => s.id !== id);
       triggerSave(); updateAllUI();
     });
@@ -762,11 +828,8 @@
     displayWeekDate.setDate(displayWeekDate.getDate() + (offset * 7));
     loadWeek(displayWeekDate);
   };
-  window.manualSaveWeek = function() { triggerSave(); showToast('저장되었습니다.'); };
-  window.reSyncProjects = function() {
-    if(activeWeek) { syncProjectsToSpecificWeek(activeWeek); renderWeeklyReport(); showToast('동기화 완료'); }
-  };
-
+  window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
+  
   function syncProjectsToSpecificWeek(weekObj) {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     if (!weekObj.categories) weekObj.categories = [];
@@ -794,15 +857,15 @@
 
     const container = document.getElementById('weekly-container');
     if(activeWeek.categories.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">진행 상태인 사업이 없습니다. 프로젝트 마스터에서 추가하세요.</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">진행 상태인 사업이 없습니다. 프로젝트 관리에서 추가하세요.</div>`;
     } else {
       container.innerHTML = activeWeek.categories.map((cat, ci) => `
         <div class="category-block">
           <div class="cat-head">
             <div class="cat-title"><span class="badge">${String(ci+1).padStart(2,'0')}</span>${escapeHtml(cat.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);">(${cat.projects.length}개)</span></div>
             <div>
-              <button class="btn-ghost btn-sm" onclick="moveCat(${ci}, -1)">↑</button>
-              <button class="btn-ghost btn-sm" onclick="moveCat(${ci}, 1)">↓</button>
+              <button class="btn-ghost btn-sm" onclick="window.moveCat(${ci}, -1)">↑</button>
+              <button class="btn-ghost btn-sm" onclick="window.moveCat(${ci}, 1)">↓</button>
             </div>
           </div>
           <div>
@@ -811,13 +874,13 @@
                 <div class="proj-header">
                   <div class="proj-name">${escapeHtml(p.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:6px;">담당: ${escapeHtml(p.owner||'-')}</span></div>
                   <div>
-                    <button class="btn-ghost btn-sm" onclick="moveProj(${ci}, ${pi}, -1)">↑</button>
-                    <button class="btn-ghost btn-sm" onclick="moveProj(${ci}, ${pi}, 1)">↓</button>
+                    <button class="btn-ghost btn-sm" onclick="window.moveProj(${ci}, ${pi}, -1)">↑</button>
+                    <button class="btn-ghost btn-sm" onclick="window.moveProj(${ci}, ${pi}, 1)">↓</button>
                   </div>
                 </div>
                 <div class="proj-grid">
-                  <div><label>전주 실적</label><textarea onchange="updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
-                  <div><label>금주 계획</label><textarea onchange="updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
+                  <div><label>전주 실적</label><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
+                  <div><label>금주 계획</label><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
                 </div>
               </div>
             `).join('')}
@@ -853,7 +916,188 @@
     triggerSave(); renderWeeklyReport();
   };
 
-  // --- 3. PROJECTS MASTER ---
+  // --- 인쇄 처리 로직 수정 (오작동 해결) ---
+  window.executePrint = function() {
+    if (!activeWeek || activeWeek.categories.length === 0) {
+      return window.showToast('인쇄할 데이터가 없습니다.');
+    }
+
+    let rowsHtml = '';
+    activeWeek.categories.forEach(cat => {
+      const rowSpan = cat.projects.length || 1;
+      if (cat.projects.length === 0) {
+         rowsHtml += `<tr>
+           <td class="print-cat" rowspan="1">${escapeHtml(cat.name)}</td>
+           <td colspan="2" style="text-align:center; color:#888;">등록된 사업 없음</td>
+         </tr>`;
+         return;
+      }
+
+      cat.projects.forEach((p, idx) => {
+        const prevText = escapeHtml(p.prev).split('\n').filter(line => line.trim() !== '').map(line => `<div class="print-text">${line}</div>`).join('');
+        const planText = escapeHtml(p.plan).split('\n').filter(line => line.trim() !== '').map(line => `<div class="print-text">${line}</div>`).join('');
+
+        rowsHtml += `<tr>`;
+        if (idx === 0) {
+          rowsHtml += `<td class="print-cat" rowspan="${rowSpan}">${escapeHtml(cat.name)}</td>`;
+        }
+        rowsHtml += `
+          <td class="print-content">
+            <div class="print-proj-name">ㅇ ${escapeHtml(p.name)} <span class="print-owner">[${escapeHtml(p.owner||'-')}]</span></div>
+            ${prevText}
+          </td>
+          <td class="print-content">
+            <div class="print-proj-name">ㅇ ${escapeHtml(p.name)}</div>
+            ${planText}
+          </td>
+        </tr>`;
+      });
+    });
+
+    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
+    let schHtml = '';
+    if(matchedSch.length > 0) {
+       const items = matchedSch.map(s => `<div class="print-text">- <strong style="font-family: monospace;">${s.date}</strong> : ${escapeHtml(s.text)}</div>`).join('');
+       schHtml = `<tr><td class="print-cat">주요 일정</td><td colspan="2" class="print-content">${items}</td></tr>`;
+    } else {
+       schHtml = `<tr><td class="print-cat">주요 일정</td><td colspan="2" class="print-content" style="color:#888; text-align: center;">등록된 주요 일정 없음</td></tr>`;
+    }
+
+    const printHtml = `
+      <div class="print-header">
+        <h1>주간 업무보고</h1>
+        <div class="print-meta">전략영업본부 | ${activeWeek.title} (${activeWeek.start} ~ ${activeWeek.end})</div>
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>전주 실적</th>
+            <th>금주 계획</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          ${schHtml}
+        </tbody>
+      </table>
+    `;
+
+    const printArea = document.getElementById('print-area');
+    printArea.innerHTML = printHtml;
+    
+    // DOM 업데이트 후 즉시(동기식으로) 프린트 호출하여 브라우저 팝업차단을 우회합니다.
+    printArea.getBoundingClientRect(); // 강제 reflow를 발생시켜 레이아웃을 즉시 반영
+    
+    try {
+        window.print();
+    } catch(e) {
+        window.showToast("브라우저 설정으로 자동 인쇄창이 막혔습니다. Ctrl+P 또는 Cmd+P를 눌러주세요.");
+    }
+  };
+
+
+  // --- 3. 카테고리 관리 기능 ---
+  window.openCategoryModal = function() {
+    window.cancelEditCategory();
+    renderCategoryList();
+    window.openModal('modal-category');
+  };
+  
+  function renderCategoryList() {
+    const list = document.getElementById('cat-list');
+    list.innerHTML = data.categories.map((c, idx) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line);">
+        <span>${escapeHtml(c)}</span>
+        <div>
+          <button class="btn-ghost btn-sm" style="padding:2px 6px;" onclick="window.startEditCategory(${idx})">수정</button>
+          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:2px 6px;" onclick="window.delCategory(${idx})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.startEditCategory = function(idx) {
+    editingCatIdx = idx;
+    document.getElementById('new-cat-name').value = data.categories[idx];
+    document.getElementById('btn-add-cat').textContent = '저장';
+    document.getElementById('btn-cancel-cat').style.display = 'inline-block';
+  };
+
+  window.cancelEditCategory = function() {
+    editingCatIdx = null;
+    document.getElementById('new-cat-name').value = '';
+    document.getElementById('btn-add-cat').textContent = '추가';
+    document.getElementById('btn-cancel-cat').style.display = 'none';
+  };
+
+  window.saveCategory = function() {
+    const input = document.getElementById('new-cat-name');
+    const val = input.value.trim();
+    if(!val) return;
+
+    if (editingCatIdx !== null) {
+      // 카테고리 수정 로직
+      if (data.categories[editingCatIdx] !== val && data.categories.includes(val)) {
+        return window.showToast('이미 존재하는 카테고리입니다.');
+      }
+      const oldCatName = data.categories[editingCatIdx];
+      data.categories[editingCatIdx] = val;
+
+      // 1. 연관된 모든 프로젝트의 카테고리명 일괄 업데이트
+      data.projects.forEach(p => {
+        if (p.cat === oldCatName) p.cat = val;
+      });
+      
+      // 2. 주간 업무보고에 연동된 카테고리명 일괄 업데이트
+      if (activeWeek) {
+        const wCat = activeWeek.categories.find(c => c.name === oldCatName);
+        if (wCat) wCat.name = val;
+      }
+      if (data.currentWeek) {
+        const cwCat = data.currentWeek.categories.find(c => c.name === oldCatName);
+        if (cwCat) cwCat.name = val;
+      }
+
+      window.showToast('카테고리가 수정되었습니다.');
+      window.cancelEditCategory();
+    } else {
+      // 카테고리 추가 로직
+      if(data.categories.includes(val)) return window.showToast('이미 존재하는 카테고리입니다.');
+      data.categories.push(val);
+      input.value = '';
+      window.showToast('카테고리가 추가되었습니다.');
+    }
+
+    triggerSave();
+    renderCategoryList();
+    updateAllUI(); // 관련된 모든 화면(프로젝트 테이블, 주간보고 등) 즉시 갱신
+  };
+
+  window.delCategory = function(idx) {
+    const targetCat = data.categories[idx];
+    const isUsed = data.projects.some(p => p.cat === targetCat);
+    
+    if(isUsed) {
+      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 사업의 데이터는 유지됩니다)`)) return;
+    }
+    
+    data.categories.splice(idx, 1);
+    triggerSave();
+    renderCategoryList();
+  };
+
+  function populateCatSelect(selectedVal = null) {
+    const sel = document.getElementById('pm-cat');
+    // 사용 중이지만 리스트에 없는 과거 카테고리 보호 처리
+    const options = new Set(data.categories);
+    if(selectedVal) options.add(selectedVal);
+    
+    sel.innerHTML = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+
+
+  // --- 4. PROJECTS MASTER (프로젝트 관리) ---
   function renderProjects() {
     const tbody = document.getElementById('projects-tbody');
     if(data.projects.length === 0) {
@@ -867,8 +1111,8 @@
         <td>${escapeHtml(p.owner)}</td>
         <td>${p.status}</td>
         <td>
-          <button class="btn-ghost btn-sm" onclick="editProject('${p.id}')">편집</button>
-          <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="delProject('${p.id}')">삭제</button>
+          <button class="btn-ghost btn-sm" onclick="window.editProject('${p.id}')">편집</button>
+          <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delProject('${p.id}')">삭제</button>
         </td>
       </tr>
     `).join('');
@@ -877,27 +1121,31 @@
   window.openProjectModal = function() {
     pmEditId = null;
     document.getElementById('pm-title').textContent = '사업 추가';
-    document.getElementById('pm-cat').value = '';
+    populateCatSelect();
+    if(data.categories.length > 0) document.getElementById('pm-cat').value = data.categories[0];
     document.getElementById('pm-name').value = '';
     document.getElementById('pm-owner').value = '';
     document.getElementById('pm-status').value = '진행';
-    openModal('modal-project');
+    window.openModal('modal-project');
   };
+  
   window.editProject = function(id) {
     const p = data.projects.find(x => x.id === id);
     if(!p) return;
     pmEditId = id;
     document.getElementById('pm-title').textContent = '사업 편집';
+    populateCatSelect(p.cat);
     document.getElementById('pm-cat').value = p.cat;
     document.getElementById('pm-name').value = p.name;
     document.getElementById('pm-owner').value = p.owner;
     document.getElementById('pm-status').value = p.status;
-    openModal('modal-project');
+    window.openModal('modal-project');
   };
+  
   window.saveProject = function() {
-    const c = document.getElementById('pm-cat').value.trim();
+    const c = document.getElementById('pm-cat').value;
     const n = document.getElementById('pm-name').value.trim();
-    if(!c || !n) return showToast('카테고리와 사업명을 입력하세요');
+    if(!c || !n) return window.showToast('카테고리와 사업명을 입력하세요');
     const obj = {
       cat: c, name: n,
       owner: document.getElementById('pm-owner').value.trim(),
@@ -910,16 +1158,17 @@
       obj.id = 'p_'+Date.now();
       data.projects.push(obj);
     }
-    triggerSave(); updateAllUI(); closeModal('modal-project');
+    triggerSave(); updateAllUI(); window.closeModal('modal-project');
   };
+  
   window.delProject = function(id) {
-    showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
+    window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
       triggerSave(); updateAllUI();
     });
   };
 
-  // --- 4. ARCHIVE ---
+  // --- 5. ARCHIVE ---
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
     if(data.archives.length === 0) {
@@ -932,13 +1181,13 @@
         <td style="font-weight:600; font-family:var(--serif);">${a.title}</td>
         <td style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
         <td>${cnt}건</td>
-        <td><button class="btn-secondary btn-sm" onclick="viewArchivedWeek('${a.start}')">보기/수정</button></td>
+        <td><button class="btn-secondary btn-sm" onclick="window.viewArchivedWeek('${a.start}')">보기/수정</button></td>
       </tr>`;
     }).join('');
   }
   window.viewArchivedWeek = function(dStr) {
     displayWeekDate = new Date(dStr);
-    goView('weekly', false);
+    window.goView('weekly', false);
   };
 </script>
 </body>
