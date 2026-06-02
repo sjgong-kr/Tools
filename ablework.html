@@ -293,9 +293,6 @@
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
 
-  .clickable-row { cursor: pointer; transition: background .15s; }
-  .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
-
   /* ===== Print Styles ===== */
   #print-area { display: none; }
   @media print {
@@ -390,6 +387,17 @@
       <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
         <!-- 좌측 영역: 달력 및 통계 -->
         <div style="flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- NEW: 월간 매출 TOTAL -->
+          <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
+             <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
+                 <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
+             </div>
+             <div style="font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1; margin-top: 12px;">
+                 <span id="dash-sales-month-val">0</span> <span style="font-size:13px; font-weight:normal; font-family:var(--sans); color:var(--muted);">백만원</span>
+             </div>
+          </div>
+
           <!-- 달력 -->
           <div class="card" style="padding: 20px;">
             <div class="section-head">
@@ -431,16 +439,6 @@
              <div class="card" style="padding: 18px;">
                <div class="section-head" style="margin-bottom:12px; padding-bottom:8px;"><div class="section-title" style="font-size:14px;">금주 전체 일정</div></div>
                <div id="db-week-sched" style="font-size:12px; max-height: 180px; overflow-y: auto;"></div>
-             </div>
-          </div>
-          
-          <!-- 월간 매출 TOTAL -->
-          <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
-             <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
-                 <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
-             </div>
-             <div style="font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1; margin-top: 12px;">
-                 <span id="dash-sales-month-val">0</span> <span style="font-size:13px; font-weight:normal; font-family:var(--sans); color:var(--muted);">백만원</span>
              </div>
           </div>
         </div>
@@ -618,7 +616,7 @@
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
         <table class="table">
-          <thead><tr><th>보고 주차</th><th>대상 기간</th><th>사업 건수</th></tr></thead>
+          <thead><tr><th>보고 주차</th><th>대상 기간</th><th>사업 건수</th><th>관리</th></tr></thead>
           <tbody id="archive-tbody"></tbody>
         </table>
       </div>
@@ -1170,11 +1168,12 @@
   };
 
   window.delAccount = async function(id) {
-    if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
-    try {
-      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
-      window.showToast('계정이 삭제되었습니다.');
-    } catch (e) { console.error(e); }
+    window.showConfirm('계정 삭제', '계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)', async () => {
+      try {
+        await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
+        window.showToast('계정이 삭제되었습니다.');
+      } catch (e) { console.error(e); }
+    });
   };
 
   // --- 8. UI Render Functions ---
@@ -1354,7 +1353,6 @@
   // --- 9. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
-    const currentRange = getWeekRange(new Date());
 
     let arch = data.archives.find(a => a.id === targetRange.id);
     let isNew = false;
@@ -1376,7 +1374,7 @@
     activeWeek = arch;
 
     // [해결 1] 아직 '보관(저장)'되지 않은 초안 주차인 경우에만 동기화를 수행! (과거 데이터는 변경되지 않음)
-    if (activeWeek.isSaved === false || targetRange.id === currentRange.id) {
+    if (activeWeek.isSaved === false) {
         const changed = syncProjectsToSpecificWeek(activeWeek); 
         if (isNew || changed) {
             window.triggerSave();
@@ -1875,14 +1873,18 @@
     const targetCat = data.categories[idx];
     const isUsed = data.projects.some(p => p.cat === targetCat) || data.sales.some(s => s.cat === targetCat);
     
+    const performDelete = () => {
+      data.categories.splice(idx, 1);
+      window.triggerSave();
+      renderCategoryList();
+      populateCatSelects();
+    };
+
     if(isUsed) {
-      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 데이터는 유지됩니다)`)) return;
+      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다. 그래도 삭제하시겠습니까? (기존 데이터는 유지됩니다)`, performDelete);
+    } else {
+      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 삭제하시겠습니까?`, performDelete);
     }
-    
-    data.categories.splice(idx, 1);
-    window.triggerSave();
-    renderCategoryList();
-    populateCatSelects();
   };
 
   function populateCatSelects(selectedVal = null) {
@@ -1989,11 +1991,8 @@
       data.projects.push(obj);
     }
     
-    if(activeWeek) {
-        const currentRange = getWeekRange(new Date());
-        if (activeWeek.isSaved === false || activeWeek.id === currentRange.id) {
-            syncProjectsToSpecificWeek(activeWeek);
-        }
+    if(activeWeek && activeWeek.isSaved === false) {
+        syncProjectsToSpecificWeek(activeWeek);
     }
 
     window.triggerSave(); updateAllUI(); window.closeModal('modal-project');
@@ -2002,11 +2001,8 @@
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
-      if(activeWeek) {
-          const currentRange = getWeekRange(new Date());
-          if (activeWeek.isSaved === false || activeWeek.id === currentRange.id) {
-              syncProjectsToSpecificWeek(activeWeek);
-          }
+      if(activeWeek && activeWeek.isSaved === false) {
+          syncProjectsToSpecificWeek(activeWeek);
       }
       window.triggerSave(); updateAllUI();
     });
@@ -2190,7 +2186,7 @@
     const savedArchives = (data.archives || []).filter(a => a.isSaved !== false);
 
     if(savedArchives.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고 탭에서 [보고서 저장]을 누르면 이곳에 영구 보존됩니다.</span></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고 탭에서 [보고서 저장]을 누르면 이곳에 영구 보존됩니다.</span></td></tr>`;
       return;
     }
 
@@ -2206,12 +2202,16 @@
       const badgeHtml = isCurrent ? '<span class="badge" style="background:var(--brass); margin-left:8px; font-weight:normal;">이번 주</span>' : '';
 
       return `
-        <tr class="clickable-row" style="${rowStyle}" onclick="window.viewArchivedWeek('${a.start}')">
-          <td style="font-weight:600; font-family:var(--serif); ${titleColor}">
-            ${a.title} ${badgeHtml}
+        <tr style="${rowStyle}">
+          <td style="font-weight:600; font-family:var(--serif); ${titleColor}; cursor:pointer;" onclick="window.viewArchivedWeek('${a.start}')">
+            <span class="hover:underline">${a.title}</span> ${badgeHtml}
           </td>
           <td style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
           <td>${cnt}건</td>
+          <td>
+              <button class="btn-ghost btn-sm" onclick="window.viewArchivedWeek('${a.start}')">수정</button>
+              <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.deleteArchive('${a.id}')">삭제</button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -2220,6 +2220,14 @@
   window.viewArchivedWeek = function(dStr) {
     displayWeekDate = new Date(dStr + "T00:00:00");
     window.goView('weekly', false);
+  };
+
+  window.deleteArchive = function(id) {
+    window.showConfirm('보고서 삭제', '해당 주차의 보고서를 아카이브에서 완전히 삭제하시겠습니까?', () => {
+      data.archives = data.archives.filter(a => a.id !== id);
+      window.triggerSave();
+      updateAllUI();
+    });
   };
 </script>
 </body>
