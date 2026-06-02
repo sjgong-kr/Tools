@@ -44,9 +44,21 @@
   button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
   input, textarea, select { font-family: inherit; color: inherit; outline: none; }
 
+  /* ===== Login Screen ===== */
+  #login-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .login-box {
+    background: var(--bg-elev); padding: 40px 30px; border-radius: 8px;
+    box-shadow: var(--shadow-md); width: 100%; max-width: 360px; text-align: center;
+    border: 1px solid var(--line);
+  }
+  .login-box .form-group { text-align: left; margin-bottom: 16px; }
+
   /* ===== Layout ===== */
   .app {
-    display: grid;
+    display: none; /* hidden until logged in */
     grid-template-columns: 240px 1fr;
     min-height: 100vh;
   }
@@ -289,7 +301,7 @@
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-sales, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-sales, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
     
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
@@ -319,6 +331,23 @@
 </head>
 <body>
 
+<!-- LOGIN VIEW -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="brand-mark" style="color:var(--ink); font-size:24px; margin-bottom:24px;">에이블컴 업무관리</div>
+    <div class="form-group">
+      <label>아이디</label>
+      <input type="text" id="login-id" placeholder="예: jhjung" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <input type="password" id="login-pw" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') window.handleLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:10px; font-size:14px;" onclick="window.handleLogin()">로그인</button>
+    <div id="login-error" style="color:var(--accent); font-size:12px; margin-top:14px; display:none; font-weight:500;"></div>
+  </div>
+</div>
+
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -333,9 +362,12 @@
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
       <div class="nav-item" data-view="sales" onclick="window.goView('sales')"><span class="nav-icon">￦</span> 매출 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
+      <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
+      <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
     </nav>
     <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
-      <div style="color:#9A9384; text-align:center;">사내 공용 워크스페이스</div>
+      <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
+      <button class="btn btn-secondary btn-sm" style="width:100%; background:rgba(255,255,255,0.05); color:#E8E4DC; border:none;" onclick="window.doLogout()">로그아웃</button>
     </div>
   </aside>
 
@@ -557,6 +589,25 @@
       </div>
     </section>
 
+    <!-- 5. ACCOUNT MANAGEMENT VIEW (Admin Only) -->
+    <section class="view" id="view-accounts">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">계정 관리</div>
+          <div class="topbar-sub">시스템 접속 계정을 추가하거나 삭제합니다.</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="window.openAccountModal()">＋ 계정 추가</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="table">
+          <thead><tr><th>아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead>
+          <tbody id="accounts-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -568,6 +619,27 @@
     <div style="display:flex; gap:10px; justify-content:center;">
       <button class="btn btn-secondary" onclick="window.closeModal('modal-confirm')">취소</button>
       <button class="btn btn-danger" id="confirm-ok">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <h3 id="acc-title">새 계정 추가</h3>
+    <p style="font-size:11px; color:var(--muted); margin-bottom:16px;" id="acc-desc">사용할 접속 아이디와 초기 비밀번호를 설정해주세요.</p>
+    <div class="form-group"><label>아이디</label><input id="acc-id" type="text" placeholder="예: jhjung"></div>
+    <div class="form-group"><label>사용자 이름</label><input id="acc-name" type="text" placeholder="예: 홍길동"></div>
+    <div class="form-group"><label>비밀번호</label><input id="acc-pw" type="password" placeholder="비밀번호 입력"></div>
+    <div class="form-group">
+      <label>권한</label>
+      <select id="acc-role">
+        <option value="user">일반 사용자</option>
+        <option value="admin">관리자</option>
+      </select>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+      <button class="btn btn-ghost" onclick="window.closeModal('modal-account')">취소</button>
+      <button class="btn btn-primary" id="btn-save-acc" onclick="window.saveAccount()">추가</button>
     </div>
   </div>
 </div>
@@ -680,9 +752,9 @@
 <!-- ============ JAVASCRIPT ============ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+  // --- 1. Data Definitions ---
   let data = {
     projects: [],
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
@@ -690,6 +762,11 @@
     archives: [],
     sales: [] 
   };
+
+  let currentUser = null;
+  let isAdmin = false;
+  let accountList = [];
+  let accEditId = null;
 
   let dbRef = null;
   let isFirebaseMode = false;
@@ -702,7 +779,7 @@
   let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v15";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v20";
 
   // Data Migration
   function applyMigration(sourceData) {
@@ -739,9 +816,8 @@
     if(mSel) mSel.innerHTML = opts;
   }
   initSalesYears();
-  updateAllUI();
 
-  // Firebase Setup (Anonymous Shared Access)
+  // Firebase Init (Auth module is completely removed to fit allow read, write: if true;)
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
     authDomain: "openzeroc.firebaseapp.com",
@@ -752,43 +828,117 @@
     measurementId: "G-M4K79K2XPG"
   };
 
-  try {
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    signInAnonymously(auth).then(() => {
-        isFirebaseMode = true;
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                // Connect to the shared company path since the rule is allow read, write: if true;
-                dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
+  // Custom Authentication Check
+  function checkSession() {
+      const sessionStr = sessionStorage.getItem('ablework_session');
+      if (sessionStr) {
+          currentUser = JSON.parse(sessionStr);
+          initApp();
+      } else {
+          document.getElementById('login-overlay').style.display = 'flex';
+          document.querySelector('.app').style.display = 'none';
+      }
+  }
 
-                onSnapshot(dbRef, (snap) => {
-                    // Prevent focus loss when typing
-                    if (snap.metadata.hasPendingWrites) return;
+  window.handleLogin = async function() {
+    const idInput = document.getElementById('login-id').value.trim();
+    const pwInput = document.getElementById('login-pw').value;
+    const errEl = document.getElementById('login-error');
 
-                    if (snap.exists()) {
-                        const serverData = snap.data();
-                        data = applyMigration({ ...data, ...serverData });
-                        
-                        const activeEl = document.activeElement;
-                        const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
-                        
-                        if (!isInputting) {
-                            updateAllUI();
-                        }
-                    } else {
-                        triggerSave();
-                    }
-                });
-            }
-        });
-    }).catch(error => {
-        console.error("Auth error, fallback to local:", error);
-    });
-  } catch(e) { 
-      console.error("Firebase init fail", e); 
+    if(!idInput || !pwInput) {
+      errEl.textContent = "아이디와 비밀번호를 모두 입력해주세요.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    try {
+      const accRef = doc(db, 'ablework', 'company_main', 'accounts', idInput);
+      const accSnap = await getDoc(accRef);
+
+      if (!accSnap.exists()) {
+          // If ablecom tries to log in and doesn't exist, we auto-seed the DB
+          if (idInput === 'ablecom' && pwInput === 'ablecom+123') {
+              const adminData = { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' };
+              await setDoc(accRef, adminData);
+              
+              // [요청사항 반영] 자동 계정 셋업
+              const usersToSeed = ['jhjung', 'jwpark', 'kcw75', 'mikey', 'sean.lee', 'sunwoo.choi'];
+              for(let u of usersToSeed) {
+                 await setDoc(doc(db, 'ablework', 'company_main', 'accounts', u), { id: u, pw: 'ablecom+123', name: u, role: 'user' });
+              }
+
+              currentUser = adminData;
+              sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
+              errEl.style.display = "none";
+              initApp();
+          } else {
+              errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
+              errEl.style.display = "block";
+          }
+      } else {
+          const userData = accSnap.data();
+          if (userData.pw === pwInput) {
+              currentUser = userData;
+              sessionStorage.setItem('ablework_session', JSON.stringify(currentUser));
+              errEl.style.display = "none";
+              initApp();
+          } else {
+              errEl.textContent = "아이디 또는 비밀번호가 일치하지 않습니다.";
+              errEl.style.display = "block";
+          }
+      }
+    } catch (e) {
+      errEl.textContent = "로그인 오류: 서버 연결에 실패했습니다.";
+      errEl.style.display = "block";
+    }
+  };
+
+  window.doLogout = function() {
+      sessionStorage.removeItem('ablework_session');
+      location.reload();
+  };
+
+  function initApp() {
+      isAdmin = (currentUser.role === 'admin');
+      document.getElementById('current-user-name').textContent = `${currentUser.name} (${currentUser.id})`;
+      document.getElementById('login-overlay').style.display = 'none';
+      document.querySelector('.app').style.display = 'grid';
+
+      if (isAdmin) {
+        document.getElementById('nav-accounts').style.display = 'flex';
+        document.getElementById('nav-label-admin').style.display = 'block';
+        loadAccounts();
+      } else {
+        document.getElementById('nav-accounts').style.display = 'none';
+        document.getElementById('nav-label-admin').style.display = 'none';
+      }
+
+      // Shared Company Path
+      dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
+      isFirebaseMode = true;
+
+      onSnapshot(dbRef, (snap) => {
+        if (snap.metadata.hasPendingWrites) return;
+
+        if (snap.exists()) {
+          const serverData = snap.data();
+          data = applyMigration({ ...data, ...serverData });
+          
+          const activeEl = document.activeElement;
+          const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+          
+          if (!isInputting) {
+              updateAllUI();
+          }
+        } else {
+          triggerSave();
+        }
+      });
+      
+      updateAllUI(); // Initial UI trigger
   }
 
   function triggerSave() {
@@ -797,6 +947,90 @@
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
   }
+
+  // Session Boot
+  checkSession();
+
+  // --- 관리자: 계정 관리 ---
+  function loadAccounts() {
+    onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
+      accountList = snap.docs.map(d => d.data());
+      renderAccounts();
+    });
+  }
+
+  function renderAccounts() {
+    const tbody = document.getElementById('accounts-tbody');
+    tbody.innerHTML = accountList.map(a => `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(a.id)}</td>
+        <td>${escapeHtml(a.name)}</td>
+        <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
+        <td>
+          ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
+            <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
+            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.id}')">삭제</button>
+          `}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.openAccountModal = function() {
+    accEditId = null;
+    document.getElementById('acc-title').textContent = '새 계정 추가';
+    document.getElementById('acc-desc').textContent = '아이디와 초기 비밀번호를 설정해주세요.';
+    document.getElementById('acc-id').value = '';
+    document.getElementById('acc-id').disabled = false;
+    document.getElementById('acc-name').value = '';
+    document.getElementById('acc-pw').value = '';
+    document.getElementById('acc-pw').placeholder = "비밀번호 입력";
+    document.getElementById('acc-role').value = 'user';
+    document.getElementById('btn-save-acc').textContent = '추가';
+    window.openModal('modal-account');
+  };
+
+  window.editAccount = function(id) {
+    const acc = accountList.find(a => a.id === id);
+    if(!acc) return;
+    accEditId = id;
+    document.getElementById('acc-title').textContent = '계정 수정';
+    document.getElementById('acc-desc').textContent = '사용자의 정보 및 비밀번호를 재설정할 수 있습니다.';
+    document.getElementById('acc-id').value = acc.id;
+    document.getElementById('acc-id').disabled = true;
+    document.getElementById('acc-name').value = acc.name;
+    document.getElementById('acc-pw').value = acc.pw; 
+    document.getElementById('acc-pw').placeholder = "새 비밀번호 입력";
+    document.getElementById('acc-role').value = acc.role;
+    document.getElementById('btn-save-acc').textContent = '저장';
+    window.openModal('modal-account');
+  };
+
+  window.saveAccount = async function() {
+    const id = document.getElementById('acc-id').value.trim();
+    const name = document.getElementById('acc-name').value.trim();
+    const pw = document.getElementById('acc-pw').value;
+    const role = document.getElementById('acc-role').value;
+
+    if(!id || !name || !pw) return window.showToast('모든 항목을 입력해주세요.');
+
+    try {
+      const accRef = doc(db, 'ablework', 'company_main', 'accounts', id);
+      await setDoc(accRef, { id, pw, name, role }, {merge: true});
+      window.closeModal('modal-account');
+      window.showToast(accEditId ? '계정이 성공적으로 수정되었습니다.' : '계정이 생성되었습니다.');
+    } catch (e) {
+      window.showToast('저장 실패: ' + e.message);
+    }
+  };
+
+  window.delAccount = async function(id) {
+    if(!confirm('계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)')) return;
+    try {
+      await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
+      window.showToast('계정이 삭제되었습니다.');
+    } catch (e) { console.error(e); }
+  };
 
   // --- UI Utilities ---
   window.showToast = function(msg) {
@@ -846,7 +1080,8 @@
   // --- NAVIGATION ---
   window.goView = function(name, resetWeekly = true) {
     document.querySelectorAll('.view, .nav-item').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + name).classList.add('active');
+    const viewEl = document.getElementById('view-' + name);
+    if(viewEl) viewEl.classList.add('active');
     const nav = document.querySelector(`.nav-item[data-view="${name}"]`);
     if(nav) nav.classList.add('active');
     
@@ -876,8 +1111,11 @@
 
   function renderCalendar() {
     const y = calRenderDate.getFullYear(), m = calRenderDate.getMonth();
-    document.getElementById('cal-month-title').textContent = `${y}.${String(m+1).padStart(2,'0')}`;
+    const titleEl = document.getElementById('cal-month-title');
+    if(titleEl) titleEl.textContent = `${y}.${String(m+1).padStart(2,'0')}`;
+    
     const grid = document.getElementById('calendar-grid');
+    if(!grid) return;
     grid.innerHTML = '';
     
     const firstDay = new Date(y, m, 1).getDay();
@@ -911,9 +1149,11 @@
   function renderDailySchedules() {
     const dStr = fmtDate(calSelectedDate);
     const opts = { month:'long', day:'numeric', weekday:'short' };
-    document.getElementById('daily-title').textContent = calSelectedDate.toLocaleDateString('ko-KR', opts) + ' 일정';
+    const tEl = document.getElementById('daily-title');
+    if(tEl) tEl.textContent = calSelectedDate.toLocaleDateString('ko-KR', opts) + ' 일정';
     
     const wrap = document.getElementById('daily-schedules');
+    if(!wrap) return;
     const list = data.schedules.filter(s => s.date === dStr);
     
     if(list.length === 0) {
@@ -950,8 +1190,12 @@
   function renderDashboardStats() {
     const activeProjs = data.projects.filter(p => p.status === '진행' || p.status === '보류');
     const catSet = new Set(activeProjs.map(p => p.cat));
-    document.getElementById('db-stat-proj').textContent = activeProjs.length;
-    document.getElementById('db-stat-cat').textContent = catSet.size;
+    
+    const projEl = document.getElementById('db-stat-proj');
+    if(projEl) projEl.textContent = activeProjs.length;
+    
+    const catEl = document.getElementById('db-stat-cat');
+    if(catEl) catEl.textContent = catSet.size;
 
     const curRange = getWeekRange(new Date());
     let planCnt = 0, prevCnt = 0;
@@ -964,39 +1208,46 @@
         if(p.prev && p.prev.trim()) prevCnt++;
       }));
     }
-    document.getElementById('db-stat-plan').textContent = planCnt;
-    document.getElementById('db-stat-prev').textContent = prevCnt;
+    
+    const planEl = document.getElementById('db-stat-plan');
+    if(planEl) planEl.textContent = planCnt;
+    const prevEl = document.getElementById('db-stat-prev');
+    if(prevEl) prevEl.textContent = prevCnt;
 
     const cdWrap = document.getElementById('db-cat-dist');
-    if(activeProjs.length === 0) cdWrap.innerHTML = '<div style="color:var(--muted);">사업 없음</div>';
-    else {
-      const counts = {}; activeProjs.forEach(p => counts[p.cat] = (counts[p.cat]||0)+1);
-      cdWrap.innerHTML = Object.keys(counts).map(c => `
-        <div style="margin-bottom:8px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span>${escapeHtml(c)}</span><span style="font-weight:bold;">${counts[c]}</span>
+    if(cdWrap) {
+      if(activeProjs.length === 0) cdWrap.innerHTML = '<div style="color:var(--muted);">사업 없음</div>';
+      else {
+        const counts = {}; activeProjs.forEach(p => counts[p.cat] = (counts[p.cat]||0)+1);
+        cdWrap.innerHTML = Object.keys(counts).map(c => `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>${escapeHtml(c)}</span><span style="font-weight:bold;">${counts[c]}</span>
+            </div>
+            <div style="height:6px; background:var(--paper); border-radius:3px; overflow:hidden;">
+              <div style="height:100%; width:${(counts[c]/activeProjs.length)*100}%; background:var(--brass);"></div>
+            </div>
           </div>
-          <div style="height:6px; background:var(--paper); border-radius:3px; overflow:hidden;">
-            <div style="height:100%; width:${(counts[c]/activeProjs.length)*100}%; background:var(--brass);"></div>
-          </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
 
     const wsWrap = document.getElementById('db-week-sched');
-    const wsList = data.schedules.filter(s => s.date >= curRange.start && s.date <= curRange.end).sort((a,b)=>a.date.localeCompare(b.date));
-    if(wsList.length === 0) wsWrap.innerHTML = '<div style="color:var(--muted);">일정 없음</div>';
-    else {
-      wsWrap.innerHTML = wsList.map(s => `
-        <div style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px dotted var(--line);">
-          <div style="color:var(--brass); font-weight:bold; font-size:11px; margin-bottom:2px;">${s.date}</div>
-          <div style="color:var(--ink-2); line-height:1.4;">${escapeHtml(s.text)}</div>
-        </div>
-      `).join('');
+    if(wsWrap) {
+      const wsList = data.schedules.filter(s => s.date >= curRange.start && s.date <= curRange.end).sort((a,b)=>a.date.localeCompare(b.date));
+      if(wsList.length === 0) wsWrap.innerHTML = '<div style="color:var(--muted);">일정 없음</div>';
+      else {
+        wsWrap.innerHTML = wsList.map(s => `
+          <div style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px dotted var(--line);">
+            <div style="color:var(--brass); font-weight:bold; font-size:11px; margin-bottom:2px;">${s.date}</div>
+            <div style="color:var(--ink-2); line-height:1.4;">${escapeHtml(s.text)}</div>
+          </div>
+        `).join('');
+      }
     }
   }
 
-  // --- 2. WEEKLY REPORT ---
+  // --- WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
 
@@ -1017,7 +1268,7 @@
     loadWeek(displayWeekDate);
   };
   
-  window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
+  window.manualSaveWeek = function() { triggerSave(); window.showToast('보고서가 영구 저장되었습니다.'); };
   
   function syncProjectsToSpecificWeek(weekObj) {
     const applicableProjs = data.projects.filter(p => {
@@ -1087,16 +1338,23 @@
 
   function renderWeeklyReport() {
     if (!activeWeek) return;
-    document.getElementById('wk-title').textContent = activeWeek.title;
-    document.getElementById('wk-range').textContent = `${activeWeek.start} ~ ${activeWeek.end}`;
+    const titleEl = document.getElementById('wk-title');
+    if(titleEl) titleEl.textContent = activeWeek.title;
+    
+    const rangeEl = document.getElementById('wk-range');
+    if(rangeEl) rangeEl.textContent = `${activeWeek.start} ~ ${activeWeek.end}`;
 
     const [sy, sm, sd] = activeWeek.start.split('-');
     const prevStart = new Date(sy, sm - 1, sd - 7);
     const prevEnd = new Date(prevStart);
     prevEnd.setDate(prevEnd.getDate() + 6);
-    document.getElementById('wk-prev-range').textContent = `${fmtDate(prevStart)} ~ ${fmtDate(prevEnd)}`;
+    
+    const prevRangeEl = document.getElementById('wk-prev-range');
+    if(prevRangeEl) prevRangeEl.textContent = `${fmtDate(prevStart)} ~ ${fmtDate(prevEnd)}`;
 
     const container = document.getElementById('weekly-container');
+    if(!container) return;
+
     if(activeWeek.categories.length === 0) {
       container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">진행 상태인 사업이 없습니다. 프로젝트 관리에서 추가하세요.</div>`;
     } else {
@@ -1132,14 +1390,16 @@
 
     const matched = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
     const schWrap = document.getElementById('weekly-matched-schedules');
-    if (matched.length === 0) schWrap.innerHTML = '등록된 주요 일정이 없습니다.';
-    else {
-      schWrap.innerHTML = matched.map(s => `
-        <div style="display:flex; gap:10px; margin-bottom:6px;">
-          <span style="font-family:var(--mono); color:var(--brass); font-weight:bold;">${s.date}</span>
-          <span>${escapeHtml(s.text)}</span>
-        </div>
-      `).join('');
+    if (schWrap) {
+      if (matched.length === 0) schWrap.innerHTML = '등록된 주요 일정이 없습니다.';
+      else {
+        schWrap.innerHTML = matched.map(s => `
+          <div style="display:flex; gap:10px; margin-bottom:6px;">
+            <span style="font-family:var(--mono); color:var(--brass); font-weight:bold;">${s.date}</span>
+            <span>${escapeHtml(s.text)}</span>
+          </div>
+        `).join('');
+      }
     }
   }
 
@@ -1330,8 +1590,11 @@
     if(selectedVal) options.add(selectedVal);
     const html = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     
-    if(document.getElementById('pm-cat')) document.getElementById('pm-cat').innerHTML = html;
-    if(document.getElementById('sm-cat')) document.getElementById('sm-cat').innerHTML = html;
+    const pCat = document.getElementById('pm-cat');
+    if(pCat) pCat.innerHTML = html;
+    
+    const sCat = document.getElementById('sm-cat');
+    if(sCat) sCat.innerHTML = html;
   }
 
   // --- 4. PROJECTS MASTER ---
@@ -1347,6 +1610,8 @@
 
   function renderProjects() {
     const tbody = document.getElementById('projects-tbody');
+    if(!tbody) return;
+    
     if(data.projects.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px;">등록된 사업이 없습니다.</td></tr>`;
       return;
@@ -1439,7 +1704,9 @@
 
   // --- NEW: SALES MANAGEMENT ---
   window.renderSales = function() {
-    const year = document.getElementById('sales-year-select').value;
+    const yearSelect = document.getElementById('sales-year-select');
+    if(!yearSelect) return;
+    const year = yearSelect.value;
     const sList = data.sales.filter(s => s.year === year);
     
     let tYr=0, tH1=0, tH2=0, tProf=0;
@@ -1492,19 +1759,26 @@
        });
     });
 
-    if(html === '') {
-       html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
+    const tbody = document.getElementById('sales-tbody');
+    if(tbody) {
+        if(html === '') {
+           html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
+        }
+        tbody.innerHTML = html;
     }
 
-    document.getElementById('sales-tbody').innerHTML = html;
-
-    document.getElementById('sales-stat-total').textContent = fmtNum(tYr);
-    document.getElementById('sales-stat-h1').textContent = fmtNum(tH1);
-    document.getElementById('sales-stat-h2').textContent = fmtNum(tH2);
-    document.getElementById('sales-stat-profit').textContent = fmtNum(tProf);
+    const tEl = document.getElementById('sales-stat-total');
+    if(tEl) tEl.textContent = fmtNum(tYr);
+    const h1El = document.getElementById('sales-stat-h1');
+    if(h1El) h1El.textContent = fmtNum(tH1);
+    const h2El = document.getElementById('sales-stat-h2');
+    if(h2El) h2El.textContent = fmtNum(tH2);
+    const pEl = document.getElementById('sales-stat-profit');
+    if(pEl) pEl.textContent = fmtNum(tProf);
     
     const overallMargin = tYr > 0 ? (tProf / tYr * 100).toFixed(1) : 0;
-    document.getElementById('sales-stat-margin-rate').textContent = `이익율 ${overallMargin}%`;
+    const mEl = document.getElementById('sales-stat-margin-rate');
+    if(mEl) mEl.textContent = `이익율 ${overallMargin}%`;
   };
 
   window.openSalesModal = function() {
@@ -1600,6 +1874,7 @@
   // --- 5. ARCHIVE ---
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
+    if(!tbody) return;
     
     if(!data.archives || data.archives.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.</td></tr>`;
