@@ -432,12 +432,18 @@
         </div>
 
         <!-- 우측 영역: 선택 날짜 타임라인 -->
-        <div class="card" style="width: 340px; flex-shrink: 0; padding: 20px;">
+        <div class="card" style="width: 340px; flex-shrink: 0; padding: 20px; display: flex; flex-direction: column;">
           <div class="section-head">
             <div class="section-title" id="daily-title">선택된 날짜 일정</div>
           </div>
-          <div id="daily-schedules" style="min-height: 250px; font-size:13px;"></div>
+          <div id="daily-schedules" style="min-height: 250px; font-size:13px; flex-grow: 1;"></div>
           <button class="btn btn-secondary" style="width: 100%; margin-top: 15px; border-style: dashed;" onclick="window.openScheduleModal()">＋ 주요 일정 추가</button>
+          
+          <!-- 월간 예상 매출 TOTAL -->
+          <div style="margin-top: 20px; padding: 16px; background: rgba(168,120,56,0.06); border-radius: 6px; border-left: 3px solid var(--brass);">
+             <div style="font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px;" id="dash-sales-month-label">월간 예상 매출</div>
+             <div style="font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); line-height: 1;"><span id="dash-sales-month-val">0</span> <span style="font-size:12px; font-weight:normal; font-family:var(--sans); color:var(--muted);">백만원</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -554,6 +560,7 @@
       </div>
 
       <!-- Sales Table -->
+      <div style="text-align:right; font-size:11px; color:var(--muted); font-weight:600; margin-bottom:8px; padding-right:4px;">단위 : 백만원</div>
       <div class="card" style="padding:0; overflow-x:auto;">
         <table class="sales-table">
           <thead>
@@ -562,10 +569,10 @@
               <th style="text-align:left; padding-left:12px;">사업명</th>
               <th style="width:50px;">담당</th>
               <th style="width:70px; background:#F4EFE3;">계</th>
-              <th style="width:50px;">1</th><th style="width:50px;">2</th><th style="width:50px;">3</th>
-              <th style="width:50px;">4</th><th style="width:50px;">5</th><th style="width:50px;">6</th>
-              <th style="width:50px;">7</th><th style="width:50px;">8</th><th style="width:50px;">9</th>
-              <th style="width:50px;">10</th><th style="width:50px;">11</th><th style="width:50px;">12</th>
+              <th style="width:50px;">1월</th><th style="width:50px;">2월</th><th style="width:50px;">3월</th>
+              <th style="width:50px;">4월</th><th style="width:50px;">5월</th><th style="width:50px;">6월</th>
+              <th style="width:50px;">7월</th><th style="width:50px;">8월</th><th style="width:50px;">9월</th>
+              <th style="width:50px;">10월</th><th style="width:50px;">11월</th><th style="width:50px;">12월</th>
             </tr>
           </thead>
           <tbody id="sales-tbody"></tbody>
@@ -859,6 +866,7 @@
 
   window.triggerSave = function() {
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
+    // [버그 해결 2] isFirebaseMode 스위치가 꺼져있어서 저장이 안 되던 문제 완벽 복구
     if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
@@ -954,11 +962,9 @@
                 showLoginError("비밀번호가 일치하지 않습니다.");
             }
         } else {
-            // Firestore에 계정이 없다면 하드코딩된 기본 계정 확인 (방탄 자동 Seeding)
             if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) {
                 const userData = hardcodedUsers[idInput];
                 
-                // 최고관리자 첫 로그인 시, 요청하신 6명 계정 모두 DB에 자동 등록!
                 if (idInput === 'ablecom') {
                     for(let key in hardcodedUsers) {
                         try { await setDoc(doc(db, 'ablework', 'company_main', 'accounts', key), hardcodedUsers[key]); } 
@@ -974,7 +980,6 @@
         }
     } catch (e) {
         console.error("Login Error:", e);
-        // [방탄 로직 2] 파이어베이스 통신/권한 에러 시 하드코딩 계정으로 무조건 통과
         if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) {
             executeLoginSuccess(hardcodedUsers[idInput]);
         } else {
@@ -1017,35 +1022,38 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      isFirebaseMode = true; // [매우 중요] 저장을 허가하는 스위치 ON
+      isFirebaseMode = true; // 서버 저장을 허가하는 필수 스위치
 
       if (db) {
-          // [기존 데이터 복구] 과거 데이터가 잘 저장되어 있던 원본 v1 경로 연결
-          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
+          // [데이터 불러오기 완벽 복구] 가장 최신 데이터가 모여있는 main 경로 (이전에 v1으로 잘못되었던 곳 복원)
+          dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
           
-          let isFirstLoad = true; // 최초 1회는 무조건 다운로드
+          let isFirstLoad = true; // 최초 접속 시에는 데이터 무조건 덮어쓰기
 
           try {
               onSnapshot(dbRef, (snap) => {
                 const activeEl = document.activeElement;
                 const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
 
-                if (snap.metadata.hasPendingWrites) return;
-
                 if (snap.exists()) {
                   const serverData = snap.data();
-                  data = applyMigration({ ...data, ...serverData });
                   
-                  // [프리징 버그 해결] 사용자가 타이핑 중일 땐 화면을 그리지 않음 (무한 반복 차단)
+                  // [버그 해결 1] 사용자가 타이핑 중일 때만 화면 새로고침(프리징) 방지. 첫 로딩 시에는 무조건 불러옴
                   if (isFirstLoad || !isInputting) {
+                      data = applyMigration({ ...data, ...serverData });
                       updateAllUI();
                       isFirstLoad = false;
                   }
                 } else {
+                  // DB에 데이터가 없으면 로컬 데이터로 신규 생성
                   window.triggerSave();
+                  updateAllUI();
                 }
               });
-          } catch(e) { console.error("Snapshot error:", e); }
+          } catch(e) { 
+              console.error("Snapshot error:", e); 
+              updateAllUI();
+          }
       } else {
           updateAllUI();
       }
@@ -1203,14 +1211,28 @@
     
     if(list.length === 0) {
       wrap.innerHTML = `<div style="color:var(--muted); text-align:center; padding:40px 0;">등록된 일정이 없습니다.</div>`;
-      return;
+    } else {
+      wrap.innerHTML = list.map(s => `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-bottom:1px solid var(--line); background:var(--paper); border-radius:4px; margin-bottom:8px;">
+          <div style="flex:1; line-height:1.4;">${escapeHtml(s.text)}</div>
+          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="window.delSchedule('${s.id}')">×</button>
+        </div>
+      `).join('');
     }
-    wrap.innerHTML = list.map(s => `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-bottom:1px solid var(--line); background:var(--paper); border-radius:4px; margin-bottom:8px;">
-        <div style="flex:1; line-height:1.4;">${escapeHtml(s.text)}</div>
-        <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="window.delSchedule('${s.id}')">×</button>
-      </div>
-    `).join('');
+
+    // Dashboard Sales Update
+    const selY = calSelectedDate.getFullYear().toString();
+    const selM = calSelectedDate.getMonth() + 1;
+    const label = document.getElementById('dash-sales-month-label');
+    if(label) label.textContent = `${selY}년 ${selM}월 예상 매출 TOTAL`;
+    
+    let mTotal = 0;
+    const sList = data.sales.filter(s => s.year === selY);
+    sList.forEach(s => {
+        mTotal += (parseFloat(s['m'+selM]) || 0);
+    });
+    const valEl = document.getElementById('dash-sales-month-val');
+    if (valEl) valEl.textContent = fmtNum(mTotal);
   }
 
   window.openScheduleModal = function() {
@@ -1297,19 +1319,14 @@
     const targetRange = getWeekRange(date);
 
     let arch = data.archives.find(a => a.id === targetRange.id);
-    let isNew = false;
     if (!arch) {
       arch = { id: targetRange.id, title: targetRange.title, start: targetRange.start, end: targetRange.end, categories: [] };
       data.archives.push(arch);
       data.archives.sort((a, b) => b.id.localeCompare(a.id));
-      isNew = true;
     }
     activeWeek = arch;
 
-    const changed = syncProjectsToSpecificWeek(activeWeek); 
-    if (isNew || changed) {
-        window.triggerSave();
-    }
+    syncProjectsToSpecificWeek(activeWeek); 
     renderWeeklyReport();
   }
 
@@ -1321,7 +1338,6 @@
   window.manualSaveWeek = function() { window.triggerSave(); window.showToast('보고서가 안전하게 저장되었습니다.'); };
   
   function syncProjectsToSpecificWeek(weekObj) {
-    let changed = false;
     const applicableProjs = data.projects.filter(p => {
       if (p.status === '진행' || p.status === '보류') return true;
       if (p.status === '완료' || p.status === '실주') {
@@ -1331,8 +1347,7 @@
       return false;
     });
 
-    if (!weekObj.categories) { weekObj.categories = []; changed = true; }
-    const originalCatStr = JSON.stringify(weekObj.categories);
+    if (!weekObj.categories) { weekObj.categories = []; }
 
     weekObj.categories.forEach(c => {
       c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
@@ -1384,9 +1399,6 @@
     });
 
     weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
-    
-    if (originalCatStr !== JSON.stringify(weekObj.categories)) changed = true;
-    return changed;
   }
 
   function renderWeeklyReport() {
