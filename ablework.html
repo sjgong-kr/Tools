@@ -156,6 +156,9 @@
     font-weight: 600;
     color: var(--ink);
     line-height: 1.1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .topbar-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .topbar-actions { display: flex; gap: 8px; align-items: center; }
@@ -239,17 +242,44 @@
   }
   .proj-grid textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
 
+  /* ===== Sales Management Styles ===== */
+  .sales-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .sales-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .sales-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+  .sc-1::before { background: #B8860B; }
+  .sc-2::before { background: #0F1626; }
+  .sc-3::before { background: #2E5C3A; }
+  .sc-4::before { background: #C97A2C; }
+  .sc-title { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; font-weight: 500; }
+  .sc-value { font-family: var(--serif); font-size: 34px; font-weight: 600; color: var(--ink); margin-bottom: 6px; line-height: 1; }
+  .sc-desc { font-size: 11.5px; color: var(--muted); }
+
+  .sales-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; }
+  .sales-table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 12px 6px; font-weight: 600; color: var(--ink); }
+  .sales-table td { border-bottom: 1px solid var(--line); padding: 10px 6px; vertical-align: middle; }
+  .st-cat { font-weight: 600; background: #FAF9F6; width: 45px; border-right: 1px solid var(--line); }
+  .st-subtotal { background: #F4EFE3; font-weight: 600; color: var(--ink); }
+  .st-name { text-align: left; font-weight: 500; max-width: 150px; line-height: 1.3; cursor: pointer; color: var(--ink-2); }
+  .st-name:hover { text-decoration: underline; color: var(--brass); }
+  .st-owner { font-size: 11px; color: var(--muted); }
+  
+  .sales-month-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 10px; }
+  .sales-month-grid > div > label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .sales-month-grid > div > input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 8px; font-size: 12px; }
+  .sales-month-grid > div > input:focus { border-color: var(--brass); }
+
   /* ===== Modals & Toasts ===== */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px);
     display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
   }
   .modal-overlay.active { display: flex; }
-  .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 400px; padding: 24px; box-shadow: var(--shadow-md); }
-  .modal h3 { font-family: var(--serif); font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+  .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 400px; padding: 28px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;}
+  .modal h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+  .modal-desc { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
   .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); padding: 8px 12px; border-radius: 4px; font-size: 13px; }
+  .form-group label { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); padding: 10px 12px; border-radius: 4px; font-size: 13px; }
   .form-group input:focus, .form-group select:focus { border-color: var(--brass); }
 
   .toast {
@@ -271,7 +301,7 @@
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #weekly-container, .card, #header-actions, .toast { display: none !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-sales, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
     
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
@@ -330,6 +360,7 @@
       <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
       <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
+      <div class="nav-item" data-view="sales" onclick="window.goView('sales')"><span class="nav-icon">￦</span> 매출 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
       <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
@@ -482,6 +513,66 @@
       </div>
     </section>
 
+    <!-- NEW: SALES MANAGEMENT VIEW -->
+    <section class="view" id="view-sales">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">매출 계획 
+            <select id="sales-year-select" onchange="window.renderSales()" style="font-size:18px; font-weight:600; font-family:var(--serif); border:none; background:transparent; outline:none; cursor:pointer; color:var(--brass); margin-left:8px;">
+            </select>
+          </div>
+          <div class="topbar-sub">사업별 월별 매출 예상 및 이익 관리</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="window.exportSalesCSV()">⇩ CSV 내보내기</button>
+          <button class="btn btn-primary" onclick="window.openSalesModal()">＋ 사업 추가</button>
+        </div>
+      </div>
+
+      <!-- Sales Summary Cards -->
+      <div class="sales-summary-grid">
+         <div class="sales-card sc-1">
+           <div class="sc-title">합계 (연간)</div>
+           <div class="sc-value" id="sales-stat-total">0</div>
+           <div class="sc-desc">단위 : 백만원</div>
+         </div>
+         <div class="sales-card sc-2">
+           <div class="sc-title">상반기</div>
+           <div class="sc-value" id="sales-stat-h1">0</div>
+           <div class="sc-desc">1월 ~ 6월</div>
+         </div>
+         <div class="sales-card sc-3">
+           <div class="sc-title">하반기</div>
+           <div class="sc-value" id="sales-stat-h2">0</div>
+           <div class="sc-desc">7월 ~ 12월</div>
+         </div>
+         <div class="sales-card sc-4">
+           <div class="sc-title">예상 이익</div>
+           <div class="sc-value" id="sales-stat-profit">0</div>
+           <div class="sc-desc" id="sales-stat-margin-rate">이익율 0%</div>
+         </div>
+      </div>
+
+      <!-- Sales Table -->
+      <div class="card" style="padding:0; overflow-x:auto;">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th style="width:45px;">구분</th>
+              <th style="text-align:left; padding-left:12px;">사업명</th>
+              <th style="width:50px;">담당</th>
+              <th style="width:70px; background:#F4EFE3;">계</th>
+              <th style="width:50px;">1</th><th style="width:50px;">2</th><th style="width:50px;">3</th>
+              <th style="width:50px;">4</th><th style="width:50px;">5</th><th style="width:50px;">6</th>
+              <th style="width:50px;">7</th><th style="width:50px;">8</th><th style="width:50px;">9</th>
+              <th style="width:50px;">10</th><th style="width:50px;">11</th><th style="width:50px;">12</th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- 4. ARCHIVE VIEW -->
     <section class="view" id="view-archive">
       <div class="topbar">
@@ -597,6 +688,53 @@
   </div>
 </div>
 
+<!-- NEW: SALES MODAL -->
+<div class="modal-overlay" id="modal-sales">
+  <div class="modal" style="max-width: 600px;">
+    <h3 id="sm-title">매출 계획 추가</h3>
+    <p class="modal-desc">월별 예상 매출을 백만원 단위로 입력하세요.</p>
+    
+    <div style="display:flex; gap:16px; margin-bottom:16px;">
+      <div class="form-group" style="flex:1;"><label>연도</label><select id="sm-year"></select></div>
+      <div class="form-group" style="flex:2;"><label>구분 (카테고리)</label><select id="sm-cat"></select></div>
+    </div>
+    <div class="form-group"><label>사업명</label><input id="sm-name" type="text" placeholder="사업명을 입력하세요"></div>
+    <div style="display:flex; gap:16px;">
+      <div class="form-group" style="flex:1;"><label>담당자</label><input id="sm-owner" type="text" placeholder="담당자"></div>
+      <div class="form-group" style="flex:1;"><label>이익율 (%)</label><input id="sm-margin" type="number" step="0.1" placeholder="예: 15"></div>
+    </div>
+    
+    <div style="margin-top: 10px; padding-top: 16px; border-top: 1px dashed var(--line);">
+       <label style="font-size:11.5px; font-weight:600; color:var(--ink);">월별 예상 매출 (단위: 백만원)</label>
+       
+       <div class="sales-month-grid">
+         <div><label>1월</label><input id="sm-m1" type="number" step="0.1"></div>
+         <div><label>2월</label><input id="sm-m2" type="number" step="0.1"></div>
+         <div><label>3월</label><input id="sm-m3" type="number" step="0.1"></div>
+         <div><label>4월</label><input id="sm-m4" type="number" step="0.1"></div>
+         <div><label>5월</label><input id="sm-m5" type="number" step="0.1"></div>
+         <div><label>6월</label><input id="sm-m6" type="number" step="0.1"></div>
+       </div>
+       <div class="sales-month-grid">
+         <div><label>7월</label><input id="sm-m7" type="number" step="0.1"></div>
+         <div><label>8월</label><input id="sm-m8" type="number" step="0.1"></div>
+         <div><label>9월</label><input id="sm-m9" type="number" step="0.1"></div>
+         <div><label>10월</label><input id="sm-m10" type="number" step="0.1"></div>
+         <div><label>11월</label><input id="sm-m11" type="number" step="0.1"></div>
+         <div><label>12월</label><input id="sm-m12" type="number" step="0.1"></div>
+       </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
+      <button class="btn btn-ghost" style="color:var(--accent); display:none;" id="btn-del-sales" onclick="window.delSales()">삭제</button>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn btn-ghost" onclick="window.closeModal('modal-sales')">취소</button>
+        <button class="btn btn-primary" onclick="window.saveSales()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-schedule">
   <div class="modal">
     <h3>일정 추가</h3>
@@ -621,7 +759,8 @@
     projects: [],
     categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
-    archives: [] 
+    archives: [],
+    sales: [] // 매출 데이터 추가
   };
 
   const domain = "@ablecom.com"; 
@@ -637,9 +776,10 @@
   let displayWeekDate = new Date(); 
   let activeWeek = null; 
   let pmEditId = null;
+  let smEditId = null; // 매출 수정 ID
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v11";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v12";
 
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
@@ -654,6 +794,7 @@
     if (!migrated.categories || migrated.categories.length === 0) migrated.categories = ['공공/기업', '금융', '국방', '기타'];
     if (!migrated.schedules) migrated.schedules = [];
     if (!migrated.projects) migrated.projects = [];
+    if (!migrated.sales) migrated.sales = [];
     return migrated;
   }
 
@@ -662,6 +803,19 @@
     try { data = applyMigration({ ...data, ...JSON.parse(localData) }); } catch(e) {} 
   }
 
+  // 초기 연도 설정 (매출 관리용)
+  function initSalesYears() {
+    const sel = document.getElementById('sales-year-select');
+    const mSel = document.getElementById('sm-year');
+    let opts = '';
+    const curYear = new Date().getFullYear();
+    for(let y = curYear - 2; y <= curYear + 4; y++) {
+       opts += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}년</option>`;
+    }
+    sel.innerHTML = opts;
+    mSel.innerHTML = opts;
+  }
+  initSalesYears();
   updateAllUI();
 
   const firebaseConfig = {
@@ -701,7 +855,6 @@
       if (idInput === 'ablecom' && (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found')) {
         try {
            await createUserWithEmailAndPassword(auth, email, pwInput);
-           // 공용 공간(company_main)에 최고관리자 계정 생성
            await setDoc(doc(db, 'ablework', 'company_main', 'accounts', email), { id: 'ablecom', name: '최고관리자', role: 'admin' });
            errEl.style.display = "none";
         } catch(err2) {
@@ -731,7 +884,6 @@
 
       try {
           if (baseId !== 'ablecom') {
-            // 모든 계정 정보를 공용 공간(company_main)에서 가져옵니다.
             const accDoc = await getDoc(doc(db, 'ablework', 'company_main', 'accounts', email));
             if (accDoc.exists()) {
                role = accDoc.data().role;
@@ -759,11 +911,9 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      // 파이어베이스 규칙에 맞춘 공용 데이터 경로(company_main)
       dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
 
       onSnapshot(dbRef, (snap) => {
-        // 입력 중 포커스 잃음 방지
         if (snap.metadata.hasPendingWrites) return;
 
         if (snap.exists()) {
@@ -787,7 +937,6 @@
     }
   });
 
-  // 공용 데이터 저장 함수
   function triggerSave() {
     localStorage.setItem(appId, JSON.stringify(data));
     if (isFirebaseMode && dbRef) {
@@ -795,7 +944,7 @@
     }
   }
 
-  // --- 관리자: 계정 관리 (공용 경로 적용) ---
+  // --- 관리자: 계정 관리 ---
   function loadAccounts() {
     onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
       accountList = snap.docs.map(d => ({ email: d.id, ...d.data() }));
@@ -913,19 +1062,19 @@
   function escapeHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+  function fmtNum(n) {
+    if (!n || isNaN(n) || n == 0) return '-';
+    return Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  }
 
   function getWeekRange(dateObj) {
     const d = new Date(dateObj);
     const day = d.getDay(); 
-    
     const sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
     const sat = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 6);
-
-    // 목요일 기준으로 해당 월의 주차 판별
     const thu = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 4);
     const targetYear = thu.getFullYear();
     const targetMonth = thu.getMonth(); 
-    
     const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
     const weekNum = Math.ceil((thu.getDate() + firstDayOfMonth.getDay()) / 7);
 
@@ -953,6 +1102,7 @@
     renderProjects();
     loadWeek(displayWeekDate);
     renderArchive();
+    renderSales();
   }
 
   // --- 1. DASHBOARD & CALENDAR ---
@@ -1099,9 +1249,7 @@
     }
     activeWeek = arch;
 
-    // 모든 주차에서 항상 프로젝트 마스터 데이터를 기준으로 최신화 및 동기화 (진행중인 건 모두 포함)
     syncProjectsToSpecificWeek(activeWeek); 
-    
     renderWeeklyReport();
   }
 
@@ -1113,11 +1261,8 @@
   window.manualSaveWeek = function() { triggerSave(); window.showToast('저장되었습니다.'); };
   
   function syncProjectsToSpecificWeek(weekObj) {
-    // 해당 주차에 표시될 유효한 프로젝트 필터링
     const applicableProjs = data.projects.filter(p => {
-      // 진행, 보류는 무조건 모든 주차에 포함
       if (p.status === '진행' || p.status === '보류') return true;
-      // 완료, 실주 처리된 건은 완료 일자가 해당 주차 시작일 이후인 경우에만 포함 (이전이면 제외)
       if (p.status === '완료' || p.status === '실주') {
         if (p.completedDate && p.completedDate >= weekObj.start) return true;
         return false;
@@ -1127,7 +1272,6 @@
 
     if (!weekObj.categories) weekObj.categories = [];
     
-    // 조건에 맞지 않는(과거에 이미 종료된) 프로젝트 제거
     weekObj.categories.forEach(c => {
       c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
     });
@@ -1386,6 +1530,7 @@
       data.categories[editingCatIdx] = val;
 
       data.projects.forEach(p => { if (p.cat === oldCatName) p.cat = val; });
+      data.sales.forEach(s => { if (s.cat === oldCatName) s.cat = val; });
       
       data.archives.forEach(arch => {
         const aCat = arch.categories.find(c => c.name === oldCatName);
@@ -1403,32 +1548,34 @@
 
     triggerSave();
     renderCategoryList();
-    populateCatSelect();
+    populateCatSelects();
     updateAllUI(); 
   };
 
   window.delCategory = function(idx) {
     const targetCat = data.categories[idx];
-    const isUsed = data.projects.some(p => p.cat === targetCat);
+    const isUsed = data.projects.some(p => p.cat === targetCat) || data.sales.some(s => s.cat === targetCat);
     
     if(isUsed) {
-      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 사업의 데이터는 유지됩니다)`)) return;
+      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 데이터는 유지됩니다)`)) return;
     }
     
     data.categories.splice(idx, 1);
     triggerSave();
     renderCategoryList();
-    populateCatSelect();
+    populateCatSelects();
   };
 
-  function populateCatSelect(selectedVal = null) {
-    const sel = document.getElementById('pm-cat');
+  function populateCatSelects(selectedVal = null) {
     const options = new Set(data.categories);
     if(selectedVal) options.add(selectedVal);
-    sel.innerHTML = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    const html = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    
+    if(document.getElementById('pm-cat')) document.getElementById('pm-cat').innerHTML = html;
+    if(document.getElementById('sm-cat')) document.getElementById('sm-cat').innerHTML = html;
   }
 
-  // 상태 변경 시 완료일자 항목 토글
+  // --- 4. PROJECTS MASTER ---
   window.toggleCompletedDate = function() {
     const status = document.getElementById('pm-status').value;
     const group = document.getElementById('group-completed-date');
@@ -1439,7 +1586,6 @@
     }
   };
 
-  // --- 4. PROJECTS MASTER ---
   function renderProjects() {
     const tbody = document.getElementById('projects-tbody');
     if(data.projects.length === 0) {
@@ -1463,7 +1609,7 @@
   window.openProjectModal = function() {
     pmEditId = null;
     document.getElementById('pm-title').textContent = '사업 추가';
-    populateCatSelect();
+    populateCatSelects();
     if(data.categories.length > 0) document.getElementById('pm-cat').value = data.categories[0];
     document.getElementById('pm-name').value = '';
     document.getElementById('pm-owner').value = '';
@@ -1478,7 +1624,7 @@
     if(!p) return;
     pmEditId = id;
     document.getElementById('pm-title').textContent = '사업 편집';
-    populateCatSelect(p.cat);
+    populateCatSelects(p.cat);
     document.getElementById('pm-cat').value = p.cat;
     document.getElementById('pm-name').value = p.name;
     document.getElementById('pm-owner').value = p.owner;
@@ -1531,6 +1677,169 @@
       triggerSave(); updateAllUI();
     });
   };
+
+  // --- NEW: SALES MANAGEMENT ---
+  window.renderSales = function() {
+    const year = document.getElementById('sales-year-select').value;
+    const sList = data.sales.filter(s => s.year === year);
+    
+    let tYr=0, tH1=0, tH2=0, tProf=0;
+    
+    const grouped = {};
+    data.categories.forEach(c => grouped[c] = []);
+    sList.forEach(s => {
+       if(!grouped[s.cat]) grouped[s.cat] = [];
+       grouped[s.cat].push(s);
+    });
+
+    let html = '';
+    
+    data.categories.forEach(cat => {
+       const items = grouped[cat] || [];
+       if(items.length === 0) return;
+
+       let cYr=0, cM = Array(12).fill(0);
+       
+       items.forEach(i => {
+          for(let m=1; m<=12; m++) {
+             const v = parseFloat(i['m'+m]) || 0;
+             cM[m-1] += v;
+             cYr += v;
+             tYr += v;
+             if(m<=6) tH1 += v; else tH2 += v;
+             tProf += v * (parseFloat(i.margin)||0) / 100;
+          }
+       });
+
+       const verticalCatName = escapeHtml(cat).split('').join('<br>');
+       html += `<tr class="st-subtotal">
+          <td class="st-cat" rowspan="${items.length+1}"><div class="vertical-text">${verticalCatName}</div></td>
+          <td style="text-align:left; padding-left:12px;">${items.length}개 사업</td>
+          <td></td>
+          <td>${fmtNum(cYr)}</td>
+          ${cM.map(v => `<td>${fmtNum(v)}</td>`).join('')}
+       </tr>`;
+
+       items.forEach(i => {
+          let iYr = 0;
+          for(let m=1; m<=12; m++) iYr += (parseFloat(i['m'+m]) || 0);
+
+          html += `<tr class="clickable-row" onclick="window.editSales('${i.id}')">
+             <td class="st-name" title="${escapeHtml(i.name)}">${escapeHtml(i.name)}</td>
+             <td class="st-owner">${escapeHtml(i.owner)}</td>
+             <td style="font-weight:600;">${fmtNum(iYr)}</td>
+             ${Array.from({length:12}, (_, mi) => `<td>${fmtNum(i['m'+(mi+1)])}</td>`).join('')}
+          </tr>`;
+       });
+    });
+
+    if(html === '') {
+       html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
+    }
+
+    document.getElementById('sales-tbody').innerHTML = html;
+
+    // Update Cards
+    document.getElementById('sales-stat-total').textContent = fmtNum(tYr);
+    document.getElementById('sales-stat-h1').textContent = fmtNum(tH1);
+    document.getElementById('sales-stat-h2').textContent = fmtNum(tH2);
+    document.getElementById('sales-stat-profit').textContent = fmtNum(tProf);
+    
+    const overallMargin = tYr > 0 ? (tProf / tYr * 100).toFixed(1) : 0;
+    document.getElementById('sales-stat-margin-rate').textContent = `이익율 ${overallMargin}%`;
+  };
+
+  window.openSalesModal = function() {
+    smEditId = null;
+    document.getElementById('sm-title').textContent = '매출 계획 추가';
+    populateCatSelects();
+    document.getElementById('sm-year').value = document.getElementById('sales-year-select').value;
+    if(data.categories.length > 0) document.getElementById('sm-cat').value = data.categories[0];
+    document.getElementById('sm-name').value = '';
+    document.getElementById('sm-owner').value = '';
+    document.getElementById('sm-margin').value = '';
+    for(let i=1; i<=12; i++) document.getElementById('sm-m'+i).value = '';
+    
+    document.getElementById('btn-del-sales').style.display = 'none';
+    window.openModal('modal-sales');
+  };
+
+  window.editSales = function(id) {
+    const s = data.sales.find(x => x.id === id);
+    if(!s) return;
+    smEditId = id;
+    document.getElementById('sm-title').textContent = '매출 계획 수정';
+    populateCatSelects(s.cat);
+    document.getElementById('sm-year').value = s.year;
+    document.getElementById('sm-cat').value = s.cat;
+    document.getElementById('sm-name').value = s.name;
+    document.getElementById('sm-owner').value = s.owner || '';
+    document.getElementById('sm-margin').value = s.margin || '';
+    for(let i=1; i<=12; i++) document.getElementById('sm-m'+i).value = s['m'+i] || '';
+    
+    document.getElementById('btn-del-sales').style.display = 'inline-block';
+    window.openModal('modal-sales');
+  };
+
+  window.saveSales = function() {
+    const y = document.getElementById('sm-year').value;
+    const c = document.getElementById('sm-cat').value;
+    const n = document.getElementById('sm-name').value.trim();
+    const o = document.getElementById('sm-owner').value.trim();
+    const mg = document.getElementById('sm-margin').value;
+    
+    if(!c || !n) return window.showToast('카테고리와 사업명을 입력하세요');
+
+    const obj = { year: y, cat: c, name: n, owner: o, margin: mg };
+    for(let i=1; i<=12; i++) obj['m'+i] = document.getElementById('sm-m'+i).value;
+
+    if(smEditId) {
+      const idx = data.sales.findIndex(x => x.id === smEditId);
+      if(idx>=0) data.sales[idx] = { ...data.sales[idx], ...obj };
+    } else {
+      obj.id = 's_'+Date.now();
+      data.sales.push(obj);
+    }
+    
+    triggerSave();
+    window.renderSales();
+    window.closeModal('modal-sales');
+  };
+
+  window.delSales = function() {
+    if(!smEditId) return;
+    window.showConfirm('매출 데이터 삭제', '이 사업의 모든 매출 계획을 삭제하시겠습니까?', () => {
+      data.sales = data.sales.filter(s => s.id !== smEditId);
+      triggerSave();
+      window.renderSales();
+      window.closeModal('modal-sales');
+    });
+  };
+
+  window.exportSalesCSV = function() {
+    const year = document.getElementById('sales-year-select').value;
+    const sList = data.sales.filter(s => s.year === year);
+    if(sList.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+
+    // UTF-8 BOM for Excel compatibility
+    let csv = '\uFEFF구분,사업명,담당자,이익율(%),계,1월,2월,3월,4월,5월,6월,7월,8월,9월,10월,11월,12월\n';
+    
+    sList.forEach(s => {
+        let sum = 0;
+        for(let i=1; i<=12; i++) sum += (parseFloat(s['m'+i]) || 0);
+        csv += `"${s.cat}","${s.name}","${s.owner||''}","${s.margin||''}",${sum},${s.m1||''},${s.m2||''},${s.m3||''},${s.m4||''},${s.m5||''},${s.m6||''},${s.m7||''},${s.m8||''},${s.m9||''},${s.m10||''},${s.m11||''},${s.m12||''}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `에이블컴_매출계획_${year}년.csv`;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   // --- 5. ARCHIVE ---
   function renderArchive() {
