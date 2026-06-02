@@ -334,6 +334,9 @@
       <div class="nav-item" data-view="sales" onclick="window.goView('sales')"><span class="nav-icon">￦</span> 매출 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
     </nav>
+    <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
+      <div style="color:#9A9384; text-align:center;">사내 공용 워크스페이스</div>
+    </div>
   </aside>
 
   <!-- MAIN CONTENT -->
@@ -678,7 +681,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   let data = {
     projects: [],
@@ -699,8 +702,9 @@
   let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v14";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v15";
 
+  // Data Migration
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
     if (migrated.currentWeek) {
@@ -735,11 +739,9 @@
     if(mSel) mSel.innerHTML = opts;
   }
   initSalesYears();
-
-  // Show UI right away (Local First)
-  document.querySelector('.app').style.display = 'grid';
   updateAllUI();
 
+  // Firebase Setup (Anonymous Shared Access)
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
     authDomain: "openzeroc.firebaseapp.com",
@@ -755,7 +757,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Auto login anonymously to bypass manual login overlay
     signInAnonymously(auth).then(() => {
         isFirebaseMode = true;
         onAuthStateChanged(auth, user => {
@@ -785,7 +786,6 @@
         });
     }).catch(error => {
         console.error("Auth error, fallback to local:", error);
-        updateAllUI();
     });
   } catch(e) { 
       console.error("Firebase init fail", e); 
