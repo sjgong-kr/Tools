@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -390,7 +389,7 @@
         <!-- 좌측 영역: 달력 및 통계 -->
         <div style="flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px;">
           
-          <!-- NEW: 월간 매출 TOTAL 최상단 이동 -->
+          <!-- 월간 매출 TOTAL 상단 배치 -->
           <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
              <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
                  <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
@@ -506,25 +505,22 @@
       <div id="print-area"></div>
     </section>
 
-    <!-- NEW: 3. PROJECT HISTORY VIEW -->
+    <!-- 3. PROJECT HISTORY VIEW -->
     <section class="view" id="view-history">
       <div class="topbar">
         <div>
           <div class="topbar-title">프로젝트 진행 내역</div>
-          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 프로젝트의 진행 이력을 모아봅니다.</div>
+          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 특정 프로젝트의 진행 이력을 모아봅니다.</div>
         </div>
         <div class="topbar-actions">
-          <select id="history-month-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
-            <option value="ALL">전체 기간 (월별)</option>
-          </select>
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
-            <option value="ALL">전체 프로젝트 종합</option>
+            <option value="">프로젝트 선택</option>
           </select>
           <button class="btn btn-secondary" onclick="window.printHistory()">🖨 인쇄</button>
         </div>
       </div>
       <div id="history-container">
-          <div style="text-align:center; padding:40px; color:var(--muted);">조건을 선택하시면 지난 보고 내역이 표시됩니다.</div>
+          <div style="text-align:center; padding:40px; color:var(--muted);">우측 상단에서 프로젝트를 선택하시면 지난 보고 내역이 표시됩니다.</div>
       </div>
     </section>
 
@@ -652,6 +648,22 @@
         <div>
           <div class="topbar-title">설정 · 백업</div>
           <div class="topbar-sub">데이터 전체 가져오기 / 내보내기 / 초기화 (최고관리자 전용)</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="section-head">
+          <div class="section-title">데이터베이스 경로 연결</div>
+          <div class="section-meta">데이터 유실 시 확인</div>
+        </div>
+        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
+          기존에 작성한 데이터가 보이지 않는다면, 데이터베이스 연결 폴더가 변경되었을 수 있습니다. 아래에서 원래 사용하던 경로를 선택해보세요.
+        </p>
+        <div style="max-width: 340px;">
+            <select id="db-path-select" onchange="window.changeDbPath()" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:4px; font-weight:bold; outline:none;">
+                <option value="v1">경로 1: 원본 데이터베이스 (v1)</option>
+                <option value="main">경로 2: 최근 데이터베이스 (main)</option>
+            </select>
         </div>
       </div>
 
@@ -871,7 +883,7 @@
 
   const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-final-v4";
 
-  // [방탄 로직] 하드코딩된 기본 계정
+  // [방탄 로직 1] DB 연결 지연/차단 시 무조건 뚫고 들어가는 하드코딩 계정
   const hardcodedUsers = {
       'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
       'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
@@ -954,6 +966,7 @@
 
   window.triggerSave = function() {
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
+    // [버그 해결 2] 서버 저장 스위치가 켜져있을 때만 (안전할 때만) 저장
     if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
@@ -987,7 +1000,6 @@
     };
   }
 
-  // --- STREAMING_CHUNK:Firebase Init and Custom Login... ---
   // --- 4. Firebase Connect (No Auth Module) ---
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -1036,6 +1048,7 @@
     }
     errEl.style.display = "none";
 
+    // [버그 해결 1] 입력 도중 포커스가 남아있어 데이터 로드가 차단되는 현상 강제 해결
     if(document.activeElement) document.activeElement.blur();
 
     try {
@@ -1095,6 +1108,13 @@
       location.reload();
   };
 
+  // DB 경로 동적 전환 도구
+  window.changeDbPath = function() {
+    const p = document.getElementById('db-path-select').value;
+    localStorage.setItem('ablework_db_path', p);
+    location.reload();
+  };
+
   // --- 6. App Initialization (After Login) ---
   function initApp() {
       isAdmin = (currentUser.role === 'admin');
@@ -1116,8 +1136,11 @@
       isFirebaseMode = true; 
 
       if (db) {
-          // 공용 경로 v1 지정
-          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
+          // [기존 데이터 100% 복구] 원래 저장되던 정상 경로인 v1으로 다시 지정
+          const savedPath = localStorage.getItem('ablework_db_path') || 'v1';
+          if(document.getElementById('db-path-select')) document.getElementById('db-path-select').value = savedPath;
+
+          dbRef = doc(db, 'ablework', 'company_main', 'data', savedPath);
           
           let isFirstLoad = true;
 
@@ -1129,6 +1152,7 @@
                 if (snap.exists()) {
                   const serverData = snap.data();
                   
+                  // [버그 해결 3] 프리징 방지 (첫 로딩이거나 사용자가 입력하지 않을 때만 화면 다시 그리기)
                   if (isFirstLoad || !isInputting) {
                       data = applyMigration({ ...data, ...serverData });
                       updateAllUI();
@@ -1150,7 +1174,6 @@
 
   checkSession();
 
-  // --- STREAMING_CHUNK:Building Account Management Logic... ---
   // --- 7. ACCOUNT MANAGEMENT UI ---
   function loadAccounts() {
     if(!db) return;
@@ -1233,7 +1256,6 @@
     });
   };
 
-  // --- STREAMING_CHUNK:Building UI Render Logic... ---
   // --- 8. UI Render Functions ---
   function updateAllUI() {
     renderCalendar();
@@ -1243,8 +1265,8 @@
     loadWeek(displayWeekDate);
     renderArchive();
     renderSales();
-    populateHistoryFilters(); // History 콤보박스 최신화
-    renderHistory();          // History View 렌더링
+    populateHistorySelect(); // History 콤보박스 최신화
+    renderHistory();         // History View 렌더링
   }
 
   window.changeCalMonth = function(offset) {
@@ -1407,7 +1429,6 @@
     }
   }
 
-  // --- STREAMING_CHUNK:Building Weekly Report Logic... ---
   // --- 9. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
@@ -1694,9 +1715,8 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // --- STREAMING_CHUNK:Building History View Logic... ---
   // --- NEW: 10. PROJECT HISTORY (프로젝트 진행 내역) ---
-  function populateHistoryFilters() {
+  function populateHistorySelect() {
     const pSel = document.getElementById('history-proj-select');
     if(pSel) {
         const currentVal = pSel.value;
@@ -1911,14 +1931,12 @@
     `;
 
     const printArea = document.getElementById('print-area');
-    if(printArea) {
-      printArea.innerHTML = printHtml;
-      printArea.getBoundingClientRect();
-      try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
-    }
+    printArea.innerHTML = printHtml;
+    printArea.getBoundingClientRect();
+    try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // --- STREAMING_CHUNK:Building Category Management... ---
+
   // --- 11. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
     window.cancelEditCategory();
@@ -2018,7 +2036,6 @@
     if(sCat) sCat.innerHTML = html;
   }
 
-  // --- STREAMING_CHUNK:Building Project Master Logic... ---
   // --- 12. PROJECTS MASTER ---
   window.toggleCompletedDate = function() {
     const status = document.getElementById('pm-status').value;
@@ -2128,7 +2145,6 @@
     });
   };
 
-  // --- STREAMING_CHUNK:Building Sales Management Logic... ---
   // --- 13. SALES MANAGEMENT ---
   window.renderSales = function() {
     const yearSelect = document.getElementById('sales-year-select');
@@ -2137,7 +2153,6 @@
     const sList = data.sales.filter(s => s.year === year);
     
     let tYr=0, tH1=0, tH2=0, tProf=0;
-    let globalM = Array(12).fill(0);
     
     const grouped = {};
     data.categories.forEach(c => grouped[c] = []);
@@ -2158,7 +2173,6 @@
           for(let m=1; m<=12; m++) {
              const v = parseFloat(i['m'+m]) || 0;
              cM[m-1] += v;
-             globalM[m-1] += v;
              cYr += v;
              tYr += v;
              if(m<=6) tH1 += v; else tH2 += v;
@@ -2197,7 +2211,11 @@
              <tr style="background:var(--ink); color:var(--bg-elev); font-weight:700;">
                <td colspan="3" style="text-align:center; padding:12px;">${year}년 전체 매출 TOTAL</td>
                <td style="color:var(--brass-soft);">${fmtNum(tYr)}</td>
-               ${globalM.map(v => `<td>${fmtNum(v)}</td>`).join('')}
+               ${Array.from({length:12}, (_, mi) => {
+                  let mt = 0;
+                  sList.forEach(s => mt += parseFloat(s['m'+(mi+1)]) || 0);
+                  return `<td>${fmtNum(mt)}</td>`;
+               }).join('')}
              </tr>
            `;
            html = totalHtml + html;
@@ -2310,7 +2328,6 @@
     document.body.removeChild(link);
   };
 
-  // --- STREAMING_CHUNK:Building Archive & Finalizing... ---
   // --- 14. ARCHIVE ---
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
@@ -2350,6 +2367,14 @@
   window.viewArchivedWeek = function(dStr) {
     displayWeekDate = new Date(dStr + "T00:00:00");
     window.goView('weekly', false);
+  };
+
+  window.deleteArchive = function(id) {
+    window.showConfirm('보고서 삭제', '해당 주차의 보고서를 아카이브에서 완전히 삭제하시겠습니까?', () => {
+      data.archives = data.archives.filter(a => a.id !== id);
+      window.triggerSave();
+      updateAllUI();
+    });
   };
 
   // --- 15. BACKUP / RESTORE / RESET (Admin Only) ---
@@ -2398,7 +2423,7 @@
       return;
     }
     
-    // 데이터 완전 초기화 (기본 카테고리만 남김)
+    // 데이터 완전 초기화
     data = {
       projects: [],
       categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
