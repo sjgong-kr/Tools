@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -259,7 +260,7 @@
   .sales-table td { border-bottom: 1px solid var(--line); padding: 10px 6px; vertical-align: middle; }
   .st-cat { font-weight: 600; background: #FAF9F6; width: 45px; border-right: 1px solid var(--line); }
   .st-subtotal { background: #F4EFE3; font-weight: 600; color: var(--ink); }
-  .st-name { text-align: left; font-weight: 500; max-width: 150px; line-height: 1.3; cursor: pointer; color: var(--ink-2); }
+  .st-name { text-align: left; font-weight: 500; line-height: 1.3; cursor: pointer; color: var(--ink-2); }
   .st-name:hover { text-decoration: underline; color: var(--brass); }
   .st-owner { font-size: 11px; color: var(--muted); }
   
@@ -293,12 +294,15 @@
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
 
+  .clickable-row { cursor: pointer; transition: background .15s; }
+  .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
+
   /* ===== Print Styles ===== */
   #print-area { display: none; }
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-sales, #view-history, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-sales, #view-history, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
     
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly, #view-history { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
@@ -356,10 +360,7 @@
       <div class="nav-label">Menu</div>
       <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
       <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
-      
-      <!-- NEW: 프로젝트 진행 내역 -->
       <div class="nav-item" data-view="history" onclick="window.goView('history')"><span class="nav-icon">◧</span> 프로젝트 진행 내역</div>
-      
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
       <div class="nav-item" data-view="sales" onclick="window.goView('sales')"><span class="nav-icon">￦</span> 매출 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
@@ -388,7 +389,7 @@
         <!-- 좌측 영역: 달력 및 통계 -->
         <div style="flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px;">
           
-          <!-- NEW: 월간 매출 TOTAL -->
+          <!-- NEW: 월간 매출 TOTAL 최상단 이동 -->
           <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
              <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
                  <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
@@ -509,17 +510,20 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">프로젝트 진행 내역</div>
-          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 특정 프로젝트의 진행 이력을 모아봅니다.</div>
+          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 프로젝트의 진행 이력을 모아봅니다.</div>
         </div>
         <div class="topbar-actions">
+          <select id="history-month-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
+            <option value="ALL">전체 기간 (월별)</option>
+          </select>
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
-            <option value="">프로젝트 선택</option>
+            <option value="ALL">전체 프로젝트 종합</option>
           </select>
           <button class="btn btn-secondary" onclick="window.printHistory()">🖨 인쇄</button>
         </div>
       </div>
       <div id="history-container">
-          <div style="text-align:center; padding:40px; color:var(--muted);">우측 상단에서 프로젝트를 선택하시면 지난 보고 내역이 표시됩니다.</div>
+          <div style="text-align:center; padding:40px; color:var(--muted);">조건을 선택하시면 지난 보고 내역이 표시됩니다.</div>
       </div>
     </section>
 
@@ -592,7 +596,7 @@
           <thead>
             <tr>
               <th style="width:45px;">구분</th>
-              <th style="text-align:left; padding-left:12px;">사업명</th>
+              <th style="text-align:left; padding-left:12px; width:25%;">사업명</th>
               <th style="width:50px;">담당</th>
               <th style="width:70px; background:#F4EFE3;">계</th>
               <th style="width:50px;">1월</th><th style="width:50px;">2월</th><th style="width:50px;">3월</th>
@@ -812,9 +816,9 @@
   let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-final-v3";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-final-v4";
 
-  // [방탄 로직 1] DB 오류/네트워크 단절 대비 하드코딩된 기본 계정
+  // [방탄 로직] 하드코딩된 기본 계정
   const hardcodedUsers = {
       'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
       'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
@@ -836,9 +840,8 @@
       delete migrated.currentWeek;
     }
     if (migrated.archives) {
-        // 기존에 저장된 데이터들은 전부 '보관됨(isSaved: true)' 상태로 동결 처리
         migrated.archives.forEach(a => {
-            if (typeof a.isSaved === 'undefined') a.isSaved = true; 
+            if (typeof a.isSaved === 'undefined') a.isSaved = true; // 과거 데이터 호환성
         });
         migrated.archives.sort((a, b) => b.id.localeCompare(a.id));
     }
@@ -898,8 +901,7 @@
 
   window.triggerSave = function() {
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
-    // [저장 누락 해결] isFirebaseMode 상태와 무관하게 dbRef가 있으면 무조건 저장
-    if (dbRef) {
+    if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
   };
@@ -932,6 +934,7 @@
     };
   }
 
+  // --- STREAMING_CHUNK:Firebase Init and Custom Login... ---
   // --- 4. Firebase Connect (No Auth Module) ---
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -980,7 +983,6 @@
     }
     errEl.style.display = "none";
 
-    // 포커스 강제 해제 (로그인 후 데이터 로드 차단 방지)
     if(document.activeElement) document.activeElement.blur();
 
     try {
@@ -1056,11 +1058,11 @@
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
-      isFirebaseMode = true;
+      isFirebaseMode = true; 
 
       if (db) {
-          // [기존 데이터 100% 복구] 원래 저장되던 정상 경로인 main
-          dbRef = doc(db, 'ablework', 'company_main', 'data', 'main');
+          // 공용 경로 v1 지정
+          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
           
           let isFirstLoad = true;
 
@@ -1072,7 +1074,6 @@
                 if (snap.exists()) {
                   const serverData = snap.data();
                   
-                  // 첫 로딩이거나, 사용자가 타이핑 중이 아닐 때만 화면 업데이트 (프리징 완벽 차단)
                   if (isFirstLoad || !isInputting) {
                       data = applyMigration({ ...data, ...serverData });
                       updateAllUI();
@@ -1094,6 +1095,7 @@
 
   checkSession();
 
+  // --- STREAMING_CHUNK:Building Account Management Logic... ---
   // --- 7. ACCOUNT MANAGEMENT UI ---
   function loadAccounts() {
     if(!db) return;
@@ -1110,7 +1112,7 @@
       <tr>
         <td style="font-weight:600;">${escapeHtml(a.id)}</td>
         <td>${escapeHtml(a.name)}</td>
-        <td>${a.role === 'admin' ? '<span class="badge badge-dark">관리자</span>' : '<span class="badge" style="background:var(--muted)">일반 사용자</span>'}</td>
+        <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
         <td>
           ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
             <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
@@ -1176,6 +1178,7 @@
     });
   };
 
+  // --- STREAMING_CHUNK:Building UI Render Logic... ---
   // --- 8. UI Render Functions ---
   function updateAllUI() {
     renderCalendar();
@@ -1185,8 +1188,8 @@
     loadWeek(displayWeekDate);
     renderArchive();
     renderSales();
-    populateHistorySelect(); // History View 갱신
-    renderHistory();         // History View 렌더링
+    populateHistoryFilters(); // History 콤보박스 최신화
+    renderHistory();          // History View 렌더링
   }
 
   window.changeCalMonth = function(offset) {
@@ -1256,7 +1259,6 @@
       `).join('');
     }
 
-    // Dashboard Sales Update
     const selY = calSelectedDate.getFullYear().toString();
     const selM = calSelectedDate.getMonth() + 1;
     const label = document.getElementById('dash-sales-month-label');
@@ -1350,6 +1352,7 @@
     }
   }
 
+  // --- STREAMING_CHUNK:Building Weekly Report Logic... ---
   // --- 9. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
@@ -1357,7 +1360,6 @@
     let arch = data.archives.find(a => a.id === targetRange.id);
     let isNew = false;
     
-    // [해결 1] 아카이브가 없으면 '작성중(isSaved: false)' 상태의 초안 생성
     if (!arch) {
       arch = { 
           id: targetRange.id, 
@@ -1365,7 +1367,7 @@
           start: targetRange.start, 
           end: targetRange.end, 
           categories: [],
-          isSaved: false // 아직 저장버튼을 안 누른 상태
+          isSaved: false 
       };
       data.archives.push(arch);
       data.archives.sort((a, b) => b.id.localeCompare(a.id));
@@ -1373,7 +1375,6 @@
     }
     activeWeek = arch;
 
-    // [해결 1] 아직 '보관(저장)'되지 않은 초안 주차인 경우에만 동기화를 수행! (과거 데이터는 변경되지 않음)
     if (activeWeek.isSaved === false) {
         const changed = syncProjectsToSpecificWeek(activeWeek); 
         if (isNew || changed) {
@@ -1389,24 +1390,21 @@
     loadWeek(displayWeekDate);
   };
   
-  // [해결 1] 저장 버튼을 누를 때 비로소 '보관됨' 처리 및 아카이브 등장
   window.manualSaveWeek = function() { 
       if (activeWeek) {
           activeWeek.isSaved = true;
           window.triggerSave(); 
           window.showToast('보고서가 영구 보존 처리되어 아카이브에 저장되었습니다.'); 
-          updateAllUI(); // 배지 업데이트 및 아카이브 목록 갱신
+          updateAllUI(); 
       }
   };
   
   function syncProjectsToSpecificWeek(weekObj) {
     let changed = false;
     
-    // [해결 2] 이번 주차만이 아니라, 모든 주차에 대해 '완료일자' 조건을 확인하여 포함 여부 결정
     const applicableProjs = data.projects.filter(p => {
       if (p.status === '진행' || p.status === '보류') return true;
       if (p.status === '완료' || p.status === '실주') {
-        // 완료일자가 해당 주차의 시작일(일요일)보다 크거나 같으면, 그 주차까지는 보고에 포함시킴
         if (p.completedDate && p.completedDate >= weekObj.start) return true;
         return false;
       }
@@ -1475,11 +1473,10 @@
     if (!activeWeek) return;
     const titleEl = document.getElementById('wk-title');
     if(titleEl) {
-        // [기능 개선] 보고서 저장 여부에 따라 배지 UI 표시
-        const badgeHtml = activeWeek.isSaved === true
-            ? `<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>`
-            : `<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>`;
-        titleEl.innerHTML = `${activeWeek.title} ${badgeHtml}`;
+        const badge = activeWeek.isSaved !== false 
+            ? '<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>'
+            : '<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>';
+        titleEl.innerHTML = `${activeWeek.title} ${badge}`;
     }
     
     const rangeEl = document.getElementById('wk-range');
@@ -1642,133 +1639,198 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
+  // --- STREAMING_CHUNK:Building History View Logic... ---
   // --- NEW: 10. PROJECT HISTORY (프로젝트 진행 내역) ---
-  function populateHistorySelect() {
-    const sel = document.getElementById('history-proj-select');
-    if(!sel) return;
-    
-    const currentVal = sel.value;
-    const projMap = new Map();
+  function populateHistoryFilters() {
+    const pSel = document.getElementById('history-proj-select');
+    if(pSel) {
+        const currentVal = pSel.value;
+        const projMap = new Map();
 
-    // 현재 등록된 프로젝트 추출
-    data.projects.forEach(p => projMap.set(p.id, p.name));
-    
-    // 영구 보존된(isSaved: true) 아카이브에 있는 과거 프로젝트들도 모두 추출
-    data.archives.forEach(a => {
-        if(a.isSaved === true) {
-            a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
+        data.projects.forEach(p => projMap.set(p.id, p.name));
+        data.archives.forEach(a => {
+            if(a.isSaved === true) {
+                a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
+            }
+        });
+
+        let html = '<option value="ALL">전체 프로젝트 종합</option>';
+        Array.from(projMap.entries()).forEach(([id, name]) => {
+            html += `<option value="${id}">${escapeHtml(name)}</option>`;
+        });
+        pSel.innerHTML = html;
+        if (currentVal && (projMap.has(currentVal) || currentVal === 'ALL')) {
+            pSel.value = currentVal;
         }
-    });
+    }
 
-    let html = '<option value="">프로젝트 선택</option>';
-    Array.from(projMap.entries()).forEach(([id, name]) => {
-        html += `<option value="${id}">${escapeHtml(name)}</option>`;
-    });
-
-    sel.innerHTML = html;
-    
-    // 기존에 선택했던 값이 갱신 후에도 남아있으면 재선택 유지
-    if (currentVal && projMap.has(currentVal)) {
-        sel.value = currentVal;
+    const mSel = document.getElementById('history-month-select');
+    if(mSel) {
+        const currentMVal = mSel.value;
+        const monthSet = new Set();
+        data.archives.forEach(a => {
+            if(a.isSaved === true && a.start) {
+                monthSet.add(a.start.substring(0, 7)); 
+            }
+        });
+        
+        let mHtml = '<option value="ALL">전체 기간 (월별)</option>';
+        Array.from(monthSet).sort().reverse().forEach(m => {
+            const [y, mo] = m.split('-');
+            mHtml += `<option value="${m}">${y}년 ${parseInt(mo, 10)}월</option>`;
+        });
+        mSel.innerHTML = mHtml;
+        if (currentMVal && (monthSet.has(currentMVal) || currentMVal === 'ALL')) {
+            mSel.value = currentMVal;
+        }
     }
   }
 
   window.renderHistory = function() {
-    const sel = document.getElementById('history-proj-select');
+    const pSel = document.getElementById('history-proj-select');
+    const mSel = document.getElementById('history-month-select');
     const container = document.getElementById('history-container');
-    if(!sel || !container) return;
+    if(!pSel || !mSel || !container) return;
 
-    const projId = sel.value;
-    if(!projId) {
-        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">우측 상단에서 프로젝트를 선택하시면 지난 보고 내역이 표시됩니다.</div>`;
+    const projId = pSel.value;
+    const monthVal = mSel.value;
+
+    let archives = data.archives.filter(a => a.isSaved === true);
+
+    if (monthVal !== 'ALL') {
+        archives = archives.filter(a => a.start.substring(0, 7) === monthVal);
+    }
+
+    archives.sort((a,b) => b.id.localeCompare(a.id));
+
+    if(archives.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">해당 조건에 맞는 보고 내역이 없습니다.</div>`;
         return;
     }
 
-    let historyItems = [];
+    let html = '';
 
-    // '보관됨(isSaved: true)' 상태의 아카이브에서만 기록을 긁어옴
-    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+    archives.forEach(arch => {
+        let projItems = [];
         arch.categories.forEach(cat => {
-            const p = cat.projects.find(x => x.id === projId);
-            // 실적이나 계획 중 하나라도 작성된 내용이 있으면 추가
-            if (p && ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) )) {
-                historyItems.push({
-                    weekTitle: arch.title,
-                    range: `${arch.start} ~ ${arch.end}`,
-                    prev: p.prev,
-                    plan: p.plan,
-                    id: arch.id // 정렬용
-                });
-            }
+            cat.projects.forEach(p => {
+                if (projId === 'ALL' || p.id === projId) {
+                    if ((p.prev && p.prev.trim()) || (p.plan && p.plan.trim())) {
+                        projItems.push({
+                            catName: cat.name,
+                            projName: p.name,
+                            prev: p.prev,
+                            plan: p.plan
+                        });
+                    }
+                }
+            });
         });
+
+        if (projItems.length > 0) {
+            html += `
+            <div class="card" style="margin-bottom: 16px; padding: 18px 24px;">
+                <div class="section-head" style="margin-bottom: 12px; padding-bottom: 8px;">
+                    <div class="section-title" style="font-size: 15px; color: var(--brass); display:flex; align-items:center;">
+                        <span style="display:inline-block; width:6px; height:6px; background:var(--brass-soft); border-radius:50%; margin-right:8px;"></span>
+                        ${escapeHtml(arch.title)}
+                        <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:12px; font-family:var(--mono);">[ ${arch.start} ~ ${arch.end} ]</span>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${projItems.map(item => `
+                        <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
+                            <div style="font-size:13px; font-weight:600; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                                <span style="font-size:10px; background:rgba(26,34,56,0.06); padding:3px 6px; border-radius:3px; color:var(--ink-2);">${escapeHtml(item.catName)}</span>
+                                ${escapeHtml(item.projName)}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                                <div>
+                                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; border-bottom:1px dashed var(--line); padding-bottom:4px;">주간 실적</div>
+                                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:30px;">${escapeHtml(item.prev) || '-'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; border-bottom:1px dashed var(--line); padding-bottom:4px;">차주 계획</div>
+                                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:30px;">${escapeHtml(item.plan) || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            `;
+        }
     });
 
-    // 최신 주차가 위로 오도록 내림차순 정렬
-    historyItems.sort((a,b) => b.id.localeCompare(a.id));
-
-    if(historyItems.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">해당 프로젝트로 저장된 보고 내역이 없습니다.</div>`;
-        return;
+    if (html === '') {
+        html = `<div style="text-align:center; padding:40px; color:var(--muted);">선택한 조건에 등록된 내역이 없습니다.</div>`;
     }
 
-    container.innerHTML = historyItems.map(item => `
-        <div class="card" style="margin-bottom: 16px; padding: 18px 24px;">
-            <div class="section-head" style="margin-bottom: 12px; padding-bottom: 8px;">
-                <div class="section-title" style="font-size: 15px; color: var(--brass); display:flex; align-items:center;">
-                    <span style="display:inline-block; width:6px; height:6px; background:var(--brass-soft); border-radius:50%; margin-right:8px;"></span>
-                    ${escapeHtml(item.weekTitle)}
-                    <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:12px; font-family:var(--mono);">[ ${item.range} ]</span>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
-                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:8px; border-bottom:1px dashed var(--line); padding-bottom:6px;">주간 실적</div>
-                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:40px;">${escapeHtml(item.prev) || '-'}</div>
-                </div>
-                <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
-                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:8px; border-bottom:1px dashed var(--line); padding-bottom:6px;">차주 계획</div>
-                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:40px;">${escapeHtml(item.plan) || '-'}</div>
-                </div>
-            </div>
-        </div>
-    `).join('');
+    container.innerHTML = html;
   };
 
   window.printHistory = function() {
-    const sel = document.getElementById('history-proj-select');
-    if(!sel || !sel.value) return window.showToast('인쇄할 프로젝트를 먼저 선택해주세요.');
-    const projId = sel.value;
-    const projName = sel.options[sel.selectedIndex].text;
+    const pSel = document.getElementById('history-proj-select');
+    const mSel = document.getElementById('history-month-select');
+    if(!pSel || !mSel) return window.showToast('옵션을 선택해주세요.');
 
-    let historyItems = [];
-    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+    const projId = pSel.value;
+    const monthVal = mSel.value;
+
+    let projNameText = pSel.options[pSel.selectedIndex].text;
+    let monthNameText = mSel.options[mSel.selectedIndex].text;
+
+    let archives = data.archives.filter(a => a.isSaved === true);
+    if (monthVal !== 'ALL') {
+        archives = archives.filter(a => a.start.substring(0, 7) === monthVal);
+    }
+    archives.sort((a,b) => b.id.localeCompare(a.id));
+
+    let rowsHtml = '';
+    let hasData = false;
+
+    archives.forEach(arch => {
+        let projItems = [];
         arch.categories.forEach(cat => {
-            const p = cat.projects.find(x => x.id === projId);
-            if(p && ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) )) {
-                historyItems.push({
-                    weekTitle: arch.title,
-                    range: `${arch.start} ~ ${arch.end}`,
-                    prev: p.prev,
-                    plan: p.plan,
-                    id: arch.id
-                });
-            }
+            cat.projects.forEach(p => {
+                if (projId === 'ALL' || p.id === projId) {
+                    if ((p.prev && p.prev.trim()) || (p.plan && p.plan.trim())) {
+                        projItems.push({
+                            catName: cat.name,
+                            projName: p.name,
+                            prev: p.prev,
+                            plan: p.plan
+                        });
+                    }
+                }
+            });
         });
+
+        if (projItems.length > 0) {
+            hasData = true;
+            rowsHtml += `
+                <tr>
+                    <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#FAF9F6 !important; border-bottom:2px solid #555;" colspan="3">
+                        ${escapeHtml(arch.title)} <span style="font-size:9pt; font-weight:normal; color:#666;">(${arch.start} ~ ${arch.end})</span>
+                    </td>
+                </tr>
+            `;
+            projItems.forEach(item => {
+                rowsHtml += `
+                <tr>
+                    <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#fff !important; font-size:9.5pt;">
+                        <span style="font-size:8pt; color:#666; display:block; margin-bottom:2px;">[${escapeHtml(item.catName)}]</span>
+                        ${escapeHtml(item.projName)}
+                    </td>
+                    <td class="print-content" style="white-space:pre-wrap; padding:10px;">${escapeHtml(item.prev) || '-'}</td>
+                    <td class="print-content" style="white-space:pre-wrap; padding:10px;">${escapeHtml(item.plan) || '-'}</td>
+                </tr>
+                `;
+            });
+        }
     });
 
-    historyItems.sort((a,b) => b.id.localeCompare(a.id));
-
-    if(historyItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
-
-    let rowsHtml = historyItems.map(item => `
-        <tr>
-            <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#FAF9F6 !important;">
-                ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
-            </td>
-            <td class="print-content" style="white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
-            <td class="print-content" style="white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.plan) || '-'}</td>
-        </tr>
-    `).join('');
+    if (!hasData) return window.showToast('인쇄할 내역이 없습니다.');
 
     const printHtml = `
       <div class="print-header-container">
@@ -1776,13 +1838,13 @@
         <div class="print-header">
           <h1>프로젝트 진행 내역</h1>
           <div class="print-dept">전략영업본부</div>
-          <div class="print-date">프로젝트명 : ${escapeHtml(projName)}</div>
+          <div class="print-date">기간: ${escapeHtml(monthNameText)} | 필터: ${escapeHtml(projNameText)}</div>
         </div>
       </div>
       <table class="print-table">
         <thead>
           <tr>
-            <th style="width: 20%;">보고 주차</th>
+            <th style="width: 20%;">프로젝트 / 보고주차</th>
             <th style="width: 40%;">주간 실적</th>
             <th style="width: 40%;">차주 계획</th>
           </tr>
@@ -1794,12 +1856,14 @@
     `;
 
     const printArea = document.getElementById('print-area');
-    printArea.innerHTML = printHtml;
-    printArea.getBoundingClientRect();
-    try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
+    if(printArea) {
+      printArea.innerHTML = printHtml;
+      printArea.getBoundingClientRect();
+      try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
+    }
   };
 
-
+  // --- STREAMING_CHUNK:Building Category Management... ---
   // --- 11. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
     window.cancelEditCategory();
@@ -1899,6 +1963,7 @@
     if(sCat) sCat.innerHTML = html;
   }
 
+  // --- STREAMING_CHUNK:Building Project Master Logic... ---
   // --- 12. PROJECTS MASTER ---
   window.toggleCompletedDate = function() {
     const status = document.getElementById('pm-status').value;
@@ -2008,6 +2073,7 @@
     });
   };
 
+  // --- STREAMING_CHUNK:Building Sales Management Logic... ---
   // --- 13. SALES MANAGEMENT ---
   window.renderSales = function() {
     const yearSelect = document.getElementById('sales-year-select');
@@ -2016,7 +2082,7 @@
     const sList = data.sales.filter(s => s.year === year);
     
     let tYr=0, tH1=0, tH2=0, tProf=0;
-    let globalM = Array(12).fill(0); // 전체 월별 TOTAL 변수 추가
+    let globalM = Array(12).fill(0);
     
     const grouped = {};
     data.categories.forEach(c => grouped[c] = []);
@@ -2037,7 +2103,7 @@
           for(let m=1; m<=12; m++) {
              const v = parseFloat(i['m'+m]) || 0;
              cM[m-1] += v;
-             globalM[m-1] += v; // 전체 월별 합계 누적
+             globalM[m-1] += v;
              cYr += v;
              tYr += v;
              if(m<=6) tH1 += v; else tH2 += v;
@@ -2072,7 +2138,6 @@
         if(html === '') {
            html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
         } else {
-           // 전체 TOTAL 행을 표 최상단에 삽입
            const totalHtml = `
              <tr style="background:var(--ink); color:var(--bg-elev); font-weight:700;">
                <td colspan="3" style="text-align:center; padding:12px;">${year}년 전체 매출 TOTAL</td>
@@ -2190,12 +2255,13 @@
     document.body.removeChild(link);
   };
 
+  // --- STREAMING_CHUNK:Building Archive & Finalizing... ---
   // --- 14. ARCHIVE ---
   function renderArchive() {
     const tbody = document.getElementById('archive-tbody');
     if(!tbody) return;
     
-    const savedArchives = (data.archives || []).filter(a => a.isSaved !== false);
+    const savedArchives = (data.archives || []).filter(a => a.isSaved === true);
 
     if(savedArchives.length === 0) {
       tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고 탭에서 [보고서 저장]을 누르면 이곳에 영구 보존됩니다.</span></td></tr>`;
@@ -2214,16 +2280,13 @@
       const badgeHtml = isCurrent ? '<span class="badge" style="background:var(--brass); margin-left:8px; font-weight:normal;">이번 주</span>' : '';
 
       return `
-        <tr style="${rowStyle}">
-          <td style="font-weight:600; font-family:var(--serif); ${titleColor}; cursor:pointer;" onclick="window.viewArchivedWeek('${a.start}')">
-            <span class="hover:underline">${a.title}</span> ${badgeHtml}
+        <tr class="clickable-row" style="${rowStyle}" onclick="window.viewArchivedWeek('${a.start}')">
+          <td style="font-weight:600; font-family:var(--serif); ${titleColor}">
+            ${a.title} ${badgeHtml}
           </td>
           <td style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
           <td>${cnt}건</td>
-          <td>
-              <button class="btn-ghost btn-sm" onclick="window.viewArchivedWeek('${a.start}')">수정</button>
-              <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.deleteArchive('${a.id}')">삭제</button>
-          </td>
+          <td><button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="event.stopPropagation(); window.deleteArchive('${a.id}')">삭제</button></td>
         </tr>
       `;
     }).join('');
