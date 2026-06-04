@@ -598,7 +598,7 @@
           <thead>
             <tr>
               <th style="width:45px;">구분</th>
-              <th style="text-align:left; padding-left:12px; width:25%;">사업명</th>
+              <th style="text-align:left; padding-left:12px;">사업명</th>
               <th style="width:50px;">담당</th>
               <th style="width:70px; background:#F4EFE3;">계</th>
               <th style="width:50px;">1월</th><th style="width:50px;">2월</th><th style="width:50px;">3월</th>
@@ -1357,6 +1357,8 @@
   // --- 9. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
+    const currentRange = getWeekRange(new Date());
+    const isCurrentWeek = (targetRange.id === currentRange.id);
 
     let arch = data.archives.find(a => a.id === targetRange.id);
     let isNew = false;
@@ -1376,7 +1378,8 @@
     }
     activeWeek = arch;
 
-    if (activeWeek.isSaved === false) {
+    // 현재 주차(이번 주)이거나, 아직 보관(저장)되지 않은 경우 무조건 프로젝트 업데이트
+    if (isCurrentWeek || activeWeek.isSaved === false) {
         const changed = syncProjectsToSpecificWeek(activeWeek); 
         if (isNew || changed) {
             window.triggerSave();
@@ -1935,18 +1938,14 @@
     const targetCat = data.categories[idx];
     const isUsed = data.projects.some(p => p.cat === targetCat) || data.sales.some(s => s.cat === targetCat);
     
-    const performDelete = () => {
-      data.categories.splice(idx, 1);
-      window.triggerSave();
-      renderCategoryList();
-      populateCatSelects();
-    };
-
     if(isUsed) {
-      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다. 그래도 삭제하시겠습니까? (기존 데이터는 유지됩니다)`, performDelete);
-    } else {
-      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 삭제하시겠습니까?`, performDelete);
+      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 데이터는 유지됩니다)`)) return;
     }
+    
+    data.categories.splice(idx, 1);
+    window.triggerSave();
+    renderCategoryList();
+    populateCatSelects();
   };
 
   function populateCatSelects(selectedVal = null) {
@@ -2053,7 +2052,8 @@
       data.projects.push(obj);
     }
     
-    if(activeWeek && activeWeek.isSaved === false) {
+    const currentRangeId = getWeekRange(new Date()).id;
+    if(activeWeek && (activeWeek.isSaved === false || activeWeek.id === currentRangeId)) {
         syncProjectsToSpecificWeek(activeWeek);
     }
 
@@ -2063,7 +2063,9 @@
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
-      if(activeWeek && activeWeek.isSaved === false) {
+      
+      const currentRangeId = getWeekRange(new Date()).id;
+      if(activeWeek && (activeWeek.isSaved === false || activeWeek.id === currentRangeId)) {
           syncProjectsToSpecificWeek(activeWeek);
       }
       window.triggerSave(); updateAllUI();
@@ -2204,7 +2206,7 @@
     window.triggerSave();
     window.renderSales();
     window.closeModal('modal-sales');
-    window.showToast('매출 데이터가 정상적으로 처리되었습니다.');
+    window.showToast('매출 데이터가 저장되었습니다.');
   };
 
   window.delSales = function() {
@@ -2287,73 +2289,6 @@
       window.triggerSave();
       updateAllUI();
     });
-  };
-
-  // --- 15. BACKUP & RESET ---
-  window.exportData = function() {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `에이블컴_데이터백업_${fmtDate(new Date())}.json`;
-    link.click();
-  };
-
-  window.importData = function(ev) {
-    const file = ev.target.files[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = (e) => {
-      try {
-        const parsed = JSON.parse(e.target.result);
-        if (!confirm('백업 파일을 가져와 현재 시스템의 데이터를 덮어쓰시겠습니까?\n(기존 데이터는 모두 삭제됩니다)')) {
-          ev.target.value = '';
-          return;
-        }
-        data = applyMigration({ ...data, ...parsed });
-        window.triggerSave();
-        updateAllUI();
-        window.showToast('데이터가 성공적으로 복구되었습니다.');
-        window.goView('dashboard');
-      } catch(err) {
-        alert('가져오기 실패: 올바른 JSON 백업 파일이 아닙니다.');
-      }
-      ev.target.value = ''; 
-    };
-    r.readAsText(file);
-  };
-
-  window.openResetModal = function() {
-    document.getElementById('reset-keyword').value = '';
-    window.openModal('modal-reset');
-  };
-
-  window.executeReset = function() {
-    const keyword = document.getElementById('reset-keyword').value;
-    if (keyword !== 'ABLECOM') {
-      window.showToast('입력 키워드가 일치하지 않습니다.');
-      return;
-    }
-    
-    data = {
-      projects: [],
-      categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
-      schedules: [],
-      archives: [],
-      sales: [] 
-    };
-    
-    window.triggerSave();
-    updateAllUI();
-    window.closeModal('modal-reset');
-    window.showToast('시스템이 완전히 초기화되었습니다.');
-    window.goView('dashboard');
-  };
-
-  window.changeDbPath = function() {
-    const p = document.getElementById('db-path-select').value;
-    localStorage.setItem('ablework_db_path', p);
-    location.reload();
   };
 </script>
 </body>
