@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -30,145 +31,38 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-  body {
-    font-family: var(--sans);
-    color: var(--ink);
-    background: var(--bg);
-    font-size: 14px;
-    line-height: 1.55;
-    font-weight: 400;
-    -webkit-font-smoothing: antialiased;
-  }
-
+  html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
   button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
   input, textarea, select { font-family: inherit; color: inherit; outline: none; }
 
   /* ===== Login Screen ===== */
-  #login-overlay {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
-  }
-  .login-box {
-    background: var(--bg-elev); padding: 40px 30px; border-radius: 8px;
-    box-shadow: var(--shadow-md); width: 100%; max-width: 360px; text-align: center;
-    border: 1px solid var(--line);
-  }
+  #login-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+  .login-box { background: var(--bg-elev); padding: 40px 30px; border-radius: 8px; box-shadow: var(--shadow-md); width: 100%; max-width: 360px; text-align: center; border: 1px solid var(--line); }
   .login-box .form-group { text-align: left; margin-bottom: 16px; }
 
   /* ===== Layout ===== */
-  .app {
-    display: none; /* hidden until logged in */
-    grid-template-columns: 240px 1fr;
-    min-height: 100vh;
-  }
-
-  /* ===== Sidebar ===== */
-  .sidebar {
-    background: var(--ink);
-    color: #E8E4DC;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    border-right: 1px solid #0F1626;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .brand {
-    padding: 28px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .brand-mark {
-    font-family: var(--serif);
-    font-weight: 700;
-    font-size: 19px;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-    color: #F4EFE3;
-  }
-  .brand-mark::before {
-    content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: var(--brass-soft);
-    border-radius: 50%;
-    margin-right: 10px;
-    vertical-align: middle;
-    transform: translateY(-2px);
-  }
-  .brand-sub {
-    font-size: 11px;
-    color: #9A9384;
-    margin-top: 6px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 500;
-  }
+  .app { display: none; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--ink); color: #E8E4DC; position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 1px solid #0F1626; display: flex; flex-direction: column; }
+  .brand { padding: 28px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .brand-mark { font-family: var(--serif); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; line-height: 1.15; color: #F4EFE3; }
+  .brand-mark::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--brass-soft); border-radius: 50%; margin-right: 10px; vertical-align: middle; transform: translateY(-2px); }
+  .brand-sub { font-size: 11px; color: #9A9384; margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
 
   .nav { padding: 18px 12px; flex: 1; }
-  .nav-label {
-    font-size: 10px;
-    color: #6B6655;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    padding: 14px 14px 8px;
-    font-weight: 600;
-  }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 10px 14px;
-    color: #C7C0B2;
-    font-size: 13.5px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .15s ease;
-    border-left: 2px solid transparent;
-    margin: 1px 0;
-  }
+  .nav-label { font-size: 10px; color: #6B6655; letter-spacing: 0.18em; text-transform: uppercase; padding: 14px 14px 8px; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 14px; color: #C7C0B2; font-size: 13.5px; border-radius: 6px; cursor: pointer; transition: all .15s ease; border-left: 2px solid transparent; margin: 1px 0; }
   .nav-item:hover { background: rgba(255,255,255,0.04); color: #F4EFE3; }
-  .nav-item.active {
-    background: rgba(201,163,94,0.10);
-    color: #F4EFE3;
-    border-left-color: var(--brass-soft);
-    font-weight: 500;
-  }
+  .nav-item.active { background: rgba(201,163,94,0.10); color: #F4EFE3; border-left-color: var(--brass-soft); font-weight: 500; }
   .nav-icon { width: 16px; text-align: center; opacity: 0.85; }
 
-  /* ===== Main ===== */
   .main { padding: 36px 44px 60px; max-width: 100%; overflow-x: hidden; }
-
-  .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 30px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar-title {
-    font-family: var(--serif);
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--ink);
-    line-height: 1.1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .topbar-title { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1.1; display: flex; align-items: center; gap: 10px; }
   .topbar-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .topbar-actions { display: flex; gap: 8px; align-items: center; }
 
-  /* ===== Buttons ===== */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500;
-    transition: all .15s ease; border: 1px solid transparent; line-height: 1; white-space: nowrap;
-  }
+  /* ===== Buttons & UI ===== */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500; transition: all .15s ease; border: 1px solid transparent; line-height: 1; white-space: nowrap; }
   .btn-primary { background: var(--ink); color: #F4EFE3; }
   .btn-primary:hover { background: #28324B; }
   .btn-secondary { background: var(--bg-elev); color: var(--ink); border-color: var(--line-strong); }
@@ -179,67 +73,42 @@
   .btn-ghost:hover { background: rgba(26,34,56,0.04); color: var(--ink); }
   .btn-sm { padding: 5px 10px; font-size: 11.5px; }
 
-  /* ===== Views & Cards ===== */
   .view { display: none; }
   .view.active { display: block; animation: fadeIn .25s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-  .card {
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm);
-  }
-  
-  .section-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
-  }
+  .card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm); }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
   .section-title { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--ink); }
   .section-meta { font-size: 11px; color: var(--muted); }
 
-  /* ===== Custom Scrollbar ===== */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
   /* ===== Calendar & Dashboard ===== */
-  .cal-day {
-    padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
-    border: 1px solid transparent; min-height: 40px; display: flex; flex-direction: column; align-items: center;
-  }
+  .cal-day { padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; min-height: 40px; display: flex; flex-direction: column; align-items: center; }
   .cal-day:hover { background: var(--paper); border-color: var(--line); }
   .cal-day.active { background: rgba(168,120,56,0.1); border-color: var(--brass-soft); color: var(--ink); font-weight: bold; }
-  
-  .stat-card {
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 18px; border-left: 3px solid var(--brass);
-  }
+  .stat-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 18px; border-left: 3px solid var(--brass); }
   .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
   .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); }
   .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
   /* ===== Weekly Editor ===== */
-  .week-header {
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px;
-    padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;
-  }
+  .week-header { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
   .category-block { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
-  .cat-head {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 18px; background: var(--paper); border-bottom: 1px solid var(--line);
-  }
+  .cat-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: var(--paper); border-bottom: 1px solid var(--line); }
   .cat-title { font-family: var(--serif); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .badge { background: var(--ink); color: #fff; font-family: var(--sans); font-size: 10px; padding: 2px 6px; border-radius: 3px; }
-  
   .proj-row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
   .proj-row:last-child { border-bottom: none; }
   .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .proj-name { font-weight: 600; font-size: 14px; }
   .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .proj-grid label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .proj-grid textarea {
-    width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px;
-    background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px;
-  }
+  .proj-grid textarea { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px; background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px; }
   .proj-grid textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
 
   /* ===== Sales Management Styles ===== */
@@ -253,26 +122,21 @@
   .sc-title { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; font-weight: 500; }
   .sc-value { font-family: var(--serif); font-size: 34px; font-weight: 600; color: var(--ink); margin-bottom: 6px; line-height: 1; }
   .sc-desc { font-size: 11.5px; color: var(--muted); }
-
   .sales-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; }
   .sales-table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 12px 6px; font-weight: 600; color: var(--ink); }
   .sales-table td { border-bottom: 1px solid var(--line); padding: 10px 6px; vertical-align: middle; }
   .st-cat { font-weight: 600; background: #FAF9F6; width: 45px; border-right: 1px solid var(--line); }
   .st-subtotal { background: #F4EFE3; font-weight: 600; color: var(--ink); }
-  .st-name { text-align: left; font-weight: 500; max-width: 150px; line-height: 1.3; cursor: pointer; color: var(--ink-2); }
+  .st-name { text-align: left; font-weight: 500; line-height: 1.3; cursor: pointer; color: var(--ink-2); }
   .st-name:hover { text-decoration: underline; color: var(--brass); }
   .st-owner { font-size: 11px; color: var(--muted); }
-  
   .sales-month-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 10px; }
   .sales-month-grid > div > label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
   .sales-month-grid > div > input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 8px; font-size: 12px; }
   .sales-month-grid > div > input:focus { border-color: var(--brass); }
 
   /* ===== Modals & Toasts ===== */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px);
-    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
-  }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 400px; padding: 28px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;}
   .modal h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
@@ -282,17 +146,12 @@
   .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); padding: 10px 12px; border-radius: 4px; font-size: 13px; }
   .form-group input:focus, .form-group select:focus { border-color: var(--brass); }
 
-  .toast {
-    position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3;
-    padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md);
-    transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 200; border-left: 3px solid var(--brass);
-  }
+  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3; padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 200; border-left: 3px solid var(--brass); }
   .toast.show { transform: translateY(0); opacity: 1; }
   
   .table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
-
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
@@ -301,7 +160,7 @@
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-sales, #view-history, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-sales, #view-history, #view-settings, #weekly-container, .card, #header-actions, .toast, .sales-summary-grid { display: none !important; }
     
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly, #view-history { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
@@ -359,15 +218,13 @@
       <div class="nav-label">Menu</div>
       <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
       <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
-      
-      <!-- NEW: 프로젝트 진행 내역 -->
       <div class="nav-item" data-view="history" onclick="window.goView('history')"><span class="nav-icon">◧</span> 프로젝트 진행 내역</div>
-      
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
       <div class="nav-item" data-view="sales" onclick="window.goView('sales')"><span class="nav-icon">￦</span> 매출 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
       <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
+      <div class="nav-item" id="nav-settings" data-view="settings" onclick="window.goView('settings')" style="display:none;"><span class="nav-icon">🛠</span> 설정 및 백업</div>
     </nav>
     <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
       <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
@@ -388,10 +245,9 @@
       </div>
 
       <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
-        <!-- 좌측 영역: 달력 및 통계 -->
+        <!-- 좌측 영역 -->
         <div style="flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px;">
-          
-          <!-- 월간 예상 매출 TOTAL을 최상단으로 이동 -->
+          <!-- 월간 매출 TOTAL (최상단) -->
           <div class="card" style="padding: 18px; background: rgba(168,120,56,0.04); border-left: 3px solid var(--brass);">
              <div class="section-head" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px dashed var(--line);">
                  <div class="section-title" style="font-size:14px;" id="dash-sales-month-label">월간 예상 매출 TOTAL</div>
@@ -401,7 +257,6 @@
              </div>
           </div>
 
-          <!-- 달력 -->
           <div class="card" style="padding: 20px;">
             <div class="section-head">
               <div class="section-title">주요 일정 달력</div>
@@ -417,7 +272,6 @@
             <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;"></div>
           </div>
 
-          <!-- 요약 통계 -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
              <div class="stat-card">
                <div class="stat-label">진행 중인 프로젝트</div>
@@ -481,7 +335,6 @@
           
           <div style="padding: 0 24px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center; white-space: nowrap;">
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">보고 주차</div>
-            <!-- Title & Status Badge injected here -->
             <div id="wk-title" style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-top:2px; display:flex; align-items:center; justify-content:center;">로딩중...</div>
           </div>
           
@@ -507,7 +360,7 @@
       <div id="print-area"></div>
     </section>
 
-    <!-- NEW: 3. PROJECT HISTORY VIEW -->
+    <!-- 3. PROJECT HISTORY VIEW -->
     <section class="view" id="view-history">
       <div class="topbar">
         <div>
@@ -515,8 +368,9 @@
           <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 특정 프로젝트의 진행 이력을 모아봅니다.</div>
         </div>
         <div class="topbar-actions">
+          <!-- 월별 필터 추가 -->
           <select id="history-month-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
-            <option value="ALL">전체 기간 (월별)</option>
+            <option value="">전체 기간 (월별)</option>
           </select>
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
             <option value="ALL">전체 프로젝트 종합</option>
@@ -598,7 +452,7 @@
           <thead>
             <tr>
               <th style="width:45px;">구분</th>
-              <th style="text-align:left; padding-left:12px;">사업명</th>
+              <th style="width:25%; text-align:left; padding-left:12px;">사업명</th>
               <th style="width:50px;">담당</th>
               <th style="width:70px; background:#F4EFE3;">계</th>
               <th style="width:50px;">1월</th><th style="width:50px;">2월</th><th style="width:50px;">3월</th>
@@ -644,6 +498,42 @@
           <thead><tr><th>접속 아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead>
           <tbody id="accounts-tbody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- 8. SETTINGS / BACKUP VIEW (Admin Only) -->
+    <section class="view" id="view-settings">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">설정 및 데이터 백업</div>
+          <div class="topbar-sub">시스템 전체 데이터 백업, 복구 및 초기화를 진행합니다. (최고관리자 전용)</div>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="section-head">
+          <div class="section-title">데이터 백업 및 복구</div>
+          <div class="section-meta">JSON 형식</div>
+        </div>
+        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
+          모든 데이터(주간보고, 프로젝트, 매출계획, 아카이브)를 단일 JSON 파일로 내보내거나, 백업 파일에서 복원할 수 있습니다.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="window.exportData()">⇩ 전체 데이터 내보내기</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⇧ 백업파일 가져오기</button>
+          <input id="import-file" type="file" accept=".json" style="display:none" onchange="window.importData(event)">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-head">
+          <div class="section-title" style="color:var(--accent);">시스템 초기화</div>
+          <div class="section-meta">Danger Zone</div>
+        </div>
+        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
+          모든 데이터를 삭제하고 초기 상태로 되돌립니다. 이 작업은 되돌릴 수 없으니 반드시 백업 후 진행하세요.
+        </p>
+        <button class="btn btn-danger" onclick="window.confirmReset()">⚠ 전체 데이터 초기화</button>
       </div>
     </section>
 
@@ -818,9 +708,9 @@
   let smEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-final-v4";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v21";
 
-  // [방탄 로직 1] DB 연결 지연/차단 시 무조건 뚫고 들어가는 하드코딩 계정
+  // [방탄 로직] DB 오류/네트워크 단절 대비 하드코딩된 기본 계정
   const hardcodedUsers = {
       'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
       'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
@@ -831,7 +721,6 @@
       'sunwoo.choi': { id: 'sunwoo.choi', pw: 'ablecom+123', name: '최선우', role: 'user' }
   };
 
-  // --- 2. Data Migration & Local Setup ---
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
     if (migrated.currentWeek) {
@@ -843,7 +732,7 @@
     }
     if (migrated.archives) {
         migrated.archives.forEach(a => {
-            if (typeof a.isSaved === 'undefined') a.isSaved = true; // 과거 데이터 호환성
+            if (typeof a.isSaved === 'undefined') a.isSaved = true; 
         });
         migrated.archives.sort((a, b) => b.id.localeCompare(a.id));
     }
@@ -873,7 +762,6 @@
   
   initSalesYears();
 
-  // --- 3. Window Core Functions ---
   window.showToast = function(msg) {
     const el = document.getElementById('toast');
     el.textContent = msg; el.classList.add('show');
@@ -901,9 +789,12 @@
     updateAllUI();
   };
 
+  // [버그 해결] 무한 핑퐁 방지 플래그. 화면을 렌더링 중일 때는 자동 저장을 하지 않음
+  let isRendering = false;
+
   window.triggerSave = function() {
+    if (isRendering) return; // 렌더링 도중 발생한 변경은 무시
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
-    // [버그 해결 2] 서버 저장 스위치가 켜져있을 때만 (안전할 때만) 저장
     if (isFirebaseMode && dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
@@ -954,7 +845,7 @@
     db = getFirestore(app);
   } catch(e) { console.error("Firebase init fail", e); }
 
-  // --- 5. Unbreakable Custom Login System ---
+  // --- 5. Custom Login System ---
   function safeGetSession() {
       try { return sessionStorage.getItem('ablework_session'); } catch(e) { return null; }
   }
@@ -984,12 +875,10 @@
         return;
     }
     errEl.style.display = "none";
-
-    // [버그 해결 1] 입력 도중 포커스가 남아있어 데이터 로드가 차단되는 현상 강제 해결
     if(document.activeElement) document.activeElement.blur();
 
     try {
-        if (!db) throw new Error("DB Initialization failed");
+        if (!db) throw new Error("DB Init failed");
         
         const accRef = doc(db, 'ablework', 'company_main', 'accounts', idInput);
         const accSnap = await getDoc(accRef);
@@ -1004,7 +893,6 @@
         } else {
             if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) {
                 const userData = hardcodedUsers[idInput];
-                
                 if (idInput === 'ablecom') {
                     for(let key in hardcodedUsers) {
                         try { await setDoc(doc(db, 'ablework', 'company_main', 'accounts', key), hardcodedUsers[key]); } 
@@ -1045,7 +933,6 @@
       location.reload();
   };
 
-  // --- 6. App Initialization (After Login) ---
   function initApp() {
       isAdmin = (currentUser.role === 'admin');
       document.getElementById('current-user-name').textContent = `${currentUser.name} (${currentUser.id})`;
@@ -1054,19 +941,20 @@
 
       if (isAdmin) {
         document.getElementById('nav-accounts').style.display = 'flex';
+        document.getElementById('nav-settings').style.display = 'flex';
         document.getElementById('nav-label-admin').style.display = 'block';
         loadAccounts();
       } else {
         document.getElementById('nav-accounts').style.display = 'none';
+        document.getElementById('nav-settings').style.display = 'none';
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
       isFirebaseMode = true; 
 
       if (db) {
-          // [기존 데이터 100% 복구] 원래 저장되던 정상 경로인 v1으로 다시 지정
+          // [기존 데이터 100% 복구] 원래 저장되던 정상 경로인 v1으로 복구!
           dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
-          
           let isFirstLoad = true;
 
           try {
@@ -1076,8 +964,6 @@
 
                 if (snap.exists()) {
                   const serverData = snap.data();
-                  
-                  // [버그 해결 3] 프리징 방지 (첫 로딩이거나 사용자가 입력하지 않을 때만 화면 다시 그리기)
                   if (isFirstLoad || !isInputting) {
                       data = applyMigration({ ...data, ...serverData });
                       updateAllUI();
@@ -1088,10 +974,7 @@
                   updateAllUI();
                 }
               });
-          } catch(e) { 
-              console.error("Snapshot error:", e); 
-              updateAllUI();
-          }
+          } catch(e) { console.error("Snapshot error:", e); updateAllUI(); }
       } else {
           updateAllUI();
       }
@@ -1115,7 +998,7 @@
       <tr>
         <td style="font-weight:600;">${escapeHtml(a.id)}</td>
         <td>${escapeHtml(a.name)}</td>
-        <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
+        <td>${a.role === 'admin' ? '<span class="badge badge-dark">관리자</span>' : '<span class="badge" style="background:var(--muted)">일반 사용자</span>'}</td>
         <td>
           ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
             <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
@@ -1183,6 +1066,7 @@
 
   // --- 8. UI Render Functions ---
   function updateAllUI() {
+    isRendering = true; // 무한 렌더링 핑퐁(먹통) 완벽 방지
     renderCalendar();
     renderDailySchedules();
     renderDashboardStats();
@@ -1190,8 +1074,9 @@
     loadWeek(displayWeekDate);
     renderArchive();
     renderSales();
-    populateHistorySelect(); // History 콤보박스 최신화
-    renderHistory();         // History View 렌더링
+    populateHistorySelect();
+    renderHistory();
+    isRendering = false;
   }
 
   window.changeCalMonth = function(offset) {
@@ -1354,11 +1239,10 @@
     }
   }
 
-  // --- 9. WEEKLY REPORT ---
+  // --- WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
     const currentRange = getWeekRange(new Date());
-    const isCurrentWeek = (targetRange.id === currentRange.id);
 
     let arch = data.archives.find(a => a.id === targetRange.id);
     let isNew = false;
@@ -1370,7 +1254,7 @@
           start: targetRange.start, 
           end: targetRange.end, 
           categories: [],
-          isSaved: false 
+          isSaved: false // 작성중 상태
       };
       data.archives.push(arch);
       data.archives.sort((a, b) => b.id.localeCompare(a.id));
@@ -1378,12 +1262,11 @@
     }
     activeWeek = arch;
 
-    // 현재 주차(이번 주)이거나, 아직 보관(저장)되지 않은 경우 무조건 프로젝트 업데이트
-    if (isCurrentWeek || activeWeek.isSaved === false) {
-        const changed = syncProjectsToSpecificWeek(activeWeek); 
-        if (isNew || changed) {
-            window.triggerSave();
-        }
+    // [버그 해결] 이번 주(현재 주차)거나, 아직 보관하지 않은 초안일 경우 무조건 전체 프로젝트를 최신화시킴!
+    if (activeWeek.id === currentRange.id || activeWeek.isSaved === false) {
+        syncProjectsToSpecificWeek(activeWeek); 
+        // 렌더링 중(무한 핑퐁)이 아닐 때만 저장 트리거 발동
+        if(!isRendering) window.triggerSave();
     }
     
     renderWeeklyReport();
@@ -1404,8 +1287,6 @@
   };
   
   function syncProjectsToSpecificWeek(weekObj) {
-    let changed = false;
-    
     const applicableProjs = data.projects.filter(p => {
       if (p.status === '진행' || p.status === '보류') return true;
       if (p.status === '완료' || p.status === '실주') {
@@ -1415,8 +1296,7 @@
       return false;
     });
 
-    if (!weekObj.categories) { weekObj.categories = []; changed = true; }
-    const originalCatStr = JSON.stringify(weekObj.categories);
+    if (!weekObj.categories) { weekObj.categories = []; }
 
     weekObj.categories.forEach(c => {
       c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
@@ -1468,19 +1348,16 @@
     });
 
     weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
-    
-    if (originalCatStr !== JSON.stringify(weekObj.categories)) changed = true;
-    return changed;
   }
 
   function renderWeeklyReport() {
     if (!activeWeek) return;
     const titleEl = document.getElementById('wk-title');
     if(titleEl) {
-        const badge = activeWeek.isSaved !== false 
-            ? '<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>'
-            : '<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>';
-        titleEl.innerHTML = `${activeWeek.title} ${badge}`;
+        const badgeHtml = activeWeek.isSaved === true
+            ? `<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>`
+            : `<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>`;
+        titleEl.innerHTML = `${activeWeek.title} ${badgeHtml}`;
     }
     
     const rangeEl = document.getElementById('wk-range');
@@ -1643,197 +1520,150 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // --- NEW: 10. PROJECT HISTORY (프로젝트 진행 내역) ---
+  // --- NEW: PROJECT HISTORY (프로젝트 진행 내역) ---
   function populateHistorySelect() {
-    const pSel = document.getElementById('history-proj-select');
-    if(pSel) {
-        const currentVal = pSel.value;
-        const projMap = new Map();
+    const selMonth = document.getElementById('history-month-select');
+    const selProj = document.getElementById('history-proj-select');
+    if(!selMonth || !selProj) return;
 
-        data.projects.forEach(p => projMap.set(p.id, p.name));
-        data.archives.forEach(a => {
-            if(a.isSaved === true) {
-                a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
-            }
-        });
-
-        let html = '<option value="ALL">전체 프로젝트 종합</option>';
-        Array.from(projMap.entries()).forEach(([id, name]) => {
-            html += `<option value="${id}">${escapeHtml(name)}</option>`;
-        });
-        pSel.innerHTML = html;
-        if (currentVal && (projMap.has(currentVal) || currentVal === 'ALL')) {
-            pSel.value = currentVal;
+    // 월별 추출
+    const months = new Set();
+    data.archives.forEach(a => {
+        if(a.isSaved === true) {
+            const m = a.start.substring(0, 7); // yyyy-mm
+            months.add(m);
         }
-    }
+    });
+    
+    const curMonthVal = selMonth.value;
+    let mHtml = '<option value="">전체 기간 (월별)</option>';
+    Array.from(months).sort().reverse().forEach(m => {
+        mHtml += `<option value="${m}">${m.replace('-','년 ')}월</option>`;
+    });
+    selMonth.innerHTML = mHtml;
+    if(months.has(curMonthVal)) selMonth.value = curMonthVal;
 
-    const mSel = document.getElementById('history-month-select');
-    if(mSel) {
-        const currentMVal = mSel.value;
-        const monthSet = new Set();
-        data.archives.forEach(a => {
-            if(a.isSaved === true && a.start) {
-                monthSet.add(a.start.substring(0, 7)); 
-            }
-        });
-        
-        let mHtml = '<option value="ALL">전체 기간 (월별)</option>';
-        Array.from(monthSet).sort().reverse().forEach(m => {
-            const [y, mo] = m.split('-');
-            mHtml += `<option value="${m}">${y}년 ${parseInt(mo, 10)}월</option>`;
-        });
-        mSel.innerHTML = mHtml;
-        if (currentMVal && (monthSet.has(currentMVal) || currentMVal === 'ALL')) {
-            mSel.value = currentMVal;
+    // 프로젝트 추출
+    const curProjVal = selProj.value;
+    const projMap = new Map();
+    data.projects.forEach(p => projMap.set(p.id, p.name));
+    data.archives.forEach(a => {
+        if(a.isSaved === true) {
+            a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
         }
-    }
+    });
+
+    let pHtml = '<option value="ALL">전체 프로젝트 종합</option>';
+    Array.from(projMap.entries()).forEach(([id, name]) => {
+        pHtml += `<option value="${id}">${escapeHtml(name)}</option>`;
+    });
+    selProj.innerHTML = pHtml;
+    if(projMap.has(curProjVal) || curProjVal === 'ALL') selProj.value = curProjVal;
   }
 
   window.renderHistory = function() {
-    const pSel = document.getElementById('history-proj-select');
-    const mSel = document.getElementById('history-month-select');
+    const selMonth = document.getElementById('history-month-select');
+    const selProj = document.getElementById('history-proj-select');
     const container = document.getElementById('history-container');
-    if(!pSel || !mSel || !container) return;
+    if(!selMonth || !selProj || !container) return;
 
-    const projId = pSel.value;
-    const monthVal = mSel.value;
+    const monthVal = selMonth.value;
+    const projId = selProj.value;
 
-    let archives = data.archives.filter(a => a.isSaved === true);
+    let historyItems = [];
 
-    if (monthVal !== 'ALL') {
-        archives = archives.filter(a => a.start.substring(0, 7) === monthVal);
-    }
+    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+        if(monthVal && !arch.start.startsWith(monthVal)) return; // 월별 필터
 
-    archives.sort((a,b) => b.id.localeCompare(a.id));
+        arch.categories.forEach(cat => {
+            if(projId === 'ALL') {
+                cat.projects.forEach(p => {
+                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                        historyItems.push({ weekTitle: arch.title, range: `${arch.start} ~ ${arch.end}`, projName: p.name, prev: p.prev, plan: p.plan, id: arch.id });
+                    }
+                });
+            } else {
+                const p = cat.projects.find(x => x.id === projId);
+                if (p && ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) )) {
+                    historyItems.push({ weekTitle: arch.title, range: `${arch.start} ~ ${arch.end}`, projName: p.name, prev: p.prev, plan: p.plan, id: arch.id });
+                }
+            }
+        });
+    });
 
-    if(archives.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">해당 조건에 맞는 보고 내역이 없습니다.</div>`;
+    historyItems.sort((a,b) => b.id.localeCompare(a.id));
+
+    if(historyItems.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">해당 조건에 부합하는 저장된 보고 내역이 없습니다.</div>`;
         return;
     }
 
-    let html = '';
-
-    archives.forEach(arch => {
-        let projItems = [];
-        arch.categories.forEach(cat => {
-            cat.projects.forEach(p => {
-                if (projId === 'ALL' || p.id === projId) {
-                    if ((p.prev && p.prev.trim()) || (p.plan && p.plan.trim())) {
-                        projItems.push({
-                            catName: cat.name,
-                            projName: p.name,
-                            prev: p.prev,
-                            plan: p.plan
-                        });
-                    }
-                }
-            });
-        });
-
-        if (projItems.length > 0) {
-            html += `
-            <div class="card" style="margin-bottom: 16px; padding: 18px 24px;">
-                <div class="section-head" style="margin-bottom: 12px; padding-bottom: 8px;">
-                    <div class="section-title" style="font-size: 15px; color: var(--brass); display:flex; align-items:center;">
-                        <span style="display:inline-block; width:6px; height:6px; background:var(--brass-soft); border-radius:50%; margin-right:8px;"></span>
-                        ${escapeHtml(arch.title)}
-                        <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:12px; font-family:var(--mono);">[ ${arch.start} ~ ${arch.end} ]</span>
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${projItems.map(item => `
-                        <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
-                            <div style="font-size:13px; font-weight:600; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-                                <span style="font-size:10px; background:rgba(26,34,56,0.06); padding:3px 6px; border-radius:3px; color:var(--ink-2);">${escapeHtml(item.catName)}</span>
-                                ${escapeHtml(item.projName)}
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                                <div>
-                                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; border-bottom:1px dashed var(--line); padding-bottom:4px;">주간 실적</div>
-                                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:30px;">${escapeHtml(item.prev) || '-'}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; border-bottom:1px dashed var(--line); padding-bottom:4px;">차주 계획</div>
-                                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:30px;">${escapeHtml(item.plan) || '-'}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
+    container.innerHTML = historyItems.map(item => `
+        <div class="card" style="margin-bottom: 16px; padding: 18px 24px;">
+            <div class="section-head" style="margin-bottom: 12px; padding-bottom: 8px;">
+                <div class="section-title" style="font-size: 15px; color: var(--brass); display:flex; align-items:center;">
+                    <span style="display:inline-block; width:6px; height:6px; background:var(--brass-soft); border-radius:50%; margin-right:8px;"></span>
+                    ${projId === 'ALL' ? `<span style="color:var(--ink); margin-right:10px;">[${escapeHtml(item.projName)}]</span>` : ''} 
+                    ${escapeHtml(item.weekTitle)}
+                    <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:12px; font-family:var(--mono);">[ ${item.range} ]</span>
                 </div>
             </div>
-            `;
-        }
-    });
-
-    if (html === '') {
-        html = `<div style="text-align:center; padding:40px; color:var(--muted);">선택한 조건에 등록된 내역이 없습니다.</div>`;
-    }
-
-    container.innerHTML = html;
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
+                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:8px; border-bottom:1px dashed var(--line); padding-bottom:6px;">주간 실적</div>
+                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:40px;">${escapeHtml(item.prev) || '-'}</div>
+                </div>
+                <div style="background:var(--paper); padding:14px; border-radius:4px; border:1px solid var(--line);">
+                    <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:8px; border-bottom:1px dashed var(--line); padding-bottom:6px;">차주 계획</div>
+                    <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2); min-height:40px;">${escapeHtml(item.plan) || '-'}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
   };
 
   window.printHistory = function() {
-    const pSel = document.getElementById('history-proj-select');
-    const mSel = document.getElementById('history-month-select');
-    if(!pSel || !mSel) return window.showToast('옵션을 선택해주세요.');
+    const selMonth = document.getElementById('history-month-select');
+    const selProj = document.getElementById('history-proj-select');
+    
+    const monthVal = selMonth.value;
+    const projId = selProj.value;
+    const projName = selProj.options[selProj.selectedIndex].text;
 
-    const projId = pSel.value;
-    const monthVal = mSel.value;
+    let historyItems = [];
+    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+        if(monthVal && !arch.start.startsWith(monthVal)) return;
 
-    let projNameText = pSel.options[pSel.selectedIndex].text;
-    let monthNameText = mSel.options[mSel.selectedIndex].text;
-
-    let archives = data.archives.filter(a => a.isSaved === true);
-    if (monthVal !== 'ALL') {
-        archives = archives.filter(a => a.start.substring(0, 7) === monthVal);
-    }
-    archives.sort((a,b) => b.id.localeCompare(a.id));
-
-    let rowsHtml = '';
-    let hasData = false;
-
-    archives.forEach(arch => {
-        let projItems = [];
         arch.categories.forEach(cat => {
-            cat.projects.forEach(p => {
-                if (projId === 'ALL' || p.id === projId) {
-                    if ((p.prev && p.prev.trim()) || (p.plan && p.plan.trim())) {
-                        projItems.push({
-                            catName: cat.name,
-                            projName: p.name,
-                            prev: p.prev,
-                            plan: p.plan
-                        });
+            if(projId === 'ALL') {
+                cat.projects.forEach(p => {
+                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                        historyItems.push({ weekTitle: arch.title, range: `${arch.start} ~ ${arch.end}`, projName: p.name, prev: p.prev, plan: p.plan, id: arch.id });
                     }
+                });
+            } else {
+                const p = cat.projects.find(x => x.id === projId);
+                if(p && ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) )) {
+                    historyItems.push({ weekTitle: arch.title, range: `${arch.start} ~ ${arch.end}`, projName: p.name, prev: p.prev, plan: p.plan, id: arch.id });
                 }
-            });
+            }
         });
-
-        if (projItems.length > 0) {
-            hasData = true;
-            rowsHtml += `
-                <tr>
-                    <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#FAF9F6 !important; border-bottom:2px solid #555;" colspan="3">
-                        ${escapeHtml(arch.title)} <span style="font-size:9pt; font-weight:normal; color:#666;">(${arch.start} ~ ${arch.end})</span>
-                    </td>
-                </tr>
-            `;
-            projItems.forEach(item => {
-                rowsHtml += `
-                <tr>
-                    <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#fff !important; font-size:9.5pt;">
-                        <span style="font-size:8pt; color:#666; display:block; margin-bottom:2px;">[${escapeHtml(item.catName)}]</span>
-                        ${escapeHtml(item.projName)}
-                    </td>
-                    <td class="print-content" style="white-space:pre-wrap; padding:10px;">${escapeHtml(item.prev) || '-'}</td>
-                    <td class="print-content" style="white-space:pre-wrap; padding:10px;">${escapeHtml(item.plan) || '-'}</td>
-                </tr>
-                `;
-            });
-        }
     });
 
-    if (!hasData) return window.showToast('인쇄할 내역이 없습니다.');
+    historyItems.sort((a,b) => b.id.localeCompare(a.id));
+
+    if(historyItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
+
+    let rowsHtml = historyItems.map(item => `
+        <tr>
+            <td style="text-align:center; vertical-align:middle; font-weight:bold; background:#FAF9F6 !important;">
+                ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
+            </td>
+            ${projId === 'ALL' ? `<td style="text-align:center; vertical-align:middle; font-weight:bold; font-size:9.5pt;">${escapeHtml(item.projName)}</td>` : ''}
+            <td class="print-content" style="white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
+            <td class="print-content" style="white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.plan) || '-'}</td>
+        </tr>
+    `).join('');
 
     const printHtml = `
       <div class="print-header-container">
@@ -1841,15 +1671,16 @@
         <div class="print-header">
           <h1>프로젝트 진행 내역</h1>
           <div class="print-dept">전략영업본부</div>
-          <div class="print-date">기간: ${escapeHtml(monthNameText)} | 필터: ${escapeHtml(projNameText)}</div>
+          <div class="print-date">${projId === 'ALL' ? '전체 사업 종합' : '사업명 : ' + escapeHtml(projName)} ${monthVal ? `(${monthVal})` : ''}</div>
         </div>
       </div>
       <table class="print-table">
         <thead>
           <tr>
-            <th style="width: 20%;">프로젝트 / 보고주차</th>
-            <th style="width: 40%;">주간 실적</th>
-            <th style="width: 40%;">차주 계획</th>
+            <th style="width: 18%;">보고 주차</th>
+            ${projId === 'ALL' ? `<th style="width: 18%;">사업명</th>` : ''}
+            <th style="width: ${projId === 'ALL' ? '32%' : '41%'};">주간 실적</th>
+            <th style="width: ${projId === 'ALL' ? '32%' : '41%'};">차주 계획</th>
           </tr>
         </thead>
         <tbody>
@@ -1863,7 +1694,6 @@
     printArea.getBoundingClientRect();
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
-
 
   // --- 11. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
@@ -1938,14 +1768,18 @@
     const targetCat = data.categories[idx];
     const isUsed = data.projects.some(p => p.cat === targetCat) || data.sales.some(s => s.cat === targetCat);
     
+    const performDelete = () => {
+      data.categories.splice(idx, 1);
+      window.triggerSave();
+      renderCategoryList();
+      populateCatSelects();
+    };
+
     if(isUsed) {
-      if(!confirm(`[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다.\n그래도 삭제하시겠습니까?\n(기존 데이터는 유지됩니다)`)) return;
+      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 사용 중인 사업/매출이 있습니다. 그래도 삭제하시겠습니까? (기존 데이터는 유지됩니다)`, performDelete);
+    } else {
+      window.showConfirm('카테고리 삭제', `[${targetCat}] 카테고리를 삭제하시겠습니까?`, performDelete);
     }
-    
-    data.categories.splice(idx, 1);
-    window.triggerSave();
-    renderCategoryList();
-    populateCatSelects();
   };
 
   function populateCatSelects(selectedVal = null) {
@@ -2052,9 +1886,12 @@
       data.projects.push(obj);
     }
     
-    const currentRangeId = getWeekRange(new Date()).id;
-    if(activeWeek && (activeWeek.isSaved === false || activeWeek.id === currentRangeId)) {
-        syncProjectsToSpecificWeek(activeWeek);
+    // 현재 주차(이번 주)인 경우에만 마스터 변동사항 즉각 연동
+    if(activeWeek) {
+        const currentRange = getWeekRange(new Date());
+        if (activeWeek.id === currentRange.id) {
+            syncProjectsToSpecificWeek(activeWeek);
+        }
     }
 
     window.triggerSave(); updateAllUI(); window.closeModal('modal-project');
@@ -2063,10 +1900,11 @@
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
-      
-      const currentRangeId = getWeekRange(new Date()).id;
-      if(activeWeek && (activeWeek.isSaved === false || activeWeek.id === currentRangeId)) {
-          syncProjectsToSpecificWeek(activeWeek);
+      if(activeWeek) {
+          const currentRange = getWeekRange(new Date());
+          if (activeWeek.id === currentRange.id) {
+              syncProjectsToSpecificWeek(activeWeek);
+          }
       }
       window.triggerSave(); updateAllUI();
     });
@@ -2080,6 +1918,7 @@
     const sList = data.sales.filter(s => s.year === year);
     
     let tYr=0, tH1=0, tH2=0, tProf=0;
+    let globalM = Array(12).fill(0); 
     
     const grouped = {};
     data.categories.forEach(c => grouped[c] = []);
@@ -2100,6 +1939,7 @@
           for(let m=1; m<=12; m++) {
              const v = parseFloat(i['m'+m]) || 0;
              cM[m-1] += v;
+             globalM[m-1] += v; 
              cYr += v;
              tYr += v;
              if(m<=6) tH1 += v; else tH2 += v;
@@ -2133,6 +1973,15 @@
     if(tbody) {
         if(html === '') {
            html = `<tr><td colspan="16" style="padding:40px; text-align:center; color:var(--muted);">해당 연도의 매출 계획 데이터가 없습니다. 사업 추가를 눌러 등록하세요.</td></tr>`;
+        } else {
+           const totalHtml = `
+             <tr style="background:var(--ink); color:var(--bg-elev); font-weight:700;">
+               <td colspan="3" style="text-align:center; padding:12px;">${year}년 전체 매출 TOTAL</td>
+               <td style="color:var(--brass-soft);">${fmtNum(tYr)}</td>
+               ${globalM.map(v => `<td>${fmtNum(v)}</td>`).join('')}
+             </tr>
+           `;
+           html = totalHtml + html;
         }
         tbody.innerHTML = html;
     }
@@ -2247,7 +2096,7 @@
     const tbody = document.getElementById('archive-tbody');
     if(!tbody) return;
     
-    const savedArchives = (data.archives || []).filter(a => a.isSaved !== false);
+    const savedArchives = (data.archives || []).filter(a => a.isSaved === true);
 
     if(savedArchives.length === 0) {
       tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고 탭에서 [보고서 저장]을 누르면 이곳에 영구 보존됩니다.</span></td></tr>`;
@@ -2272,7 +2121,9 @@
           </td>
           <td style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
           <td>${cnt}건</td>
-          <td><button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="event.stopPropagation(); window.deleteArchive('${a.id}')">삭제</button></td>
+          <td>
+             <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="event.stopPropagation(); window.deleteArchive('${a.id}')">삭제</button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -2289,6 +2140,59 @@
       window.triggerSave();
       updateAllUI();
     });
+  };
+
+  // --- 15. SETTINGS / BACKUP ---
+  window.exportData = function() {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `에이블컴_데이터백업_${fmtDate(new Date())}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.importData = function(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if(imported && typeof imported === 'object') {
+          window.showConfirm('데이터 복구', '백업 파일로 현재 데이터를 완전히 덮어쓰시겠습니까?', () => {
+             data = applyMigration({...data, ...imported});
+             window.triggerSave();
+             updateAllUI();
+             window.showToast('데이터 복구가 완료되었습니다.');
+          });
+        }
+      } catch(err) {
+        window.showToast('파일 파싱 오류: 올바른 JSON 파일이 아닙니다.');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; 
+  };
+
+  window.confirmReset = function() {
+    const input = prompt('모든 데이터를 초기화하시려면 "ABLECOM"을 정확히 대문자로 입력해주세요.');
+    if(input === 'ABLECOM') {
+      data = {
+        projects: [],
+        categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
+        schedules: [],
+        archives: [],
+        sales: [] 
+      };
+      window.triggerSave();
+      updateAllUI();
+      window.showToast('데이터가 완벽히 초기화되었습니다.');
+    } else if (input !== null) {
+      window.showToast('입력값이 일치하지 않아 초기화가 취소되었습니다.');
+    }
   };
 </script>
 </body>
