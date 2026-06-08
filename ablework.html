@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- SheetJS 엑셀 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -269,23 +271,21 @@
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
-  /* ===== Print Styles (완벽 적용) ===== */
+  /* ===== Print Styles (A4 Landscape 완벽 적용) ===== */
   #print-area { display: none; }
   @media print {
-    /* 1. 가로 출력(landscape) 설정 */
     @page { size: A4 landscape; margin: 15mm; }
     
-    /* 2. 기존 UI 싹 숨기기 */
     body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
     #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-history, #weekly-container, .card, #header-actions, .toast, #history-container { display: none !important; }
     
+    /* 레이아웃 쏠림 현상 방지: 화면용 Grid 무력화 */
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly, #view-history { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
 
-    /* 3. 프린트 영역만 노출 */
+    /* 인쇄 영역만 블록 표시 */
     #print-area { display: block !important; width: 100% !important; color: black; }
     
-    /* 여백(margin) 최적화로 다음 페이지 밀림 방지 */
     .print-header-container { margin-bottom: 15px; border-bottom: 2px solid #555; position: relative; padding-bottom: 5px; }
     .print-company-name { position: absolute; top: 0; right: 0; font-size: 9pt; color: #777; }
     .print-header { text-align: center; }
@@ -293,18 +293,16 @@
     .print-dept { font-size: 11pt; color: #555; margin-bottom: 2px; }
     .print-date { font-size: 10.5pt; color: #777; letter-spacing: 1px;}
     
-    /* 표 폭 완벽 분할 (8% / 46% / 46%) */
+    /* 테이블 강제 100% 및 고정 너비 사용 */
     .print-table { width: 100% !important; border-collapse: collapse; font-size: 10pt; table-layout: fixed; border-top: 2px solid #1A2238;}
     .print-table th, .print-table td { border: 1px solid #e2e8f0; padding: 10px; vertical-align: top; word-break: break-word; }
     
-    /* 헤더 짙은 남색 유지 */
     .print-table th { background: #1A2238 !important; color: #ffffff !important; font-weight: bold; text-align: center; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 12px 10px; vertical-align: middle;}
     .print-table th:nth-child(1) { width: 8%; }
     .print-table th:nth-child(2) { width: 46%; }
     .print-table th:nth-child(3) { width: 46%; }
 
     .print-cat { text-align: center; vertical-align: middle; background: #ffffff !important; font-family: var(--serif); font-size: 12pt; padding: 8px 4px;}
-    /* 세로 글씨에 띄어쓰기가 적용되도록 변경 */
     .vertical-text { display: inline-block; line-height: 1.5; font-weight: bold; white-space: pre-wrap; word-break: keep-all;}
     
     .print-content { line-height: 1.5; }
@@ -438,6 +436,7 @@
         </div>
         <div class="topbar-actions">
           <button class="btn btn-primary" onclick="window.manualSaveWeek()">💾 보고서 저장</button>
+          <button class="btn btn-secondary" onclick="window.exportExcelWeekly()">⇩ 엑셀</button>
           <button class="btn btn-secondary" onclick="window.executePrint()">🖨 인쇄</button>
         </div>
       </div>
@@ -479,7 +478,7 @@
       <div id="print-area"></div>
     </section>
 
-    <!-- 3. PROJECT HISTORY VIEW (신규 추가: 사업별 그룹화) -->
+    <!-- 3. PROJECT HISTORY VIEW -->
     <section class="view" id="view-history">
       <div class="topbar">
         <div>
@@ -493,6 +492,7 @@
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
             <!-- 동적 프로젝트 렌더링 -->
           </select>
+          <button class="btn btn-secondary" onclick="window.exportExcelHistory()">⇩ 엑셀</button>
           <button class="btn btn-secondary" onclick="window.printHistory()">🖨 인쇄</button>
         </div>
       </div>
@@ -786,7 +786,6 @@
     updateAllUI();
   };
 
-  // 수동 저장 트리거 (입력 렌더링 락 때문에 수동 저장 필요)
   window.triggerSave = function() {
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
     if (dbRef) setDoc(dbRef, data, {merge: true}).catch(e => console.error(e));
@@ -936,7 +935,6 @@
       }
 
       if (db) {
-          // [필수 유지] 원본 데이터베이스 경로 V1 강제 고정
           dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
           
           let isFirstLoad = true;
@@ -1249,7 +1247,6 @@
     activeWeek = arch;
 
     const currentRange = getWeekRange(new Date());
-    // [버그해결] 실제 달력상 '이번 주'일 경우, 저장 여부와 상관없이 무조건 마스터 데이터 동기화!
     if (activeWeek.isSaved === false || targetRange.id === currentRange.id) {
         const changed = syncProjectsToSpecificWeek(activeWeek); 
         if (isNew || changed) window.triggerSave();
@@ -1286,10 +1283,8 @@
 
     if (!weekObj.categories) { weekObj.categories = []; changed = true; }
     
-    // 이전에 사용자가 설정한 카테고리/프로젝트 순서를 보호하기 위해 기존 배열 순회 방식 최적화
     const newCategories = [];
 
-    // 1. 기존 카테고리 순서를 훑으면서 유효한 프로젝트만 남김
     weekObj.categories.forEach(c => {
         const validProjs = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
         if (validProjs.length > 0) {
@@ -1302,7 +1297,6 @@
     const prevWeekId = fmtDate(prevWeekSun);
     const prevWeekObj = data.archives.find(a => a.id === prevWeekId);
 
-    // 2. 전체 적용 대상 프로젝트를 훑으면서, 기존에 없던 건 새로 추가
     applicableProjs.forEach(p => {
       let existingPrev = '';
       let existingPlan = '';
@@ -1329,7 +1323,6 @@
 
       let targetCat = newCategories.find(c => c.name === p.cat);
       if (!targetCat) {
-        // 기존에 없던 카테고리는 뒤에 추가 (마스터 카테고리 배열 순서 참고)
         targetCat = { name: p.cat, projects: [] };
         newCategories.push(targetCat);
       }
@@ -1345,7 +1338,6 @@
       }
     });
 
-    // 마스터 카테고리 순서대로 정렬하되, 기존 카테고리 순서를 1순위 존중
     newCategories.sort((a,b) => {
         let ai = weekObj.categories.findIndex(x => x.name === a.name);
         let bi = weekObj.categories.findIndex(x => x.name === b.name);
@@ -1444,7 +1436,84 @@
     window.triggerSave(); renderWeeklyReport();
   };
 
-  // --- PRINT MODULE (LANDSCAPE) ---
+  // --- Excel Export (SheetJS) ---
+  window.exportExcelWeekly = function() {
+    if (!activeWeek || activeWeek.categories.length === 0) {
+      return window.showToast('엑셀로 내보낼 데이터가 없습니다.');
+    }
+
+    const [sy, sm, sd] = activeWeek.start.split('-');
+    const prevStart = new Date(sy, sm - 1, sd - 7);
+    const prevEnd = new Date(prevStart);
+    prevEnd.setDate(prevEnd.getDate() + 6);
+    
+    const prevRangeStr = `${prevStart.getMonth()+1}/${prevStart.getDate()} ~ ${prevEnd.getMonth()+1}/${prevEnd.getDate()}`;
+    const thisRangeStr = `${parseInt(activeWeek.start.split('-')[1])}/${parseInt(activeWeek.start.split('-')[2])} ~ ${parseInt(activeWeek.end.split('-')[1])}/${parseInt(activeWeek.end.split('-')[2])}`;
+
+    let rowsHtml = '';
+    activeWeek.categories.forEach(cat => {
+      const rowSpan = cat.projects.length || 1;
+      if (cat.projects.length === 0) {
+         rowsHtml += `<tr>
+           <td rowspan="1">${escapeHtml(cat.name)}</td>
+           <td colspan="2" style="text-align:center; color:#888;">등록된 사업 없음</td>
+         </tr>`;
+         return;
+      }
+
+      cat.projects.forEach((p, idx) => {
+        const prevText = escapeHtml(p.prev).replace(/\n/g, '<br>');
+        const planText = escapeHtml(p.plan).replace(/\n/g, '<br>');
+
+        rowsHtml += `<tr>`;
+        if (idx === 0) {
+          rowsHtml += `<td rowspan="${rowSpan}">${escapeHtml(cat.name)}</td>`;
+        }
+        rowsHtml += `
+          <td>
+            <strong>ㅇ ${escapeHtml(p.name)} [${escapeHtml(p.owner||'-')}]</strong><br>
+            ${prevText}
+          </td>
+          <td>
+            <strong>ㅇ ${escapeHtml(p.name)}</strong><br>
+            ${planText}
+          </td>
+        </tr>`;
+      });
+    });
+
+    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
+    let schHtml = '';
+    if(matchedSch.length > 0) {
+       const items = matchedSch.map(s => `- ${s.date} : ${escapeHtml(s.text)}`).join('<br>');
+       schHtml = `<tr><td>주요일정</td><td colspan="2">${items}</td></tr>`;
+    }
+
+    const printHtml = `
+      <table>
+        <thead>
+          <tr><th colspan="3" style="font-size: 16pt;">주간업무보고 (기술팀)</th></tr>
+          <tr><th colspan="3">보고일자: ${activeWeek.start.replace(/-/g, '. ')}</th></tr>
+          <tr>
+            <th>구분</th>
+            <th>전주실적 ( ${prevRangeStr} )</th>
+            <th>금주계획 ( ${thisRangeStr} )</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          ${schHtml}
+        </tbody>
+      </table>
+    `;
+
+    const div = document.createElement('div');
+    div.innerHTML = printHtml;
+    const wb = XLSX.utils.table_to_book(div.querySelector('table'), { raw: true });
+    XLSX.writeFile(wb, `주간업무보고_${activeWeek.start}.xlsx`);
+  };
+
+  // --- Print Handling ---
   window.executePrint = function() {
     if (!activeWeek || activeWeek.categories.length === 0) {
       return window.showToast('인쇄할 데이터가 없습니다.');
@@ -1461,7 +1530,13 @@
     let rowsHtml = '';
     activeWeek.categories.forEach(cat => {
       const rowSpan = cat.projects.length || 1;
-      if (cat.projects.length === 0) return;
+      if (cat.projects.length === 0) {
+         rowsHtml += `<tr>
+           <td class="print-cat" rowspan="1"><div class="vertical-text">${escapeHtml(cat.name).split('').join('<br>')}</div></td>
+           <td colspan="2" style="text-align:center; color:#888;">등록된 사업 없음</td>
+         </tr>`;
+         return;
+      }
 
       cat.projects.forEach((p, idx) => {
         const prevText = escapeHtml(p.prev).split('\n').filter(line => line.trim() !== '').map(line => `<div class="print-text">${line}</div>`).join('');
@@ -1522,17 +1597,15 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-
   // --- PROJECT HISTORY VIEW ---
   function populateHistorySelect() {
     const monthSel = document.getElementById('history-month-select');
     const projSel = document.getElementById('history-proj-select');
     if(!monthSel || !projSel) return;
     
-    // 월별 필터 옵션 생성
     const months = new Set();
     data.archives.filter(a => a.isSaved === true).forEach(a => {
-        months.add(a.start.substring(0, 7)); // YYYY-MM
+        months.add(a.start.substring(0, 7));
     });
     
     const curMonthVal = monthSel.value;
@@ -1543,7 +1616,6 @@
     monthSel.innerHTML = mHtml;
     if (months.has(curMonthVal)) monthSel.value = curMonthVal;
 
-    // 프로젝트 목록 옵션 생성
     const curProjVal = projSel.value;
     const projMap = new Map();
     data.projects.forEach(p => projMap.set(p.id, p.name));
@@ -1595,7 +1667,6 @@
         return;
     }
 
-    // 그룹화: 프로젝트(이름) 단위로 모으고, 그 안에서 주차별 내림차순
     const grouped = {};
     historyItems.forEach(item => {
         if(!grouped[item.projName]) grouped[item.projName] = [];
@@ -1604,7 +1675,7 @@
 
     let html = '';
     for(const pName in grouped) {
-        grouped[pName].sort((a,b) => b.id.localeCompare(a.id)); // 최신 주차 위로
+        grouped[pName].sort((a,b) => b.id.localeCompare(a.id)); 
         
         html += `<div class="card" style="margin-bottom: 24px; padding: 20px;">
             <div style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:16px; border-bottom:2px solid var(--ink); padding-bottom:8px;">
@@ -1640,6 +1711,84 @@
     container.innerHTML = html;
   };
 
+  window.exportExcelHistory = function() {
+    const monthVal = document.getElementById('history-month-select').value;
+    const projId = document.getElementById('history-proj-select').value;
+    const projSel = document.getElementById('history-proj-select');
+    const projNameTitle = projId ? projSel.options[projSel.selectedIndex].text : "전체 프로젝트 종합";
+    
+    let historyItems = [];
+    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+        if(monthVal && !arch.start.startsWith(monthVal)) return;
+        arch.categories.forEach(cat => {
+            cat.projects.forEach(p => {
+                if(projId && p.id !== projId) return;
+                if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                    historyItems.push({
+                        projName: p.name,
+                        weekTitle: arch.title,
+                        range: `${arch.start} ~ ${arch.end}`,
+                        prev: p.prev,
+                        plan: p.plan,
+                        id: arch.id
+                    });
+                }
+            });
+        });
+    });
+
+    if(historyItems.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+
+    const grouped = {};
+    historyItems.forEach(item => {
+        if(!grouped[item.projName]) grouped[item.projName] = [];
+        grouped[item.projName].push(item);
+    });
+
+    let rowsHtml = '';
+    for(const pName in grouped) {
+        grouped[pName].sort((a,b) => a.id.localeCompare(b.id));
+        const rowSpan = grouped[pName].length;
+
+        grouped[pName].forEach((item, idx) => {
+            rowsHtml += `<tr>`;
+            if (idx === 0) {
+                rowsHtml += `<td rowspan="${rowSpan}">${escapeHtml(pName)}</td>`;
+            }
+            rowsHtml += `
+                <td>
+                    <strong>${escapeHtml(item.weekTitle)}</strong><br>${item.range}
+                </td>
+                <td>${escapeHtml(item.prev).replace(/\n/g, '<br>') || '-'}</td>
+                <td>${escapeHtml(item.plan).replace(/\n/g, '<br>') || '-'}</td>
+            </tr>`;
+        });
+    }
+
+    const printHtml = `
+      <table>
+        <thead>
+          <tr><th colspan="4" style="font-size: 16pt;">프로젝트 진행 내역</th></tr>
+          <tr><th colspan="4">조건: ${escapeHtml(projNameTitle)} ${monthVal ? `(${monthVal}월)` : ''}</th></tr>
+          <tr>
+            <th>사업명</th>
+            <th>보고 주차</th>
+            <th>주간 실적</th>
+            <th>차주 계획</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
+
+    const div = document.createElement('div');
+    div.innerHTML = printHtml;
+    const wb = XLSX.utils.table_to_book(div.querySelector('table'), { raw: true });
+    XLSX.writeFile(wb, `프로젝트진행내역_${monthVal || '전체'}.xlsx`);
+  };
+
   window.printHistory = function() {
     const monthVal = document.getElementById('history-month-select').value;
     const projId = document.getElementById('history-proj-select').value;
@@ -1668,7 +1817,6 @@
 
     if(historyItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
 
-    // 프로젝트 사업별로 그룹화
     const grouped = {};
     historyItems.forEach(item => {
         if(!grouped[item.projName]) grouped[item.projName] = [];
@@ -1677,14 +1825,12 @@
 
     let rowsHtml = '';
     for(const pName in grouped) {
-        // 과거 -> 최신순으로 정렬 (순차적 표시)
         grouped[pName].sort((a,b) => a.id.localeCompare(b.id));
         const rowSpan = grouped[pName].length;
 
         grouped[pName].forEach((item, idx) => {
             rowsHtml += `<tr>`;
             if (idx === 0) {
-                // 첫 행에만 프로젝트명 셀 생성
                 rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="background:#FAF9F6 !important; font-size:11pt; padding:15px 10px;">${escapeHtml(pName)}</td>`;
             }
             rowsHtml += `
@@ -1712,8 +1858,8 @@
           <tr>
             <th style="width: 20%;">사업명</th>
             <th style="width: 15%;">보고 주차</th>
-            <th style="width: 32.5%;">전주 실적</th>
-            <th style="width: 32.5%;">금주 계획</th>
+            <th style="width: 32.5%;">주간 실적</th>
+            <th style="width: 32.5%;">차주 계획</th>
           </tr>
         </thead>
         <tbody>
@@ -1796,6 +1942,7 @@
       data.categories[editingCatIdx] = val;
 
       data.projects.forEach(p => { if (p.cat === oldCatName) p.cat = val; });
+      
       data.archives.forEach(arch => {
         const aCat = arch.categories.find(c => c.name === oldCatName);
         if(aCat) aCat.name = val;
