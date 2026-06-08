@@ -1668,6 +1668,7 @@
 
     if(historyItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
 
+    // 프로젝트 사업별로 그룹화
     const grouped = {};
     historyItems.forEach(item => {
         if(!grouped[item.projName]) grouped[item.projName] = [];
@@ -1676,12 +1677,14 @@
 
     let rowsHtml = '';
     for(const pName in grouped) {
-        grouped[pName].sort((a,b) => b.id.localeCompare(a.id));
+        // 과거 -> 최신순으로 정렬 (순차적 표시)
+        grouped[pName].sort((a,b) => a.id.localeCompare(b.id));
         const rowSpan = grouped[pName].length;
 
         grouped[pName].forEach((item, idx) => {
             rowsHtml += `<tr>`;
             if (idx === 0) {
+                // 첫 행에만 프로젝트명 셀 생성
                 rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="background:#FAF9F6 !important; font-size:11pt; padding:15px 10px;">${escapeHtml(pName)}</td>`;
             }
             rowsHtml += `
