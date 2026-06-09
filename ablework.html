@@ -66,20 +66,31 @@
     transition: all 0.3s ease;
   }
 
-  /* ===== Presentation Mode Styles (Fixed) ===== */
+   /* ===== Presentation Mode Styles (Fixed) ===== */
   body.presentation-mode {
-    background: white;
+    background: #E8E4DC !important; /* 바탕을 약간 어둡게 처리 */
+    overflow-y: auto !important;
   }
   body.presentation-mode .app {
-    display: block; /* 사이드바 제거 및 전체 화면 사용 */
+    display: flex !important;
+    justify-content: center !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+    background: #E8E4DC !important;
   }
   body.presentation-mode .sidebar {
     display: none !important;
   }
   body.presentation-mode .main {
-    padding: 30px 50px;
-    max-width: 100%; /* 화면 꽉 차게 변경 */
-    margin: 0;
+    display: block !important;
+    width: 100% !important;
+    max-width: 1200px !important; /* 화면 가득 차지 않게 A4 용지 비율로 너비 고정 */
+    margin: 40px auto !important; /* 상하 여백 및 가운데 정렬 */
+    padding: 50px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.15) !important;
+    border-radius: 8px !important;
+    overflow-x: visible !important;
   }
   body.presentation-mode .topbar,
   body.presentation-mode .week-header,
@@ -87,12 +98,26 @@
     display: none !important;
   }
   
-  /* PT 모드 텍스트 및 박스 크기 대폭 확대 */
+  /* PT 모드 텍스트 및 박스 크기 대폭 확대 및 찌그러짐 원천 차단 */
+  body.presentation-mode .category-block,
+  body.presentation-mode .proj-row,
+  body.presentation-mode .history-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
   body.presentation-mode .category-block .cat-title { font-size: 24px; padding: 10px 0;}
   body.presentation-mode .proj-name { font-size: 22px; margin-bottom: 15px;}
-  body.presentation-mode .proj-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+  body.presentation-mode .proj-grid { 
+    display: grid !important; 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: 40px !important; 
+    width: 100% !important; 
+    box-sizing: border-box !important; 
+  }
   body.presentation-mode .proj-grid label { font-size: 16px; margin-bottom: 10px; color: var(--brass); }
   body.presentation-mode .proj-grid textarea { 
+      width: 100% !important;
+      box-sizing: border-box !important;
       font-size: 18px !important; 
       line-height: 1.8 !important; 
       min-height: 250px !important; 
@@ -100,8 +125,12 @@
   }
   
   /* 히스토리 뷰 PT 모드 적용 */
-  body.presentation-mode #history-container .section-title { font-size: 24px; }
-  body.presentation-mode #history-container .history-content { font-size: 18px; line-height: 1.8; padding: 20px;}
+  body.presentation-mode #history-container { width: 100% !important; box-sizing: border-box !important; }
+  body.presentation-mode #history-container .section-title { font-size: 24px; margin-top: 20px;}
+  body.presentation-mode #history-container .history-content { 
+      font-size: 18px; line-height: 1.8; padding: 20px; 
+      width: 100% !important; box-sizing: border-box !important; 
+  }
   body.presentation-mode #history-container .history-label { font-size: 16px; margin-bottom: 10px; }
   
   .btn-exit-pt {
@@ -109,7 +138,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 10000;
     background: var(--accent);
     color: white;
     padding: 12px 24px;
@@ -117,8 +146,10 @@
     font-weight: bold;
     font-size: 15px;
     box-shadow: var(--shadow-md);
+    cursor: pointer;
   }
   body.presentation-mode .btn-exit-pt { display: block; }
+
 
   /* ===== Sidebar ===== */
   .sidebar {
