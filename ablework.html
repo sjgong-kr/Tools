@@ -1561,8 +1561,8 @@
 
         rowsHtml += `<tr>`;
         if (idx === 0) {
-          const verticalCatName = escapeHtml(cat.name).split('').join('<br>');
-          rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="width:10%;">${verticalCatName}</td>`;
+          // 가로 출력 시 너비 비율 10%
+          rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="width:10%;">${escapeHtml(cat.name)}</td>`;
         }
         rowsHtml += `
           <td class="print-content" style="width:45%;">
@@ -1589,9 +1589,9 @@
       <table class="print-table">
         <thead>
           <tr>
-            <th>구 분</th>
-            <th>전주실적 ( ${prevRangeStr} )</th>
-            <th>금주계획 ( ${thisRangeStr} )</th>
+            <th style="width:10%;">구 분</th>
+            <th style="width:45%;">전주실적 ( ${prevRangeStr} )</th>
+            <th style="width:45%;">금주계획 ( ${thisRangeStr} )</th>
           </tr>
         </thead>
         <tbody>
@@ -1605,7 +1605,7 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // 엑셀 Export (주간 보고서 - 인쇄와 100% 동일한 HTML Table 방식)
+  // 엑셀 Export (주간 보고서)
   window.exportWeeklyExcel = function() {
     if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
@@ -1830,8 +1830,10 @@
         group.items.forEach((item, idx) => {
             rowsHtml += `<tr>`;
             if (idx === 0) {
+                // 프로젝트 제목은 전체 폭의 18%만 차지
                 rowsHtml += `<td rowspan="${rowSpan}" class="print-cat" style="width:18%;">${escapeHtml(group.name)}</td>`;
             }
+            // 주차 폭 15%, 나머지 실적/계획이 반반씩 차지
             rowsHtml += `
                 <td style="text-align:center; vertical-align:middle; background:#FAF9F6 !important; width:15%; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
@@ -1854,10 +1856,10 @@
       <table class="print-table">
         <thead>
           <tr>
-            <th>사업명</th>
-            <th>보고 주차</th>
-            <th>주간 실적</th>
-            <th>차주 계획</th>
+            <th style="width: 18%;">사업명</th>
+            <th style="width: 15%;">보고 주차</th>
+            <th style="width: 33.5%;">주간 실적</th>
+            <th style="width: 33.5%;">차주 계획</th>
           </tr>
         </thead>
         <tbody>
@@ -1871,9 +1873,7 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // 엑셀 Export (프로젝트 진행 내역 - 인쇄와 100% 동일한 HTML Table 방식)
-  window.exportHistoryExcel = function() {
-    const projSel = document.getElementById('history-proj-select');
+  // 엑셀 Export (프로젝트 진행 내역)
     const monthSel = document.getElementById('history-month-select');
     if(!projSel || !monthSel) return;
     
