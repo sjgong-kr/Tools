@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>에이블컴 기술팀 · 업무 관리</title>
+<!-- SheetJS 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- SheetJS 엑셀 라이브러리 추가 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -63,7 +63,50 @@
     display: none; 
     grid-template-columns: 240px 1fr;
     min-height: 100vh;
+    transition: all 0.3s ease;
   }
+
+  /* Presentation Mode Styles */
+  body.presentation-mode {
+    background: white;
+  }
+  body.presentation-mode .app {
+    grid-template-columns: 1fr;
+  }
+  body.presentation-mode .sidebar {
+    display: none !important;
+  }
+  body.presentation-mode .main {
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  body.presentation-mode .topbar,
+  body.presentation-mode .week-header,
+  body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
+    display: none !important;
+  }
+  body.presentation-mode .view {
+    font-size: 18px; /* Increase base font size for visibility */
+  }
+  body.presentation-mode .proj-name { font-size: 20px; }
+  body.presentation-mode .proj-grid label { font-size: 14px; }
+  body.presentation-mode .proj-grid textarea { font-size: 16px; line-height: 1.6; min-height: 120px; }
+  
+  .btn-exit-pt {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--accent);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    box-shadow: var(--shadow-md);
+  }
+  body.presentation-mode .btn-exit-pt { display: block; }
 
   /* ===== Sidebar ===== */
   .sidebar {
@@ -247,7 +290,7 @@
   /* ===== Modals & Toasts ===== */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px);
-    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+    display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px;
   }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 400px; padding: 28px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;}
@@ -261,59 +304,52 @@
   .toast {
     position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3;
     padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md);
-    transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 200; border-left: 3px solid var(--brass);
+    transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 20000; border-left: 3px solid var(--brass);
   }
   .toast.show { transform: translateY(0); opacity: 1; }
   
   .table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
+
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
-  /* ===== Print Styles (A4 Landscape 완벽 적용) ===== */
+  /* ===== Print Styles (Fixed Margin Bug) ===== */
   #print-area { display: none; }
   @media print {
-    @page { size: A4 landscape; margin: 15mm; }
+    @page { size: A4 landscape; margin: 10mm 15mm; }
+    body, html { background: white !important; height: auto !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #weekly-container, #history-container, .card, #header-actions, .toast, .btn-exit-pt { display: none !important; }
     
-    body, html { background: white !important; height: auto !important; overflow: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #view-history, #weekly-container, .card, #header-actions, .toast, #history-container { display: none !important; }
-    
-    /* 레이아웃 쏠림 현상 방지: 화면용 Grid 무력화 */
     .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
     #view-weekly, #view-history { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
 
-    /* 인쇄 영역만 블록 표시 */
-    #print-area { display: block !important; width: 100% !important; color: black; }
+    #print-area { display: block !important; width: 100% !important; color: black; page-break-inside: auto; }
     
-    .print-header-container { margin-bottom: 15px; border-bottom: 2px solid #555; position: relative; padding-bottom: 5px; }
+    .print-header-container { margin-bottom: 15px; border-bottom: 2px solid #555; position: relative; padding-bottom: 10px; page-break-after: avoid; }
     .print-company-name { position: absolute; top: 0; right: 0; font-size: 9pt; color: #777; }
     .print-header { text-align: center; }
-    .print-header h1 { font-family: var(--serif); font-size: 24pt; font-weight: bold; margin: 0 0 5px 0; color: #222; letter-spacing: 1px; }
-    .print-dept { font-size: 11pt; color: #555; margin-bottom: 2px; }
-    .print-date { font-size: 10.5pt; color: #777; letter-spacing: 1px;}
+    .print-header h1 { font-family: var(--serif); font-size: 26pt; font-weight: bold; margin: 0 0 8px 0; color: #222; letter-spacing: 1px; white-space: nowrap; }
+    .print-dept { font-size: 12pt; color: #555; margin-bottom: 4px; }
+    .print-date { font-size: 11pt; color: #777; letter-spacing: 1px;}
     
-    /* 테이블 강제 100% 및 고정 너비 사용 */
-    .print-table { width: 100% !important; border-collapse: collapse; font-size: 10pt; table-layout: fixed; border-top: 2px solid #1A2238;}
-    .print-table th, .print-table td { border: 1px solid #e2e8f0; padding: 10px; vertical-align: top; word-break: break-word; }
+    .print-table { width: 100% !important; border-collapse: collapse; font-size: 10pt; table-layout: fixed; margin-top: 0; page-break-inside: auto;}
+    .print-table th, .print-table td { border: 1px solid #c0c0c0; padding: 12px 15px; vertical-align: middle; word-break: break-word; }
+    .print-table th { background: #1A2238 !important; color: #ffffff !important; font-weight: bold; text-align: center; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 14px 10px; }
+    .print-cat { text-align: center; vertical-align: middle; background: #ffffff !important; font-family: var(--serif); font-size: 12pt; padding: 10px; font-weight: 600;}
     
-    .print-table th { background: #1A2238 !important; color: #ffffff !important; font-weight: bold; text-align: center; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 12px 10px; vertical-align: middle;}
-    .print-table th:nth-child(1) { width: 8%; }
-    .print-table th:nth-child(2) { width: 46%; }
-    .print-table th:nth-child(3) { width: 46%; }
-
-    .print-cat { text-align: center; vertical-align: middle; background: #ffffff !important; font-family: var(--serif); font-size: 12pt; padding: 8px 4px;}
-    .vertical-text { display: inline-block; line-height: 1.5; font-weight: bold; white-space: pre-wrap; word-break: keep-all;}
-    
-    .print-content { line-height: 1.5; }
-    .print-proj-name { font-weight: bold; margin-bottom: 4px; font-size: 10pt; color: #222;}
+    .print-content { line-height: 1.6; vertical-align: top !important; }
+    .print-proj-name { font-weight: bold; margin-bottom: 6px; font-size: 10.5pt; color: #222;}
     .print-owner { font-weight: normal; font-size: 8.5pt; color: #888; margin-left: 4px; }
-    .print-text { padding-left: 10px; text-indent: -10px; margin-bottom: 3px; color: #444;}
-    tr { page-break-inside: avoid; }
+    .print-text { padding-left: 12px; text-indent: -12px; margin-bottom: 4px; color: #333;}
+    tr { page-break-inside: avoid; page-break-after: auto; }
   }
 </style>
 </head>
 <body>
+
+<button class="btn-exit-pt" onclick="window.exitPresentation()">ESC 프레젠테이션 종료</button>
 
 <!-- LOGIN VIEW -->
 <div id="login-overlay">
@@ -348,7 +384,6 @@
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
       <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
-      <div class="nav-item" id="nav-backup" data-view="backup" onclick="window.goView('backup')" style="display:none;"><span class="nav-icon">💾</span> 설정 · 백업</div>
     </nav>
     <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
       <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
@@ -432,12 +467,13 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">주간 업무보고</div>
-          <div class="topbar-sub">일요일~토요일 기준. 프로젝트 관리와 자동 연동됩니다.</div>
+          <div class="topbar-sub">일요일~토요일 기준. 내용을 다 적으신 후 [보고서 저장]을 눌러야만 아카이브에 영구 보존됩니다.</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-primary" onclick="window.manualSaveWeek()">💾 보고서 저장</button>
-          <button class="btn btn-secondary" onclick="window.exportExcelWeekly()">⇩ 엑셀</button>
+          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-desktop" style="margin-right:4px;"></i> 프레젠테이션</button>
+          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportWeeklyExcel()">⇩ 엑셀 내보내기</button>
           <button class="btn btn-secondary" onclick="window.executePrint()">🖨 인쇄</button>
+          <button class="btn btn-primary" onclick="window.manualSaveWeek()">💾 보고서 저장</button>
         </div>
       </div>
 
@@ -452,7 +488,6 @@
           
           <div style="padding: 0 24px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center; white-space: nowrap;">
             <div style="font-size:10px; color:var(--muted); font-weight:bold;">보고 주차</div>
-            <!-- Title & Status Badge injected here -->
             <div id="wk-title" style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-top:2px; display:flex; align-items:center; justify-content:center;">로딩중...</div>
           </div>
           
@@ -478,26 +513,27 @@
       <div id="print-area"></div>
     </section>
 
-    <!-- 3. PROJECT HISTORY VIEW -->
+    <!-- NEW: 3. PROJECT HISTORY VIEW -->
     <section class="view" id="view-history">
       <div class="topbar">
         <div>
           <div class="topbar-title">프로젝트 진행 내역</div>
-          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 기간별 프로젝트 내역을 종합합니다.</div>
+          <div class="topbar-sub">영구 보존(저장)된 주간 업무보고를 바탕으로 사업별 진행 이력을 모아봅니다.</div>
         </div>
         <div class="topbar-actions">
           <select id="history-month-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
             <!-- 동적 월 렌더링 -->
           </select>
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
-            <!-- 동적 프로젝트 렌더링 -->
+            <option value="all">전체 프로젝트 종합</option>
           </select>
-          <button class="btn btn-secondary" onclick="window.exportExcelHistory()">⇩ 엑셀</button>
+          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-desktop" style="margin-right:4px;"></i> PT 모드</button>
+          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportHistoryExcel()">⇩ 엑셀 내보내기</button>
           <button class="btn btn-secondary" onclick="window.printHistory()">🖨 인쇄</button>
         </div>
       </div>
       <div id="history-container">
-          <div style="text-align:center; padding:40px; color:var(--muted);">우측 상단에서 기간 및 프로젝트를 선택하시면 지난 보고 내역이 표시됩니다.</div>
+          <div style="text-align:center; padding:40px; color:var(--muted);">우측 상단에서 기간과 프로젝트를 선택하시면 지난 보고 내역이 표시됩니다.</div>
       </div>
     </section>
 
@@ -528,7 +564,7 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">보고서 아카이브</div>
-          <div class="topbar-sub">저장된 과거 주간 업무보고 내역. (저장 시점의 상태가 영구 보존됩니다)</div>
+          <div class="topbar-sub">주간 업무보고에서 [보고서 저장]을 누른 확정된 보고서들만 모아봅니다. (과거 데이터는 변경되지 않고 영구 보존됩니다)</div>
         </div>
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
@@ -558,51 +594,14 @@
       </div>
     </section>
 
-    <!-- 7. BACKUP / RESET VIEW (Admin Only) -->
-    <section class="view" id="view-backup">
-      <div class="topbar">
-        <div>
-          <div class="topbar-title">설정 · 백업</div>
-          <div class="topbar-sub">시스템 데이터 가져오기 / 내보내기 및 초기화 (최고관리자 전용)</div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="section-head">
-          <div class="section-title">데이터 백업 / 복구</div>
-          <div class="section-meta">JSON 형식 파일</div>
-        </div>
-        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
-          모든 데이터(주간보고, 프로젝트, 아카이브 등)를 PC로 내보내거나, 보관 중인 백업 파일을 업로드하여 복원할 수 있습니다.<br>
-          <strong style="color:var(--ink);">주의:</strong> 복원을 진행하면 현재 서버에 있는 데이터가 업로드한 파일 내용으로 완전히 덮어씌워집니다.
-        </p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="window.exportData()">⇩ 전체 데이터 PC 다운로드 (백업)</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⇧ 백업 파일로 복구 (업로드)</button>
-          <input id="import-file" type="file" accept=".json" style="display:none" onchange="window.importData(event)">
-        </div>
-      </div>
-
-      <div class="card" style="border-color: var(--accent);">
-        <div class="section-head" style="border-color: #FBF1F1;">
-          <div class="section-title" style="color: var(--accent);">시스템 강제 초기화</div>
-          <div class="section-meta">Danger Zone</div>
-        </div>
-        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
-          모든 데이터베이스 정보를 초기 빈 상태로 되돌립니다. 이 작업은 되돌릴 수 없으니 반드시 사전에 백업을 진행해 주세요.
-        </p>
-        <button class="btn btn-danger" onclick="window.confirmReset()">⚠ 전체 데이터 초기화</button>
-      </div>
-    </section>
-
   </main>
 </div>
 
 <!-- ============ MODALS ============ -->
-<div class="modal-overlay" id="modal-confirm">
+<div class="modal-overlay" id="modal-confirm" style="z-index: 99999;">
   <div class="modal" style="max-width: 320px; text-align:center;">
     <h3 id="confirm-title" style="margin-bottom:10px;">확인</h3>
-    <p id="confirm-text" style="color:var(--muted); font-size:13px; margin-bottom:20px; white-space:pre-wrap;">진행하시겠습니까?</p>
+    <p id="confirm-text" style="color:var(--muted); font-size:13px; margin-bottom:20px;">진행하시겠습니까?</p>
     <div style="display:flex; gap:10px; justify-content:center;">
       <button class="btn btn-secondary" onclick="window.closeModal('modal-confirm')">취소</button>
       <button class="btn btn-danger" id="confirm-ok">확인</button>
@@ -636,10 +635,10 @@
     <h3>카테고리 관리</h3>
     <div style="display:flex; gap:8px; margin-bottom:16px;">
       <input id="new-cat-name" type="text" placeholder="새 카테고리명" style="flex:1; border:1px solid var(--line); padding:8px 12px; border-radius:4px; font-size:13px;">
-      <button class="btn btn-primary" id="btn-add-cat" onclick="window.saveCategory()">추가</button>
-      <button class="btn btn-secondary" id="btn-cancel-cat" style="display:none;" onclick="window.cancelEditCategory()">취소</button>
+      <button class="btn btn-primary" id="btn-add-cat" style="flex-shrink:0;" onclick="window.saveCategory()">추가</button>
+      <button class="btn btn-secondary" id="btn-cancel-cat" style="display:none; flex-shrink:0;" onclick="window.cancelEditCategory()">취소</button>
     </div>
-    <div id="cat-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--line); border-radius:4px; padding:4px;"></div>
+    <div id="cat-list" style="max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:4px; padding:4px;"></div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
       <button class="btn btn-ghost" onclick="window.closeModal('modal-category')">닫기</button>
     </div>
@@ -678,12 +677,11 @@
 <div class="modal-overlay" id="modal-schedule">
   <div class="modal">
     <h3>일정 추가</h3>
-    <div style="display:flex; gap:16px;">
-        <div class="form-group" style="flex:1;"><label>시작 날짜</label><input id="sch-date" type="date"></div>
-        <div class="form-group" style="flex:1;"><label>종료 날짜 (선택)</label><input id="sch-date-end" type="date" placeholder="당일 일정일 경우 비워둠"></div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1;"><label>시작일</label><input id="sch-date" type="date"></div>
+      <div class="form-group" style="flex:1;"><label>종료일 (최대 7일)</label><input id="sch-date-end" type="date"></div>
     </div>
     <div class="form-group"><label>내용</label><input id="sch-text" type="text" placeholder="일정 내용을 입력하세요"></div>
-    <p style="font-size:11px; color:var(--muted);">종료 날짜를 선택하시면 해당 기간 동안 매일 동일한 일정이 자동 등록됩니다. (최대 7일)</p>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
       <button class="btn btn-ghost" onclick="window.closeModal('modal-schedule')">취소</button>
       <button class="btn btn-primary" onclick="window.saveSchedule()">저장</button>
@@ -698,9 +696,10 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+  // --- 1. Data Definitions ---
   let data = {
     projects: [],
-    categories: ['공공/기업', '금융', '국방', '기타'],
+    categories: ['공공/기업', '금융', '국방', '유지보수', '기타'],
     schedules: [],
     archives: []
   };
@@ -711,6 +710,8 @@
   let accEditId = null;
 
   let dbRef = null;
+  let isFirebaseMode = false;
+  let isRendering = false; 
   
   let calRenderDate = new Date(); 
   let calSelectedDate = new Date(); 
@@ -719,17 +720,7 @@
   let pmEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v1-fixed";
-
-  const hardcodedUsers = {
-      'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
-      'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
-      'jwpark': { id: 'jwpark', pw: 'ablecom+123', name: '박지원', role: 'user' },
-      'kcw75': { id: 'kcw75', pw: 'ablecom+123', name: '김찬우', role: 'user' },
-      'mikey': { id: 'mikey', pw: 'ablecom+123', name: '마이키', role: 'user' },
-      'sean.lee': { id: 'sean.lee', pw: 'ablecom+123', name: '이시언', role: 'user' },
-      'sunwoo.choi': { id: 'sunwoo.choi', pw: 'ablecom+123', name: '최선우', role: 'user' }
-  };
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v27";
 
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
@@ -741,9 +732,7 @@
       delete migrated.currentWeek;
     }
     if (migrated.archives) {
-        migrated.archives.forEach(a => {
-            if (typeof a.isSaved === 'undefined') a.isSaved = true; 
-        });
+        migrated.archives.forEach(a => { if (typeof a.isSaved === 'undefined') a.isSaved = true; });
         migrated.archives.sort((a, b) => b.id.localeCompare(a.id));
     }
     if (!migrated.categories || migrated.categories.length === 0) migrated.categories = ['공공/기업', '금융', '국방', '기타'];
@@ -752,21 +741,30 @@
     return migrated;
   }
 
-  // --- Window Core Functions ---
+  try { 
+      const localData = localStorage.getItem(appId);
+      if (localData) data = applyMigration({ ...data, ...JSON.parse(localData) }); 
+  } catch(e) {} 
+
+  const hardcodedUsers = {
+      'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
+      'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
+      'jwpark': { id: 'jwpark', pw: 'ablecom+123', name: '박지원', role: 'user' },
+      'kcw75': { id: 'kcw75', pw: 'ablecom+123', name: '김찬우', role: 'user' },
+      'mikey': { id: 'mikey', pw: 'ablecom+123', name: '마이키', role: 'user' },
+      'sean.lee': { id: 'sean.lee', pw: 'ablecom+123', name: '이시언', role: 'user' },
+      'sunwoo.choi': { id: 'sunwoo.choi', pw: 'ablecom+123', name: '최선우', role: 'user' }
+  };
+
+  // --- 3. Window Core Functions ---
   window.showToast = function(msg) {
     const el = document.getElementById('toast');
     el.textContent = msg; el.classList.add('show');
     clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2500);
   };
   
-  window.openModal = function(id) { 
-      const modal = document.getElementById(id);
-      modal.classList.add('active'); 
-      if(id === 'modal-confirm') modal.style.zIndex = "1000";
-  };
-  window.closeModal = function(id) { 
-      document.getElementById(id).classList.remove('active'); 
-  };
+  window.openModal = id => document.getElementById(id).classList.add('active');
+  window.closeModal = id => document.getElementById(id).classList.remove('active');
   
   window.showConfirm = function(title, text, onOk) {
     document.getElementById('confirm-title').textContent = title;
@@ -776,6 +774,7 @@
   };
 
   window.goView = function(name, resetWeekly = true) {
+    isRendering = true;
     document.querySelectorAll('.view, .nav-item').forEach(v => v.classList.remove('active'));
     const viewEl = document.getElementById('view-' + name);
     if(viewEl) viewEl.classList.add('active');
@@ -784,11 +783,16 @@
     
     if (name === 'weekly' && resetWeekly) displayWeekDate = new Date();
     updateAllUI();
+    
+    setTimeout(() => { isRendering = false; }, 100);
   };
 
   window.triggerSave = function() {
+    if(isRendering) return;
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
-    if (dbRef) setDoc(dbRef, data, {merge: true}).catch(e => console.error(e));
+    if (isFirebaseMode && dbRef) {
+      setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
+    }
   };
 
   function fmtDate(d) {
@@ -815,15 +819,10 @@
     };
   }
 
-  // --- Firebase Connect ---
+  // --- 4. Firebase Connect (No Auth Module) ---
   const firebaseConfig = {
     apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
-    authDomain: "openzeroc.firebaseapp.com",
-    projectId: "openzeroc",
-    storageBucket: "openzeroc.firebasestorage.app",
-    messagingSenderId: "465944510778",
-    appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
-    measurementId: "G-M4K79K2XPG"
+    projectId: "openzeroc"
   };
 
   let db;
@@ -832,12 +831,8 @@
     db = getFirestore(app);
   } catch(e) { console.error("Firebase init fail", e); }
 
-  function safeGetSession() {
-      try { return sessionStorage.getItem('ablework_session'); } catch(e) { return null; }
-  }
-  function safeSetSession(val) {
-      try { sessionStorage.setItem('ablework_session', JSON.stringify(val)); } catch(e) {}
-  }
+  function safeGetSession() { try { return sessionStorage.getItem('ablework_session'); } catch(e) { return null; } }
+  function safeSetSession(val) { try { sessionStorage.setItem('ablework_session', JSON.stringify(val)); } catch(e) {} }
 
   function checkSession() {
       const sessionStr = safeGetSession();
@@ -870,11 +865,8 @@
 
         if (accSnap.exists()) {
             const userData = accSnap.data();
-            if (userData.pw === pwInput) {
-                executeLoginSuccess(userData);
-            } else {
-                showLoginError("비밀번호가 일치하지 않습니다.");
-            }
+            if (userData.pw === pwInput) executeLoginSuccess(userData);
+            else showLoginError("비밀번호가 일치하지 않습니다.");
         } else {
             if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) {
                 const userData = hardcodedUsers[idInput];
@@ -892,11 +884,8 @@
             }
         }
     } catch (e) {
-        if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) {
-            executeLoginSuccess(hardcodedUsers[idInput]);
-        } else {
-            showLoginError("로그인 오류. 서버 통신에 실패했습니다.");
-        }
+        if (hardcodedUsers[idInput] && hardcodedUsers[idInput].pw === pwInput) executeLoginSuccess(hardcodedUsers[idInput]);
+        else showLoginError("접속 오류. 시스템이 오프라인 상태일 수 있습니다.");
     }
   };
 
@@ -925,18 +914,17 @@
 
       if (isAdmin) {
         document.getElementById('nav-accounts').style.display = 'flex';
-        document.getElementById('nav-backup').style.display = 'flex';
         document.getElementById('nav-label-admin').style.display = 'block';
         loadAccounts();
       } else {
         document.getElementById('nav-accounts').style.display = 'none';
-        document.getElementById('nav-backup').style.display = 'none';
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
+      isFirebaseMode = true; 
+
       if (db) {
           dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
-          
           let isFirstLoad = true;
 
           try {
@@ -944,13 +932,15 @@
                 const activeEl = document.activeElement;
                 const isInputting = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
 
+                if (snap.metadata.hasPendingWrites || isInputting) return;
+
                 if (snap.exists()) {
+                  isRendering = true;
                   const serverData = snap.data();
-                  if (isFirstLoad || !isInputting) {
-                      data = applyMigration({ ...data, ...serverData });
-                      updateAllUI();
-                      isFirstLoad = false;
-                  }
+                  data = applyMigration({ ...data, ...serverData });
+                  updateAllUI();
+                  setTimeout(() => { isRendering = false; }, 100);
+                  isFirstLoad = false;
                 } else {
                   window.triggerSave();
                   updateAllUI();
@@ -964,7 +954,7 @@
 
   checkSession();
 
-  // --- ACCOUNT MANAGEMENT ---
+  // --- 7. ACCOUNT MANAGEMENT UI ---
   function loadAccounts() {
     if(!db) return;
     onSnapshot(collection(db, 'ablework', 'company_main', 'accounts'), (snap) => {
@@ -980,9 +970,9 @@
       <tr>
         <td style="font-weight:600;">${escapeHtml(a.id)}</td>
         <td>${escapeHtml(a.name)}</td>
-        <td>${a.role === 'admin' ? '<span class="badge" style="background:var(--brass); color:white;">관리자</span>' : '<span class="badge bg-gray-100 text-gray-600">일반 사용자</span>'}</td>
+        <td>${a.role === 'admin' ? '<span class="badge badge-dark">관리자</span>' : '<span class="badge" style="background:var(--muted)">일반 사용자</span>'}</td>
         <td>
-          ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한</span>' : `
+          ${a.id === 'ablecom' ? '<span style="font-size:11px; color:var(--muted);">기본 권한 (삭제불가)</span>' : `
             <button class="btn-ghost btn-sm" onclick="window.editAccount('${a.id}')">수정</button>
             <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delAccount('${a.id}')">삭제</button>
           `}
@@ -1032,19 +1022,21 @@
       await setDoc(accRef, { id, pw, name, role }, {merge: true});
       window.closeModal('modal-account');
       window.showToast(accEditId ? '계정이 성공적으로 수정되었습니다.' : '계정이 추가되었습니다.');
-    } catch (e) { window.showToast('저장 실패: ' + e.message); }
+    } catch (e) {
+      window.showToast('저장 실패: ' + e.message);
+    }
   };
 
   window.delAccount = async function(id) {
-    window.showConfirm('계정 삭제', '해당 계정을 삭제하시겠습니까?\n(사용자는 즉시 차단됩니다)', async () => {
-        try {
-          await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
-          window.showToast('계정이 삭제되었습니다.');
-        } catch (e) { console.error(e); }
+    window.showConfirm('계정 삭제', '계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)', async () => {
+      try {
+        await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
+        window.showToast('계정이 삭제되었습니다.');
+      } catch (e) { console.error(e); }
     });
   };
 
-  // --- UI Render Functions ---
+  // --- 8. UI Render Functions ---
   function updateAllUI() {
     renderCalendar();
     renderDailySchedules();
@@ -1114,14 +1106,14 @@
     
     if(list.length === 0) {
       wrap.innerHTML = `<div style="color:var(--muted); text-align:center; padding:40px 0;">등록된 일정이 없습니다.</div>`;
-      return;
+    } else {
+      wrap.innerHTML = list.map(s => `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-bottom:1px solid var(--line); background:var(--paper); border-radius:4px; margin-bottom:8px;">
+          <div style="flex:1; line-height:1.4;">${escapeHtml(s.text)}</div>
+          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="window.delSchedule('${s.id}')">×</button>
+        </div>
+      `).join('');
     }
-    wrap.innerHTML = list.map(s => `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-bottom:1px solid var(--line); background:var(--paper); border-radius:4px; margin-bottom:8px;">
-        <div style="flex:1; line-height:1.4;">${escapeHtml(s.text)}</div>
-        <button class="btn-ghost btn-sm" style="color:var(--accent); padding:0 4px;" onclick="window.delSchedule('${s.id}')">×</button>
-      </div>
-    `).join('');
   }
 
   window.openScheduleModal = function() {
@@ -1130,28 +1122,24 @@
     document.getElementById('sch-text').value = '';
     window.openModal('modal-schedule');
   };
-
+  
   window.saveSchedule = function() {
-    const dStr = document.getElementById('sch-date').value;
-    const dEndStr = document.getElementById('sch-date-end').value;
+    const sd = document.getElementById('sch-date').value;
+    const ed = document.getElementById('sch-date-end').value || sd;
     const t = document.getElementById('sch-text').value.trim();
+    if(!sd || !t) return window.showToast('내용을 입력하세요');
 
-    if(!dStr || !t) return window.showToast('날짜와 내용을 입력하세요');
-
-    let startDate = new Date(dStr);
-    let endDate = dEndStr ? new Date(dEndStr) : new Date(dStr);
+    const startDate = new Date(sd);
+    const endDate = new Date(ed);
+    const diffDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
     
-    if(endDate < startDate) return window.showToast('종료 날짜가 시작 날짜보다 빠를 수 없습니다.');
+    if(diffDays < 0) return window.showToast('종료일이 시작일보다 빠릅니다.');
+    if(diffDays > 6) return window.showToast('최대 7일까지만 등록 가능합니다.');
 
-    let diffDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
-    if (diffDays > 7) {
-        return window.showToast('일정은 최대 7일까지 연속 등록 가능합니다.');
-    }
-
-    for (let i = 0; i <= diffDays; i++) {
-        let curDate = new Date(startDate);
-        curDate.setDate(curDate.getDate() + i);
-        data.schedules.push({ id:'sch_'+Date.now()+'_'+i, date:fmtDate(curDate), text:t });
+    for(let i=0; i<=diffDays; i++) {
+        let currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        data.schedules.push({ id:'sch_'+Date.now()+i, date:fmtDate(currentDate), text:t });
     }
 
     window.triggerSave(); updateAllUI(); window.closeModal('modal-schedule');
@@ -1224,7 +1212,7 @@
     }
   }
 
-  // --- WEEKLY REPORT ---
+  // --- 9. WEEKLY REPORT ---
   function loadWeek(date) {
     const targetRange = getWeekRange(date);
 
@@ -1238,7 +1226,7 @@
           start: targetRange.start, 
           end: targetRange.end, 
           categories: [],
-          isSaved: false
+          isSaved: false 
       };
       data.archives.push(arch);
       data.archives.sort((a, b) => b.id.localeCompare(a.id));
@@ -1247,9 +1235,14 @@
     activeWeek = arch;
 
     const currentRange = getWeekRange(new Date());
-    if (activeWeek.isSaved === false || targetRange.id === currentRange.id) {
-        const changed = syncProjectsToSpecificWeek(activeWeek); 
-        if (isNew || changed) window.triggerSave();
+    const isCurrentWeek = (targetRange.id === currentRange.id);
+
+    // [중요 개선] 
+    // 1) 아직 저장을 안 누른 주차이거나
+    // 2) 저장을 했더라도 "현재 주차"인 경우에는 프로젝트 마스터와 무조건 동기화시킴
+    if (activeWeek.isSaved === false || isCurrentWeek) {
+        syncProjectsToSpecificWeek(activeWeek); 
+        window.triggerSave();
     }
     
     renderWeeklyReport();
@@ -1265,13 +1258,11 @@
           activeWeek.isSaved = true;
           window.triggerSave(); 
           window.showToast('보고서가 영구 보존 처리되어 아카이브에 저장되었습니다.'); 
-          updateAllUI();
+          updateAllUI(); 
       }
   };
   
   function syncProjectsToSpecificWeek(weekObj) {
-    let changed = false;
-    
     const applicableProjs = data.projects.filter(p => {
       if (p.status === '진행' || p.status === '보류') return true;
       if (p.status === '완료' || p.status === '실주') {
@@ -1281,15 +1272,11 @@
       return false;
     });
 
-    if (!weekObj.categories) { weekObj.categories = []; changed = true; }
-    
-    const newCategories = [];
+    if (!weekObj.categories) { weekObj.categories = []; }
 
+    // 이번 주차 동기화 시, 예전 카테고리/프로젝트 삭제 처리 (과거 동결된 데이터는 제외)
     weekObj.categories.forEach(c => {
-        const validProjs = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
-        if (validProjs.length > 0) {
-            newCategories.push({ name: c.name, projects: validProjs });
-        }
+      c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
     });
 
     const [sy, sm, sd] = weekObj.start.split('-');
@@ -1297,67 +1284,80 @@
     const prevWeekId = fmtDate(prevWeekSun);
     const prevWeekObj = data.archives.find(a => a.id === prevWeekId);
 
-    applicableProjs.forEach(p => {
-      let existingPrev = '';
-      let existingPlan = '';
-      let foundInCurrent = false;
+    // 카테고리 순서는 마스터의 순서를 무조건 따르도록 정렬 로직 추가
+    data.categories.forEach(catName => {
+        const catProjsInMaster = applicableProjs.filter(p => p.cat === catName);
+        if (catProjsInMaster.length === 0) return;
 
-      newCategories.forEach(c => {
-        const idx = c.projects.findIndex(x => x.id === p.id);
-        if (idx !== -1) {
-          foundInCurrent = true;
-          existingPrev = c.projects[idx].prev;
-          existingPlan = c.projects[idx].plan;
-          if (c.name !== p.cat) c.projects.splice(idx, 1);
+        let targetCat = weekObj.categories.find(c => c.name === catName);
+        if (!targetCat) {
+            targetCat = { name: catName, projects: [] };
+            weekObj.categories.push(targetCat);
         }
-      });
 
-      if ((!foundInCurrent || existingPrev.trim() === '') && prevWeekObj) {
-        prevWeekObj.categories.forEach(pc => {
-           const prevProj = pc.projects.find(x => x.id === p.id);
-           if (prevProj && prevProj.plan && prevProj.plan.trim() !== '') {
-             existingPrev = prevProj.plan; 
-           }
+        catProjsInMaster.forEach(p => {
+          let existingPrev = '';
+          let existingPlan = '';
+          let foundInCurrent = false;
+
+          // 다른 카테고리에 잘못 들어가 있다면 제거하고 찾기
+          weekObj.categories.forEach(c => {
+            const idx = c.projects.findIndex(x => x.id === p.id);
+            if (idx !== -1) {
+              foundInCurrent = true;
+              existingPrev = c.projects[idx].prev;
+              existingPlan = c.projects[idx].plan;
+              if (c.name !== p.cat) c.projects.splice(idx, 1);
+            }
+          });
+
+          if ((!foundInCurrent || existingPrev.trim() === '') && prevWeekObj) {
+            prevWeekObj.categories.forEach(pc => {
+               const prevProj = pc.projects.find(x => x.id === p.id);
+               if (prevProj && prevProj.plan && prevProj.plan.trim() !== '') {
+                 existingPrev = prevProj.plan; 
+               }
+            });
+          }
+          
+          let cp = targetCat.projects.find(x => x.id === p.id);
+          if (!cp) {
+            targetCat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: existingPrev, plan: existingPlan });
+          } else {
+            cp.name = p.name; 
+            cp.owner = p.owner;
+            if (!cp.prev || cp.prev.trim() === '') cp.prev = existingPrev; 
+          }
         });
-      }
 
-      let targetCat = newCategories.find(c => c.name === p.cat);
-      if (!targetCat) {
-        targetCat = { name: p.cat, projects: [] };
-        newCategories.push(targetCat);
-      }
-      
-      let cp = targetCat.projects.find(x => x.id === p.id);
-      if (!cp) {
-        targetCat.projects.push({ id: p.id, name: p.name, owner: p.owner, prev: existingPrev, plan: existingPlan });
-        changed = true;
-      } else {
-        cp.name = p.name; 
-        cp.owner = p.owner;
-        if (!cp.prev || cp.prev.trim() === '') cp.prev = existingPrev; 
-      }
+        // 프로젝트 순서도 마스터 순서를 최우선으로 하되, 이미 옮긴 순서가 있다면 존중 (안전 장치)
+        targetCat.projects.sort((a,b) => {
+             const idxA = catProjsInMaster.findIndex(mp => mp.id === a.id);
+             const idxB = catProjsInMaster.findIndex(mp => mp.id === b.id);
+             if(idxA !== -1 && idxB !== -1) return idxA - idxB;
+             return 0;
+        });
     });
 
-    newCategories.sort((a,b) => {
-        let ai = weekObj.categories.findIndex(x => x.name === a.name);
-        let bi = weekObj.categories.findIndex(x => x.name === b.name);
-        if (ai === -1) ai = 999 + data.categories.indexOf(a.name);
-        if (bi === -1) bi = 999 + data.categories.indexOf(b.name);
-        return ai - bi;
+    // 카테고리 자체 순서도 마스터 기준 정렬
+    weekObj.categories.sort((a,b) => {
+        const idxA = data.categories.indexOf(a.name);
+        const idxB = data.categories.indexOf(b.name);
+        if(idxA !== -1 && idxB !== -1) return idxA - idxB;
+        return 0;
     });
 
-    weekObj.categories = newCategories.filter(c => c.projects.length > 0);
-    return changed;
+    weekObj.categories = weekObj.categories.filter(c => c.projects.length > 0);
   }
 
   function renderWeeklyReport() {
     if (!activeWeek) return;
     const titleEl = document.getElementById('wk-title');
     if(titleEl) {
-        const badge = activeWeek.isSaved !== false 
-            ? '<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>'
-            : '<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>';
-        titleEl.innerHTML = `${activeWeek.title} ${badge}`;
+        const badgeHtml = activeWeek.isSaved === true
+            ? `<span class="badge" style="background:var(--good); margin-left:8px; font-weight:500;">보관됨</span>`
+            : `<span class="badge" style="background:var(--warn); margin-left:8px; font-weight:500;">작성중</span>`;
+        titleEl.innerHTML = `${activeWeek.title} ${badgeHtml}`;
     }
     
     const rangeEl = document.getElementById('wk-range');
@@ -1375,26 +1375,18 @@
     if(!container) return;
 
     if(activeWeek.categories.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">이 주차에 해당하는 데이터가 없습니다.</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:40px; border:1px dashed var(--line); color:var(--muted);">해당 주차에 진행 상태인 사업이 없습니다. 프로젝트 관리에서 추가하세요.</div>`;
     } else {
       container.innerHTML = activeWeek.categories.map((cat, ci) => `
         <div class="category-block">
           <div class="cat-head">
             <div class="cat-title"><span class="badge badge-dark">${String(ci+1).padStart(2,'0')}</span>${escapeHtml(cat.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);">(${cat.projects.length}개)</span></div>
-            <div>
-              <button class="btn-ghost btn-sm" onclick="window.moveCat(${ci}, -1)">↑</button>
-              <button class="btn-ghost btn-sm" onclick="window.moveCat(${ci}, 1)">↓</button>
-            </div>
           </div>
           <div>
             ${cat.projects.map((p, pi) => `
               <div class="proj-row">
                 <div class="proj-header">
                   <div class="proj-name">${escapeHtml(p.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:6px;">담당: ${escapeHtml(p.owner||'-')}</span></div>
-                  <div>
-                    <button class="btn-ghost btn-sm" onclick="window.moveProj(${ci}, ${pi}, -1)">↑</button>
-                    <button class="btn-ghost btn-sm" onclick="window.moveProj(${ci}, ${pi}, 1)">↓</button>
-                  </div>
                 </div>
                 <div class="proj-grid">
                   <div><label>전주 실적</label><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
@@ -1423,97 +1415,22 @@
   }
 
   window.updateWeekData = function(ci, pi, field, val) { activeWeek.categories[ci].projects[pi][field] = val; window.triggerSave(); };
-  window.moveCat = function(ci, dir) {
-    const arr = activeWeek.categories;
-    if (ci+dir < 0 || ci+dir >= arr.length) return;
-    [arr[ci], arr[ci+dir]] = [arr[ci+dir], arr[ci]];
-    window.triggerSave(); renderWeeklyReport();
+
+  // --- PRESENTATION MODE ---
+  window.startPresentation = function() {
+    document.body.classList.add('presentation-mode');
+    document.documentElement.requestFullscreen().catch(e => console.warn(e));
   };
-  window.moveProj = function(ci, pi, dir) {
-    const arr = activeWeek.categories[ci].projects;
-    if (pi+dir < 0 || pi+dir >= arr.length) return;
-    [arr[pi], arr[pi+dir]] = [arr[pi+dir], arr[pi]];
-    window.triggerSave(); renderWeeklyReport();
+  window.exitPresentation = function() {
+    document.body.classList.remove('presentation-mode');
+    if (document.fullscreenElement) document.exitFullscreen();
   };
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) document.body.classList.remove('presentation-mode');
+  });
 
-  // --- Excel Export (SheetJS) ---
-  window.exportExcelWeekly = function() {
-    if (!activeWeek || activeWeek.categories.length === 0) {
-      return window.showToast('엑셀로 내보낼 데이터가 없습니다.');
-    }
 
-    const [sy, sm, sd] = activeWeek.start.split('-');
-    const prevStart = new Date(sy, sm - 1, sd - 7);
-    const prevEnd = new Date(prevStart);
-    prevEnd.setDate(prevEnd.getDate() + 6);
-    
-    const prevRangeStr = `${prevStart.getMonth()+1}/${prevStart.getDate()} ~ ${prevEnd.getMonth()+1}/${prevEnd.getDate()}`;
-    const thisRangeStr = `${parseInt(activeWeek.start.split('-')[1])}/${parseInt(activeWeek.start.split('-')[2])} ~ ${parseInt(activeWeek.end.split('-')[1])}/${parseInt(activeWeek.end.split('-')[2])}`;
-
-    let rowsHtml = '';
-    activeWeek.categories.forEach(cat => {
-      const rowSpan = cat.projects.length || 1;
-      if (cat.projects.length === 0) {
-         rowsHtml += `<tr>
-           <td rowspan="1">${escapeHtml(cat.name)}</td>
-           <td colspan="2" style="text-align:center; color:#888;">등록된 사업 없음</td>
-         </tr>`;
-         return;
-      }
-
-      cat.projects.forEach((p, idx) => {
-        const prevText = escapeHtml(p.prev).replace(/\n/g, '<br>');
-        const planText = escapeHtml(p.plan).replace(/\n/g, '<br>');
-
-        rowsHtml += `<tr>`;
-        if (idx === 0) {
-          rowsHtml += `<td rowspan="${rowSpan}">${escapeHtml(cat.name)}</td>`;
-        }
-        rowsHtml += `
-          <td>
-            <strong>ㅇ ${escapeHtml(p.name)} [${escapeHtml(p.owner||'-')}]</strong><br>
-            ${prevText}
-          </td>
-          <td>
-            <strong>ㅇ ${escapeHtml(p.name)}</strong><br>
-            ${planText}
-          </td>
-        </tr>`;
-      });
-    });
-
-    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
-    let schHtml = '';
-    if(matchedSch.length > 0) {
-       const items = matchedSch.map(s => `- ${s.date} : ${escapeHtml(s.text)}`).join('<br>');
-       schHtml = `<tr><td>주요일정</td><td colspan="2">${items}</td></tr>`;
-    }
-
-    const printHtml = `
-      <table>
-        <thead>
-          <tr><th colspan="3" style="font-size: 16pt;">주간업무보고 (기술팀)</th></tr>
-          <tr><th colspan="3">보고일자: ${activeWeek.start.replace(/-/g, '. ')}</th></tr>
-          <tr>
-            <th>구분</th>
-            <th>전주실적 ( ${prevRangeStr} )</th>
-            <th>금주계획 ( ${thisRangeStr} )</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-          ${schHtml}
-        </tbody>
-      </table>
-    `;
-
-    const div = document.createElement('div');
-    div.innerHTML = printHtml;
-    const wb = XLSX.utils.table_to_book(div.querySelector('table'), { raw: true });
-    XLSX.writeFile(wb, `주간업무보고_${activeWeek.start}.xlsx`);
-  };
-
-  // --- Print Handling ---
+  // --- PRINT EXCEL & PDF ---
   window.executePrint = function() {
     if (!activeWeek || activeWeek.categories.length === 0) {
       return window.showToast('인쇄할 데이터가 없습니다.');
@@ -1530,13 +1447,7 @@
     let rowsHtml = '';
     activeWeek.categories.forEach(cat => {
       const rowSpan = cat.projects.length || 1;
-      if (cat.projects.length === 0) {
-         rowsHtml += `<tr>
-           <td class="print-cat" rowspan="1"><div class="vertical-text">${escapeHtml(cat.name).split('').join('<br>')}</div></td>
-           <td colspan="2" style="text-align:center; color:#888;">등록된 사업 없음</td>
-         </tr>`;
-         return;
-      }
+      if (cat.projects.length === 0) return;
 
       cat.projects.forEach((p, idx) => {
         const prevText = escapeHtml(p.prev).split('\n').filter(line => line.trim() !== '').map(line => `<div class="print-text">${line}</div>`).join('');
@@ -1579,9 +1490,9 @@
       <table class="print-table">
         <thead>
           <tr>
-            <th>구<br>분</th>
-            <th>전주실적 ( ${prevRangeStr} )</th>
-            <th>금주계획 ( ${thisRangeStr} )</th>
+            <th style="width: 8%;">구<br>분</th>
+            <th style="width: 46%;">전주실적 ( ${prevRangeStr} )</th>
+            <th style="width: 46%;">금주계획 ( ${thisRangeStr} )</th>
           </tr>
         </thead>
         <tbody>
@@ -1593,183 +1504,264 @@
 
     const printArea = document.getElementById('print-area');
     printArea.innerHTML = printHtml;
+    
+    // 강제 reflow 후 print 실행 (상단 잘림 완벽 방지)
+    printArea.style.display = 'block';
     printArea.getBoundingClientRect(); 
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
+    setTimeout(() => { printArea.style.display = 'none'; }, 1000);
   };
 
-  // --- PROJECT HISTORY VIEW ---
+  // 엑셀 Export (주간 보고서)
+  window.exportWeeklyExcel = function() {
+    if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+
+    const [sy, sm, sd] = activeWeek.start.split('-');
+    const prevStart = new Date(sy, sm - 1, sd - 7);
+    const prevEnd = new Date(prevStart);
+    prevEnd.setDate(prevEnd.getDate() + 6);
+    
+    const prevRangeStr = `${prevStart.getMonth()+1}/${prevStart.getDate()} ~ ${prevEnd.getMonth()+1}/${prevEnd.getDate()}`;
+    const thisRangeStr = `${parseInt(activeWeek.start.split('-')[1])}/${parseInt(activeWeek.start.split('-')[2])} ~ ${parseInt(activeWeek.end.split('-')[1])}/${parseInt(activeWeek.end.split('-')[2])}`;
+
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+       ["주간업무보고"],
+       ["기술팀", "", activeWeek.start.replace(/-/g, '. ')],
+       [],
+       ["구 분", `전주실적 ( ${prevRangeStr} )`, `금주계획 ( ${thisRangeStr} )`]
+    ];
+
+    let rowIdx = 4;
+    const merges = [];
+    merges.push({s:{r:0,c:0}, e:{r:0,c:2}}); // Title Merge
+
+    activeWeek.categories.forEach(cat => {
+      const startRow = rowIdx;
+      if (cat.projects.length === 0) return;
+
+      cat.projects.forEach(p => {
+          wsData.push([
+              cat.name, 
+              `ㅇ ${p.name} [${p.owner||'-'}]\n${p.prev}`, 
+              `ㅇ ${p.name}\n${p.plan}`
+          ]);
+          rowIdx++;
+      });
+      merges.push({s:{r:startRow, c:0}, e:{r:rowIdx-1, c:0}}); // Category Merge
+    });
+
+    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
+    if(matchedSch.length > 0) {
+       const schText = matchedSch.map(s => `- ${s.date} : ${s.text}`).join('\n');
+       wsData.push(["주요일정", schText, ""]);
+       merges.push({s:{r:rowIdx, c:1}, e:{r:rowIdx, c:2}}); // Schedule Col Span Merge
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!merges'] = merges;
+    ws['!cols'] = [{wch: 15}, {wch: 60}, {wch: 60}];
+
+    XLSX.utils.book_append_sheet(wb, ws, "주간보고");
+    XLSX.writeFile(wb, `에이블컴_주간업무보고_${activeWeek.start}.xlsx`);
+  };
+
+  // --- NEW: 10. PROJECT HISTORY (프로젝트 진행 내역) ---
   function populateHistorySelect() {
-    const monthSel = document.getElementById('history-month-select');
     const projSel = document.getElementById('history-proj-select');
-    if(!monthSel || !projSel) return;
+    const monthSel = document.getElementById('history-month-select');
+    if(!projSel || !monthSel) return;
     
-    const months = new Set();
-    data.archives.filter(a => a.isSaved === true).forEach(a => {
-        months.add(a.start.substring(0, 7));
-    });
-    
-    const curMonthVal = monthSel.value;
-    let mHtml = '<option value="">전체 기간 종합</option>';
-    Array.from(months).sort().reverse().forEach(m => {
-        mHtml += `<option value="${m}">${m.replace('-', '년 ')}월</option>`;
-    });
-    monthSel.innerHTML = mHtml;
-    if (months.has(curMonthVal)) monthSel.value = curMonthVal;
-
     const curProjVal = projSel.value;
+    const curMonthVal = monthSel.value;
     const projMap = new Map();
+    const monthSet = new Set();
+
     data.projects.forEach(p => projMap.set(p.id, p.name));
-    data.archives.filter(a => a.isSaved === true).forEach(a => {
-        a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
+    
+    data.archives.forEach(a => {
+        if(a.isSaved === true) {
+            a.categories.forEach(c => c.projects.forEach(p => projMap.set(p.id, p.name)));
+            const monthStr = a.start.substring(0, 7); // YYYY-MM
+            monthSet.add(monthStr);
+        }
     });
 
-    let pHtml = '<option value="">전체 프로젝트 종합</option>';
+    let pOpts = '<option value="all">전체 프로젝트 종합</option>';
     Array.from(projMap.entries()).forEach(([id, name]) => {
-        pHtml += `<option value="${id}">${escapeHtml(name)}</option>`;
+        pOpts += `<option value="${id}">${escapeHtml(name)}</option>`;
     });
-    projSel.innerHTML = pHtml;
-    if (curProjVal && projMap.has(curProjVal)) projSel.value = curProjVal;
+    projSel.innerHTML = pOpts;
+    if (curProjVal && (projMap.has(curProjVal) || curProjVal === 'all')) projSel.value = curProjVal;
+
+    // 월별 선택 드롭다운 렌더링
+    const sortedMonths = Array.from(monthSet).sort().reverse();
+    let mOpts = '<option value="all">전체 기간 (모든 월)</option>';
+    sortedMonths.forEach(m => {
+        const [yy, mm] = m.split('-');
+        mOpts += `<option value="${m}">${yy}년 ${mm}월</option>`;
+    });
+    monthSel.innerHTML = mOpts;
+    if (curMonthVal && (monthSet.has(curMonthVal) || curMonthVal === 'all')) monthSel.value = curMonthVal;
   }
 
   window.renderHistory = function() {
-    const monthVal = document.getElementById('history-month-select').value;
-    const projId = document.getElementById('history-proj-select').value;
+    const projSel = document.getElementById('history-proj-select');
+    const monthSel = document.getElementById('history-month-select');
     const container = document.getElementById('history-container');
-    if(!container) return;
+    if(!projSel || !monthSel || !container) return;
 
-    let historyItems = [];
+    const projId = projSel.value;
+    const monthFilter = monthSel.value;
+
+    let rawItems = [];
 
     data.archives.filter(a => a.isSaved === true).forEach(arch => {
-        if(monthVal && !arch.start.startsWith(monthVal)) return;
+        const archMonth = arch.start.substring(0, 7);
+        if (monthFilter !== 'all' && archMonth !== monthFilter) return;
 
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
-                if(projId && p.id !== projId) return;
-
-                if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                    historyItems.push({
-                        projId: p.id,
-                        projName: p.name,
-                        catName: cat.name,
-                        weekTitle: arch.title,
-                        range: `${arch.start} ~ ${arch.end}`,
-                        prev: p.prev,
-                        plan: p.plan,
-                        id: arch.id
-                    });
+                if (projId === 'all' || p.id === projId) {
+                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                        rawItems.push({
+                            catName: cat.name,
+                            projId: p.id,
+                            projName: p.name,
+                            weekTitle: arch.title,
+                            range: `${arch.start} ~ ${arch.end}`,
+                            prev: p.prev,
+                            plan: p.plan,
+                            weekId: arch.id
+                        });
+                    }
                 }
             });
         });
     });
 
-    if(historyItems.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">선택한 조건에 일치하는 보고 내역이 없습니다.</div>`;
+    if(rawItems.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">해당 조건에 부합하는 보고 내역이 없습니다.</div>`;
         return;
     }
 
+    // 그룹화: 1. 프로젝트별 -> 2. 주차별(내림차순) 정렬
     const grouped = {};
-    historyItems.forEach(item => {
-        if(!grouped[item.projName]) grouped[item.projName] = [];
-        grouped[item.projName].push(item);
+    rawItems.forEach(item => {
+        if(!grouped[item.projId]) grouped[item.projId] = { name: item.projName, items: [] };
+        grouped[item.projId].items.push(item);
     });
 
     let html = '';
-    for(const pName in grouped) {
-        grouped[pName].sort((a,b) => b.id.localeCompare(a.id)); 
+    Object.values(grouped).forEach(group => {
+        group.items.sort((a,b) => b.weekId.localeCompare(a.weekId));
         
-        html += `<div class="card" style="margin-bottom: 24px; padding: 20px;">
-            <div style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:16px; border-bottom:2px solid var(--ink); padding-bottom:8px;">
-                ${escapeHtml(pName)}
-            </div>
-            <div style="display:flex; flex-direction:column; gap:16px;">
-        `;
-
-        grouped[pName].forEach(item => {
-            html += `
-            <div style="background:var(--paper); border:1px solid var(--line); border-radius:6px; padding:16px;">
-                <div style="display:flex; align-items:center; margin-bottom:12px;">
-                    <span style="display:inline-block; width:6px; height:6px; background:var(--brass); border-radius:50%; margin-right:8px;"></span>
-                    <span style="font-weight:600; color:var(--brass); font-size:14px;">${escapeHtml(item.weekTitle)}</span>
-                    <span style="font-size:11.5px; color:var(--muted); margin-left:10px; font-family:var(--mono);">(${item.range})</span>
+        html += `<div style="margin-bottom: 24px;">
+            <div style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid var(--ink);">
+               ■ ${escapeHtml(group.name)}
+            </div>`;
+            
+        group.items.forEach(item => {
+           html += `
+            <div class="card" style="margin-bottom: 12px; padding: 14px 20px;">
+                <div style="margin-bottom: 8px; font-size: 14px; font-weight:600; color: var(--brass);">
+                    ${escapeHtml(item.weekTitle)} <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:8px; font-family:var(--mono);">[ ${item.range} ]</span>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                    <div>
-                        <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">전주 실적</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background:var(--paper); padding:12px; border-radius:4px; border:1px solid var(--line);">
+                        <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">주간 실적</div>
                         <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.prev) || '-'}</div>
                     </div>
-                    <div>
-                        <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">금주 계획</div>
+                    <div style="background:var(--paper); padding:12px; border-radius:4px; border:1px solid var(--line);">
+                        <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">차주 계획</div>
                         <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.plan) || '-'}</div>
                     </div>
                 </div>
             </div>`;
         });
-        
-        html += `</div></div>`;
-    }
-    
+        html += `</div>`;
+    });
+
     container.innerHTML = html;
   };
 
-  window.exportExcelHistory = function() {
-    const monthVal = document.getElementById('history-month-select').value;
-    const projId = document.getElementById('history-proj-select').value;
+  window.printHistory = function() {
     const projSel = document.getElementById('history-proj-select');
-    const projNameTitle = projId ? projSel.options[projSel.selectedIndex].text : "전체 프로젝트 종합";
+    const monthSel = document.getElementById('history-month-select');
+    if(!projSel || !monthSel) return window.showToast('데이터가 없습니다.');
     
-    let historyItems = [];
+    const projId = projSel.value;
+    const monthFilter = monthSel.value;
+    
+    let conditionText = '';
+    if(projId === 'all') conditionText += '전체 프로젝트 종합';
+    else conditionText += projSel.options[projSel.selectedIndex].text;
+    
+    if(monthFilter !== 'all') conditionText += ` (${monthSel.options[monthSel.selectedIndex].text})`;
+
+    let rawItems = [];
     data.archives.filter(a => a.isSaved === true).forEach(arch => {
-        if(monthVal && !arch.start.startsWith(monthVal)) return;
+        const archMonth = arch.start.substring(0, 7);
+        if (monthFilter !== 'all' && archMonth !== monthFilter) return;
+
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
-                if(projId && p.id !== projId) return;
-                if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                    historyItems.push({
-                        projName: p.name,
-                        weekTitle: arch.title,
-                        range: `${arch.start} ~ ${arch.end}`,
-                        prev: p.prev,
-                        plan: p.plan,
-                        id: arch.id
-                    });
+                if (projId === 'all' || p.id === projId) {
+                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                        rawItems.push({
+                            projId: p.id,
+                            projName: p.name,
+                            weekTitle: arch.title,
+                            range: `${arch.start} ~ ${arch.end}`,
+                            prev: p.prev,
+                            plan: p.plan,
+                            weekId: arch.id
+                        });
+                    }
                 }
             });
         });
     });
 
-    if(historyItems.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+    if(rawItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
 
     const grouped = {};
-    historyItems.forEach(item => {
-        if(!grouped[item.projName]) grouped[item.projName] = [];
-        grouped[item.projName].push(item);
+    rawItems.forEach(item => {
+        if(!grouped[item.projId]) grouped[item.projId] = { name: item.projName, items: [] };
+        grouped[item.projId].items.push(item);
     });
 
     let rowsHtml = '';
-    for(const pName in grouped) {
-        grouped[pName].sort((a,b) => a.id.localeCompare(b.id));
-        const rowSpan = grouped[pName].length;
-
-        grouped[pName].forEach((item, idx) => {
+    Object.values(grouped).forEach(group => {
+        group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); // 최신순
+        
+        const rowSpan = group.items.length;
+        group.items.forEach((item, idx) => {
             rowsHtml += `<tr>`;
             if (idx === 0) {
-                rowsHtml += `<td rowspan="${rowSpan}">${escapeHtml(pName)}</td>`;
+                rowsHtml += `<td rowspan="${rowSpan}" class="print-cat" style="width:18%;">${escapeHtml(group.name)}</td>`;
             }
             rowsHtml += `
-                <td>
-                    <strong>${escapeHtml(item.weekTitle)}</strong><br>${item.range}
+                <td style="text-align:center; vertical-align:middle; background:#FAF9F6; width:15%; font-weight:bold;">
+                    ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
                 </td>
-                <td>${escapeHtml(item.prev).replace(/\n/g, '<br>') || '-'}</td>
-                <td>${escapeHtml(item.plan).replace(/\n/g, '<br>') || '-'}</td>
+                <td class="print-content" style="width:33.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
+                <td class="print-content" style="width:33.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.plan) || '-'}</td>
             </tr>`;
         });
-    }
+    });
 
     const printHtml = `
-      <table>
+      <div class="print-header-container">
+        <div class="print-company-name">주식회사 에이블컴</div>
+        <div class="print-header">
+          <h1>프로젝트 진행 내역</h1>
+          <div class="print-dept">기술팀</div>
+          <div class="print-date">조회 조건 : ${escapeHtml(conditionText)}</div>
+        </div>
+      </div>
+      <table class="print-table">
         <thead>
-          <tr><th colspan="4" style="font-size: 16pt;">프로젝트 진행 내역</th></tr>
-          <tr><th colspan="4">조건: ${escapeHtml(projNameTitle)} ${monthVal ? `(${monthVal}월)` : ''}</th></tr>
           <tr>
             <th>사업명</th>
             <th>보고 주차</th>
@@ -1783,99 +1775,95 @@
       </table>
     `;
 
-    const div = document.createElement('div');
-    div.innerHTML = printHtml;
-    const wb = XLSX.utils.table_to_book(div.querySelector('table'), { raw: true });
-    XLSX.writeFile(wb, `프로젝트진행내역_${monthVal || '전체'}.xlsx`);
+    const printArea = document.getElementById('print-area');
+    printArea.innerHTML = printHtml;
+    
+    printArea.style.display = 'block';
+    printArea.getBoundingClientRect();
+    try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
+    setTimeout(() => { printArea.style.display = 'none'; }, 1000);
   };
 
-  window.printHistory = function() {
-    const monthVal = document.getElementById('history-month-select').value;
-    const projId = document.getElementById('history-proj-select').value;
+  // 엑셀 Export (프로젝트 진행 내역)
+  window.exportHistoryExcel = function() {
     const projSel = document.getElementById('history-proj-select');
-    const projNameTitle = projId ? projSel.options[projSel.selectedIndex].text : "전체 프로젝트 종합";
+    const monthSel = document.getElementById('history-month-select');
+    if(!projSel || !monthSel) return;
     
-    let historyItems = [];
+    const projId = projSel.value;
+    const monthFilter = monthSel.value;
+    
+    let rawItems = [];
     data.archives.filter(a => a.isSaved === true).forEach(arch => {
-        if(monthVal && !arch.start.startsWith(monthVal)) return;
+        const archMonth = arch.start.substring(0, 7);
+        if (monthFilter !== 'all' && archMonth !== monthFilter) return;
+
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
-                if(projId && p.id !== projId) return;
-                if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                    historyItems.push({
-                        projName: p.name,
-                        weekTitle: arch.title,
-                        range: `${arch.start} ~ ${arch.end}`,
-                        prev: p.prev,
-                        plan: p.plan,
-                        id: arch.id
-                    });
+                if (projId === 'all' || p.id === projId) {
+                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
+                        rawItems.push({
+                            projId: p.id,
+                            projName: p.name,
+                            weekTitle: arch.title,
+                            range: `${arch.start} ~ ${arch.end}`,
+                            prev: p.prev,
+                            plan: p.plan,
+                            weekId: arch.id
+                        });
+                    }
                 }
             });
         });
     });
 
-    if(historyItems.length === 0) return window.showToast('인쇄할 내역이 없습니다.');
+    if(rawItems.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
     const grouped = {};
-    historyItems.forEach(item => {
-        if(!grouped[item.projName]) grouped[item.projName] = [];
-        grouped[item.projName].push(item);
+    rawItems.forEach(item => {
+        if(!grouped[item.projId]) grouped[item.projId] = { name: item.projName, items: [] };
+        grouped[item.projId].items.push(item);
     });
 
-    let rowsHtml = '';
-    for(const pName in grouped) {
-        grouped[pName].sort((a,b) => a.id.localeCompare(b.id));
-        const rowSpan = grouped[pName].length;
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+       ["프로젝트 진행 내역"],
+       ["조회일자", new Date().toLocaleDateString('ko-KR')],
+       [],
+       ["사업명", "보고 주차", "주간 실적", "차주 계획"]
+    ];
 
-        grouped[pName].forEach((item, idx) => {
-            rowsHtml += `<tr>`;
-            if (idx === 0) {
-                rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="background:#FAF9F6 !important; font-size:11pt; padding:15px 10px;">${escapeHtml(pName)}</td>`;
-            }
-            rowsHtml += `
-                <td style="text-align:center; vertical-align:middle; background:#fff;">
-                    <div style="font-weight:bold; color:#222; font-size:10pt;">${escapeHtml(item.weekTitle)}</div>
-                    <div style="font-size:8pt; color:#666; margin-top:2px;">${item.range}</div>
-                </td>
-                <td class="print-content" style="white-space:pre-wrap; padding:12px; font-size:9.5pt;">${escapeHtml(item.prev) || '-'}</td>
-                <td class="print-content" style="white-space:pre-wrap; padding:12px; font-size:9.5pt;">${escapeHtml(item.plan) || '-'}</td>
-            </tr>`;
+    let rowIdx = 4;
+    const merges = [];
+    merges.push({s:{r:0,c:0}, e:{r:0,c:3}}); 
+
+    Object.values(grouped).forEach(group => {
+        group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
+        const startRow = rowIdx;
+
+        group.items.forEach(item => {
+            wsData.push([
+                group.name, 
+                `${item.weekTitle}\n(${item.range})`, 
+                item.prev || '-', 
+                item.plan || '-'
+            ]);
+            rowIdx++;
         });
-    }
+        if (group.items.length > 1) {
+            merges.push({s:{r:startRow, c:0}, e:{r:rowIdx-1, c:0}}); 
+        }
+    });
 
-    const printHtml = `
-      <div class="print-header-container">
-        <div class="print-company-name">주식회사 에이블컴</div>
-        <div class="print-header">
-          <h1>프로젝트 진행 내역</h1>
-          <div class="print-dept">기술팀</div>
-          <div class="print-date">조건 : ${escapeHtml(projNameTitle)} ${monthVal ? `(${monthVal}월)` : ''}</div>
-        </div>
-      </div>
-      <table class="print-table">
-        <thead>
-          <tr>
-            <th style="width: 20%;">사업명</th>
-            <th style="width: 15%;">보고 주차</th>
-            <th style="width: 32.5%;">주간 실적</th>
-            <th style="width: 32.5%;">차주 계획</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
-    `;
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!merges'] = merges;
+    ws['!cols'] = [{wch: 25}, {wch: 25}, {wch: 60}, {wch: 60}];
 
-    const printArea = document.getElementById('print-area');
-    printArea.innerHTML = printHtml;
-    printArea.getBoundingClientRect();
-    try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
+    XLSX.utils.book_append_sheet(wb, ws, "진행내역");
+    XLSX.writeFile(wb, `에이블컴_프로젝트_진행내역.xlsx`);
   };
 
-
-  // --- CATEGORY MANAGEMENT ---
+  // --- 11. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
     window.cancelEditCategory();
     renderCategoryList();
@@ -1886,33 +1874,24 @@
     const list = document.getElementById('cat-list');
     list.innerHTML = data.categories.map((c, idx) => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line);">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div style="display:flex; flex-direction:column; gap:2px;">
-            <button class="btn-ghost" style="padding:0; font-size:10px; height:12px;" onclick="window.moveCategory(${idx}, -1)">▲</button>
-            <button class="btn-ghost" style="padding:0; font-size:10px; height:12px;" onclick="window.moveCategory(${idx}, 1)">▼</button>
-          </div>
-          <span>${escapeHtml(c)}</span>
-        </div>
-        <div style="flex-shrink:0;">
-          <button class="btn-ghost btn-sm" style="padding:2px 6px;" onclick="window.startEditCategory(${idx})">수정</button>
-          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:2px 6px;" onclick="window.delCategory(${idx})">삭제</button>
+        <span>${escapeHtml(c)}</span>
+        <div>
+          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, -1)">↑</button>
+          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, 1)">↓</button>
+          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:2px 6px; margin-left:8px;" onclick="window.delCategory(${idx})">삭제</button>
         </div>
       </div>
     `).join('');
   }
 
   window.moveCategory = function(idx, dir) {
-      if(idx + dir < 0 || idx + dir >= data.categories.length) return;
-      const temp = data.categories[idx];
-      data.categories[idx] = data.categories[idx + dir];
-      data.categories[idx + dir] = temp;
+      if (idx + dir < 0 || idx + dir >= data.categories.length) return;
+      const arr = data.categories;
+      [arr[idx], arr[idx+dir]] = [arr[idx+dir], arr[idx]];
       window.triggerSave();
       renderCategoryList();
       populateCatSelects();
-      if(activeWeek && activeWeek.isSaved === false) {
-          syncProjectsToSpecificWeek(activeWeek);
-          renderWeeklyReport();
-      }
+      updateAllUI();
   };
 
   window.startEditCategory = function(idx) {
@@ -1942,7 +1921,6 @@
       data.categories[editingCatIdx] = val;
 
       data.projects.forEach(p => { if (p.cat === oldCatName) p.cat = val; });
-      
       data.archives.forEach(arch => {
         const aCat = arch.categories.find(c => c.name === oldCatName);
         if(aCat) aCat.name = val;
@@ -1972,6 +1950,7 @@
       window.triggerSave();
       renderCategoryList();
       populateCatSelects();
+      updateAllUI();
     };
 
     if(isUsed) {
@@ -1985,12 +1964,11 @@
     const options = new Set(data.categories);
     if(selectedVal) options.add(selectedVal);
     const html = Array.from(options).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-    
     const pCat = document.getElementById('pm-cat');
     if(pCat) pCat.innerHTML = html;
   }
 
-  // --- PROJECTS MASTER ---
+  // --- 12. PROJECTS MASTER ---
   window.toggleCompletedDate = function() {
     const status = document.getElementById('pm-status').value;
     const group = document.getElementById('group-completed-date');
@@ -2009,38 +1987,46 @@
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px;">등록된 사업이 없습니다.</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.projects.map((p, idx) => `
-      <tr>
-        <td><span style="background:var(--paper); padding:3px 6px; border-radius:3px; font-size:11px;">${escapeHtml(p.cat)}</span></td>
-        <td style="font-weight:600;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div style="display:flex; flex-direction:column; gap:2px;">
-              <button class="btn-ghost" style="padding:0; font-size:10px; height:12px;" onclick="window.moveProjectMaster(${idx}, -1)">▲</button>
-              <button class="btn-ghost" style="padding:0; font-size:10px; height:12px;" onclick="window.moveProjectMaster(${idx}, 1)">▼</button>
-            </div>
-            ${escapeHtml(p.name)}
-          </div>
-        </td>
-        <td>${escapeHtml(p.owner)}</td>
-        <td>${p.status}${p.completedDate ? ` <span style="font-size:10.5px;color:var(--muted);margin-left:4px;">(${p.completedDate})</span>` : ''}</td>
-        <td>
-          <button class="btn-ghost btn-sm" onclick="window.editProject('${p.id}')">편집</button>
-          <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delProject('${p.id}')">삭제</button>
-        </td>
-      </tr>
-    `).join('');
+
+    let html = '';
+    // 카테고리 순서대로 프로젝트 정렬
+    data.categories.forEach(catName => {
+        const catProjs = data.projects.filter(p => p.cat === catName);
+        catProjs.forEach((p, idx) => {
+            // 프로젝트 순서 이동을 위한 인덱스 찾기
+            const globalIdx = data.projects.findIndex(x => x.id === p.id);
+            html += `
+              <tr>
+                <td><span style="background:var(--paper); padding:3px 6px; border-radius:3px; font-size:11px;">${escapeHtml(p.cat)}</span></td>
+                <td style="font-weight:600;">${escapeHtml(p.name)}</td>
+                <td>${escapeHtml(p.owner)}</td>
+                <td>${p.status}${p.completedDate ? ` <span style="font-size:10.5px;color:var(--muted);margin-left:4px;">(${p.completedDate})</span>` : ''}</td>
+                <td style="white-space:nowrap;">
+                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, -1)">↑</button>
+                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, 1)">↓</button>
+                  <button class="btn-ghost btn-sm" onclick="window.editProject('${p.id}')">편집</button>
+                  <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delProject('${p.id}')">삭제</button>
+                </td>
+              </tr>
+            `;
+        });
+    });
+    tbody.innerHTML = html;
   }
 
-  window.moveProjectMaster = function(idx, dir) {
-      if(idx + dir < 0 || idx + dir >= data.projects.length) return;
-      const temp = data.projects[idx];
-      data.projects[idx] = data.projects[idx + dir];
-      data.projects[idx + dir] = temp;
-      window.triggerSave();
-      renderProjects();
-      if(activeWeek && activeWeek.isSaved === false) {
-          syncProjectsToSpecificWeek(activeWeek);
-          renderWeeklyReport();
+  window.moveMasterProj = function(idx, dir) {
+      // 같은 카테고리 내에서만 위아래 이동하도록 로직 구현
+      if (idx + dir < 0 || idx + dir >= data.projects.length) return;
+      
+      const currentCat = data.projects[idx].cat;
+      let targetIdx = idx + dir;
+      
+      // 이동하려는 타겟이 같은 카테고리일 때만 Swap 허용
+      if (data.projects[targetIdx].cat === currentCat) {
+          const arr = data.projects;
+          [arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]];
+          window.triggerSave();
+          updateAllUI();
       }
   };
 
@@ -2103,117 +2089,14 @@
       data.projects.push(obj);
     }
     
-    if(activeWeek && activeWeek.isSaved === false) {
-        syncProjectsToSpecificWeek(activeWeek);
-    }
-
     window.triggerSave(); updateAllUI(); window.closeModal('modal-project');
   };
   
   window.delProject = function(id) {
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
-      if(activeWeek && activeWeek.isSaved === false) {
-          syncProjectsToSpecificWeek(activeWeek);
-      }
       window.triggerSave(); updateAllUI();
     });
-  };
-
-  // --- ARCHIVE VIEW ---
-  function renderArchive() {
-    const tbody = document.getElementById('archive-tbody');
-    if(!tbody) return;
-    
-    const savedArchives = (data.archives || []).filter(a => a.isSaved === true);
-
-    if(savedArchives.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고에서 [보고서 저장]을 누르면 이곳에 보존됩니다.</span></td></tr>`;
-      return;
-    }
-
-    const curRangeId = getWeekRange(new Date()).id;
-
-    tbody.innerHTML = savedArchives.map(a => {
-      let cnt = 0; 
-      if (a.categories) a.categories.forEach(c => cnt += c.projects.length);
-      
-      const isCurrent = (a.id === curRangeId);
-      const rowStyle = isCurrent ? 'background: rgba(201,163,94,0.05);' : '';
-      const titleColor = isCurrent ? 'color: var(--brass);' : 'color: inherit;';
-      const badgeHtml = isCurrent ? '<span class="badge" style="background:var(--brass); margin-left:8px; font-weight:normal;">이번 주</span>' : '';
-
-      return `
-        <tr class="clickable-row" style="${rowStyle}" onclick="window.viewArchivedWeek('${a.start}')">
-          <td style="font-weight:600; font-family:var(--serif); ${titleColor}">
-            ${a.title} ${badgeHtml}
-          </td>
-          <td style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
-          <td>${cnt}건</td>
-          <td onclick="event.stopPropagation();">
-            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.deleteArchive('${a.id}')">삭제</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
-  
-  window.viewArchivedWeek = function(dStr) {
-    displayWeekDate = new Date(dStr + "T00:00:00");
-    window.goView('weekly', false);
-  };
-
-  window.deleteArchive = function(id) {
-    window.showConfirm('보고서 삭제', '해당 주차의 보고서를 아카이브에서 완전히 삭제하시겠습니까?', () => {
-      data.archives = data.archives.filter(a => a.id !== id);
-      window.triggerSave();
-      updateAllUI();
-    });
-  };
-
-  // --- BACKUP & RESET ---
-  window.exportData = function() {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `에이블컴_데이터백업_${fmtDate(new Date())}.json`;
-    link.click();
-  };
-
-  window.importData = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = (e) => {
-      try {
-        const parsed = JSON.parse(e.target.result);
-        if (!parsed.projects || !parsed.categories) throw new Error('올바른 백업 파일 형식이 아닙니다.');
-        
-        window.showConfirm('데이터 복구', '업로드한 파일로 전체 데이터를 덮어쓰시겠습니까?\n(현재 서버 데이터는 모두 사라집니다)', () => {
-           data = applyMigration(parsed);
-           window.triggerSave();
-           updateAllUI();
-           window.showToast('데이터가 성공적으로 복구되었습니다.');
-        });
-      } catch(err) {
-        window.showToast('가져오기 실패: ' + err.message);
-      }
-    };
-    r.readAsText(file);
-    event.target.value = '';
-  };
-
-  window.confirmReset = function() {
-     const input = prompt('데이터를 완전히 초기화하려면 대문자로 "ABLECOM"을 입력하세요.');
-     if (input === 'ABLECOM') {
-         data = { projects: [], categories: ['공공/기업', '금융', '국방', '기타'], schedules: [], archives: [] };
-         window.triggerSave();
-         updateAllUI();
-         window.showToast('시스템이 초기화되었습니다.');
-     } else if (input !== null) {
-         window.showToast('입력값이 일치하지 않아 초기화가 취소되었습니다.');
-     }
   };
 
 </script>
