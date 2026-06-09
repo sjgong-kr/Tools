@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>에이블컴 기술팀 · 업무 관리</title>
-<!-- SheetJS 라이브러리 추가 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   :root {
     --bg: #F7F4ED;
@@ -60,38 +60,49 @@
 
   /* ===== Layout ===== */
   .app {
-    display: none; 
+    display: grid; 
     grid-template-columns: 240px 1fr;
     min-height: 100vh;
     transition: all 0.3s ease;
   }
 
-  /* Presentation Mode Styles */
+  /* ===== Presentation Mode Styles (Fixed) ===== */
   body.presentation-mode {
     background: white;
   }
   body.presentation-mode .app {
-    grid-template-columns: 1fr;
+    display: block; /* 사이드바 제거 및 전체 화면 사용 */
   }
   body.presentation-mode .sidebar {
     display: none !important;
   }
   body.presentation-mode .main {
-    padding: 20px;
-    max-width: 1600px;
-    margin: 0 auto;
+    padding: 30px 50px;
+    max-width: 100%; /* 화면 꽉 차게 변경 */
+    margin: 0;
   }
   body.presentation-mode .topbar,
   body.presentation-mode .week-header,
   body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
     display: none !important;
   }
-  body.presentation-mode .view {
-    font-size: 18px; /* Increase base font size for visibility */
+  
+  /* PT 모드 텍스트 및 박스 크기 대폭 확대 */
+  body.presentation-mode .category-block .cat-title { font-size: 24px; padding: 10px 0;}
+  body.presentation-mode .proj-name { font-size: 22px; margin-bottom: 15px;}
+  body.presentation-mode .proj-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+  body.presentation-mode .proj-grid label { font-size: 16px; margin-bottom: 10px; color: var(--brass); }
+  body.presentation-mode .proj-grid textarea { 
+      font-size: 18px !important; 
+      line-height: 1.8 !important; 
+      min-height: 250px !important; 
+      padding: 18px !important;
   }
-  body.presentation-mode .proj-name { font-size: 20px; }
-  body.presentation-mode .proj-grid label { font-size: 14px; }
-  body.presentation-mode .proj-grid textarea { font-size: 16px; line-height: 1.6; min-height: 120px; }
+  
+  /* 히스토리 뷰 PT 모드 적용 */
+  body.presentation-mode #history-container .section-title { font-size: 24px; }
+  body.presentation-mode #history-container .history-content { font-size: 18px; line-height: 1.8; padding: 20px;}
+  body.presentation-mode #history-container .history-label { font-size: 16px; margin-bottom: 10px; }
   
   .btn-exit-pt {
     display: none;
@@ -101,9 +112,10 @@
     z-index: 1000;
     background: var(--accent);
     color: white;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 50px;
     font-weight: bold;
+    font-size: 15px;
     box-shadow: var(--shadow-md);
   }
   body.presentation-mode .btn-exit-pt { display: block; }
@@ -315,41 +327,100 @@
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
-  /* ===== Print Styles (Fixed Margin Bug) ===== */
+  /* ===== Print Styles (완벽 개선: 상단 여백 및 잘림 방지) ===== */
   #print-area { display: none; }
+  
   @media print {
-    @page { size: A4 landscape; margin: 10mm 15mm; }
-    body, html { background: white !important; height: auto !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    #login-overlay, .sidebar, .topbar, .week-header, .nav, #view-dashboard, #view-projects, #view-archive, #view-accounts, #weekly-container, #history-container, .card, #header-actions, .toast, .btn-exit-pt { display: none !important; }
+    @page { size: A4 landscape; margin: 5mm 10mm; }
     
-    .app, .main { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; grid-template-columns: none !important; border: none !important; }
-    #view-weekly, #view-history { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
-
-    #print-area { display: block !important; width: 100% !important; color: black; page-break-inside: auto; }
+    body, html { 
+        background: white !important; 
+        width: 100% !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    }
     
-    .print-header-container { margin-bottom: 15px; border-bottom: 2px solid #555; position: relative; padding-bottom: 10px; page-break-after: avoid; }
+    /* 인쇄 시 화면용 UI 전부 강제 숨김 */
+    .app, #login-overlay, .sidebar, .topbar, .week-header, .nav, 
+    .view, .card, #header-actions, .toast, .btn-exit-pt { 
+        display: none !important; 
+    }
+    
+    /* 인쇄 영역만 화면 최상단에 강제 노출 */
+    #print-area { 
+        display: block !important; 
+        width: 100% !important; 
+        color: black; 
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    .print-header-container { 
+        margin-bottom: 15px; 
+        border-bottom: 2px solid #555; 
+        position: relative; 
+        padding-bottom: 10px; 
+        page-break-after: avoid; 
+    }
     .print-company-name { position: absolute; top: 0; right: 0; font-size: 9pt; color: #777; }
     .print-header { text-align: center; }
     .print-header h1 { font-family: var(--serif); font-size: 26pt; font-weight: bold; margin: 0 0 8px 0; color: #222; letter-spacing: 1px; white-space: nowrap; }
     .print-dept { font-size: 12pt; color: #555; margin-bottom: 4px; }
     .print-date { font-size: 11pt; color: #777; letter-spacing: 1px;}
     
-    .print-table { width: 100% !important; border-collapse: collapse; font-size: 10pt; table-layout: fixed; margin-top: 0; page-break-inside: auto;}
-    .print-table th, .print-table td { border: 1px solid #c0c0c0; padding: 12px 15px; vertical-align: middle; word-break: break-word; }
-    .print-table th { background: #1A2238 !important; color: #ffffff !important; font-weight: bold; text-align: center; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 14px 10px; }
-    .print-cat { text-align: center; vertical-align: middle; background: #ffffff !important; font-family: var(--serif); font-size: 12pt; padding: 10px; font-weight: 600;}
+    .print-table { 
+        width: 100% !important; 
+        border-collapse: collapse; 
+        font-size: 10pt; 
+        table-layout: fixed; 
+        margin-top: 0; 
+        page-break-inside: auto; /* 표 중간 잘림 허용하여 다음장으로 부드럽게 넘김 */
+    }
+    
+    .print-table th, .print-table td { 
+        border: 1px solid #c0c0c0; 
+        padding: 12px 15px; 
+        vertical-align: middle; 
+        word-break: break-word; 
+    }
+    
+    .print-table th { 
+        background: #1A2238 !important; 
+        color: #ffffff !important; 
+        font-weight: bold; 
+        text-align: center; 
+        font-size: 10.5pt; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+        padding: 14px 10px; 
+    }
+    
+    .print-cat { 
+        text-align: center; 
+        vertical-align: middle; 
+        background: #f8f9fa !important; 
+        font-family: var(--serif); 
+        font-size: 12pt; 
+        padding: 10px; 
+        font-weight: 600;
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
     
     .print-content { line-height: 1.6; vertical-align: top !important; }
     .print-proj-name { font-weight: bold; margin-bottom: 6px; font-size: 10.5pt; color: #222;}
     .print-owner { font-weight: normal; font-size: 8.5pt; color: #888; margin-left: 4px; }
     .print-text { padding-left: 12px; text-indent: -12px; margin-bottom: 4px; color: #333;}
+    
+    /* 각 행이 중간에 잘리지 않도록 보호 */
     tr { page-break-inside: avoid; page-break-after: auto; }
   }
 </style>
 </head>
 <body>
 
-<button class="btn-exit-pt" onclick="window.exitPresentation()">ESC 프레젠테이션 종료</button>
+<button class="btn-exit-pt" onclick="window.exitPresentation()"><i class="fa-solid fa-compress" style="margin-right:6px;"></i> ESC 프레젠테이션 종료</button>
 
 <!-- LOGIN VIEW -->
 <div id="login-overlay">
@@ -377,13 +448,13 @@
     </div>
     <nav class="nav">
       <div class="nav-label">Menu</div>
-      <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon">◐</span> 대시보드 (일정)</div>
-      <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon">▤</span> 주간 업무보고</div>
-      <div class="nav-item" data-view="history" onclick="window.goView('history')"><span class="nav-icon">◧</span> 프로젝트 진행 내역</div>
-      <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon">◆</span> 프로젝트 관리</div>
-      <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon">⊞</span> 보고서 아카이브</div>
+      <div class="nav-item active" data-view="dashboard" onclick="window.goView('dashboard')"><span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span> 대시보드 (일정)</div>
+      <div class="nav-item" data-view="weekly" onclick="window.goView('weekly')"><span class="nav-icon"><i class="fa-solid fa-calendar-week"></i></span> 주간 업무보고</div>
+      <div class="nav-item" data-view="history" onclick="window.goView('history')"><span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> 프로젝트 진행 내역</div>
+      <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span> 프로젝트 관리</div>
+      <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon"><i class="fa-solid fa-box-archive"></i></span> 보고서 아카이브</div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
-      <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon">⚙</span> 계정 관리</div>
+      <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> 계정 관리</div>
     </nav>
     <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
       <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
@@ -470,10 +541,10 @@
           <div class="topbar-sub">일요일~토요일 기준. 내용을 다 적으신 후 [보고서 저장]을 눌러야만 아카이브에 영구 보존됩니다.</div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-desktop" style="margin-right:4px;"></i> 프레젠테이션</button>
-          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportWeeklyExcel()">⇩ 엑셀 내보내기</button>
-          <button class="btn btn-secondary" onclick="window.executePrint()">🖨 인쇄</button>
-          <button class="btn btn-primary" onclick="window.manualSaveWeek()">💾 보고서 저장</button>
+          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-expand" style="margin-right:4px;"></i> 프레젠테이션</button>
+          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportWeeklyExcel()"><i class="fa-solid fa-file-excel" style="margin-right:4px;"></i> 엑셀 내보내기</button>
+          <button class="btn btn-secondary" onclick="window.executePrint()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
+          <button class="btn btn-primary" onclick="window.manualSaveWeek()"><i class="fa-solid fa-floppy-disk" style="margin-right:4px;"></i> 보고서 저장</button>
         </div>
       </div>
 
@@ -510,10 +581,9 @@
           <div id="weekly-matched-schedules" style="font-size:13px; color:var(--ink-2);"></div>
       </div>
 
-      <div id="print-area"></div>
     </section>
 
-    <!-- NEW: 3. PROJECT HISTORY VIEW -->
+    <!-- 3. PROJECT HISTORY VIEW -->
     <section class="view" id="view-history">
       <div class="topbar">
         <div>
@@ -527,9 +597,9 @@
           <select id="history-proj-select" onchange="window.renderHistory()" style="padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; font-weight: 500; outline: none; background:var(--bg-elev);">
             <option value="all">전체 프로젝트 종합</option>
           </select>
-          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-desktop" style="margin-right:4px;"></i> PT 모드</button>
-          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportHistoryExcel()">⇩ 엑셀 내보내기</button>
-          <button class="btn btn-secondary" onclick="window.printHistory()">🖨 인쇄</button>
+          <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-expand" style="margin-right:4px;"></i> PT 모드</button>
+          <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportHistoryExcel()"><i class="fa-solid fa-file-excel" style="margin-right:4px;"></i> 엑셀 내보내기</button>
+          <button class="btn btn-secondary" onclick="window.printHistory()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
         </div>
       </div>
       <div id="history-container">
@@ -564,7 +634,7 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">보고서 아카이브</div>
-          <div class="topbar-sub">주간 업무보고에서 [보고서 저장]을 누른 확정된 보고서들만 모아봅니다. (과거 데이터는 변경되지 않고 영구 보존됩니다)</div>
+          <div class="topbar-sub">주간 업무보고에서 [보고서 저장]을 누른 확정된 보고서들만 모아봅니다.</div>
         </div>
       </div>
       <div class="card" style="padding:0; overflow:hidden;">
@@ -596,6 +666,9 @@
 
   </main>
 </div>
+
+<!-- ============ PRINT AREA (Hidden on screen, shown on print) ============ -->
+<div id="print-area"></div>
 
 <!-- ============ MODALS ============ -->
 <div class="modal-overlay" id="modal-confirm" style="z-index: 99999;">
@@ -720,7 +793,7 @@
   let pmEditId = null;
   let editingCatIdx = null;
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v27";
+  const appId = typeof __app_id !== 'undefined' ? __app_id : "ablework-local-app-v30";
 
   function applyMigration(sourceData) {
     let migrated = { ...sourceData };
@@ -790,7 +863,7 @@
   window.triggerSave = function() {
     if(isRendering) return;
     try { localStorage.setItem(appId, JSON.stringify(data)); } catch(e) {}
-    if (isFirebaseMode && dbRef) {
+    if (dbRef) {
       setDoc(dbRef, data, {merge: true}).catch(e => console.error("Firebase Save Error:", e));
     }
   };
@@ -817,6 +890,48 @@
       id: fmtDate(sun), start: fmtDate(sun), end: fmtDate(sat),
       title: `${targetYear}년 ${targetMonth + 1}월 ${weekNum}주차`
     };
+  }
+
+  // --- HTML to Native Excel (Styled) ---
+  function exportHtmlTableToExcel(htmlTableStr, filename) {
+      const template = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+      <meta charset="UTF-8">
+      <style>
+          table { border-collapse: collapse; width: 100%; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 10pt; }
+          th, td { border: 1px solid #a0a0a0; padding: 10px; vertical-align: middle; }
+          th { background-color: #1A2238; color: #ffffff; font-weight: bold; text-align: center; font-size: 11pt; }
+          .cat-cell { background-color: #f8f9fa; font-weight: bold; text-align: center; font-size: 11pt;}
+          .content-cell { vertical-align: top; white-space: pre-wrap; }
+          .bold-title { font-weight: bold; font-size: 10.5pt; color: #222; }
+          .owner-text { font-size: 9pt; color: #666; }
+      </style>
+      <!--[if gte mso 9]><xml>
+       <x:ExcelWorkbook>
+        <x:ExcelWorksheets>
+         <x:ExcelWorksheet>
+          <x:Name>Report</x:Name>
+          <x:WorksheetOptions>
+           <x:DisplayGridlines/>
+          </x:WorksheetOptions>
+         </x:ExcelWorksheet>
+        </x:ExcelWorksheets>
+       </x:ExcelWorkbook>
+      </xml><![endif]-->
+      </head>
+      <body>
+      ${htmlTableStr}
+      </body>
+      </html>`;
+
+      const blob = new Blob([template], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename + ".xls";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
   }
 
   // --- 4. Firebase Connect (No Auth Module) ---
@@ -924,7 +1039,7 @@
       isFirebaseMode = true; 
 
       if (db) {
-          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1');
+          dbRef = doc(db, 'ablework', 'company_main', 'data', 'v1'); // V1 고정
           let isFirstLoad = true;
 
           try {
@@ -1237,9 +1352,6 @@
     const currentRange = getWeekRange(new Date());
     const isCurrentWeek = (targetRange.id === currentRange.id);
 
-    // [중요 개선] 
-    // 1) 아직 저장을 안 누른 주차이거나
-    // 2) 저장을 했더라도 "현재 주차"인 경우에는 프로젝트 마스터와 무조건 동기화시킴
     if (activeWeek.isSaved === false || isCurrentWeek) {
         syncProjectsToSpecificWeek(activeWeek); 
         window.triggerSave();
@@ -1274,7 +1386,6 @@
 
     if (!weekObj.categories) { weekObj.categories = []; }
 
-    // 이번 주차 동기화 시, 예전 카테고리/프로젝트 삭제 처리 (과거 동결된 데이터는 제외)
     weekObj.categories.forEach(c => {
       c.projects = c.projects.filter(cp => applicableProjs.some(ap => ap.id === cp.id));
     });
@@ -1284,7 +1395,6 @@
     const prevWeekId = fmtDate(prevWeekSun);
     const prevWeekObj = data.archives.find(a => a.id === prevWeekId);
 
-    // 카테고리 순서는 마스터의 순서를 무조건 따르도록 정렬 로직 추가
     data.categories.forEach(catName => {
         const catProjsInMaster = applicableProjs.filter(p => p.cat === catName);
         if (catProjsInMaster.length === 0) return;
@@ -1300,7 +1410,6 @@
           let existingPlan = '';
           let foundInCurrent = false;
 
-          // 다른 카테고리에 잘못 들어가 있다면 제거하고 찾기
           weekObj.categories.forEach(c => {
             const idx = c.projects.findIndex(x => x.id === p.id);
             if (idx !== -1) {
@@ -1330,7 +1439,6 @@
           }
         });
 
-        // 프로젝트 순서도 마스터 순서를 최우선으로 하되, 이미 옮긴 순서가 있다면 존중 (안전 장치)
         targetCat.projects.sort((a,b) => {
              const idxA = catProjsInMaster.findIndex(mp => mp.id === a.id);
              const idxB = catProjsInMaster.findIndex(mp => mp.id === b.id);
@@ -1339,7 +1447,6 @@
         });
     });
 
-    // 카테고리 자체 순서도 마스터 기준 정렬
     weekObj.categories.sort((a,b) => {
         const idxA = data.categories.indexOf(a.name);
         const idxB = data.categories.indexOf(b.name);
@@ -1429,8 +1536,7 @@
     if (!document.fullscreenElement) document.body.classList.remove('presentation-mode');
   });
 
-
-  // --- PRINT EXCEL & PDF ---
+  // --- PRINT & NATIVE EXCEL EXPORT (100% UI Match) ---
   window.executePrint = function() {
     if (!activeWeek || activeWeek.categories.length === 0) {
       return window.showToast('인쇄할 데이터가 없습니다.');
@@ -1456,27 +1562,20 @@
         rowsHtml += `<tr>`;
         if (idx === 0) {
           const verticalCatName = escapeHtml(cat.name).split('').join('<br>');
-          rowsHtml += `<td class="print-cat" rowspan="${rowSpan}"><div class="vertical-text">${verticalCatName}</div></td>`;
+          rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="width:10%;">${verticalCatName}</td>`;
         }
         rowsHtml += `
-          <td class="print-content">
+          <td class="print-content" style="width:45%;">
             <div class="print-proj-name">ㅇ ${escapeHtml(p.name)} <span class="print-owner">[${escapeHtml(p.owner||'-')}]</span></div>
             ${prevText}
           </td>
-          <td class="print-content">
+          <td class="print-content" style="width:45%;">
             <div class="print-proj-name">ㅇ ${escapeHtml(p.name)}</div>
             ${planText}
           </td>
         </tr>`;
       });
     });
-
-    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
-    let schHtml = '';
-    if(matchedSch.length > 0) {
-       const items = matchedSch.map(s => `<div class="print-text">- <strong style="font-family: monospace;">${s.date}</strong> : ${escapeHtml(s.text)}</div>`).join('');
-       schHtml = `<tr><td class="print-cat"><div class="vertical-text">주<br>요<br>일<br>정</div></td><td colspan="2" class="print-content">${items}</td></tr>`;
-    }
 
     const printHtml = `
       <div class="print-header-container">
@@ -1490,29 +1589,23 @@
       <table class="print-table">
         <thead>
           <tr>
-            <th style="width: 8%;">구<br>분</th>
-            <th style="width: 46%;">전주실적 ( ${prevRangeStr} )</th>
-            <th style="width: 46%;">금주계획 ( ${thisRangeStr} )</th>
+            <th>구 분</th>
+            <th>전주실적 ( ${prevRangeStr} )</th>
+            <th>금주계획 ( ${thisRangeStr} )</th>
           </tr>
         </thead>
         <tbody>
           ${rowsHtml}
-          ${schHtml}
         </tbody>
       </table>
     `;
 
     const printArea = document.getElementById('print-area');
     printArea.innerHTML = printHtml;
-    
-    // 강제 reflow 후 print 실행 (상단 잘림 완벽 방지)
-    printArea.style.display = 'block';
-    printArea.getBoundingClientRect(); 
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
-    setTimeout(() => { printArea.style.display = 'none'; }, 1000);
   };
 
-  // 엑셀 Export (주간 보고서)
+  // 엑셀 Export (주간 보고서 - 인쇄와 100% 동일한 HTML Table 방식)
   window.exportWeeklyExcel = function() {
     if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
@@ -1524,47 +1617,49 @@
     const prevRangeStr = `${prevStart.getMonth()+1}/${prevStart.getDate()} ~ ${prevEnd.getMonth()+1}/${prevEnd.getDate()}`;
     const thisRangeStr = `${parseInt(activeWeek.start.split('-')[1])}/${parseInt(activeWeek.start.split('-')[2])} ~ ${parseInt(activeWeek.end.split('-')[1])}/${parseInt(activeWeek.end.split('-')[2])}`;
 
-    const wb = XLSX.utils.book_new();
-    const wsData = [
-       ["주간업무보고"],
-       ["기술팀", "", activeWeek.start.replace(/-/g, '. ')],
-       [],
-       ["구 분", `전주실적 ( ${prevRangeStr} )`, `금주계획 ( ${thisRangeStr} )`]
-    ];
-
-    let rowIdx = 4;
-    const merges = [];
-    merges.push({s:{r:0,c:0}, e:{r:0,c:2}}); // Title Merge
-
+    let rowsHtml = '';
     activeWeek.categories.forEach(cat => {
-      const startRow = rowIdx;
+      const rowSpan = cat.projects.length || 1;
       if (cat.projects.length === 0) return;
 
-      cat.projects.forEach(p => {
-          wsData.push([
-              cat.name, 
-              `ㅇ ${p.name} [${p.owner||'-'}]\n${p.prev}`, 
-              `ㅇ ${p.name}\n${p.plan}`
-          ]);
-          rowIdx++;
+      cat.projects.forEach((p, idx) => {
+        const prevText = escapeHtml(p.prev).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>');
+        const planText = escapeHtml(p.plan).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>');
+
+        rowsHtml += `<tr>`;
+        if (idx === 0) {
+          rowsHtml += `<td class="cat-cell" rowspan="${rowSpan}" width="120">${escapeHtml(cat.name)}</td>`;
+        }
+        rowsHtml += `
+          <td class="content-cell" width="500">
+            <span class="bold-title">ㅇ ${escapeHtml(p.name)}</span> <span class="owner-text">[${escapeHtml(p.owner||'-')}]</span><br style="mso-data-placement:same-cell;"/>
+            ${prevText}
+          </td>
+          <td class="content-cell" width="500">
+            <span class="bold-title">ㅇ ${escapeHtml(p.name)}</span><br style="mso-data-placement:same-cell;"/>
+            ${planText}
+          </td>
+        </tr>`;
       });
-      merges.push({s:{r:startRow, c:0}, e:{r:rowIdx-1, c:0}}); // Category Merge
     });
 
-    const matchedSch = data.schedules.filter(s => s.date >= activeWeek.start && s.date <= activeWeek.end).sort((a,b)=>a.date.localeCompare(b.date));
-    if(matchedSch.length > 0) {
-       const schText = matchedSch.map(s => `- ${s.date} : ${s.text}`).join('\n');
-       wsData.push(["주요일정", schText, ""]);
-       merges.push({s:{r:rowIdx, c:1}, e:{r:rowIdx, c:2}}); // Schedule Col Span Merge
-    }
+    const htmlTable = `
+      <table border="0" cellpadding="0" cellspacing="0" width="1120">
+        <tr><td colspan="3" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">주간업무보고</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">${activeWeek.start.replace(/-/g, '. ')}</td></tr>
+        <tr>
+          <th>구 분</th>
+          <th>전주실적 ( ${prevRangeStr} )</th>
+          <th>금주계획 ( ${thisRangeStr} )</th>
+        </tr>
+        ${rowsHtml}
+      </table>
+    `;
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!merges'] = merges;
-    ws['!cols'] = [{wch: 15}, {wch: 60}, {wch: 60}];
-
-    XLSX.utils.book_append_sheet(wb, ws, "주간보고");
-    XLSX.writeFile(wb, `에이블컴_주간업무보고_${activeWeek.start}.xlsx`);
+    exportHtmlTableToExcel(htmlTable, `에이블컴_주간업무보고_${activeWeek.start}`);
   };
+
 
   // --- NEW: 10. PROJECT HISTORY (프로젝트 진행 내역) ---
   function populateHistorySelect() {
@@ -1623,18 +1718,17 @@
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
                 if (projId === 'all' || p.id === projId) {
-                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                        rawItems.push({
-                            catName: cat.name,
-                            projId: p.id,
-                            projName: p.name,
-                            weekTitle: arch.title,
-                            range: `${arch.start} ~ ${arch.end}`,
-                            prev: p.prev,
-                            plan: p.plan,
-                            weekId: arch.id
-                        });
-                    }
+                    // 데이터가 있든 없든, 아카이브에 포함되어 있다면 히스토리에 무조건 표시
+                    rawItems.push({
+                        catName: cat.name,
+                        projId: p.id,
+                        projName: p.name,
+                        weekTitle: arch.title,
+                        range: `${arch.start} ~ ${arch.end}`,
+                        prev: p.prev,
+                        plan: p.plan,
+                        weekId: arch.id
+                    });
                 }
             });
         });
@@ -1656,25 +1750,25 @@
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId));
         
-        html += `<div style="margin-bottom: 24px;">
-            <div style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid var(--ink);">
+        html += `<div style="margin-bottom: 30px;">
+            <div class="section-title" style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid var(--ink);">
                ■ ${escapeHtml(group.name)}
             </div>`;
             
         group.items.forEach(item => {
            html += `
-            <div class="card" style="margin-bottom: 12px; padding: 14px 20px;">
-                <div style="margin-bottom: 8px; font-size: 14px; font-weight:600; color: var(--brass);">
+            <div class="card history-card" style="margin-bottom: 12px; padding: 14px 20px;">
+                <div class="history-label" style="margin-bottom: 8px; font-size: 14px; font-weight:600; color: var(--brass);">
                     ${escapeHtml(item.weekTitle)} <span style="font-size:11.5px; color:var(--muted); font-weight:normal; margin-left:8px; font-family:var(--mono);">[ ${item.range} ]</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="proj-grid">
                     <div style="background:var(--paper); padding:12px; border-radius:4px; border:1px solid var(--line);">
                         <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">주간 실적</div>
-                        <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.prev) || '-'}</div>
+                        <div class="history-content" style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.prev) || '-'}</div>
                     </div>
                     <div style="background:var(--paper); padding:12px; border-radius:4px; border:1px solid var(--line);">
                         <div style="font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px;">차주 계획</div>
-                        <div style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.plan) || '-'}</div>
+                        <div class="history-content" style="font-size:12.5px; line-height:1.6; white-space:pre-wrap; color:var(--ink-2);">${escapeHtml(item.plan) || '-'}</div>
                     </div>
                 </div>
             </div>`;
@@ -1696,7 +1790,6 @@
     let conditionText = '';
     if(projId === 'all') conditionText += '전체 프로젝트 종합';
     else conditionText += projSel.options[projSel.selectedIndex].text;
-    
     if(monthFilter !== 'all') conditionText += ` (${monthSel.options[monthSel.selectedIndex].text})`;
 
     let rawItems = [];
@@ -1707,17 +1800,15 @@
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
                 if (projId === 'all' || p.id === projId) {
-                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                        rawItems.push({
-                            projId: p.id,
-                            projName: p.name,
-                            weekTitle: arch.title,
-                            range: `${arch.start} ~ ${arch.end}`,
-                            prev: p.prev,
-                            plan: p.plan,
-                            weekId: arch.id
-                        });
-                    }
+                    rawItems.push({
+                        projId: p.id,
+                        projName: p.name,
+                        weekTitle: arch.title,
+                        range: `${arch.start} ~ ${arch.end}`,
+                        prev: p.prev,
+                        plan: p.plan,
+                        weekId: arch.id
+                    });
                 }
             });
         });
@@ -1733,7 +1824,7 @@
 
     let rowsHtml = '';
     Object.values(grouped).forEach(group => {
-        group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); // 최신순
+        group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
         
         const rowSpan = group.items.length;
         group.items.forEach((item, idx) => {
@@ -1742,7 +1833,7 @@
                 rowsHtml += `<td rowspan="${rowSpan}" class="print-cat" style="width:18%;">${escapeHtml(group.name)}</td>`;
             }
             rowsHtml += `
-                <td style="text-align:center; vertical-align:middle; background:#FAF9F6; width:15%; font-weight:bold;">
+                <td style="text-align:center; vertical-align:middle; background:#FAF9F6 !important; width:15%; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
                 </td>
                 <td class="print-content" style="width:33.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
@@ -1777,14 +1868,10 @@
 
     const printArea = document.getElementById('print-area');
     printArea.innerHTML = printHtml;
-    
-    printArea.style.display = 'block';
-    printArea.getBoundingClientRect();
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
-    setTimeout(() => { printArea.style.display = 'none'; }, 1000);
   };
 
-  // 엑셀 Export (프로젝트 진행 내역)
+  // 엑셀 Export (프로젝트 진행 내역 - 인쇄와 100% 동일한 HTML Table 방식)
   window.exportHistoryExcel = function() {
     const projSel = document.getElementById('history-proj-select');
     const monthSel = document.getElementById('history-month-select');
@@ -1792,6 +1879,11 @@
     
     const projId = projSel.value;
     const monthFilter = monthSel.value;
+    
+    let conditionText = '';
+    if(projId === 'all') conditionText += '전체 프로젝트 종합';
+    else conditionText += projSel.options[projSel.selectedIndex].text;
+    if(monthFilter !== 'all') conditionText += ` (${monthSel.options[monthSel.selectedIndex].text})`;
     
     let rawItems = [];
     data.archives.filter(a => a.isSaved === true).forEach(arch => {
@@ -1801,17 +1893,15 @@
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
                 if (projId === 'all' || p.id === projId) {
-                    if ( (p.prev && p.prev.trim()) || (p.plan && p.plan.trim()) ) {
-                        rawItems.push({
-                            projId: p.id,
-                            projName: p.name,
-                            weekTitle: arch.title,
-                            range: `${arch.start} ~ ${arch.end}`,
-                            prev: p.prev,
-                            plan: p.plan,
-                            weekId: arch.id
-                        });
-                    }
+                    rawItems.push({
+                        projId: p.id,
+                        projName: p.name,
+                        weekTitle: arch.title,
+                        range: `${arch.start} ~ ${arch.end}`,
+                        prev: p.prev,
+                        plan: p.plan,
+                        weekId: arch.id
+                    });
                 }
             });
         });
@@ -1825,42 +1915,44 @@
         grouped[item.projId].items.push(item);
     });
 
-    const wb = XLSX.utils.book_new();
-    const wsData = [
-       ["프로젝트 진행 내역"],
-       ["조회일자", new Date().toLocaleDateString('ko-KR')],
-       [],
-       ["사업명", "보고 주차", "주간 실적", "차주 계획"]
-    ];
-
-    let rowIdx = 4;
-    const merges = [];
-    merges.push({s:{r:0,c:0}, e:{r:0,c:3}}); 
-
+    let rowsHtml = '';
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
-        const startRow = rowIdx;
-
-        group.items.forEach(item => {
-            wsData.push([
-                group.name, 
-                `${item.weekTitle}\n(${item.range})`, 
-                item.prev || '-', 
-                item.plan || '-'
-            ]);
-            rowIdx++;
+        const rowSpan = group.items.length;
+        group.items.forEach((item, idx) => {
+            const prevText = escapeHtml(item.prev).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
+            const planText = escapeHtml(item.plan).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
+            
+            rowsHtml += `<tr>`;
+            if (idx === 0) {
+                rowsHtml += `<td class="cat-cell" rowspan="${rowSpan}" width="200">${escapeHtml(group.name)}</td>`;
+            }
+            rowsHtml += `
+                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="180">
+                    ${escapeHtml(item.weekTitle)}<br style="mso-data-placement:same-cell;"/><span class="owner-text">${item.range}</span>
+                </td>
+                <td class="content-cell" width="450">${prevText}</td>
+                <td class="content-cell" width="450">${planText}</td>
+            </tr>`;
         });
-        if (group.items.length > 1) {
-            merges.push({s:{r:startRow, c:0}, e:{r:rowIdx-1, c:0}}); 
-        }
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!merges'] = merges;
-    ws['!cols'] = [{wch: 25}, {wch: 25}, {wch: 60}, {wch: 60}];
+    const htmlTable = `
+      <table border="0" cellpadding="0" cellspacing="0" width="1280">
+        <tr><td colspan="4" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
+        <tr><td colspan="4" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
+        <tr><td colspan="4" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
+        <tr>
+          <th>사업명</th>
+          <th>보고 주차</th>
+          <th>주간 실적</th>
+          <th>차주 계획</th>
+        </tr>
+        ${rowsHtml}
+      </table>
+    `;
 
-    XLSX.utils.book_append_sheet(wb, ws, "진행내역");
-    XLSX.writeFile(wb, `에이블컴_프로젝트_진행내역.xlsx`);
+    exportHtmlTableToExcel(htmlTable, `에이블컴_프로젝트_진행내역`);
   };
 
   // --- 11. CATEGORY MANAGEMENT ---
@@ -1876,9 +1968,9 @@
       <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line);">
         <span>${escapeHtml(c)}</span>
         <div>
-          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, -1)">↑</button>
-          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, 1)">↓</button>
-          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:2px 6px; margin-left:8px;" onclick="window.delCategory(${idx})">삭제</button>
+          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+          <button class="btn-ghost btn-sm" onclick="window.moveCategory(${idx}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+          <button class="btn-ghost btn-sm" style="color:var(--accent); padding:2px 6px; margin-left:8px;" onclick="window.delCategory(${idx})"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
     `).join('');
@@ -1989,11 +2081,9 @@
     }
 
     let html = '';
-    // 카테고리 순서대로 프로젝트 정렬
     data.categories.forEach(catName => {
         const catProjs = data.projects.filter(p => p.cat === catName);
         catProjs.forEach((p, idx) => {
-            // 프로젝트 순서 이동을 위한 인덱스 찾기
             const globalIdx = data.projects.findIndex(x => x.id === p.id);
             html += `
               <tr>
@@ -2002,8 +2092,8 @@
                 <td>${escapeHtml(p.owner)}</td>
                 <td>${p.status}${p.completedDate ? ` <span style="font-size:10.5px;color:var(--muted);margin-left:4px;">(${p.completedDate})</span>` : ''}</td>
                 <td style="white-space:nowrap;">
-                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, -1)">↑</button>
-                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, 1)">↓</button>
+                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                  <button class="btn-ghost btn-sm" onclick="window.moveMasterProj(${globalIdx}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
                   <button class="btn-ghost btn-sm" onclick="window.editProject('${p.id}')">편집</button>
                   <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.delProject('${p.id}')">삭제</button>
                 </td>
@@ -2015,13 +2105,11 @@
   }
 
   window.moveMasterProj = function(idx, dir) {
-      // 같은 카테고리 내에서만 위아래 이동하도록 로직 구현
       if (idx + dir < 0 || idx + dir >= data.projects.length) return;
       
       const currentCat = data.projects[idx].cat;
       let targetIdx = idx + dir;
       
-      // 이동하려는 타겟이 같은 카테고리일 때만 Swap 허용
       if (data.projects[targetIdx].cat === currentCat) {
           const arr = data.projects;
           [arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]];
@@ -2096,6 +2184,57 @@
     window.showConfirm('사업 삭제', '삭제하시겠습니까?', () => {
       data.projects = data.projects.filter(p => p.id !== id);
       window.triggerSave(); updateAllUI();
+    });
+  };
+
+  // --- 13. ARCHIVE VIEW ---
+  function renderArchive() {
+    const tbody = document.getElementById('archive-tbody');
+    if(!tbody) return;
+    
+    const savedArchives = (data.archives || []).filter(a => a.isSaved === true);
+
+    if(savedArchives.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">보관된 내역이 없습니다.<br><span style="font-size:12px;">주간 업무보고 탭에서 [보고서 저장]을 누르면 이곳에 영구 보존됩니다.</span></td></tr>`;
+      return;
+    }
+
+    const curRangeId = getWeekRange(new Date()).id;
+
+    tbody.innerHTML = savedArchives.map(a => {
+      let cnt = 0; 
+      if (a.categories) a.categories.forEach(c => cnt += c.projects.length);
+      
+      const isCurrent = (a.id === curRangeId);
+      const rowStyle = isCurrent ? 'background: rgba(201,163,94,0.05);' : '';
+      const titleColor = isCurrent ? 'color: var(--brass);' : 'color: inherit;';
+      const badgeHtml = isCurrent ? '<span class="badge" style="background:var(--brass); margin-left:8px; font-weight:normal;">이번 주</span>' : '';
+
+      return `
+        <tr style="${rowStyle}">
+          <td class="clickable-row" onclick="window.viewArchivedWeek('${a.start}')" style="font-weight:600; font-family:var(--serif); ${titleColor}">
+            ${a.title} ${badgeHtml}
+          </td>
+          <td class="clickable-row" onclick="window.viewArchivedWeek('${a.start}')" style="font-family:var(--mono);">${a.start} ~ ${a.end}</td>
+          <td class="clickable-row" onclick="window.viewArchivedWeek('${a.start}')">${cnt}건</td>
+          <td>
+            <button class="btn-ghost btn-sm" style="color:var(--accent);" onclick="window.deleteArchive('${a.id}')">삭제</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.viewArchivedWeek = function(dStr) {
+    displayWeekDate = new Date(dStr + "T00:00:00");
+    window.goView('weekly', false);
+  };
+
+  window.deleteArchive = function(id) {
+    window.showConfirm('보고서 삭제', '해당 주차의 보고서를 아카이브에서 완전히 삭제하시겠습니까?', () => {
+      data.archives = data.archives.filter(a => a.id !== id);
+      window.triggerSave();
+      updateAllUI();
     });
   };
 
