@@ -1826,20 +1826,16 @@
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
         
-        const rowSpan = group.items.length;
-        group.items.forEach((item, idx) => {
-            rowsHtml += `<tr>`;
-            if (idx === 0) {
-                // 프로젝트 제목은 전체 폭의 18%만 차지
-                rowsHtml += `<td rowspan="${rowSpan}" class="print-cat" style="width:18%;">${escapeHtml(group.name)}</td>`;
-            }
-            // 주차 폭 15%, 나머지 실적/계획이 반반씩 차지
-            rowsHtml += `
+        // [해결] 인쇄 시 페이지 잘림을 유발하는 세로 병합(rowspan)을 완전히 제거하고, 사업명을 전체 가로폭(colspan=3) 소제목 헤더로 변경
+        rowsHtml += `<tr><td colspan="3" class="print-cat" style="text-align:left; padding-left:15px; background:#f0f0f0 !important; color:var(--ink); font-size:12pt;">■ ${escapeHtml(group.name)}</td></tr>`;
+        
+        group.items.forEach((item) => {
+            rowsHtml += `<tr>
                 <td style="text-align:center; vertical-align:middle; background:#FAF9F6 !important; width:15%; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     ${escapeHtml(item.weekTitle)}<br><span style="font-size:8pt; font-weight:normal; color:#666;">${item.range}</span>
                 </td>
-                <td class="print-content" style="width:33.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
-                <td class="print-content" style="width:33.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.plan) || '-'}</td>
+                <td class="print-content" style="width:42.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.prev) || '-'}</td>
+                <td class="print-content" style="width:42.5%; white-space:pre-wrap; padding-top:14px;">${escapeHtml(item.plan) || '-'}</td>
             </tr>`;
         });
     });
@@ -1856,10 +1852,9 @@
       <table class="print-table">
         <thead>
           <tr>
-            <th style="width: 18%;">사업명</th>
             <th style="width: 15%;">보고 주차</th>
-            <th style="width: 33.5%;">주간 실적</th>
-            <th style="width: 33.5%;">차주 계획</th>
+            <th style="width: 42.5%;">주간 실적</th>
+            <th style="width: 42.5%;">차주 계획</th>
           </tr>
         </thead>
         <tbody>
