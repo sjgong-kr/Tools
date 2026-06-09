@@ -1874,6 +1874,8 @@
   };
 
   // 엑셀 Export (프로젝트 진행 내역)
+  window.exportHistoryExcel = function() {
+    const projSel = document.getElementById('history-proj-select');
     const monthSel = document.getElementById('history-month-select');
     if(!projSel || !monthSel) return;
     
