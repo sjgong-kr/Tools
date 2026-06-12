@@ -66,7 +66,7 @@
     transition: all 0.3s ease;
   }
 
-   /* ===== Presentation Mode Styles (Fixed) ===== */
+  /* ===== Presentation Mode Styles (Fixed) ===== */
   body.presentation-mode {
     background: #E8E4DC !important; /* 바탕을 약간 어둡게 처리 */
     overflow-y: auto !important;
@@ -105,24 +105,60 @@
     width: 100% !important;
     box-sizing: border-box !important;
   }
-  body.presentation-mode .category-block .cat-title { font-size: 24px; padding: 10px 0;}
-  body.presentation-mode .proj-name { font-size: 22px; margin-bottom: 15px;}
+  
+  /* 주간 업무보고 PT 모드 디자인 개선 (프로젝트 진행 내역과 통일) */
+  body.presentation-mode .category-block { margin-bottom: 40px !important; border: none !important; background: transparent !important; }
+  body.presentation-mode .category-block .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+  body.presentation-mode .category-block .cat-title { 
+      font-size: 26px !important; 
+      padding: 10px 0 15px 0 !important; 
+      border-bottom: 3px solid var(--ink) !important;
+      color: var(--ink) !important;
+      display: flex !important;
+      align-items: center !important;
+  }
+  body.presentation-mode .category-block .cat-title .badge { font-size: 16px !important; padding: 6px 12px !important; margin-right: 12px !important; }
+  body.presentation-mode .category-block .cat-title span:last-child { font-size: 18px !important; margin-left: 10px !important;}
+  
+  body.presentation-mode .proj-row { 
+      margin-bottom: 25px !important; 
+      padding: 25px !important; 
+      border: 1px solid var(--line) !important; 
+      border-radius: 8px !important; 
+      background: #ffffff !important; 
+      box-shadow: var(--shadow-sm) !important;
+  }
+  body.presentation-mode .proj-name { font-size: 22px !important; margin-bottom: 20px !important; font-weight: 700 !important; color: var(--ink) !important; display: flex !important; align-items: baseline !important; }
+  body.presentation-mode .proj-name span { font-size: 16px !important; margin-left: 12px !important; color: var(--muted) !important; }
+  
   body.presentation-mode .proj-grid { 
     display: grid !important; 
     grid-template-columns: 1fr 1fr !important; 
-    gap: 40px !important; 
+    gap: 30px !important; 
     width: 100% !important; 
     box-sizing: border-box !important; 
   }
-  body.presentation-mode .proj-grid label { font-size: 16px; margin-bottom: 10px; color: var(--brass); }
+  body.presentation-mode .proj-grid > div {
+      background: var(--paper) !important;
+      padding: 24px !important;
+      border-radius: 6px !important;
+      border: 1px solid var(--line) !important;
+  }
+  body.presentation-mode .proj-grid label { font-size: 18px !important; font-weight: 700 !important; margin-bottom: 15px !important; display: block !important; color: var(--brass) !important; }
+  
   body.presentation-mode .proj-grid textarea { 
       width: 100% !important;
       box-sizing: border-box !important;
       font-size: 18px !important; 
       line-height: 1.8 !important; 
       min-height: 250px !important; 
-      padding: 18px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      color: var(--ink-2) !important;
+      resize: vertical !important;
   }
+  body.presentation-mode .proj-grid textarea:focus { outline: none !important; }
   
   /* 히스토리 뷰 PT 모드 적용 */
   body.presentation-mode #history-container { width: 100% !important; box-sizing: border-box !important; }
@@ -149,7 +185,6 @@
     cursor: pointer;
   }
   body.presentation-mode .btn-exit-pt { display: block; }
-
 
   /* ===== Sidebar ===== */
   .sidebar {
