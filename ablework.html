@@ -68,6 +68,107 @@
     transition: all 0.3s ease;
   }
 
+  /* ===== Presentation Mode Styles (Fixed) ===== */
+  body.presentation-mode {
+    background: #E8E4DC !important; /* 바탕을 약간 어둡게 처리 */
+    overflow-y: auto !important;
+  }
+  body.presentation-mode .app {
+    display: block !important; /* 사이드바 제거 및 전체 화면 사용 */
+  }
+  body.presentation-mode .sidebar {
+    display: none !important;
+  }
+  body.presentation-mode .main {
+    display: block !important;
+    max-width: 1300px !important; /* 화면 가득 차지 않게 쾌적한 너비 고정 */
+    width: 95% !important;
+    margin: 40px auto !important; 
+    padding: 50px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.15) !important;
+    border-radius: 8px !important;
+    overflow-x: visible !important;
+  }
+  body.presentation-mode .topbar,
+  body.presentation-mode .week-header,
+  body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
+    display: none !important;
+  }
+
+  /* PT 모드 주간 업무보고서 & 프로젝트 히스토리 통합 디자인 */
+  body.presentation-mode .category-block { margin-bottom: 50px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  body.presentation-mode .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+  body.presentation-mode .cat-title { font-size: 26px !important; padding: 10px 0 !important; border-bottom: 3px solid var(--ink) !important; color: var(--ink) !important; display: flex !important; align-items: center !important; }
+  body.presentation-mode .cat-title .badge { font-size: 16px !important; padding: 6px 12px !important; margin-right: 12px !important; }
+  
+  body.presentation-mode .proj-row,
+  body.presentation-mode .history-card { 
+      margin-bottom: 30px !important; 
+      padding: 0 !important; 
+      border: none !important; 
+      border-radius: 0 !important; 
+      background: transparent !important; 
+      box-shadow: none !important;
+  }
+  
+  body.presentation-mode .proj-name,
+  body.presentation-mode #history-container .section-title { 
+      font-size: 24px !important; 
+      margin-bottom: 20px !important; 
+      font-weight: 700 !important; 
+      color: var(--ink) !important; 
+      display: flex !important; 
+      align-items: baseline !important; 
+  }
+  body.presentation-mode .history-label { font-size: 24px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 20px !important; }
+
+  body.presentation-mode .proj-grid { 
+    display: grid !important; 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: 30px !important; 
+  }
+  
+  body.presentation-mode .proj-grid > div,
+  body.presentation-mode .wk-pt-box {
+      background: var(--paper) !important;
+      padding: 20px 25px !important;
+      border-radius: 8px !important;
+      border: 1px solid var(--line) !important;
+      min-height: auto !important; /* 강제 높이를 풀어 유연하게 높이 조절 */
+  }
+  
+  body.presentation-mode .wk-pt-box label,
+  body.presentation-mode .proj-grid > div > div:first-child { 
+      font-size: 16px !important; 
+      font-weight: 700 !important; 
+      margin-bottom: 5px !important; /* 여백 줄임 */
+      display: block !important; 
+      color: var(--muted) !important; 
+      border-bottom: 1px dashed var(--line) !important;
+      padding-bottom: 8px !important;
+  }
+  
+  /* Textarea 편집창 숨기고, 깔끔한 Text div 노출 */
+  body.presentation-mode .edit-area { display: none !important; }
+  body.presentation-mode .pt-area,
+  body.presentation-mode .history-content { 
+      display: block !important; 
+      font-size: 18px !important; 
+      line-height: 1.7 !important; 
+      color: var(--ink-2) !important; 
+      white-space: pre-wrap !important;
+      min-height: auto !important; /* 내용 길이에 맞춰서 박스 높이 자동 조절 */
+      padding: 10px 0 0 0 !important; /* 불필요한 패딩 제거 */
+  }
+
+  .btn-exit-pt {
+    display: none; position: fixed; top: 20px; right: 20px; z-index: 10000;
+    background: var(--accent); color: white; padding: 12px 24px; border-radius: 50px;
+    font-weight: bold; font-size: 15px; box-shadow: var(--shadow-md); cursor: pointer;
+  }
+  body.presentation-mode .btn-exit-pt { display: block; }
+
   /* ===== Sidebar ===== */
   .sidebar {
     background: var(--ink);
@@ -234,6 +335,7 @@
   }
   .cat-title { font-family: var(--serif); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .badge { background: var(--ink); color: #fff; font-family: var(--sans); font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+  .badge-dark { background: var(--ink-2); }
   
   .proj-row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
   .proj-row:last-child { border-bottom: none; }
@@ -276,106 +378,6 @@
 
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
-
-  /* ========================================= */
-  /* ===== 프레젠테이션 (PT) 모드 강제 통제 ===== */
-  /* ========================================= */
-  body.presentation-mode {
-    background: #E8E4DC !important;
-    overflow-y: auto !important;
-  }
-  body.presentation-mode .app {
-    display: block !important;
-  }
-  body.presentation-mode .sidebar {
-    display: none !important;
-  }
-  body.presentation-mode .main {
-    display: block !important;
-    max-width: 1300px !important; /* 화면 가득 차지 않게 쾌적한 너비 고정 */
-    width: 95% !important;
-    margin: 40px auto !important; 
-    padding: 50px !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 30px rgba(0,0,0,0.15) !important;
-    border-radius: 8px !important;
-  }
-  body.presentation-mode .topbar,
-  body.presentation-mode .week-header,
-  body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
-    display: none !important;
-  }
-
-  /* PT 모드 주간 업무보고서 & 프로젝트 히스토리 통합 디자인 */
-  body.presentation-mode .category-block { margin-bottom: 50px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
-  body.presentation-mode .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
-  body.presentation-mode .cat-title { font-size: 26px !important; padding: 10px 0 !important; border-bottom: 3px solid var(--ink) !important; color: var(--ink) !important; display: flex !important; align-items: center !important; }
-  body.presentation-mode .cat-title .badge { font-size: 16px !important; padding: 6px 12px !important; margin-right: 12px !important; }
-  
-  body.presentation-mode .proj-row,
-  body.presentation-mode .history-card { 
-      margin-bottom: 30px !important; 
-      padding: 0 !important; 
-      border: none !important; 
-      border-radius: 0 !important; 
-      background: transparent !important; 
-      box-shadow: none !important;
-  }
-  
-  body.presentation-mode .proj-name,
-  body.presentation-mode #history-container .section-title { 
-      font-size: 24px !important; 
-      margin-bottom: 20px !important; 
-      font-weight: 700 !important; 
-      color: var(--ink) !important; 
-      display: flex !important; 
-      align-items: baseline !important; 
-  }
-  body.presentation-mode .history-label { font-size: 24px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 20px !important; }
-
-  body.presentation-mode .proj-grid { 
-    display: grid !important; 
-    grid-template-columns: 1fr 1fr !important; 
-    gap: 30px !important; 
-  }
-  
-  body.presentation-mode .proj-grid > div,
-  body.presentation-mode .wk-pt-box {
-      background: var(--paper) !important;
-      padding: 25px !important;
-      border-radius: 8px !important;
-      border: 1px solid var(--line) !important;
-  }
-  
-  body.presentation-mode .wk-pt-box label,
-  body.presentation-mode .proj-grid > div > div:first-child { 
-      font-size: 16px !important; 
-      font-weight: 700 !important; 
-      margin-bottom: 15px !important; 
-      display: block !important; 
-      color: var(--muted) !important; 
-      border-bottom: 1px dashed var(--line) !important;
-      padding-bottom: 8px !important;
-  }
-  
-  /* Textarea 편집창 숨기고, 깔끔한 Text div 노출 */
-  body.presentation-mode .edit-area { display: none !important; }
-  body.presentation-mode .pt-area,
-  body.presentation-mode .history-content { 
-      display: block !important; 
-      font-size: 17px !important; 
-      line-height: 1.8 !important; 
-      color: var(--ink-2) !important; 
-      white-space: pre-wrap !important;
-      min-height: 150px;
-  }
-
-  .btn-exit-pt {
-    display: none; position: fixed; top: 20px; right: 20px; z-index: 10000;
-    background: var(--accent); color: white; padding: 12px 24px; border-radius: 50px;
-    font-weight: bold; font-size: 15px; box-shadow: var(--shadow-md); cursor: pointer;
-  }
-  body.presentation-mode .btn-exit-pt { display: block; }
 
   /* ========================================= */
   /* ===== Print Styles (완벽 개선: 여백 차단) ===== */
@@ -508,6 +510,7 @@
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon"><i class="fa-solid fa-box-archive"></i></span> 보고서 아카이브</div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
       <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> 계정 관리</div>
+      <div class="nav-item" id="nav-backup" data-view="backup" onclick="window.goView('backup')" style="display:none;"><span class="nav-icon"><i class="fa-solid fa-floppy-disk"></i></span> 설정 · 백업</div>
     </nav>
     <div class="sidebar-foot" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding:20px; font-size:12px;">
       <div style="color:#9A9384; margin-bottom:8px;">접속 계정: <span id="current-user-name" style="color:#F4EFE3; font-weight:bold;"></span></div>
@@ -633,7 +636,6 @@
           </div>
           <div id="weekly-matched-schedules" style="font-size:13px; color:var(--ink-2);"></div>
       </div>
-
     </section>
 
     <!-- 3. PROJECT HISTORY VIEW -->
@@ -652,7 +654,7 @@
           </select>
           <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-expand" style="margin-right:4px;"></i> PT 모드</button>
           <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportHistoryExcel()"><i class="fa-solid fa-file-excel" style="margin-right:4px;"></i> 엑셀 내보내기</button>
-          <button class="btn btn-secondary" onclick="window.printHistory()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
+          <button class="btn btn-secondary" onclick="window.executePrintHistory()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
         </div>
       </div>
       <div id="history-container">
@@ -714,6 +716,43 @@
           <thead><tr><th>접속 아이디</th><th>이름</th><th>권한</th><th>관리</th></tr></thead>
           <tbody id="accounts-tbody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- 7. BACKUP / RESET VIEW (Admin Only) -->
+    <section class="view" id="view-backup">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">설정 · 백업</div>
+          <div class="topbar-sub">시스템 데이터 가져오기 / 내보내기 및 초기화 (최고관리자 전용)</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="section-head">
+          <div class="section-title">데이터 백업 / 복구</div>
+          <div class="section-meta">JSON 형식 파일</div>
+        </div>
+        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
+          모든 데이터(주간보고, 프로젝트, 아카이브 등)를 PC로 내보내거나, 보관 중인 백업 파일을 업로드하여 복원할 수 있습니다.<br>
+          <strong style="color:var(--ink);">주의:</strong> 복원을 진행하면 현재 서버에 있는 데이터가 업로드한 파일 내용으로 완전히 덮어씌워집니다.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="window.exportData()">⇩ 전체 데이터 PC 다운로드 (백업)</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⇧ 백업 파일로 복구 (업로드)</button>
+          <input id="import-file" type="file" accept=".json" style="display:none" onchange="window.importData(event)">
+        </div>
+      </div>
+
+      <div class="card" style="border-color: var(--accent);">
+        <div class="section-head" style="border-color: #FBF1F1;">
+          <div class="section-title" style="color: var(--accent);">시스템 강제 초기화</div>
+          <div class="section-meta">Danger Zone</div>
+        </div>
+        <p style="color:var(--muted); font-size:12.5px; margin-bottom:16px;">
+          모든 데이터베이스 정보를 초기 빈 상태로 되돌립니다. 이 작업은 되돌릴 수 없으니 반드시 사전에 백업을 진행해 주세요.
+        </p>
+        <button class="btn btn-danger" onclick="window.confirmReset()">⚠ 전체 데이터 초기화</button>
       </div>
     </section>
 
@@ -1622,6 +1661,7 @@
 
         rowsHtml += `<tr>`;
         if (idx === 0) {
+          // 가로 출력 시 너비 비율 10%
           rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="width:10%;">${escapeHtml(cat.name)}</td>`;
         }
         rowsHtml += `
@@ -1665,6 +1705,7 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
+  // 엑셀 Export (주간 보고서)
   window.exportWeeklyExcel = function() {
     if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
@@ -1884,6 +1925,7 @@
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
         
+        // [해결] 인쇄 시 페이지 잘림을 유발하는 세로 병합(rowspan)을 완전히 제거하고, 사업명을 전체 가로폭(colspan=3) 소제목 헤더로 변경
         rowsHtml += `<tr><td colspan="3" class="print-cat" style="text-align:left; padding-left:15px; background:#f0f0f0 !important; color:var(--ink); font-size:12pt;">■ ${escapeHtml(group.name)}</td></tr>`;
         
         group.items.forEach((item) => {
@@ -1925,7 +1967,7 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // 엑셀 Export (프로젝트 진행 내역 - 자체 생성 엔진)
+  // 엑셀 Export (프로젝트 진행 내역)
   window.exportHistoryExcel = function() {
     const projSel = document.getElementById('history-proj-select');
     const monthSel = document.getElementById('history-month-select');
@@ -1972,29 +2014,32 @@
     let rowsHtml = '';
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
-        
-        rowsHtml += `<tr><td colspan="3" class="cat-cell" style="text-align:left; background-color:#e2e8f0;">■ ${escapeHtml(group.name)}</td></tr>`;
-
-        group.items.forEach((item) => {
+        const rowSpan = group.items.length;
+        group.items.forEach((item, idx) => {
             const prevText = escapeHtml(item.prev).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             const planText = escapeHtml(item.plan).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             
-            rowsHtml += `<tr>
-                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="150">
+            rowsHtml += `<tr>`;
+            if (idx === 0) {
+                rowsHtml += `<td class="cat-cell" rowspan="${rowSpan}" width="200">${escapeHtml(group.name)}</td>`;
+            }
+            rowsHtml += `
+                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="180">
                     ${escapeHtml(item.weekTitle)}<br style="mso-data-placement:same-cell;"/><span class="owner-text">${item.range}</span>
                 </td>
-                <td class="content-cell" width="485">${prevText}</td>
-                <td class="content-cell" width="485">${planText}</td>
+                <td class="content-cell" width="450">${prevText}</td>
+                <td class="content-cell" width="450">${planText}</td>
             </tr>`;
         });
     });
 
     const htmlTable = `
-      <table border="0" cellpadding="0" cellspacing="0" width="1120">
-        <tr><td colspan="3" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
-        <tr><td colspan="3" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
-        <tr><td colspan="3" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
+      <table border="0" cellpadding="0" cellspacing="0" width="1280">
+        <tr><td colspan="4" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
+        <tr><td colspan="4" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
+        <tr><td colspan="4" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
         <tr>
+          <th>사업명</th>
           <th>보고 주차</th>
           <th>주간 실적</th>
           <th>차주 계획</th>
