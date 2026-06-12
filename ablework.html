@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>에이블컴 기술팀 · 업무 관리</title>
+<!-- SheetJS 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -65,126 +67,6 @@
     min-height: 100vh;
     transition: all 0.3s ease;
   }
-
-  /* ===== Presentation Mode Styles (Fixed) ===== */
-  body.presentation-mode {
-    background: #E8E4DC !important; /* 바탕을 약간 어둡게 처리 */
-    overflow-y: auto !important;
-  }
-  body.presentation-mode .app {
-    display: flex !important;
-    justify-content: center !important;
-    width: 100vw !important;
-    min-height: 100vh !important;
-    background: #E8E4DC !important;
-  }
-  body.presentation-mode .sidebar {
-    display: none !important;
-  }
-  body.presentation-mode .main {
-    display: block !important;
-    width: 100% !important;
-    max-width: 1200px !important; /* 화면 가득 차지 않게 A4 용지 비율로 너비 고정 */
-    margin: 40px auto !important; /* 상하 여백 및 가운데 정렬 */
-    padding: 50px !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 30px rgba(0,0,0,0.15) !important;
-    border-radius: 8px !important;
-    overflow-x: visible !important;
-  }
-  body.presentation-mode .topbar,
-  body.presentation-mode .week-header,
-  body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
-    display: none !important;
-  }
-  
-  /* PT 모드 텍스트 및 박스 크기 대폭 확대 및 찌그러짐 원천 차단 */
-  body.presentation-mode .category-block,
-  body.presentation-mode .proj-row,
-  body.presentation-mode .history-card {
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-  
-  /* 주간 업무보고 PT 모드 디자인 개선 (프로젝트 진행 내역과 통일) */
-  body.presentation-mode .category-block { margin-bottom: 40px !important; border: none !important; background: transparent !important; }
-  body.presentation-mode .category-block .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
-  body.presentation-mode .category-block .cat-title { 
-      font-size: 26px !important; 
-      padding: 10px 0 15px 0 !important; 
-      border-bottom: 3px solid var(--ink) !important;
-      color: var(--ink) !important;
-      display: flex !important;
-      align-items: center !important;
-  }
-  body.presentation-mode .category-block .cat-title .badge { font-size: 16px !important; padding: 6px 12px !important; margin-right: 12px !important; }
-  body.presentation-mode .category-block .cat-title span:last-child { font-size: 18px !important; margin-left: 10px !important;}
-  
-  body.presentation-mode .proj-row { 
-      margin-bottom: 25px !important; 
-      padding: 25px !important; 
-      border: 1px solid var(--line) !important; 
-      border-radius: 8px !important; 
-      background: #ffffff !important; 
-      box-shadow: var(--shadow-sm) !important;
-  }
-  body.presentation-mode .proj-name { font-size: 22px !important; margin-bottom: 20px !important; font-weight: 700 !important; color: var(--ink) !important; display: flex !important; align-items: baseline !important; }
-  body.presentation-mode .proj-name span { font-size: 16px !important; margin-left: 12px !important; color: var(--muted) !important; }
-  
-  body.presentation-mode .proj-grid { 
-    display: grid !important; 
-    grid-template-columns: 1fr 1fr !important; 
-    gap: 30px !important; 
-    width: 100% !important; 
-    box-sizing: border-box !important; 
-  }
-  body.presentation-mode .proj-grid > div {
-      background: var(--paper) !important;
-      padding: 24px !important;
-      border-radius: 6px !important;
-      border: 1px solid var(--line) !important;
-  }
-  body.presentation-mode .proj-grid label { font-size: 18px !important; font-weight: 700 !important; margin-bottom: 15px !important; display: block !important; color: var(--brass) !important; }
-  
-  body.presentation-mode .proj-grid textarea { 
-      width: 100% !important;
-      box-sizing: border-box !important;
-      font-size: 18px !important; 
-      line-height: 1.8 !important; 
-      min-height: 250px !important; 
-      padding: 0 !important;
-      background: transparent !important;
-      border: none !important;
-      color: var(--ink-2) !important;
-      resize: vertical !important;
-  }
-  body.presentation-mode .proj-grid textarea:focus { outline: none !important; }
-  
-  /* 히스토리 뷰 PT 모드 적용 */
-  body.presentation-mode #history-container { width: 100% !important; box-sizing: border-box !important; }
-  body.presentation-mode #history-container .section-title { font-size: 24px; margin-top: 20px;}
-  body.presentation-mode #history-container .history-content { 
-      font-size: 18px; line-height: 1.8; padding: 20px; 
-      width: 100% !important; box-sizing: border-box !important; 
-  }
-  body.presentation-mode #history-container .history-label { font-size: 16px; margin-bottom: 10px; }
-  
-  .btn-exit-pt {
-    display: none;
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    background: var(--accent);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-weight: bold;
-    font-size: 15px;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-  }
-  body.presentation-mode .btn-exit-pt { display: block; }
 
   /* ===== Sidebar ===== */
   .sidebar {
@@ -340,7 +222,7 @@
   .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); }
   .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* ===== Weekly Editor ===== */
+  /* ===== Weekly Editor Component ===== */
   .week-header {
     background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px;
     padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;
@@ -358,12 +240,14 @@
   .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .proj-name { font-weight: 600; font-size: 14px; }
   .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .proj-grid label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .proj-grid textarea {
+  .wk-pt-box label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .edit-area textarea {
     width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px;
     background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px;
   }
-  .proj-grid textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
+  .edit-area textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
+  
+  .pt-area { display: none; } /* 평상시에는 텍스트 출력 영역 숨김 */
 
   /* ===== Modals & Toasts ===== */
   .modal-overlay {
@@ -393,11 +277,113 @@
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
-  /* ===== Print Styles (완벽 개선: 상단 여백 및 잘림 방지) ===== */
+  /* ========================================= */
+  /* ===== 프레젠테이션 (PT) 모드 강제 통제 ===== */
+  /* ========================================= */
+  body.presentation-mode {
+    background: #E8E4DC !important;
+    overflow-y: auto !important;
+  }
+  body.presentation-mode .app {
+    display: block !important;
+  }
+  body.presentation-mode .sidebar {
+    display: none !important;
+  }
+  body.presentation-mode .main {
+    display: block !important;
+    max-width: 1300px !important; /* 화면 가득 차지 않게 쾌적한 너비 고정 */
+    width: 95% !important;
+    margin: 40px auto !important; 
+    padding: 50px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.15) !important;
+    border-radius: 8px !important;
+  }
+  body.presentation-mode .topbar,
+  body.presentation-mode .week-header,
+  body.presentation-mode .topbar-actions button:not(.btn-exit-pt) {
+    display: none !important;
+  }
+
+  /* PT 모드 주간 업무보고서 & 프로젝트 히스토리 통합 디자인 */
+  body.presentation-mode .category-block { margin-bottom: 50px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  body.presentation-mode .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+  body.presentation-mode .cat-title { font-size: 26px !important; padding: 10px 0 !important; border-bottom: 3px solid var(--ink) !important; color: var(--ink) !important; display: flex !important; align-items: center !important; }
+  body.presentation-mode .cat-title .badge { font-size: 16px !important; padding: 6px 12px !important; margin-right: 12px !important; }
+  
+  body.presentation-mode .proj-row,
+  body.presentation-mode .history-card { 
+      margin-bottom: 30px !important; 
+      padding: 0 !important; 
+      border: none !important; 
+      border-radius: 0 !important; 
+      background: transparent !important; 
+      box-shadow: none !important;
+  }
+  
+  body.presentation-mode .proj-name,
+  body.presentation-mode #history-container .section-title { 
+      font-size: 24px !important; 
+      margin-bottom: 20px !important; 
+      font-weight: 700 !important; 
+      color: var(--ink) !important; 
+      display: flex !important; 
+      align-items: baseline !important; 
+  }
+  body.presentation-mode .history-label { font-size: 24px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 20px !important; }
+
+  body.presentation-mode .proj-grid { 
+    display: grid !important; 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: 30px !important; 
+  }
+  
+  body.presentation-mode .proj-grid > div,
+  body.presentation-mode .wk-pt-box {
+      background: var(--paper) !important;
+      padding: 25px !important;
+      border-radius: 8px !important;
+      border: 1px solid var(--line) !important;
+  }
+  
+  body.presentation-mode .wk-pt-box label,
+  body.presentation-mode .proj-grid > div > div:first-child { 
+      font-size: 16px !important; 
+      font-weight: 700 !important; 
+      margin-bottom: 15px !important; 
+      display: block !important; 
+      color: var(--muted) !important; 
+      border-bottom: 1px dashed var(--line) !important;
+      padding-bottom: 8px !important;
+  }
+  
+  /* Textarea 편집창 숨기고, 깔끔한 Text div 노출 */
+  body.presentation-mode .edit-area { display: none !important; }
+  body.presentation-mode .pt-area,
+  body.presentation-mode .history-content { 
+      display: block !important; 
+      font-size: 17px !important; 
+      line-height: 1.8 !important; 
+      color: var(--ink-2) !important; 
+      white-space: pre-wrap !important;
+      min-height: 150px;
+  }
+
+  .btn-exit-pt {
+    display: none; position: fixed; top: 20px; right: 20px; z-index: 10000;
+    background: var(--accent); color: white; padding: 12px 24px; border-radius: 50px;
+    font-weight: bold; font-size: 15px; box-shadow: var(--shadow-md); cursor: pointer;
+  }
+  body.presentation-mode .btn-exit-pt { display: block; }
+
+  /* ========================================= */
+  /* ===== Print Styles (완벽 개선: 여백 차단) ===== */
+  /* ========================================= */
   #print-area { display: none; }
   
   @media print {
-    @page { size: A4 landscape; margin: 5mm 10mm; }
+    @page { size: A4 landscape; margin: 10mm 15mm; }
     
     body, html { 
         background: white !important; 
@@ -420,6 +406,8 @@
         position: absolute;
         top: 0;
         left: 0;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .print-header-container { 
@@ -441,7 +429,7 @@
         font-size: 10pt; 
         table-layout: fixed; 
         margin-top: 0; 
-        page-break-inside: auto; /* 표 중간 잘림 허용하여 다음장으로 부드럽게 넘김 */
+        page-break-inside: auto; 
     }
     
     .print-table th, .print-table td { 
@@ -479,7 +467,6 @@
     .print-owner { font-weight: normal; font-size: 8.5pt; color: #888; margin-left: 4px; }
     .print-text { padding-left: 12px; text-indent: -12px; margin-bottom: 4px; color: #333;}
     
-    /* 각 행이 중간에 잘리지 않도록 보호 */
     tr { page-break-inside: avoid; page-break-after: auto; }
   }
 </style>
@@ -740,7 +727,7 @@
 <div class="modal-overlay" id="modal-confirm" style="z-index: 99999;">
   <div class="modal" style="max-width: 320px; text-align:center;">
     <h3 id="confirm-title" style="margin-bottom:10px;">확인</h3>
-    <p id="confirm-text" style="color:var(--muted); font-size:13px; margin-bottom:20px;">진행하시겠습니까?</p>
+    <p id="confirm-text" style="color:var(--muted); font-size:13px; margin-bottom:20px; white-space:pre-wrap;">진행하시겠습니까?</p>
     <div style="display:flex; gap:10px; justify-content:center;">
       <button class="btn btn-secondary" onclick="window.closeModal('modal-confirm')">취소</button>
       <button class="btn btn-danger" id="confirm-ok">확인</button>
@@ -1562,8 +1549,16 @@
                   <div class="proj-name">${escapeHtml(p.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:6px;">담당: ${escapeHtml(p.owner||'-')}</span></div>
                 </div>
                 <div class="proj-grid">
-                  <div><label>전주 실적</label><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
-                  <div><label>금주 계획</label><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
+                  <div class="wk-pt-box">
+                      <label>전주 실적</label>
+                      <div class="edit-area"><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
+                      <div class="pt-area">${escapeHtml(p.prev) || '-'}</div>
+                  </div>
+                  <div class="wk-pt-box">
+                      <label>금주 계획</label>
+                      <div class="edit-area"><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
+                      <div class="pt-area">${escapeHtml(p.plan) || '-'}</div>
+                  </div>
                 </div>
               </div>
             `).join('')}
@@ -1627,7 +1622,6 @@
 
         rowsHtml += `<tr>`;
         if (idx === 0) {
-          // 가로 출력 시 너비 비율 10%
           rowsHtml += `<td class="print-cat" rowspan="${rowSpan}" style="width:10%;">${escapeHtml(cat.name)}</td>`;
         }
         rowsHtml += `
@@ -1671,7 +1665,6 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // 엑셀 Export (주간 보고서)
   window.exportWeeklyExcel = function() {
     if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
@@ -1784,7 +1777,6 @@
         arch.categories.forEach(cat => {
             cat.projects.forEach(p => {
                 if (projId === 'all' || p.id === projId) {
-                    // 데이터가 있든 없든, 아카이브에 포함되어 있다면 히스토리에 무조건 표시
                     rawItems.push({
                         catName: cat.name,
                         projId: p.id,
@@ -1892,7 +1884,6 @@
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
         
-        // [해결] 인쇄 시 페이지 잘림을 유발하는 세로 병합(rowspan)을 완전히 제거하고, 사업명을 전체 가로폭(colspan=3) 소제목 헤더로 변경
         rowsHtml += `<tr><td colspan="3" class="print-cat" style="text-align:left; padding-left:15px; background:#f0f0f0 !important; color:var(--ink); font-size:12pt;">■ ${escapeHtml(group.name)}</td></tr>`;
         
         group.items.forEach((item) => {
@@ -1934,7 +1925,7 @@
     try { window.print(); } catch(e) { window.showToast("Ctrl+P 또는 Cmd+P를 눌러주세요."); }
   };
 
-  // 엑셀 Export (프로젝트 진행 내역)
+  // 엑셀 Export (프로젝트 진행 내역 - 자체 생성 엔진)
   window.exportHistoryExcel = function() {
     const projSel = document.getElementById('history-proj-select');
     const monthSel = document.getElementById('history-month-select');
@@ -1981,32 +1972,29 @@
     let rowsHtml = '';
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
-        const rowSpan = group.items.length;
-        group.items.forEach((item, idx) => {
+        
+        rowsHtml += `<tr><td colspan="3" class="cat-cell" style="text-align:left; background-color:#e2e8f0;">■ ${escapeHtml(group.name)}</td></tr>`;
+
+        group.items.forEach((item) => {
             const prevText = escapeHtml(item.prev).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             const planText = escapeHtml(item.plan).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             
-            rowsHtml += `<tr>`;
-            if (idx === 0) {
-                rowsHtml += `<td class="cat-cell" rowspan="${rowSpan}" width="200">${escapeHtml(group.name)}</td>`;
-            }
-            rowsHtml += `
-                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="180">
+            rowsHtml += `<tr>
+                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="150">
                     ${escapeHtml(item.weekTitle)}<br style="mso-data-placement:same-cell;"/><span class="owner-text">${item.range}</span>
                 </td>
-                <td class="content-cell" width="450">${prevText}</td>
-                <td class="content-cell" width="450">${planText}</td>
+                <td class="content-cell" width="485">${prevText}</td>
+                <td class="content-cell" width="485">${planText}</td>
             </tr>`;
         });
     });
 
     const htmlTable = `
-      <table border="0" cellpadding="0" cellspacing="0" width="1280">
-        <tr><td colspan="4" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
-        <tr><td colspan="4" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
-        <tr><td colspan="4" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
+      <table border="0" cellpadding="0" cellspacing="0" width="1120">
+        <tr><td colspan="3" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
         <tr>
-          <th>사업명</th>
           <th>보고 주차</th>
           <th>주간 실적</th>
           <th>차주 계획</th>
