@@ -131,16 +131,17 @@
   body.presentation-mode .proj-grid > div,
   body.presentation-mode .wk-pt-box {
       background: var(--paper) !important;
-      padding: 25px !important;
+      padding: 15px 25px !important;
       border-radius: 8px !important;
       border: 1px solid var(--line) !important;
+      min-height: auto !important; /* 강제 높이 해제, 유연하게 조절 */
   }
   
   body.presentation-mode .wk-pt-box label,
   body.presentation-mode .proj-grid > div > div:first-child { 
       font-size: 16px !important; 
       font-weight: 700 !important; 
-      margin-bottom: 15px !important; 
+      margin-bottom: 5px !important; /* 낭비되는 여백 대폭 축소 */
       display: block !important; 
       color: var(--muted) !important; 
       border-bottom: 1px dashed var(--line) !important;
@@ -152,10 +153,11 @@
   body.presentation-mode .history-content { 
       display: block !important; 
       font-size: 17px !important; 
-      line-height: 1.8 !important; 
+      line-height: 1.6 !important; 
       color: var(--ink-2) !important; 
       white-space: pre-wrap !important;
-      min-height: 150px;
+      min-height: auto !important; /* 내용 길이에 맞춰 박스 크기 최소화 */
+      padding: 10px 0 0 0 !important;
   }
 
   .btn-exit-pt {
