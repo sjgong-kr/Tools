@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>기술지원 REPORT 작성</title>
+<!-- Firebase (compat SDK) — Firestore 기반 저장 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 /* === xlsx-js-style (SheetJS 호환·스타일 지원) 내장 — 오프라인 동작 === */
 /* xlsx-js-style 1.2.0-beta @ 2022-04-05T01:40:40.843Z */
@@ -78,6 +81,10 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
   .mini-btn{background:#fff; border:1px solid var(--line-strong); border-radius:7px; padding:6px 9px;
     font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; color:var(--accent-dark);}
   .mini-btn:hover{background:var(--accent-soft);}
+  .fb-badge{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; vertical-align:middle; }
+  .fb-on{ background:#dcfce7; color:#166534; }
+  .fb-wait{ background:#fef9c3; color:#854d0e; }
+  .fb-off{ background:#fee2e2; color:#991b1b; }
   .lab-mng{padding:2px 7px; font-size:10.5px; margin-left:4px; vertical-align:middle;}
   /* Excel 전송 필수 항목: 비어 있으면 연한 분홍 */
   input.req-empty, select.req-empty{ background:#fff0f5; border-color:#f3a8c4; }
@@ -208,7 +215,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 
 <header class="topbar">
   <div class="brand"><span class="dot"></span>
-    <div><h1>기술지원 REPORT</h1><span>㈜에이블컴 · 통합 유지보수 / 기술지원 내역 관리</span></div></div>
+    <div><h1>기술지원 REPORT</h1><span>㈜에이블컴 · 통합 유지보수 / 기술지원 내역 관리 <span id="fbStatus" class="fb-badge fb-wait">● 연결 확인 중…</span></span></div></div>
   <div class="tabs">
     <button class="tab active" id="tabList" onclick="showView('list')">📋 목록</button>
   </div>
@@ -467,10 +474,69 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
    ========================================================================= */
 let reports = [];
 let editingId = null;
+let editingDocId = null;   // Firestore 문서 ID (수정/삭제용)
 let equipmentGroups = ['ROADM','IP-MPLS','7210SAS'];
 let modelNames = ['1830PSS-32','1830PSS-8','NFM-T','7750-SR-7','7750-SR-A7','7250 IXR-R6','7210-SAS-S','7210SAS-T ETR'];
 let ktRegions = ['강남','서부','강북','강원','경북','대구','충남','충북','전남','전북','부산','경남','제주','판교','고양'];
 let operators = ['KT','세종텔레콤','경기도청','유티정보'];
+
+/* ===================== Firebase (Firestore) ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+  authDomain: "openzeroc.firebaseapp.com",
+  projectId: "openzeroc",
+  storageBucket: "openzeroc.firebasestorage.app",
+  messagingSenderId: "465944510778",
+  appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+  measurementId: "G-M4K79K2XPG"
+};
+const COL_NAME = 'ablereport';     // 컬렉션
+const SETTINGS_ID = '_settings';   // 옵션 설정 저장 문서
+let db = null, COL = null, fbReady = false;
+
+function setFbStatus(state, msg){ const el=$('fbStatus'); if(!el)return;
+  el.className='fb-badge fb-'+state; el.textContent=msg; }
+function initFirebase(){
+  if(typeof firebase==='undefined' || !firebase.initializeApp){
+    fbReady=false; setFbStatus('off','● 메모리 모드 (Firebase 미연결)'); return; }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore(); COL=db.collection(COL_NAME); fbReady=true;
+    setFbStatus('wait','● 클라우드 연결 중…');
+    // 실시간 동기화
+    COL.onSnapshot(snap=>{ applySnapshot(snap); setFbStatus('on','● 클라우드 연결됨'); },
+      err=>{ console.error('onSnapshot',err); fbReady=false; setFbStatus('off','● 연결 오류 (메모리 모드)'); });
+  }catch(e){ console.error('initFirebase',e); fbReady=false; setFbStatus('off','● 메모리 모드 (연결 실패)'); }
+}
+function applySnapshot(snap){
+  const arr=[];
+  snap.forEach(doc=>{ if(doc.id===SETTINGS_ID){ applySettings(doc.data()); return; }
+    arr.push({ ...doc.data(), docId:doc.id }); });
+  arr.forEach((r,i)=>{ if(typeof r.id!=='number') r.id=i+1; });
+  reports=arr;
+  if(editingId!=null){ const cur=reports.find(r=>r.id===editingId); editingDocId = cur?cur.docId:editingDocId; }
+  refreshOptionSelects(); renderList();
+}
+function applySettings(s){ if(!s)return;
+  if(Array.isArray(s.equipmentGroups)&&s.equipmentGroups.length) equipmentGroups=s.equipmentGroups;
+  if(Array.isArray(s.modelNames)&&s.modelNames.length) modelNames=s.modelNames;
+  if(Array.isArray(s.ktRegions)&&s.ktRegions.length) ktRegions=s.ktRegions;
+  if(Array.isArray(s.operators)&&s.operators.length) operators=s.operators;
+  refreshOptionSelects(); }
+function persistSettings(){ if(!fbReady||!COL)return;
+  COL.doc(SETTINGS_ID).set({equipmentGroups,modelNames,ktRegions,operators,updatedAt:new Date().toISOString()})
+    .catch(e=>console.error('persistSettings',e)); }
+/* 리포트 객체에서 저장용 데이터만 추출 (docId 제외) */
+function cleanReport(r){ const o={...r}; delete o.docId; return o; }
+/* 신규 리포트 여러 건 저장 (Firestore 배치 / 폴백: 메모리) */
+async function commitNewReports(newReps){ if(!newReps.length) return 0;
+  if(fbReady && COL){
+    try{ let batch=db.batch(), n=0;
+      for(const r of newReps){ batch.set(COL.doc(), cleanReport(r)); if(++n%400===0){ await batch.commit(); batch=db.batch(); } }
+      await batch.commit();
+    }catch(e){ console.error('commitNewReports',e); toast('클라우드 저장 실패'); return 0; }
+  }else{ newReps.forEach(r=> reports.push(r)); renderList(); }
+  return newReps.length; }
 // Excel로 나가는 필수 항목 (비어 있으면 분홍 표시 + 저장 차단)
 const REQUIRED = {mgmtNo:'관리번호(No)', equipmentGroup:'장비군', modelName:'기종명', operator:'사업자',
   customerName:'고객명/링명', siteName:'국소명', requestAt:'고객 요청 일시',
@@ -552,10 +618,10 @@ function renderOptModal(){
 }
 function listOf(t){ return t==='equip'?equipmentGroups:modelNames; }
 function addOpt(t){ const inp=t==='equip'?$('optAddEquip'):$('optAddModel'); const v=inp.value.trim(); if(!v)return;
-  const arr=listOf(t); if(arr.includes(v)){toast('이미 있는 항목');return;} arr.push(v); inp.value=''; renderOptModal(); refreshOptionSelects(); updatePreview(); }
+  const arr=listOf(t); if(arr.includes(v)){toast('이미 있는 항목');return;} arr.push(v); inp.value=''; renderOptModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
 function editOpt(t,i){ const arr=listOf(t); const nv=prompt('항목 수정',arr[i]); if(nv===null)return; const x=nv.trim(); if(!x)return;
-  arr[i]=x; renderOptModal(); refreshOptionSelects(); updatePreview(); }
-function delOpt(t,i){ const arr=listOf(t); if(!confirm(`'${arr[i]}' 항목 삭제?`))return; arr.splice(i,1); renderOptModal(); refreshOptionSelects(); updatePreview(); }
+  arr[i]=x; renderOptModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
+function delOpt(t,i){ const arr=listOf(t); if(!confirm(`'${arr[i]}' 항목 삭제?`))return; arr.splice(i,1); renderOptModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
 
 /* KT지역 / 사업자 항목 관리 모달 */
 let listModalType=null;
@@ -569,10 +635,10 @@ function renderListModal(){ const arr=curList(listModalType);
     <button class="e" onclick="editListItem(${i})">수정</button>
     <button class="d" onclick="delListItem(${i})">삭제</button></div>`).join('') || '<div style="color:#94a3b8;font-size:12px;">항목 없음</div>'; }
 function addListItem(){ const inp=$('listModalAdd'); const v=inp.value.trim(); if(!v)return; const arr=curList(listModalType);
-  if(arr.includes(v)){toast('이미 있는 항목');return;} arr.push(v); inp.value=''; renderListModal(); refreshOptionSelects(); updatePreview(); }
+  if(arr.includes(v)){toast('이미 있는 항목');return;} arr.push(v); inp.value=''; renderListModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
 function editListItem(i){ const arr=curList(listModalType); const nv=prompt('항목 수정',arr[i]); if(nv===null)return; const x=nv.trim(); if(!x)return;
-  arr[i]=x; renderListModal(); refreshOptionSelects(); updatePreview(); }
-function delListItem(i){ const arr=curList(listModalType); if(!confirm(`'${arr[i]}' 항목 삭제?`))return; arr.splice(i,1); renderListModal(); refreshOptionSelects(); updatePreview(); }
+  arr[i]=x; renderListModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
+function delListItem(i){ const arr=curList(listModalType); if(!confirm(`'${arr[i]}' 항목 삭제?`))return; arr.splice(i,1); renderListModal(); refreshOptionSelects(); updatePreview(); persistSettings(); }
 
 function syncSupplier(keep){ const cat=getRadio('supportCategory'); const sel=$('f_supplierDetail'); const prev=keep||sel.value;
   const list=SUPPLIER_MAP[cat]||ALL_SUPPLIERS; sel.innerHTML='<option value="">선택</option>';
@@ -580,7 +646,7 @@ function syncSupplier(keep){ const cat=getRadio('supportCategory'); const sel=$(
 
 function nextDbId(){ let m=0; reports.forEach(r=>{ if(typeof r.id==='number') m=Math.max(m,r.id); }); return m+1; }
 
-function resetForm(){ editingId=null; clearForm();
+function resetForm(){ editingId=null; editingDocId=null; clearForm();
   $('f_id').value='#'+String(nextDbId()).padStart(4,'0');
   $('f_supportCount').value='1'; $('f_partnerName').value='㈜에이블컴'; $('f_writerCompany').value='㈜에이블컴'; $('f_workResult').value='특이사항 없음'; $('f_remark').value='특이사항 없음';
   $('f_supplierDetail').innerHTML='<option value="">선택</option>';
@@ -592,25 +658,42 @@ function newReport(){ resetForm(); showView('write'); $('f_mgmtNo').focus(); }
 function markRequired(){ Object.keys(REQUIRED).forEach(k=>{ const el=$('f_'+k); if(!el)return;
   el.classList.toggle('req-empty', !String(el.value||'').trim()); }); }
 
-function saveReport(){ const d=getForm();
+async function saveReport(){ const d=getForm();
   const missing=Object.keys(REQUIRED).filter(k=> !String(d[k]||'').trim());
   markRequired();
   if(missing.length){ const first=$('f_'+missing[0]); if(first){ first.focus(); }
     toast(`필수 항목 ${missing.length}개 누락: ${missing.map(k=>REQUIRED[k]).join(', ')}`); return; }
   const now=new Date().toISOString();
+  if(fbReady && COL){   // ---- Firestore ----
+    try{
+      if(editingDocId){ const cur=reports.find(r=>r.id===editingId); const c=(cur&&cur.createdAt)||now;
+        await COL.doc(editingDocId).set({...d,id:editingId,createdAt:c,updatedAt:now});
+        toast('수정되었습니다 · #'+String(editingId).padStart(4,'0')); }
+      else{ const id=nextDbId(); const ref=await COL.add({...d,id,createdAt:now,updatedAt:now});
+        editingId=id; editingDocId=ref.id; $('f_id').value='#'+String(id).padStart(4,'0');
+        toast('저장되었습니다 · #'+String(id).padStart(4,'0')); }
+      $('formTitle').textContent='리포트 수정 · #'+String(editingId).padStart(4,'0'); $('deleteBtn').style.display='';
+    }catch(e){ console.error('saveReport',e); toast('저장 실패: 클라우드 오류'); }
+    return;
+  }
+  // ---- 메모리 폴백 ----
   if(editingId!=null){ const i=reports.findIndex(r=>r.id===editingId);
     if(i>-1){ const c=reports[i].createdAt||now; reports[i]={...d,id:editingId,createdAt:c,updatedAt:now}; }
     toast('수정되었습니다 · #'+String(editingId).padStart(4,'0'));
   }else{ const id=nextDbId(); reports.push({...d,id,createdAt:now,updatedAt:now}); editingId=id;
     $('f_id').value='#'+String(id).padStart(4,'0'); toast('저장되었습니다 · #'+String(id).padStart(4,'0')); }
-  $('formTitle').textContent='리포트 수정 · #'+String(editingId).padStart(4,'0'); $('deleteBtn').style.display=''; }
+  $('formTitle').textContent='리포트 수정 · #'+String(editingId).padStart(4,'0'); $('deleteBtn').style.display='';
+  renderList(); }
 
 function editReport(id){ const r=reports.find(x=>x.id===id); if(!r)return;
-  setForm(r); refreshOptionSelects(); syncSupplier(r.supplierDetail); editingId=id;
+  setForm(r); refreshOptionSelects(); syncSupplier(r.supplierDetail); editingId=id; editingDocId=r.docId||null;
   $('formTitle').textContent='리포트 수정 · #'+String(id).padStart(4,'0'); $('deleteBtn').style.display='';
-  updatePreview(); showView('write'); window.scrollTo({top:0,behavior:'smooth'}); }
-function deleteReport(id){ if(!confirm('#'+String(id).padStart(4,'0')+' 리포트를 삭제할까요?'))return;
-  reports=reports.filter(r=>r.id!==id); if(editingId===id) newReport(); renderList(); toast('삭제되었습니다'); }
+  updatePreview(); showView('write'); $('viewWrite').querySelector('.form-panel .panel-body').scrollTop=0; }
+async function deleteReport(id){ if(!confirm('#'+String(id).padStart(4,'0')+' 리포트를 삭제할까요?'))return;
+  const r=reports.find(x=>x.id===id);
+  if(fbReady && COL && r && r.docId){ try{ await COL.doc(r.docId).delete(); }catch(e){ console.error('deleteReport',e); toast('삭제 실패: 클라우드 오류'); return; }
+    if(editingId===id) resetForm(); showView('list'); toast('삭제되었습니다'); return; }
+  reports=reports.filter(x=>x.id!==id); if(editingId===id) newReport(); renderList(); toast('삭제되었습니다'); }
 function deleteCurrent(){ if(editingId!=null) deleteReport(editingId); }
 
 function toggleAll(box){ document.querySelectorAll('.rowChk').forEach(c=> c.checked=box.checked); }
@@ -723,19 +806,27 @@ function exportJSON(){ if(!reports.length){toast('저장할 리포트가 없습�
   toast(reports.length+'건을 JSON으로 저장했습니다'); }
 function importJSON(){ $('jsonFile').click(); }
 $('jsonFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f)return; const rd=new FileReader();
-  rd.onload=ev=>{ try{ const parsed=JSON.parse(ev.target.result);
+  rd.onload=async ev=>{ try{ const parsed=JSON.parse(ev.target.result);
     const arr=Array.isArray(parsed)?parsed:(parsed.reports||[]); if(!Array.isArray(arr)) throw 0;
-    reports=arr.map((r,i)=>{ const o=typeof r.id==='number'?{...r}:{...r,id:i+1};
+    const loaded=arr.map((r,i)=>{ const o=typeof r.id==='number'?{...r}:{...r,id:i+1};
       if(o.actionContent&&!o.handlingDetail){o.handlingDetail=o.actionContent; delete o.actionContent;}
       if(!Array.isArray(o.supportStaffList)) o.supportStaffList = o.supportStaff ? String(o.supportStaff).split(/[,\n]/).map(s=>s.trim()).filter(Boolean) : [];
       if(o.issueSummary===undefined) o.issueSummary='';
       if(o.handlingSummary===undefined) o.handlingSummary='';
-      return o; });
+      delete o.docId; return o; });
     if(!Array.isArray(parsed)){ if(Array.isArray(parsed.equipmentGroups)&&parsed.equipmentGroups.length)equipmentGroups=parsed.equipmentGroups;
       if(Array.isArray(parsed.modelNames)&&parsed.modelNames.length)modelNames=parsed.modelNames;
       if(Array.isArray(parsed.ktRegions)&&parsed.ktRegions.length)ktRegions=parsed.ktRegions;
       if(Array.isArray(parsed.operators)&&parsed.operators.length)operators=parsed.operators; }
-    refreshOptionSelects(); toast(reports.length+'건을 불러왔습니다'); resetForm(); showView('list');
+    refreshOptionSelects();
+    if(fbReady && COL){   // 클라우드: 중복(mgmtNo) 제외하고 추가
+      persistSettings();
+      const exist=new Set(reports.map(r=>r.mgmtNo).filter(Boolean));
+      let nid=nextDbId(); const newReps=[];
+      loaded.forEach(r=>{ if(r.mgmtNo && exist.has(r.mgmtNo)) return; newReps.push({...r,id:nid++}); });
+      const added=await commitNewReports(newReps);
+      toast(`클라우드에 ${added}건 추가${loaded.length-added?` (중복 ${loaded.length-added}건 제외)`:''}`); resetForm(); showView('list');
+    }else{ reports=loaded; toast(reports.length+'건을 불러왔습니다 (메모리)'); resetForm(); showView('list'); }
   }catch{ toast('JSON 파일을 읽을 수 없습니다'); } }; rd.readAsText(f); e.target.value=''; });
 
 /* ---------- Excel 내보내기 (첨부 양식 + 디자인 + 근로구분) ---------- */
@@ -897,7 +988,7 @@ function exportErp(data, po){ if(!data.length){toast('대상 없음');return;}
 /* ---------- Excel 가져오기 (장애처리 목록에 추가) ---------- */
 function importExcel(){ $('xlsxFile').click(); }
 $('xlsxFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f)return; const rd=new FileReader();
-  rd.onload=ev=>{ try{
+  rd.onload=async ev=>{ try{
     const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
@@ -915,7 +1006,7 @@ $('xlsxFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f)re
       requester:col(h=>h.includes('요청자')), cnt:col(h=>h.includes('지원인원')), staff:col(h=>h.includes('지원요원')),
       issue:col(h=>h.includes('고장')), handling:col(h=>h.includes('처리내역')), remark:col(h=>h.includes('비고')) };
     const g=(row,i)=> i>=0 ? row[i] : '';
-    let added=0,dup=0,nid=nextDbId(); const exist=new Set(reports.map(r=>r.mgmtNo));
+    let added=0,dup=0,nid=nextDbId(); const exist=new Set(reports.map(r=>r.mgmtNo)); const newReps=[];
     for(let i=hr+1;i<rows.length;i++){ const row=rows[i]||[];
       const no=String(g(row,idx.no)||'').trim(); if(!no) continue;
       const eq=str(g(row,idx.eq)), model=str(g(row,idx.model)), issue=str(g(row,idx.issue));
@@ -936,10 +1027,11 @@ $('xlsxFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f)re
         severity:'',asWarranty:'', createdAt:now, updatedAt:now };
       if(eq && !equipmentGroups.includes(eq)) equipmentGroups.push(eq);
       if(model && !modelNames.includes(model)) modelNames.push(model);
-      reports.push(rep); exist.add(no); added++;
+      newReps.push(rep); exist.add(no); added++;
     }
-    refreshOptionSelects(); resetForm();
-    toast(`Excel에서 ${added}건 추가${dup?` (중복 ${dup}건 제외)`:''}`); showView('list');
+    refreshOptionSelects(); persistSettings();
+    await commitNewReports(newReps); resetForm();
+    toast(`${added}건 추가${dup?` (중복 ${dup}건 제외)`:''}${fbReady?' · 클라우드':''}`); showView('list');
   }catch(err){ console.error(err); toast('Excel 파일을 읽을 수 없습니다'); } };
   rd.readAsArrayBuffer(f); e.target.value=''; });
 
@@ -1094,6 +1186,7 @@ RADIOS.forEach(n=> document.querySelectorAll(`input[name="${n}"]`).forEach(r=> r
 // 포커스 시 A4 해당 항목 강조 (동적 지원요원 칸 포함 — 위임)
 document.querySelector('.form-panel').addEventListener('focusin', e=> setHighlight(e.target));
 refreshOptionSelects(); resetForm(); markRequired(); showView('list');
+initFirebase();   // Firestore 연결 + 실시간 동기화 (실패 시 메모리 모드)
 </script>
 </body>
 </html>
