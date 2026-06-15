@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>에이블컴 기술팀 · 업무 관리</title>
-<!-- SheetJS 라이브러리 추가 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- SheetJS 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg: #F7F4ED;
@@ -70,18 +70,18 @@
 
   /* ===== Presentation Mode Styles (Fixed) ===== */
   body.presentation-mode {
-    background: #E8E4DC !important; /* 바탕을 약간 어둡게 처리 */
+    background: #E8E4DC !important;
     overflow-y: auto !important;
   }
   body.presentation-mode .app {
-    display: block !important; /* 사이드바 제거 및 전체 화면 사용 */
+    display: block !important; 
   }
   body.presentation-mode .sidebar {
     display: none !important;
   }
   body.presentation-mode .main {
     display: block !important;
-    max-width: 1300px !important; /* 화면 가득 차지 않게 쾌적한 너비 고정 */
+    max-width: 1300px !important; 
     width: 95% !important;
     margin: 40px auto !important; 
     padding: 50px !important;
@@ -96,7 +96,6 @@
     display: none !important;
   }
 
-  /* PT 모드 주간 업무보고서 & 프로젝트 히스토리 통합 디자인 */
   body.presentation-mode .category-block { margin-bottom: 50px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
   body.presentation-mode .cat-head { background: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
   body.presentation-mode .cat-title { font-size: 26px !important; padding: 10px 0 !important; border-bottom: 3px solid var(--ink) !important; color: var(--ink) !important; display: flex !important; align-items: center !important; }
@@ -132,34 +131,31 @@
   body.presentation-mode .proj-grid > div,
   body.presentation-mode .wk-pt-box {
       background: var(--paper) !important;
-      padding: 20px 25px !important;
+      padding: 25px !important;
       border-radius: 8px !important;
       border: 1px solid var(--line) !important;
-      min-height: auto !important; /* 강제 높이를 풀어 유연하게 높이 조절 */
   }
   
   body.presentation-mode .wk-pt-box label,
   body.presentation-mode .proj-grid > div > div:first-child { 
       font-size: 16px !important; 
       font-weight: 700 !important; 
-      margin-bottom: 5px !important; /* 여백 줄임 */
+      margin-bottom: 15px !important; 
       display: block !important; 
       color: var(--muted) !important; 
       border-bottom: 1px dashed var(--line) !important;
       padding-bottom: 8px !important;
   }
   
-  /* Textarea 편집창 숨기고, 깔끔한 Text div 노출 */
   body.presentation-mode .edit-area { display: none !important; }
   body.presentation-mode .pt-area,
   body.presentation-mode .history-content { 
       display: block !important; 
-      font-size: 18px !important; 
-      line-height: 1.7 !important; 
+      font-size: 17px !important; 
+      line-height: 1.8 !important; 
       color: var(--ink-2) !important; 
       white-space: pre-wrap !important;
-      min-height: auto !important; /* 내용 길이에 맞춰서 박스 높이 자동 조절 */
-      padding: 10px 0 0 0 !important; /* 불필요한 패딩 제거 */
+      min-height: 150px;
   }
 
   .btn-exit-pt {
@@ -182,99 +178,28 @@
     flex-direction: column;
   }
 
-  .brand {
-    padding: 28px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .brand-mark {
-    font-family: var(--serif);
-    font-weight: 700;
-    font-size: 19px;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-    color: #F4EFE3;
-  }
-  .brand-mark::before {
-    content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: var(--brass-soft);
-    border-radius: 50%;
-    margin-right: 10px;
-    vertical-align: middle;
-    transform: translateY(-2px);
-  }
-  .brand-sub {
-    font-size: 11px;
-    color: #9A9384;
-    margin-top: 6px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 500;
-  }
+  .brand { padding: 28px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .brand-mark { font-family: var(--serif); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; line-height: 1.15; color: #F4EFE3; }
+  .brand-mark::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--brass-soft); border-radius: 50%; margin-right: 10px; vertical-align: middle; transform: translateY(-2px); }
+  .brand-sub { font-size: 11px; color: #9A9384; margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
 
   .nav { padding: 18px 12px; flex: 1; }
-  .nav-label {
-    font-size: 10px;
-    color: #6B6655;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    padding: 14px 14px 8px;
-    font-weight: 600;
-  }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 10px 14px;
-    color: #C7C0B2;
-    font-size: 13.5px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .15s ease;
-    border-left: 2px solid transparent;
-    margin: 1px 0;
-  }
+  .nav-label { font-size: 10px; color: #6B6655; letter-spacing: 0.18em; text-transform: uppercase; padding: 14px 14px 8px; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 14px; color: #C7C0B2; font-size: 13.5px; border-radius: 6px; cursor: pointer; transition: all .15s ease; border-left: 2px solid transparent; margin: 1px 0; }
   .nav-item:hover { background: rgba(255,255,255,0.04); color: #F4EFE3; }
-  .nav-item.active {
-    background: rgba(201,163,94,0.10);
-    color: #F4EFE3;
-    border-left-color: var(--brass-soft);
-    font-weight: 500;
-  }
+  .nav-item.active { background: rgba(201,163,94,0.10); color: #F4EFE3; border-left-color: var(--brass-soft); font-weight: 500; }
   .nav-icon { width: 16px; text-align: center; opacity: 0.85; }
 
   /* ===== Main ===== */
   .main { padding: 36px 44px 60px; max-width: 100%; overflow-x: hidden; }
 
-  .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 30px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar-title {
-    font-family: var(--serif);
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--ink);
-    line-height: 1.1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .topbar-title { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink); line-height: 1.1; display: flex; align-items: center; gap: 10px; }
   .topbar-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .topbar-actions { display: flex; gap: 8px; align-items: center; }
 
   /* ===== Buttons ===== */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500;
-    transition: all .15s ease; border: 1px solid transparent; line-height: 1; white-space: nowrap;
-  }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500; transition: all .15s ease; border: 1px solid transparent; line-height: 1; white-space: nowrap; }
   .btn-primary { background: var(--ink); color: #F4EFE3; }
   .btn-primary:hover { background: #28324B; }
   .btn-secondary { background: var(--bg-elev); color: var(--ink); border-color: var(--line-strong); }
@@ -290,15 +215,8 @@
   .view.active { display: block; animation: fadeIn .25s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-  .card {
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm);
-  }
-  
-  .section-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
-  }
+  .card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm); }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
   .section-title { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--ink); }
   .section-meta { font-size: 11px; color: var(--muted); }
 
@@ -309,53 +227,33 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
   /* ===== Calendar & Dashboard ===== */
-  .cal-day {
-    padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
-    border: 1px solid transparent; min-height: 40px; display: flex; flex-direction: column; align-items: center;
-  }
+  .cal-day { padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; min-height: 40px; display: flex; flex-direction: column; align-items: center; }
   .cal-day:hover { background: var(--paper); border-color: var(--line); }
   .cal-day.active { background: rgba(168,120,56,0.1); border-color: var(--brass-soft); color: var(--ink); font-weight: bold; }
-  
-  .stat-card {
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 18px; border-left: 3px solid var(--brass);
-  }
+  .stat-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 18px; border-left: 3px solid var(--brass); }
   .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
   .stat-value { font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); }
   .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
   /* ===== Weekly Editor Component ===== */
-  .week-header {
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px;
-    padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;
-  }
+  .week-header { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 16px 20px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
   .category-block { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
-  .cat-head {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 18px; background: var(--paper); border-bottom: 1px solid var(--line);
-  }
+  .cat-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: var(--paper); border-bottom: 1px solid var(--line); }
   .cat-title { font-family: var(--serif); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .badge { background: var(--ink); color: #fff; font-family: var(--sans); font-size: 10px; padding: 2px 6px; border-radius: 3px; }
   .badge-dark { background: var(--ink-2); }
-  
   .proj-row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
   .proj-row:last-child { border-bottom: none; }
   .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .proj-name { font-weight: 600; font-size: 14px; }
   .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .wk-pt-box label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .edit-area textarea {
-    width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px;
-    background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px;
-  }
+  .edit-area textarea { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px; background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px; }
   .edit-area textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
-  
-  .pt-area { display: none; } /* 평상시에는 텍스트 출력 영역 숨김 */
+  .pt-area { display: none; } 
 
   /* ===== Modals & Toasts ===== */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px);
-    display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px;
-  }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,34,56,0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--bg-elev); border-radius: 8px; width: 100%; max-width: 400px; padding: 28px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;}
   .modal h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
@@ -365,17 +263,12 @@
   .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); padding: 10px 12px; border-radius: 4px; font-size: 13px; }
   .form-group input:focus, .form-group select:focus { border-color: var(--brass); }
 
-  .toast {
-    position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3;
-    padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md);
-    transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 20000; border-left: 3px solid var(--brass);
-  }
+  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3; padding: 12px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); transform: translateY(100px); opacity: 0; transition: all .25s ease; z-index: 20000; border-left: 3px solid var(--brass); }
   .toast.show { transform: translateY(0); opacity: 1; }
   
   .table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 10px; text-align: left; font-weight: 600; }
   .table td { border-bottom: 1px solid var(--line); padding: 10px; }
-
   .clickable-row { cursor: pointer; transition: background .15s; }
   .clickable-row:hover { background: rgba(168,120,56,0.06) !important; }
 
@@ -394,13 +287,11 @@
         padding: 0 !important; 
     }
     
-    /* 인쇄 시 화면용 UI 전부 강제 숨김 */
     .app, #login-overlay, .sidebar, .topbar, .week-header, .nav, 
     .view, .card, #header-actions, .toast, .btn-exit-pt { 
         display: none !important; 
     }
     
-    /* 인쇄 영역만 화면 최상단에 강제 노출 */
     #print-area { 
         display: block !important; 
         width: 100% !important; 
@@ -412,57 +303,17 @@
         padding: 0 !important;
     }
     
-    .print-header-container { 
-        margin-bottom: 15px; 
-        border-bottom: 2px solid #555; 
-        position: relative; 
-        padding-bottom: 10px; 
-        page-break-after: avoid; 
-    }
+    .print-header-container { margin-bottom: 15px; border-bottom: 2px solid #555; position: relative; padding-bottom: 10px; page-break-after: avoid; }
     .print-company-name { position: absolute; top: 0; right: 0; font-size: 9pt; color: #777; }
     .print-header { text-align: center; }
     .print-header h1 { font-family: var(--serif); font-size: 26pt; font-weight: bold; margin: 0 0 8px 0; color: #222; letter-spacing: 1px; white-space: nowrap; }
     .print-dept { font-size: 12pt; color: #555; margin-bottom: 4px; }
     .print-date { font-size: 11pt; color: #777; letter-spacing: 1px;}
     
-    .print-table { 
-        width: 100% !important; 
-        border-collapse: collapse; 
-        font-size: 10pt; 
-        table-layout: fixed; 
-        margin-top: 0; 
-        page-break-inside: auto; 
-    }
-    
-    .print-table th, .print-table td { 
-        border: 1px solid #c0c0c0; 
-        padding: 12px 15px; 
-        vertical-align: middle; 
-        word-break: break-word; 
-    }
-    
-    .print-table th { 
-        background: #1A2238 !important; 
-        color: #ffffff !important; 
-        font-weight: bold; 
-        text-align: center; 
-        font-size: 10.5pt; 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact; 
-        padding: 14px 10px; 
-    }
-    
-    .print-cat { 
-        text-align: center; 
-        vertical-align: middle; 
-        background: #f8f9fa !important; 
-        font-family: var(--serif); 
-        font-size: 12pt; 
-        padding: 10px; 
-        font-weight: 600;
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact; 
-    }
+    .print-table { width: 100% !important; border-collapse: collapse; font-size: 10pt; table-layout: fixed; margin-top: 0; page-break-inside: auto; }
+    .print-table th, .print-table td { border: 1px solid #c0c0c0; padding: 12px 15px; vertical-align: middle; word-break: break-word; }
+    .print-table th { background: #1A2238 !important; color: #ffffff !important; font-weight: bold; text-align: center; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 14px 10px; }
+    .print-cat { text-align: center; vertical-align: middle; background: #f8f9fa !important; font-family: var(--serif); font-size: 12pt; padding: 10px; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     
     .print-content { line-height: 1.6; vertical-align: top !important; }
     .print-proj-name { font-weight: bold; margin-bottom: 6px; font-size: 10.5pt; color: #222;}
@@ -636,6 +487,7 @@
           </div>
           <div id="weekly-matched-schedules" style="font-size:13px; color:var(--ink-2);"></div>
       </div>
+
     </section>
 
     <!-- 3. PROJECT HISTORY VIEW -->
@@ -654,7 +506,7 @@
           </select>
           <button class="btn btn-primary" onclick="window.startPresentation()"><i class="fa-solid fa-expand" style="margin-right:4px;"></i> PT 모드</button>
           <button class="btn btn-primary" style="background:#2F6A4A;" onclick="window.exportHistoryExcel()"><i class="fa-solid fa-file-excel" style="margin-right:4px;"></i> 엑셀 내보내기</button>
-          <button class="btn btn-secondary" onclick="window.executePrintHistory()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
+          <button class="btn btn-secondary" onclick="window.printHistory()"><i class="fa-solid fa-print" style="margin-right:4px;"></i> 인쇄</button>
         </div>
       </div>
       <div id="history-container">
@@ -1121,10 +973,12 @@
 
       if (isAdmin) {
         document.getElementById('nav-accounts').style.display = 'flex';
+        document.getElementById('nav-backup').style.display = 'flex';
         document.getElementById('nav-label-admin').style.display = 'block';
         loadAccounts();
       } else {
         document.getElementById('nav-accounts').style.display = 'none';
+        document.getElementById('nav-backup').style.display = 'none';
         document.getElementById('nav-label-admin').style.display = 'none';
       }
 
@@ -1235,7 +1089,7 @@
   };
 
   window.delAccount = async function(id) {
-    window.showConfirm('계정 삭제', '계정을 삭제하시겠습니까? (해당 사용자는 즉시 접속이 차단됩니다)', async () => {
+    window.showConfirm('계정 삭제', '해당 계정을 삭제하시겠습니까?\n(사용자는 즉시 접속이 차단됩니다)', async () => {
       try {
         await deleteDoc(doc(db, 'ablework', 'company_main', 'accounts', id));
         window.showToast('계정이 삭제되었습니다.');
@@ -1925,7 +1779,6 @@
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
         
-        // [해결] 인쇄 시 페이지 잘림을 유발하는 세로 병합(rowspan)을 완전히 제거하고, 사업명을 전체 가로폭(colspan=3) 소제목 헤더로 변경
         rowsHtml += `<tr><td colspan="3" class="print-cat" style="text-align:left; padding-left:15px; background:#f0f0f0 !important; color:var(--ink); font-size:12pt;">■ ${escapeHtml(group.name)}</td></tr>`;
         
         group.items.forEach((item) => {
@@ -2014,32 +1867,29 @@
     let rowsHtml = '';
     Object.values(grouped).forEach(group => {
         group.items.sort((a,b) => b.weekId.localeCompare(a.weekId)); 
-        const rowSpan = group.items.length;
-        group.items.forEach((item, idx) => {
+        
+        rowsHtml += `<tr><td colspan="3" class="cat-cell" style="text-align:left; background-color:#e2e8f0;">■ ${escapeHtml(group.name)}</td></tr>`;
+
+        group.items.forEach((item) => {
             const prevText = escapeHtml(item.prev).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             const planText = escapeHtml(item.plan).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
             
-            rowsHtml += `<tr>`;
-            if (idx === 0) {
-                rowsHtml += `<td class="cat-cell" rowspan="${rowSpan}" width="200">${escapeHtml(group.name)}</td>`;
-            }
-            rowsHtml += `
-                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="180">
+            rowsHtml += `<tr>
+                <td style="text-align:center; vertical-align:middle; font-weight:bold; background-color:#f8f9fa;" width="150">
                     ${escapeHtml(item.weekTitle)}<br style="mso-data-placement:same-cell;"/><span class="owner-text">${item.range}</span>
                 </td>
-                <td class="content-cell" width="450">${prevText}</td>
-                <td class="content-cell" width="450">${planText}</td>
+                <td class="content-cell" width="485">${prevText}</td>
+                <td class="content-cell" width="485">${planText}</td>
             </tr>`;
         });
     });
 
     const htmlTable = `
-      <table border="0" cellpadding="0" cellspacing="0" width="1280">
-        <tr><td colspan="4" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
-        <tr><td colspan="4" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
-        <tr><td colspan="4" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
+      <table border="0" cellpadding="0" cellspacing="0" width="1120">
+        <tr><td colspan="3" style="text-align:center; font-size:24pt; font-weight:bold; border:none; padding-bottom:20px;">프로젝트 진행 내역</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:12pt; border:none;">기술팀</td></tr>
+        <tr><td colspan="3" style="text-align:center; font-size:11pt; border:none; padding-bottom:10px;">조회 조건 : ${escapeHtml(conditionText)}</td></tr>
         <tr>
-          <th>사업명</th>
           <th>보고 주차</th>
           <th>주간 실적</th>
           <th>차주 계획</th>
@@ -2332,6 +2182,53 @@
       window.triggerSave();
       updateAllUI();
     });
+  };
+
+  // --- 14. BACKUP & RESET ---
+  window.exportData = function() {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `에이블컴_기술팀_백업_${fmtDate(new Date())}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  window.importData = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed.projects || !parsed.categories) throw new Error('올바른 백업 파일 형식이 아닙니다.');
+        
+        window.showConfirm('데이터 복구', '업로드한 파일로 전체 데이터를 덮어쓰시겠습니까?\n(현재 서버 데이터는 모두 사라집니다)', () => {
+           data = applyMigration(parsed);
+           window.triggerSave();
+           updateAllUI();
+           window.showToast('데이터가 성공적으로 복구되었습니다.');
+        });
+      } catch(err) {
+        window.showToast('가져오기 실패: ' + err.message);
+      }
+    };
+    r.readAsText(file);
+    event.target.value = '';
+  };
+
+  window.confirmReset = function() {
+     const input = prompt('데이터를 완전히 초기화하려면 대문자로 "ABLECOM"을 입력하세요.');
+     if (input === 'ABLECOM') {
+         data = { projects: [], categories: ['공공/기업', '금융', '국방', '기타'], schedules: [], archives: [] };
+         window.triggerSave();
+         updateAllUI();
+         window.showToast('시스템이 초기화되었습니다.');
+     } else if (input !== null) {
+         window.showToast('입력값이 일치하지 않아 초기화가 취소되었습니다.');
+     }
   };
 
 </script>
