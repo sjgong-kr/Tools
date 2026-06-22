@@ -249,44 +249,44 @@
                         <h3 class="font-bold text-lg text-gray-800 mb-6 border-b pb-3"><i class="fa-solid fa-chart-bar mr-2 text-indigo-500"></i>작업 분류별 통계</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10" id="stat-categories-container"></div>
                     </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- ==================== 모달 영역 ==================== -->
-    
-    <!-- 모달: 업무 상세 보기 및 내역 입력 -->
+    <!-- ✅ [복구됨] 모달: 업무 상세 보기 및 내역 입력 -->
     <div id="task-detail-modal" class="fixed inset-0 bg-black/50 z-[65] flex items-center justify-center hidden backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl h-[85vh] overflow-hidden animate-fade-in-up flex flex-col">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                 <div class="flex items-center gap-3">
                     <span id="detail-category-badge" class="px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider"></span>
-                    <h3 class="font-bold text-lg text-gray-800 truncate max-w-[200px] sm:max-w-[250px]" id="detail-task-title">업무 제목</h3>
+                    <h3 class="font-bold text-lg text-gray-800 truncate max-w-[200px] sm:max-w-[400px]" id="detail-task-title">업무 제목</h3>
                 </div>
                 <button onclick="window.closeTaskDetailModal()" class="text-gray-400 hover:text-gray-600">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
             
-            <div class="p-6 flex-1 overflow-y-auto">
-                <div class="flex items-center text-sm text-gray-500 mb-6 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">
-                    <i class="fa-regular fa-calendar mr-2 text-indigo-400"></i> <span id="detail-task-date"></span>
-                    <i class="fa-regular fa-clock ml-5 mr-2 text-indigo-400"></i> <span id="detail-task-time"></span>
+            <div class="p-6 flex-1 flex flex-col overflow-hidden min-h-0 bg-white">
+                <div class="flex justify-between items-end mb-4 shrink-0">
+                    <div class="flex items-center text-sm text-gray-500 font-medium bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                        <i class="fa-regular fa-calendar mr-2 text-indigo-400"></i> <span id="detail-task-date"></span>
+                        <i class="fa-regular fa-clock ml-5 mr-2 text-indigo-400"></i> <span id="detail-task-time"></span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button type="button" onclick="window.insertAtCursor('★ ')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-bold transition-colors shadow-sm border border-gray-200"><i class="fa-solid fa-star text-yellow-500 mr-1"></i> 대분류 (★)</button>
+                        <button type="button" onclick="window.insertAtCursor(' - ')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-bold transition-colors shadow-sm border border-gray-200"><i class="fa-solid fa-minus text-gray-400 mr-1"></i> 소분류 (-)</button>
+                    </div>
                 </div>
                 
-                <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
+                <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1 shrink-0">
                     <i class="fa-solid fa-list text-gray-400"></i> 상세 작업 내역
                 </label>
-                <textarea id="detail-task-desc" rows="8" class="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm leading-relaxed transition-colors" placeholder="이 업무의 진행 상황, 수정 피드백 등 상세 내용을 기록하세요."></textarea>
+                <textarea id="detail-task-desc" class="w-full flex-1 px-5 py-4 border border-gray-200 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-base leading-relaxed transition-colors shadow-inner" placeholder="이 업무의 진행 상황, 수정 피드백 등 상세 내용을 기록하세요.&#10;(상단 버튼을 눌러 글머리 기호를 추가할 수 있으며, 엔터 시 자동 연장됩니다)"></textarea>
                 <input type="hidden" id="detail-task-id">
             </div>
             
-            <div class="p-5 border-t border-gray-100 flex gap-3 shrink-0 bg-white">
-                <button type="button" onclick="window.closeTaskDetailModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-bold transition-colors">닫기</button>
-                <button type="button" onclick="window.saveTaskDetail()" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition-colors flex justify-center items-center gap-2 shadow-md shadow-indigo-100">
+            <div class="p-5 border-t border-gray-100 flex gap-3 shrink-0 bg-gray-50">
+                <button type="button" onclick="window.closeTaskDetailModal()" class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-colors shadow-sm">닫기</button>
+                <button type="button" onclick="window.saveTaskDetail()" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition-colors flex justify-center items-center gap-2 shadow-md shadow-indigo-200">
                     <span id="detail-save-text">내역 저장</span>
-                    <div id="detail-save-loader" class="loader !w-4 !h-4 !border-[2.5px] hidden border-t-white border-white/30"></div>
+                    <div id="detail-save-loader" class="loader !w-4 !h-4 !border-[2px] hidden border-t-white border-white/30"></div>
                 </button>
             </div>
         </div>
@@ -700,6 +700,32 @@
                     document.getElementById('cat-submit-loader').classList.add('hidden');
                 }
             });
+
+            // ✅ 상세 업무 메모장 자동 글머리 기호 (Enter 키)
+            document.getElementById('detail-task-desc').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const start = this.selectionStart;
+                    const val = this.value;
+                    const lastLine = val.substring(0, start).split('\n').pop();
+                    
+                    const match = lastLine.match(/^(\s*(?:★|-)\s*)/);
+                    if (match) {
+                        e.preventDefault();
+                        if (lastLine === match[1]) {
+                            // 글머리 기호만 있는 줄에서 엔터 시 기호 삭제 (빠져나오기)
+                            this.value = val.substring(0, start - match[1].length) + '\n' + val.substring(this.selectionEnd);
+                            this.selectionStart = this.selectionEnd = start - match[1].length + 1;
+                        } else {
+                            // 일반적인 경우 다음 줄에 기호 자동 추가
+                            let prefix = match[1];
+                            if (prefix.trim() === '★') prefix = ' - '; // 대분류(★) 엔터 시 소분류(-)로 자동 유도
+                            
+                            this.value = val.substring(0, start) + '\n' + prefix + val.substring(this.selectionEnd);
+                            this.selectionStart = this.selectionEnd = start + 1 + prefix.length;
+                        }
+                    }
+                }
+            });
         });
 
         // 7. Window 전역 함수 바인딩 (HTML에서 onclick으로 접근하기 위함)
@@ -917,6 +943,23 @@
                 btn.onclick = () => window.selectColor(btn, key);
                 container.appendChild(btn);
             }
+        };
+
+        // ✅ [추가] 텍스트 입력창 글머리 커서 추가 기능
+        window.insertAtCursor = function(text) {
+            const textarea = document.getElementById('detail-task-desc');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const value = textarea.value;
+            
+            let prefix = '';
+            if (start > 0 && value.charAt(start - 1) !== '\n') {
+                prefix = '\n';
+            }
+            
+            textarea.value = value.substring(0, start) + prefix + text + value.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + prefix.length + text.length;
+            textarea.focus();
         };
 
         // ✅ [복구] 상세 업무 모달 및 일일 메모장 클라우드 저장 로직
