@@ -424,6 +424,8 @@
                             <h2 class="text-lg font-black">내 제품 목록</h2>
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="hidden xl:inline-block text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>끌어서 순서 변경</span>
+                                
+                                <!-- 🌟 엑셀 업로드/다운로드 전용 버튼 -->
                                 <input type="file" id="product-excel-file" accept=".xlsx, .xls" class="hidden" onchange="importProductsFromExcel(event)">
                                 <button onclick="document.getElementById('product-excel-file').click()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5" title="엑셀 파일 업로드 (목록 수정/등록)">
                                     <i class="fas fa-file-upload text-sm"></i> <span class="hidden sm:inline">엑셀 업로드</span>
@@ -431,6 +433,7 @@
                                 <button onclick="exportProductsToExcel()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5" title="현재 제품 목록 엑셀 다운로드">
                                     <i class="fas fa-file-download text-sm"></i> <span class="hidden sm:inline">엑셀 다운로드</span>
                                 </button>
+
                                 <button onclick="openPrintModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
                                     <i class="fas fa-print"></i> <span class="hidden sm:inline">가격표 일괄 인쇄</span>
                                 </button>
@@ -439,7 +442,6 @@
                         
                         <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 제품이 없습니다.</div>
                         <div class="overflow-x-auto pb-4">
-                            <!-- 썸네일 칸이 추가된 제품 목록 테이블 -->
                             <table class="w-full text-left border-collapse min-w-[400px]">
                                 <tbody id="products-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
                             </table>
@@ -1649,6 +1651,7 @@
             renderApp();
         };
 
+        // 🌟 수정: 제품 탭 전용 엑셀 내보내기에 이미지 URL 열 추가
         window.exportProductsToExcel = () => {
             if (allProducts.length === 0) {
                 showModal("내보낼 제품이 없습니다.");
@@ -1703,6 +1706,7 @@
             window.URL.revokeObjectURL(url);
         };
 
+        // 🌟 수정: 제품 탭 전용 엑셀 업로드 시 이미지 URL 복원
         window.importProductsFromExcel = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -1768,7 +1772,7 @@
             reader.readAsArrayBuffer(file);
         };
 
-        // 🌟 수정: 전체 데이터 백업 시 재고 조정 내역 시트 생성 로직 추가
+        // 🌟 수정: 전체 데이터 백업 엑셀 내보내기에 이미지 URL 열 추가
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -1862,7 +1866,6 @@
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
             }
 
-            // 🌟 추가: 재고 조정 내역 시트
             if (allInventoryLogs.length > 0) {
                 const aoa = [
                     [{ v: `📝 재고 조정 내역`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
@@ -2012,7 +2015,7 @@
             window.URL.revokeObjectURL(url);
         };
 
-        // 🌟 수정: 전체 엑셀 업로드 시 '재고_조정_내역' 복구 로직 추가
+        // 🌟 수정: 전체 엑셀 업로드 시 제품 이미지 URL 복원 로직 통합
         document.getElementById('excel-upload-form').onsubmit = async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('excel-file');
@@ -2029,7 +2032,6 @@
                     const workbook = XLSX.read(data, {type: 'array'});
                     let uCount = 0, aCount = 0;
 
-                    // 1. 제품 복구/업데이트
                     if(workbook.Sheets["등록제품_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["등록제품_목록"], {range: 2});
                         for(const row of rows) {
@@ -2061,7 +2063,6 @@
                         }
                     }
 
-                    // 2. 카테고리 복구/업데이트
                     if(workbook.Sheets["카테고리_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["카테고리_목록"], {range: 2});
                         for(const row of rows) {
@@ -2073,7 +2074,6 @@
                         }
                     }
 
-                    // 3. 판매처 복구/업데이트
                     if(workbook.Sheets["판매처_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["판매처_목록"], {range: 2});
                         for(const row of rows) {
@@ -2097,7 +2097,6 @@
                         }
                     }
 
-                    // 4. 구매처 복구/업데이트
                     if(workbook.Sheets["구매처_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["구매처_목록"], {range: 2});
                         for(const row of rows) {
@@ -2121,7 +2120,6 @@
                         }
                     }
 
-                    // 🌟 5. 재고 조정 내역 복구/업데이트
                     if(workbook.Sheets["재고_조정_내역"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["재고_조정_내역"], {range: 2});
                         for(const row of rows) {
@@ -2138,7 +2136,6 @@
                             const isMinus = adjType === '판매' || adjType === '폐기' || adjType === '기타(차감)';
                             const qtyChange = isMinus ? -absQty : absQty;
 
-                            // 중복 방지를 위해 기존에 동일한 내역이 있는지 확인
                             const existing = allInventoryLogs.find(l => 
                                 l.date === date && 
                                 l.adjType === adjType && 
