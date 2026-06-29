@@ -84,14 +84,14 @@
     <!-- 로딩 스피너 -->
     <div id="loading-screen" class="fixed inset-0 bg-white/80 backdrop-blur-md z-[110] hidden flex-col items-center justify-center">
         <div class="loader mb-5"></div>
-        <p class="text-slate-500 font-bold text-lg tracking-tight">데이터 동기화 중...</p>
+        <p class="text-slate-500 font-bold text-lg tracking-tight">데이터 연동 중...</p>
     </div>
 
     <!-- 범용 모달 -->
     <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 z-[200] hidden flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
             <div id="modal-icon" class="text-purple-500 text-5xl mb-5"><i class="fas fa-check-circle"></i></div>
-            <p id="custom-modal-text" class="text-slate-900 font-black mb-6 text-lg leading-snug"></p>
+            <p id="custom-modal-text" class="text-slate-900 font-black mb-6 text-lg leading-snug whitespace-pre-wrap"></p>
             <div id="modal-buttons" class="flex gap-2">
                 <button id="modal-confirm-btn" onclick="closeModal()" class="w-full bg-slate-950 text-white py-3 rounded-xl font-black transition-all shadow-lg active:scale-95 text-sm">확인</button>
             </div>
@@ -186,6 +186,7 @@
             <button onclick="switchTab('channels')" id="tab-btn-channels" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">판매처 관리</button>
             <button onclick="switchTab('vendors')" id="tab-btn-vendors" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">구매처 관리</button>
             <button onclick="switchTab('stats')" id="tab-btn-stats" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">통계 분석</button>
+            <button onclick="switchTab('backup')" id="tab-btn-backup" class="pb-3 px-1 whitespace-nowrap text-slate-400 hover:text-purple-400 transition-all">백업/복구</button>
         </nav>
 
         <!-- [탭 1] 내역 관리 -->
@@ -239,7 +240,6 @@
                                         <select id="input-product" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
                                     <div class="space-y-1">
-                                        <!-- 🌟 텍스트 변경: 납품/재고 증가를 명시 -->
                                         <label class="text-[9px] font-black text-slate-400 ml-1">판매처 (납품처 / 재고 증가)</label>
                                         <select id="input-channel" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all"></select>
                                     </div>
@@ -329,7 +329,7 @@
             </div>
         </div>
 
-        <!-- [추가 탭] 재고 관리 -->
+        <!-- [탭 2] 재고 관리 -->
         <div id="tab-inventory" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <!-- 좌측: 재고 조정 폼 -->
@@ -396,13 +396,21 @@
             </div>
         </div>
 
-        <!-- [탭 3] 제품 관리 -->
+        <!-- 🌟 [탭 3] 제품 관리 (썸네일 이미지 파일 업로드 추가) -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 sticky top-6">
                         <h2 class="text-lg font-black mb-5">제품 신규 등록</h2>
                         <form id="product-form" class="space-y-4">
+                            <!-- 제품 썸네일 업로드 -->
+                            <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-slate-50">
+                                <label class="text-[10px] font-black text-slate-500 flex items-center gap-1.5"><i class="fas fa-camera text-purple-500"></i> 제품 썸네일 사진 (선택)</label>
+                                <input type="file" id="prod-image" accept="image/*" class="w-full mt-2 text-xs bg-white border border-slate-200 rounded-lg py-1.5 px-2 font-bold outline-none focus:ring-2 focus:ring-purple-400 transition-all cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:bg-purple-100 file:text-purple-600 hover:file:bg-purple-200">
+                                <div id="prod-image-preview" class="hidden flex justify-center mt-3">
+                                    <img src="" class="h-20 w-20 object-cover rounded-xl shadow-sm border border-slate-200">
+                                </div>
+                            </div>
                             <input type="text" id="prod-code" placeholder="제품 코드 (C-001)" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="text" id="prod-name" placeholder="제품명" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
                             <input type="number" id="prod-price" placeholder="단가 (원)" required class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-black outline-none ring-2 ring-slate-100 focus:ring-purple-400">
@@ -412,19 +420,27 @@
                 </div>
                 <div class="md:col-span-3">
                     <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 min-h-[400px]">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6">
                             <h2 class="text-lg font-black">내 제품 목록</h2>
-                            <div class="flex items-center gap-3">
-                                <span class="hidden sm:inline-block text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>끌어서 순서 변경</span>
-                                <button onclick="openPrintModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                                    <i class="fas fa-print"></i> 가격표 일괄 인쇄
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="hidden xl:inline-block text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100"><i class="fas fa-arrows-alt-v mr-1"></i>끌어서 순서 변경</span>
+                                <input type="file" id="product-excel-file" accept=".xlsx, .xls" class="hidden" onchange="importProductsFromExcel(event)">
+                                <button onclick="document.getElementById('product-excel-file').click()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5" title="엑셀 파일 업로드 (목록 수정/등록)">
+                                    <i class="fas fa-file-upload text-sm"></i> <span class="hidden sm:inline">엑셀 업로드</span>
+                                </button>
+                                <button onclick="exportProductsToExcel()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5" title="현재 제품 목록 엑셀 다운로드">
+                                    <i class="fas fa-file-download text-sm"></i> <span class="hidden sm:inline">엑셀 다운로드</span>
+                                </button>
+                                <button onclick="openPrintModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg font-black text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
+                                    <i class="fas fa-print"></i> <span class="hidden sm:inline">가격표 일괄 인쇄</span>
                                 </button>
                             </div>
                         </div>
                         
                         <div id="prod-empty-state" class="text-center py-20 text-slate-300 font-black text-sm">등록된 제품이 없습니다.</div>
                         <div class="overflow-x-auto pb-4">
-                            <table class="w-full text-left border-collapse">
+                            <!-- 🌟 썸네일 칸이 추가된 제품 목록 테이블 -->
+                            <table class="w-full text-left border-collapse min-w-[400px]">
                                 <tbody id="products-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
                             </table>
                         </div>
@@ -574,6 +590,46 @@
                 <div id="vendor-stats-container" class="space-y-5"></div>
             </div>
         </div>
+
+        <!-- [탭 8] 백업 및 복구 -->
+        <div id="tab-backup" class="tab-content hidden space-y-6 pb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 1. 데이터 백업 (Export) -->
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-sm">
+                            <i class="fas fa-cloud-download-alt"></i>
+                        </div>
+                        <h2 class="text-2xl font-black mb-2 text-slate-900">전체 데이터 백업 (Excel)</h2>
+                        <p class="text-sm text-slate-500 font-bold mb-6">현재까지 기록된 거래 내역, 제품 목록, 카테고리, 거래처 정보 등 <br>모든 마스터 데이터를 엑셀 파일 하나로 안전하게 다운로드합니다.</p>
+                    </div>
+                    <button onclick="exportToExcel()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg font-black py-4 rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-file-excel"></i> 전체 데이터 백업하기
+                    </button>
+                </div>
+
+                <!-- 2. 데이터 복구 및 업데이트 (Import) -->
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-sm">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h2 class="text-2xl font-black mb-2 text-slate-900">전체 데이터 복구 / 업데이트</h2>
+                        <p class="text-sm text-slate-500 font-bold mb-4">다운로드한 엑셀 파일에서 정보를 수정하여 업로드하면 내역이 복구됩니다. <br>(제품, 카테고리, 거래처 시트만 복구됩니다.)</p>
+                        <div class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] p-3 rounded-lg font-bold mb-6">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> 데이터 중복 방지를 위해 [거래 내역]은 업데이트 되지 않습니다.
+                        </div>
+                    </div>
+                    <form id="excel-upload-form" class="space-y-3">
+                        <input type="file" id="excel-file" accept=".xlsx, .xls" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-400 transition-all cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-emerald-50 file:text-emerald-600 hover:file:bg-emerald-100">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-black py-4 rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-upload"></i> 엑셀 업로드 및 일괄 반영
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Firebase SDK 및 로직 -->
@@ -581,6 +637,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // 🌟 추가: Firebase Storage 이미지 업로드를 위한 기능 임포트
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -595,6 +653,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app); // 🌟 Storage 초기화
 
         let currentUser = null;
         let allEntries = [], allProducts = [], allCategories = [], allChannels = [], allVendors = [], allInventoryLogs = [];
@@ -694,18 +753,15 @@
             ];
         }
 
-        // 🌟 수정: 장부 판매 시 재고 '추가(납품)', 수동 조정 시 재고 가감
         window.getCurrentStock = (productName, channelName) => {
             let stock = 0;
             
-            // 1. 장부 내역(판매 수익) 합산 -> 판매처로 납품한 수량이므로 재고 증가(+)
             allEntries.forEach(entry => {
                 if (entry.type === 'income' && entry.name === productName && entry.channel === channelName) {
-                    stock += Number(entry.quantity); // 🌟 여기가 중요합니다. += 로 변경되었습니다.
+                    stock += Number(entry.quantity);
                 }
             });
 
-            // 2. 수동 조정 내역 합산 (+ 입고/기타, - 판매/폐기 등)
             allInventoryLogs.forEach(log => {
                 if (log.productName === productName && log.channelName === channelName) {
                     stock += Number(log.qtyChange);
@@ -932,6 +988,7 @@
             });
         };
 
+        // 🌟 수정: 제품 수정 모달에 썸네일 파일 업로드 인풋 추가
         window.openEditModal = (type, id) => {
             currentEditInfo = { type, id };
             const container = document.getElementById('edit-fields-container');
@@ -940,7 +997,16 @@
             if(type === 'product') {
                 item = allProducts.find(x => x.id === id);
                 if(!item) return;
+                
+                const imgHtml = item.imageUrl 
+                    ? `<img id="edit-p-preview-img" src="${item.imageUrl}" class="h-20 w-20 object-cover rounded-xl shadow-sm border border-slate-200">`
+                    : `<div id="edit-p-preview-img" class="h-20 w-20 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 shadow-sm border border-slate-200"><i class="fas fa-image text-2xl"></i></div>`;
+
                 container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center mb-3 space-y-2">
+                        ${imgHtml}
+                        <input type="file" id="edit-p-image" accept="image/*" onchange="const f = this.files[0]; if(f) { const el = document.getElementById('edit-p-preview-img'); if(el.tagName==='IMG') el.src = window.URL.createObjectURL(f); else el.outerHTML = '<img id=\\'edit-p-preview-img\\' src=\\''+window.URL.createObjectURL(f)+'\\' class=\\'h-20 w-20 object-cover rounded-xl shadow-sm border border-slate-200\\'>'; }" class="w-full text-[10px] bg-slate-50 border border-slate-200 rounded-lg py-1 px-2 font-bold outline-none focus:ring-2 focus:ring-purple-400 transition-all cursor-pointer file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-black file:bg-purple-100 file:text-purple-600">
+                    </div>
                     <input type="text" id="edit-p-code" value="${item.code}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                     <input type="text" id="edit-p-name" value="${item.name}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
                     <input type="number" id="edit-p-price" value="${item.price}" class="w-full bg-slate-50 px-4 py-3 rounded-xl ring-2 ring-slate-100 font-black outline-none focus:ring-purple-400 text-sm">
@@ -1034,54 +1100,84 @@
 
         window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
 
+        // 🌟 수정: 모달 폼 저장 시 Firebase Storage 이미지 업로드 로직 포함 (스피너 로딩 추가)
         document.getElementById('edit-form').onsubmit = async e => {
             e.preventDefault();
             const { type, id } = currentEditInfo;
             const colName = type === 'product' ? 'products' : type === 'category' ? 'categories' : type === 'channel' ? 'channels' : type === 'vendor' ? 'vendors' : 'entries';
-            const ref = doc(db, 'jina_resin', currentUser.uid, colName, id);
+            const refDoc = doc(db, 'jina_resin', currentUser.uid, colName, id);
             
-            let data = {};
-            if (type === 'product') {
-                data = { code: document.getElementById('edit-p-code').value, name: document.getElementById('edit-p-name').value, price: Number(document.getElementById('edit-p-price').value) };
-            } else if (type === 'category') {
-                data = { name: document.getElementById('edit-cat-name').value };
-            } else if (type === 'channel') {
-                data = { 
-                    name: document.getElementById('edit-c-name').value,
-                    bizNum: document.getElementById('edit-c-biz').value,
-                    contact: document.getElementById('edit-c-contact').value,
-                    link: document.getElementById('edit-c-link').value,
-                    address: document.getElementById('edit-c-address').value,
-                    memo: document.getElementById('edit-c-memo').value
-                };
-            } else if (type === 'vendor') {
-                data = { 
-                    name: document.getElementById('edit-v-name').value,
-                    bizNum: document.getElementById('edit-v-biz').value,
-                    contact: document.getElementById('edit-v-contact').value,
-                    link: document.getElementById('edit-v-link').value,
-                    address: document.getElementById('edit-v-address').value,
-                    memo: document.getElementById('edit-v-memo').value
-                };
-            } else if (type === 'entry') {
-                data = {
-                    date: document.getElementById('edit-e-date').value,
-                    name: document.getElementById('edit-e-name').value,
-                    unitPrice: Number(document.getElementById('edit-e-price').value) || 0,
-                    quantity: Number(document.getElementById('edit-e-qty').value) || 1,
-                    amount: Number(document.getElementById('edit-e-amount').value) || 0,
-                    memo: document.getElementById('edit-e-memo').value
-                };
-                if (currentEditInfo.originalType === 'income') {
-                    data.channel = document.getElementById('edit-e-related').value;
-                } else {
-                    data.vendor = document.getElementById('edit-e-related').value;
-                    const catEl = document.getElementById('edit-e-category');
-                    if (catEl) data.category = catEl.value; 
-                }
-            }
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-screen').classList.add('flex');
 
-            try { await updateDoc(ref, data); closeEditModal(); showModal("수정 완료되었습니다."); } catch(e) { showModal("수정 실패"); }
+            try {
+                let data = {};
+                if (type === 'product') {
+                    const item = allProducts.find(x => x.id === id);
+                    let newImageUrl = item.imageUrl || ""; 
+                    const fileInput = document.getElementById('edit-p-image');
+                    
+                    if (fileInput && fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const storageRef = ref(storage, `products/${currentUser.uid}_${Date.now()}_${file.name}`);
+                        const snapshot = await uploadBytes(storageRef, file);
+                        newImageUrl = await getDownloadURL(snapshot.ref);
+                    }
+
+                    data = { 
+                        code: document.getElementById('edit-p-code').value, 
+                        name: document.getElementById('edit-p-name').value, 
+                        price: Number(document.getElementById('edit-p-price').value),
+                        imageUrl: newImageUrl
+                    };
+                } else if (type === 'category') {
+                    data = { name: document.getElementById('edit-cat-name').value };
+                } else if (type === 'channel') {
+                    data = { 
+                        name: document.getElementById('edit-c-name').value,
+                        bizNum: document.getElementById('edit-c-biz').value,
+                        contact: document.getElementById('edit-c-contact').value,
+                        link: document.getElementById('edit-c-link').value,
+                        address: document.getElementById('edit-c-address').value,
+                        memo: document.getElementById('edit-c-memo').value
+                    };
+                } else if (type === 'vendor') {
+                    data = { 
+                        name: document.getElementById('edit-v-name').value,
+                        bizNum: document.getElementById('edit-v-biz').value,
+                        contact: document.getElementById('edit-v-contact').value,
+                        link: document.getElementById('edit-v-link').value,
+                        address: document.getElementById('edit-v-address').value,
+                        memo: document.getElementById('edit-v-memo').value
+                    };
+                } else if (type === 'entry') {
+                    data = {
+                        date: document.getElementById('edit-e-date').value,
+                        name: document.getElementById('edit-e-name').value,
+                        unitPrice: Number(document.getElementById('edit-e-price').value) || 0,
+                        quantity: Number(document.getElementById('edit-e-qty').value) || 1,
+                        amount: Number(document.getElementById('edit-e-amount').value) || 0,
+                        memo: document.getElementById('edit-e-memo').value
+                    };
+                    if (currentEditInfo.originalType === 'income') {
+                        data.channel = document.getElementById('edit-e-related').value;
+                    } else {
+                        data.vendor = document.getElementById('edit-e-related').value;
+                        const catEl = document.getElementById('edit-e-category');
+                        if (catEl) data.category = catEl.value; 
+                    }
+                }
+
+                await updateDoc(refDoc, data); 
+                closeEditModal(); 
+                showModal("수정 완료되었습니다."); 
+            } catch(e) { 
+                console.error(e);
+                showModal("수정 실패"); 
+            } finally {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('flex');
+            }
         };
 
         window.handleDeleteEntry = id => showModal("이 거래 내역을 삭제할까요?", true, () => deleteDoc(doc(db, 'jina_resin', currentUser.uid, 'entries', id)));
@@ -1093,7 +1189,61 @@
 
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
-        document.getElementById('product-form').onsubmit = e => { e.preventDefault(); saveAdd('products', {code: document.getElementById('prod-code').value, name: document.getElementById('prod-name').value, price: Number(document.getElementById('prod-price').value), order: allProducts.length}, 'product-form'); };
+        // 🌟 수정: 새 제품 등록 폼 제출 시 이미지 Storage 업로드 처리
+        document.getElementById('product-form').onsubmit = async e => { 
+            e.preventDefault(); 
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-screen').classList.add('flex');
+            
+            try {
+                let imageUrl = "";
+                const fileInput = document.getElementById('prod-image');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `products/${currentUser.uid}_${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    imageUrl = await getDownloadURL(snapshot.ref);
+                }
+
+                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), {
+                    code: document.getElementById('prod-code').value,
+                    name: document.getElementById('prod-name').value,
+                    price: Number(document.getElementById('prod-price').value),
+                    imageUrl: imageUrl,
+                    order: allProducts.length,
+                    createdAt: Date.now()
+                });
+                
+                document.getElementById('product-form').reset();
+                const preview = document.getElementById('prod-image-preview');
+                if(preview) preview.classList.add('hidden');
+                showModal("제품이 등록되었습니다.");
+            } catch (err) {
+                console.error(err);
+                showModal("저장 중 오류가 발생했습니다.");
+            } finally {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('flex');
+            }
+        };
+
+        // 제품 등록폼 사진 미리보기 스크립트
+        document.getElementById('prod-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const previewDiv = document.getElementById('prod-image-preview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    previewDiv.classList.remove('hidden');
+                    previewDiv.querySelector('img').src = evt.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.add('hidden');
+                previewDiv.querySelector('img').src = '';
+            }
+        });
+
         document.getElementById('category-form').onsubmit = e => { e.preventDefault(); saveAdd('categories', {name: document.getElementById('cat-name').value, order: allCategories.length}, 'category-form'); };
         
         document.getElementById('inventory-form').onsubmit = e => {
@@ -1205,15 +1355,22 @@
             }).join('') || '<p class="text-slate-400 text-sm text-center py-10 font-bold">조정 내역이 없습니다.</p>';
         };
 
+        // 🌟 수정: 제품 리스트 표에 썸네일 이미지 열(Column) 추가 적용
         window.renderProducts = () => {
             const container = document.getElementById('products-table-body');
             container.innerHTML = allProducts.map(p => `
                 <tr data-id="${p.id}" class="product-item hover:bg-slate-50 transition-all font-bold group bg-white">
                     <td class="p-3 sm:p-4 w-10 text-center"><i class="fas fa-grip-lines text-slate-300 cursor-grab active:cursor-grabbing drag-handle hover:text-purple-500 transition-colors"></i></td>
+                    <td class="p-3 sm:p-4 w-16 text-center">
+                        ${p.imageUrl 
+                            ? `<img src="${p.imageUrl}" class="w-10 h-10 rounded-lg object-cover shadow-sm border border-slate-200 mx-auto">` 
+                            : `<div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 shadow-sm mx-auto border border-slate-200"><i class="fas fa-image"></i></div>`
+                        }
+                    </td>
                     <td class="py-3 sm:py-4 text-xs text-slate-400 font-mono">${p.code}</td>
                     <td class="p-3 sm:p-4 text-slate-900">${p.name}</td>
                     <td class="p-3 sm:p-4 text-blue-600">${formatMoney(p.price)}</td>
-                    <td class="p-3 sm:p-4 text-right flex gap-1.5 justify-end">
+                    <td class="p-3 sm:p-4 text-right flex gap-1.5 justify-end items-center h-full">
                         <button onclick="openEditModal('product', '${p.id}')" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all flex items-center justify-center border border-slate-100 shadow-sm text-sm"><i class="fas fa-pen-nib"></i></button>
                         <button onclick="handleDeleteProduct('${p.id}')" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center border border-rose-50 shadow-sm text-sm"><i class="fas fa-trash-alt"></i></button>
                     </td>
@@ -1465,6 +1622,115 @@
             renderApp();
         };
 
+        window.exportProductsToExcel = () => {
+            if (allProducts.length === 0) {
+                showModal("내보낼 제품이 없습니다.");
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const borderThin = { style: "thin", color: { rgb: "BFBFBF" } }; 
+            const borderAll = { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin };
+            const headerStyle = { fill: { fgColor: { rgb: "F1F5F9" } }, font: { bold: true, color: { rgb: "334155" }, sz: 11 }, alignment: { horizontal: "center", vertical: "center" }, border: borderAll };
+            const dataStyleCenter = { alignment: { horizontal: "center", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleLeft = { alignment: { horizontal: "left", vertical: "center" }, border: borderAll, font: { color: { rgb: "334155" } } };
+            const dataStyleMoney = { alignment: { horizontal: "right", vertical: "center" }, border: borderAll, numFmt: '#,##0"원"', font: { color: { rgb: "334155" } } };
+            const titleStyle = { font: { sz: 16, bold: true, color: { rgb: "0F172A" } }, alignment: { vertical: "center" } };
+            const dateStyle = { font: { color: { rgb: "64748B" }, italic: true }, alignment: { horizontal: "right", vertical: "center" } };
+
+            const now = new Date();
+            const printTime = `출력일시: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const aoa = [];
+            aoa.push([
+                { v: `💎 planet_jina 제품 목록`, s: titleStyle },
+                null, null,
+                { v: printTime, s: dateStyle }
+            ]);
+            aoa.push([]);
+            aoa.push(['순번', '제품코드', '제품명', '기본 단가'].map(h => ({ v: h, s: headerStyle })));
+            
+            allProducts.forEach((p, idx) => aoa.push([
+                { v: idx + 1, s: dataStyleCenter },
+                { v: p.code || '', s: dataStyleCenter },
+                { v: p.name || '', s: dataStyleLeft },
+                { v: Number(p.price) || 0, s: dataStyleMoney }
+            ]));
+            
+            const wsProducts = XLSX.utils.aoa_to_sheet(aoa);
+            wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+            wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
+
+            const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `planet_jina_제품목록_${todayStr}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        };
+
+        window.importProductsFromExcel = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-screen').classList.add('flex');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    let uCount = 0, aCount = 0;
+
+                    let sheetName = "등록제품_목록";
+                    if(!workbook.Sheets[sheetName]) sheetName = workbook.SheetNames[0];
+
+                    if(workbook.Sheets[sheetName]) {
+                        let rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {range: 2});
+                        
+                        if(rows.length === 0 || (!rows[0]['제품명'] && !rows[0]['Name'] && !rows[0]['name'])) {
+                            rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                        }
+
+                        for(const row of rows) {
+                            const code = (row['제품코드'] || row['Code'] || row['code'])?.toString().trim() || '';
+                            const name = (row['제품명'] || row['Name'] || row['name'])?.toString().trim();
+                            const priceRaw = row['기본 단가'] || row['단가'] || row['Price'] || row['price'] || 0;
+                            const price = Number(priceRaw.toString().replace(/[^0-9]/g, '')) || 0; 
+                            
+                            if(!name) continue;
+
+                            const existing = allProducts.find(p => p.name === name || (code && p.code === code));
+                            if(existing) {
+                                if (existing.price !== price || existing.code !== code || existing.name !== name) {
+                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), { code, name, price });
+                                    uCount++;
+                                }
+                            } else {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code, name, price, order: allProducts.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+                    showModal(`제품 목록 동기화 완료!\n\n신규 등록: ${aCount}건\n정보 수정: ${uCount}건`);
+                } catch (err) {
+                    console.error(err);
+                    showModal("엑셀 파일을 처리하는 중 오류가 발생했습니다. 양식을 다시 확인해주세요.");
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('loading-screen').classList.remove('flex');
+                    document.getElementById('product-excel-file').value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -1679,6 +1945,114 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+        };
+
+        // 전체 엑셀 파일 업로드(Import) 처리 로직
+        document.getElementById('excel-upload-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('excel-file');
+            if(!fileInput.files.length) return;
+            const file = fileInput.files[0];
+
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-screen').classList.add('flex');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    let uCount = 0, aCount = 0;
+
+                    if(workbook.Sheets["등록제품_목록"]) {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets["등록제품_목록"], {range: 2});
+                        for(const row of rows) {
+                            const code = row['제품코드']?.toString().trim();
+                            const name = row['제품명']?.toString().trim();
+                            const priceRaw = row['기본 단가'] || 0;
+                            const price = Number(priceRaw.toString().replace(/[^0-9]/g, '')) || 0; 
+                            if(!name) continue;
+
+                            const existing = allProducts.find(p => p.name === name || (code && p.code === code));
+                            if(existing) {
+                                if (existing.price !== price || existing.code !== code || existing.name !== name) {
+                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), { code: code || '', name, price });
+                                    uCount++;
+                                }
+                            } else {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code: code || '', name, price, order: allProducts.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+
+                    if(workbook.Sheets["카테고리_목록"]) {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets["카테고리_목록"], {range: 2});
+                        for(const row of rows) {
+                            const name = row['카테고리명']?.toString().trim();
+                            if(!name) continue;
+                            if(!allCategories.find(c => c.name === name)) {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'categories'), { name, order: allCategories.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+
+                    if(workbook.Sheets["판매처_목록"]) {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets["판매처_목록"], {range: 2});
+                        for(const row of rows) {
+                            const name = row['판매처명']?.toString().trim();
+                            if(!name) continue;
+                            const existing = allChannels.find(c => c.name === name);
+                            const updateData = {
+                                name,
+                                bizNum: row['사업자 번호']?.toString() || '',
+                                contact: row['연락처']?.toString() || '',
+                                link: row['링크']?.toString() || '',
+                                address: row['주소']?.toString() || '',
+                                memo: row['기타 (메모)']?.toString() || ''
+                            };
+                            if(existing) {
+                                await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'channels', existing.id), updateData);
+                                uCount++;
+                            } else {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'channels'), { ...updateData, order: allChannels.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+
+                    if(workbook.Sheets["구매처_목록"]) {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets["구매처_목록"], {range: 2});
+                        for(const row of rows) {
+                            const name = row['구매처명']?.toString().trim();
+                            if(!name) continue;
+                            const existing = allVendors.find(c => c.name === name);
+                            const updateData = {
+                                name,
+                                bizNum: row['사업자 번호']?.toString() || '',
+                                contact: row['연락처']?.toString() || '',
+                                link: row['링크']?.toString() || '',
+                                address: row['주소']?.toString() || '',
+                                memo: row['기타 (메모)']?.toString() || ''
+                            };
+                            if(existing) {
+                                await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'vendors', existing.id), updateData);
+                                uCount++;
+                            } else {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'vendors'), { ...updateData, order: allVendors.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+
+                    showModal(`데이터 동기화가 완료되었습니다!\n\n신규 등록: ${aCount}건\n정보 수정: ${uCount}건`);
+                } catch(error) {
+                    console.error(error);
+                    showModal("엑셀 파일을 처리하는 중 오류가 발생했습니다. 다운로드한 양식을 그대로 사용해주세요.");
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('loading-screen').classList.remove('flex');
+                    fileInput.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         const getLocalDateStr = (d) => {
