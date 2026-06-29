@@ -1671,22 +1671,23 @@
             const aoa = [];
             aoa.push([
                 { v: `💎 planet_jina 제품 목록`, s: titleStyle },
-                null, null,
+                null, null, null,
                 { v: printTime, s: dateStyle }
             ]);
             aoa.push([]);
-            aoa.push(['순번', '제품코드', '제품명', '기본 단가'].map(h => ({ v: h, s: headerStyle })));
+            aoa.push(['순번', '제품코드', '제품명', '기본 단가', '이미지 URL'].map(h => ({ v: h, s: headerStyle })));
             
             allProducts.forEach((p, idx) => aoa.push([
                 { v: idx + 1, s: dataStyleCenter },
                 { v: p.code || '', s: dataStyleCenter },
                 { v: p.name || '', s: dataStyleLeft },
-                { v: Number(p.price) || 0, s: dataStyleMoney }
+                { v: Number(p.price) || 0, s: dataStyleMoney },
+                { v: p.imageUrl || '', s: dataStyleLeft }
             ]));
             
             const wsProducts = XLSX.utils.aoa_to_sheet(aoa);
-            wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
-            wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }];
+            wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+            wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 50 }];
             XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
 
             const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -1731,17 +1732,26 @@
                             const name = (row['제품명'] || row['Name'] || row['name'])?.toString().trim();
                             const priceRaw = row['기본 단가'] || row['단가'] || row['Price'] || row['price'] || 0;
                             const price = Number(priceRaw.toString().replace(/[^0-9]/g, '')) || 0; 
+                            const imageUrl = (row['이미지 URL'] || row['imageUrl'])?.toString().trim() || '';
                             
                             if(!name) continue;
 
                             const existing = allProducts.find(p => p.name === name || (code && p.code === code));
                             if(existing) {
-                                if (existing.price !== price || existing.code !== code || existing.name !== name) {
-                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), { code, name, price });
+                                let updateData = { code, name, price };
+                                let needsUpdate = existing.price !== price || existing.code !== code || existing.name !== name;
+                                
+                                if (row['이미지 URL'] !== undefined || row['imageUrl'] !== undefined) {
+                                    updateData.imageUrl = imageUrl;
+                                    if (existing.imageUrl !== imageUrl) needsUpdate = true;
+                                }
+
+                                if (needsUpdate) {
+                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), updateData);
                                     uCount++;
                                 }
                             } else {
-                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code, name, price, order: allProducts.length + aCount++, createdAt: Date.now() });
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code, name, price, imageUrl, order: allProducts.length + aCount++, createdAt: Date.now() });
                             }
                         }
                     }
@@ -1910,22 +1920,23 @@
                 const aoa = [];
                 aoa.push([
                     { v: `💎 planet_jina 제품 목록`, s: titleStyle },
-                    null, null,
+                    null, null, null,
                     { v: printTime, s: dateStyle }
                 ]);
                 aoa.push([]);
-                aoa.push(['순번', '제품코드', '제품명', '기본 단가'].map(h => ({ v: h, s: headerStyle })));
+                aoa.push(['순번', '제품코드', '제품명', '기본 단가', '이미지 URL'].map(h => ({ v: h, s: headerStyle })));
                 
                 allProducts.forEach((p, idx) => aoa.push([
                     { v: idx + 1, s: dataStyleCenter },
                     { v: p.code || '', s: dataStyleCenter },
                     { v: p.name || '', s: dataStyleLeft },
-                    { v: Number(p.price) || 0, s: dataStyleMoney }
+                    { v: Number(p.price) || 0, s: dataStyleMoney },
+                    { v: p.imageUrl || '', s: dataStyleLeft }
                 ]));
                 
                 const wsProducts = XLSX.utils.aoa_to_sheet(aoa);
-                wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
-                wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }];
+                wsProducts['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+                wsProducts['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 50 }];
                 XLSX.utils.book_append_sheet(wb, wsProducts, "등록제품_목록");
             }
 
@@ -2022,20 +2033,30 @@
                     if(workbook.Sheets["등록제품_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["등록제품_목록"], {range: 2});
                         for(const row of rows) {
-                            const code = row['제품코드']?.toString().trim();
+                            const code = row['제품코드']?.toString().trim() || '';
                             const name = row['제품명']?.toString().trim();
                             const priceRaw = row['기본 단가'] || 0;
                             const price = Number(priceRaw.toString().replace(/[^0-9]/g, '')) || 0; 
+                            const imageUrl = (row['이미지 URL'] || row['imageUrl'])?.toString().trim() || '';
+                            
                             if(!name) continue;
 
                             const existing = allProducts.find(p => p.name === name || (code && p.code === code));
                             if(existing) {
-                                if (existing.price !== price || existing.code !== code || existing.name !== name) {
-                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), { code: code || '', name, price });
+                                let updateData = { code, name, price };
+                                let needsUpdate = existing.price !== price || existing.code !== code || existing.name !== name;
+                                
+                                if (row['이미지 URL'] !== undefined || row['imageUrl'] !== undefined) {
+                                    updateData.imageUrl = imageUrl;
+                                    if (existing.imageUrl !== imageUrl) needsUpdate = true;
+                                }
+
+                                if (needsUpdate) {
+                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'products', existing.id), updateData);
                                     uCount++;
                                 }
                             } else {
-                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code: code || '', name, price, order: allProducts.length + aCount++, createdAt: Date.now() });
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'products'), { code, name, price, imageUrl, order: allProducts.length + aCount++, createdAt: Date.now() });
                             }
                         }
                     }
