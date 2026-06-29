@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이블컴 라이센스 · 사용 신청</title>
+<style>
+  :root{
+    --bg:#0e1217; --card:#181f29; --field:#0e1217;
+    --border:#263241; --border-focus:#2dd4bf;
+    --text:#e2e8f0; --muted:#8a98a8; --faint:#5b6878;
+    --accent:#2dd4bf; --accent-ink:#06342e;
+    --error:#f87171; --error-bg:#2a1416;
+    --ok:#4ade80; --ok-bg:#10241a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{
+    width:100%; max-width:420px; background:var(--card);
+    border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.4);
+  }
+  .accent-bar{height:3px; background:var(--accent);}
+  .inner{padding:32px 30px 28px;}
+  .eyebrow{
+    font-size:11px; letter-spacing:2px; font-weight:600;
+    color:var(--accent); text-transform:uppercase; margin:0 0 10px;
+  }
+  h1{font-size:22px; font-weight:600; margin:0 0 6px;}
+  .sub{font-size:13px; color:var(--muted); margin:0 0 24px; line-height:1.6;}
+  .field{margin-bottom:16px;}
+  label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  input{
+    width:100%; padding:11px 13px; font-size:14px;
+    background:var(--field); color:var(--text);
+    border:1px solid var(--border); border-radius:8px; outline:none;
+    transition:border-color .15s;
+  }
+  input:focus{border-color:var(--border-focus);}
+  input::placeholder{color:var(--faint);}
+  .hint{font-size:11px; color:var(--faint); margin-top:5px;}
+  .preview{
+    font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px;
+    color:var(--accent); margin-top:6px; min-height:16px; word-break:break-all;
+  }
+  .row{display:flex; gap:12px;}
+  .row .field{flex:1;}
+  button{
+    width:100%; margin-top:8px; padding:12px; font-size:15px; font-weight:600;
+    color:var(--accent-ink); background:var(--accent); border:none;
+    border-radius:8px; cursor:pointer; transition:opacity .15s;
+  }
+  button:hover{opacity:.9;}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+  .msg{
+    margin-top:16px; padding:12px 14px; border-radius:8px;
+    font-size:13px; line-height:1.6; display:none;
+  }
+  .msg.show{display:block;}
+  .msg.error{background:var(--error-bg); color:var(--error); border:1px solid #422;}
+  .msg.ok{background:var(--ok-bg); color:var(--ok); border:1px solid #1c4a32;}
+  .foot{
+    margin-top:22px; padding-top:18px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--faint); text-align:center; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="accent-bar"></div>
+    <div class="inner">
+      <p class="eyebrow">Ablecom License</p>
+      <h1>사용 신청</h1>
+      <p class="sub">아래 정보를 입력해 신청하면, 관리자 승인 후 프로그램에서 로그인할 수 있습니다.</p>
+
+      <form id="signupForm" autocomplete="off">
+        <div class="field">
+          <label for="userId">아이디</label>
+          <input type="text" id="userId" placeholder="예: hong123" maxlength="20">
+          <div class="hint">영문·숫자 4~20자</div>
+          <div class="preview" id="emailPreview"></div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="name">이름</label>
+            <input type="text" id="name" placeholder="홍길동" maxlength="20">
+          </div>
+          <div class="field">
+            <label for="dept">소속</label>
+            <input type="text" id="dept" placeholder="기술지원팀" maxlength="30">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="pw">비밀번호</label>
+          <input type="password" id="pw" placeholder="6자 이상" maxlength="64">
+        </div>
+
+        <div class="field">
+          <label for="pw2">비밀번호 확인</label>
+          <input type="password" id="pw2" placeholder="비밀번호 다시 입력" maxlength="64">
+        </div>
+
+        <button type="submit" id="submitBtn">신청하기</button>
+      </form>
+
+      <div class="msg" id="msg"></div>
+
+      <p class="foot">이미 승인받으셨나요? 프로그램에서 아이디로 로그인하세요.</p>
+    </div>
+  </div>
+
+<script type="module">
+  // ── Firebase SDK 불러오기 (버전 숫자는 필요 시 변경 가능) ────────────
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, setDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── ★ 여기에 콘솔에서 복사한 firebaseConfig를 붙여넣으세요 ──────────
+  const firebaseConfig = {
+    apiKey: "여기에-붙여넣기",
+    authDomain: "여기에-붙여넣기",
+    projectId: "여기에-붙여넣기",
+    storageBucket: "여기에-붙여넣기",
+    messagingSenderId: "여기에-붙여넣기",
+    appId: "여기에-붙여넣기"
+  };
+
+  // ── ID를 Firebase용 이메일 형식으로 바꿀 때 쓰는 도메인 (실제 메일 아님) ─
+  const ID_DOMAIN = "ablecom-license.com";
+  // ──────────────────────────────────────────────────────────────
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const $ = (id) => document.getElementById(id);
+  const form = $("signupForm");
+  const btn = $("submitBtn");
+  const msgBox = $("msg");
+
+  // 아이디 입력 시 실제 로그인 계정(이메일) 미리보기
+  $("userId").addEventListener("input", (e) => {
+    const id = e.target.value.trim().toLowerCase();
+    $("emailPreview").textContent = id ? "로그인 계정: " + id + "@" + ID_DOMAIN : "";
+  });
+
+  function showMsg(text, type) {
+    msgBox.textContent = text;
+    msgBox.className = "msg show " + type;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msgBox.className = "msg"; // 메시지 초기화
+
+    const id = $("userId").value.trim().toLowerCase();
+    const name = $("name").value.trim();
+    const dept = $("dept").value.trim();
+    const pw = $("pw").value;
+    const pw2 = $("pw2").value;
+
+    // 입력 검증
+    if (!/^[a-z0-9]{4,20}$/.test(id)) {
+      return showMsg("아이디는 영문·숫자 4~20자로 입력하세요.", "error");
+    }
+    if (!name) return showMsg("이름을 입력하세요.", "error");
+    if (pw.length < 6) return showMsg("비밀번호는 6자 이상이어야 합니다.", "error");
+    if (pw !== pw2) return showMsg("비밀번호가 일치하지 않습니다.", "error");
+
+    btn.disabled = true;
+    btn.textContent = "신청 중...";
+
+    const email = id + "@" + ID_DOMAIN;
+
+    try {
+      // 1) Firebase 인증 계정 생성 (비밀번호는 Firebase가 해시로 안전하게 보관)
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+
+      // 2) Firestore에 '대기' 상태의 사용자 문서 생성 (license/data/users 경로)
+      await setDoc(doc(db, "license", "data", "users", cred.user.uid), {
+        id: id,
+        name: name,
+        dept: dept,
+        status: "대기",       // 대기 → 활성 / 정지 / 만료 / 거부
+        role: "user",
+        sessionLimit: 1,      // 동시 접속 수 (관리자가 승인 시 조정)
+        licenseStart: null,
+        licenseEnd: null,
+        createdAt: serverTimestamp(),
+        approvedAt: null,
+        approvedBy: null
+      });
+
+      // 3) 신청만 하고 자동 로그인은 해제
+      await signOut(auth);
+
+      form.reset();
+      $("emailPreview").textContent = "";
+      showMsg("신청이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.", "ok");
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
+        showMsg("이미 사용 중인 아이디입니다.", "error");
+      } else if (err.code === "auth/weak-password") {
+        showMsg("비밀번호는 6자 이상이어야 합니다.", "error");
+      } else if (err.code === "auth/invalid-email") {
+        showMsg("아이디 형식이 올바르지 않습니다.", "error");
+      } else {
+        showMsg("신청 중 오류가 발생했습니다: " + err.message, "error");
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "신청하기";
+    }
+  });
+</script>
+</body>
+</html>
