@@ -224,6 +224,7 @@
                                         <input type="date" id="input-date" required class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
                                     </div>
                                     <div class="space-y-1">
+                                        <!-- 실시간 재고 표시 -->
                                         <label class="text-[9px] font-black text-slate-400 ml-1 flex justify-between">
                                             <span>수량</span>
                                             <span id="current-stock-display" class="font-black text-[9px]"></span>
@@ -232,6 +233,7 @@
                                     </div>
                                 </div>
 
+                                <!-- 수익 폼 -->
                                 <div id="income-group" class="space-y-3">
                                     <div class="space-y-1">
                                         <label class="text-[9px] font-black text-slate-400 ml-1">제품 선택</label>
@@ -243,10 +245,12 @@
                                     </div>
                                 </div>
 
+                                <!-- 지출 폼 -->
                                 <div id="expense-group" class="hidden space-y-3">
                                     <div class="space-y-1">
                                         <label class="text-[9px] font-black text-slate-400 ml-1">재료 카테고리</label>
                                         <select id="input-expense-category" class="w-full bg-slate-50 border-none rounded-xl px-3 py-2.5 text-sm font-bold outline-none ring-2 ring-slate-100 focus:ring-purple-400 transition-all">
+                                            <!-- JS 주입 -->
                                         </select>
                                     </div>
                                     <div class="space-y-1">
@@ -392,7 +396,7 @@
             </div>
         </div>
 
-        <!-- 🌟 [탭 3] 제품 관리 -->
+        <!-- [탭 3] 제품 관리 -->
         <div id="tab-products" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-2">
@@ -597,7 +601,7 @@
                             <i class="fas fa-cloud-download-alt"></i>
                         </div>
                         <h2 class="text-2xl font-black mb-2 text-slate-900">전체 데이터 백업 (Excel)</h2>
-                        <p class="text-sm text-slate-500 font-bold mb-6">현재까지 기록된 거래 내역, 제품 목록, 카테고리, 거래처 정보 등 <br>모든 마스터 데이터를 엑셀 파일 하나로 안전하게 다운로드합니다.</p>
+                        <p class="text-sm text-slate-500 font-bold mb-6">현재까지 기록된 거래 내역, 제품 목록, 카테고리, 거래처 정보, <b>재고 조정 내역</b> 등 모든 마스터 데이터를 엑셀 파일 하나로 안전하게 다운로드합니다.</p>
                     </div>
                     <button onclick="exportToExcel()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg font-black py-4 rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
                         <i class="fas fa-file-excel"></i> 전체 데이터 백업하기
@@ -611,9 +615,9 @@
                             <i class="fas fa-cloud-upload-alt"></i>
                         </div>
                         <h2 class="text-2xl font-black mb-2 text-slate-900">전체 데이터 복구 / 업데이트</h2>
-                        <p class="text-sm text-slate-500 font-bold mb-4">다운로드한 엑셀 파일에서 정보를 수정하여 업로드하면 내역이 복구됩니다. <br>(제품, 카테고리, 거래처 시트만 복구됩니다.)</p>
+                        <p class="text-sm text-slate-500 font-bold mb-4">다운로드한 엑셀 파일에서 정보를 수정하여 업로드하면 내역이 복구됩니다. <br>(제품, 카테고리, 거래처, <b class="text-emerald-600">재고 조정 내역</b> 시트가 복구됩니다.)</p>
                         <div class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] p-3 rounded-lg font-bold mb-6">
-                            <i class="fas fa-exclamation-triangle mr-1"></i> 데이터 중복 방지를 위해 [거래 내역]은 업데이트 되지 않습니다.
+                            <i class="fas fa-exclamation-triangle mr-1"></i> 데이터 중복 방지를 위해 [거래 내역]은 업데이트 되지 않으며, [재고 현황]은 자동 계산되므로 수동 복구에서 제외됩니다.
                         </div>
                     </div>
                     <form id="excel-upload-form" class="space-y-3">
@@ -628,12 +632,11 @@
 
     </div>
 
-    <!-- Firebase SDK 및 로직 (Cloudinary 연동 방식으로 수정됨) -->
+    <!-- Firebase SDK 및 로직 (Cloudinary 연동) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // 🌟 Storage 임포트는 제거되었습니다 (Cloudinary 사용)
 
         const firebaseConfig = {
             apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -654,10 +657,9 @@
         let unsubs = [];
         let currentEditInfo = null;
 
-        // 🌟 Cloudinary를 통해 안전하게 이미지를 업로드하는 함수
         const uploadToCloudinary = async (file) => {
             const cloudName = 'dnps9dhys';
-            const uploadPreset = 'jina_preset'; // 꼭 Cloudinary 설정에서 만들어주세요!
+            const uploadPreset = 'jina_preset'; 
 
             const formData = new FormData();
             formData.append('file', file);
@@ -1121,7 +1123,6 @@
 
         window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
 
-        // 🌟 수정: 모달 폼 저장 시 Cloudinary 이미지 업로드 로직 포함 (스피너 유지)
         document.getElementById('edit-form').onsubmit = async e => {
             e.preventDefault();
             const { type, id } = currentEditInfo;
@@ -1214,7 +1215,6 @@
 
         const saveAdd = async (col, data, fId) => { try { await addDoc(collection(db, 'jina_resin', currentUser.uid, col), {...data, createdAt: Date.now()}); document.getElementById(fId).reset(); } catch(e) { showModal("저장 오류"); } };
         
-        // 🌟 수정: 새 제품 등록 폼 제출 시 Cloudinary 업로드 처리 적용
         document.getElementById('product-form').onsubmit = async e => { 
             e.preventDefault(); 
             document.getElementById('loading-screen').classList.remove('hidden');
@@ -1256,7 +1256,6 @@
             }
         };
 
-        // 제품 등록폼 사진 미리보기 스크립트
         document.getElementById('prod-image').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const previewDiv = document.getElementById('prod-image-preview');
@@ -1759,6 +1758,7 @@
             reader.readAsArrayBuffer(file);
         };
 
+        // 🌟 수정: 전체 데이터 백업 시 재고 조정 내역 시트 생성 로직 추가
         window.exportToExcel = () => {
             const s = document.getElementById('filter-start').value;
             const e = document.getElementById('filter-end').value;
@@ -1769,7 +1769,7 @@
                 return isAfterStart && isBeforeEnd;
             });
 
-            if (filtered.length === 0 && allProducts.length === 0 && allChannels.length === 0 && allVendors.length === 0 && allCategories.length === 0) {
+            if (filtered.length === 0 && allProducts.length === 0 && allChannels.length === 0 && allVendors.length === 0 && allCategories.length === 0 && allInventoryLogs.length === 0) {
                 showModal("내보낼 데이터가 전혀 없습니다.");
                 return;
             }
@@ -1850,6 +1850,32 @@
                 wsEntries['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }]; 
                 wsEntries['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
                 XLSX.utils.book_append_sheet(wb, wsEntries, "거래내역");
+            }
+
+            // 🌟 추가: 재고 조정 내역 시트
+            if (allInventoryLogs.length > 0) {
+                const aoa = [
+                    [{ v: `📝 재고 조정 내역`, s: titleStyle }, null, null, null, null, null, { v: printTime, s: dateStyle }],
+                    [],
+                    ['순번', '조정 일자', '유형', '제품명', '판매처', '조정 수량', '메모'].map(h => ({ v: h, s: headerStyle }))
+                ];
+                
+                const sortedLogs = [...allInventoryLogs].sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt);
+                
+                sortedLogs.forEach((log, idx) => aoa.push([
+                    { v: idx + 1, s: dataStyleCenter },
+                    { v: log.date || '', s: dataStyleCenter },
+                    { v: log.adjType || (log.qtyChange > 0 ? '입고' : '차감'), s: dataStyleCenter },
+                    { v: log.productName || '', s: dataStyleLeft },
+                    { v: log.channelName || '', s: dataStyleCenter },
+                    { v: log.absQty !== undefined ? log.absQty : Math.abs(log.qtyChange), s: dataStyleQty },
+                    { v: log.memo || '', s: dataStyleLeft }
+                ]));
+                
+                const wsInvLogs = XLSX.utils.aoa_to_sheet(aoa);
+                wsInvLogs['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+                wsInvLogs['!cols'] = [{ wch: 6 }, { wch: 15 }, { wch: 12 }, { wch: 30 }, { wch: 20 }, { wch: 12 }, { wch: 30 }];
+                XLSX.utils.book_append_sheet(wb, wsInvLogs, "재고_조정_내역");
             }
 
             if (allProducts.length > 0 && allChannels.length > 0) {
@@ -1975,7 +2001,7 @@
             window.URL.revokeObjectURL(url);
         };
 
-        // 전체 엑셀 파일 업로드(Import) 처리 로직
+        // 🌟 수정: 전체 엑셀 업로드 시 '재고_조정_내역' 복구 로직 추가
         document.getElementById('excel-upload-form').onsubmit = async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('excel-file');
@@ -1992,6 +2018,7 @@
                     const workbook = XLSX.read(data, {type: 'array'});
                     let uCount = 0, aCount = 0;
 
+                    // 1. 제품 복구/업데이트
                     if(workbook.Sheets["등록제품_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["등록제품_목록"], {range: 2});
                         for(const row of rows) {
@@ -2013,6 +2040,7 @@
                         }
                     }
 
+                    // 2. 카테고리 복구/업데이트
                     if(workbook.Sheets["카테고리_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["카테고리_목록"], {range: 2});
                         for(const row of rows) {
@@ -2024,6 +2052,7 @@
                         }
                     }
 
+                    // 3. 판매처 복구/업데이트
                     if(workbook.Sheets["판매처_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["판매처_목록"], {range: 2});
                         for(const row of rows) {
@@ -2047,6 +2076,7 @@
                         }
                     }
 
+                    // 4. 구매처 복구/업데이트
                     if(workbook.Sheets["구매처_목록"]) {
                         const rows = XLSX.utils.sheet_to_json(workbook.Sheets["구매처_목록"], {range: 2});
                         for(const row of rows) {
@@ -2066,6 +2096,46 @@
                                 uCount++;
                             } else {
                                 await addDoc(collection(db, 'jina_resin', currentUser.uid, 'vendors'), { ...updateData, order: allVendors.length + aCount++, createdAt: Date.now() });
+                            }
+                        }
+                    }
+
+                    // 🌟 5. 재고 조정 내역 복구/업데이트
+                    if(workbook.Sheets["재고_조정_내역"]) {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets["재고_조정_내역"], {range: 2});
+                        for(const row of rows) {
+                            const date = row['조정 일자']?.toString().trim();
+                            const adjType = row['유형']?.toString().trim();
+                            const productName = row['제품명']?.toString().trim();
+                            const channelName = row['판매처']?.toString().trim();
+                            const absQtyRaw = row['조정 수량'] || 0;
+                            const absQty = Number(absQtyRaw.toString().replace(/[^0-9]/g, '')) || 0;
+                            const memo = row['메모']?.toString().trim() || '';
+
+                            if(!date || !productName || !channelName || !adjType) continue;
+
+                            const isMinus = adjType === '판매' || adjType === '폐기' || adjType === '기타(차감)';
+                            const qtyChange = isMinus ? -absQty : absQty;
+
+                            // 중복 방지를 위해 기존에 동일한 내역이 있는지 확인
+                            const existing = allInventoryLogs.find(l => 
+                                l.date === date && 
+                                l.adjType === adjType && 
+                                l.productName === productName && 
+                                l.channelName === channelName && 
+                                l.memo === memo
+                            );
+
+                            if(existing) {
+                                if(existing.absQty !== absQty || existing.qtyChange !== qtyChange) {
+                                    await updateDoc(doc(db, 'jina_resin', currentUser.uid, 'inventory_logs', existing.id), { absQty, qtyChange });
+                                    uCount++;
+                                }
+                            } else {
+                                await addDoc(collection(db, 'jina_resin', currentUser.uid, 'inventory_logs'), {
+                                    date, adjType, productName, channelName, absQty, qtyChange, memo, createdAt: Date.now()
+                                });
+                                aCount++;
                             }
                         }
                     }
