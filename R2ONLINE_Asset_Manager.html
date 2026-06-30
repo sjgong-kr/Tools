@@ -5,112 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>R2 ONLINE 자산 관리</title>
 
-<!-- ===================== Firebase SDK (compat 버전) ===================== -->
+<!-- ===================== Firebase SDK (compat) ===================== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-  /* ====== 색상/폰트 기본값 ====== */
   :root{
-    --bg:#0e1116;            /* 전체 배경 */
-    --bg2:#161b22;           /* 카드/패널 배경 */
-    --bg3:#1f2630;           /* 입력/행 배경 */
-    --line:#2b333f;          /* 테두리 */
-    --text:#e6edf3;          /* 기본 글자 */
-    --muted:#8b97a6;         /* 흐린 글자 */
-    --gold:#f5c451;          /* 포인트(금색) */
-    --gold-d:#caa233;
-    --green:#5bd17a;
-    --red:#ff6b6b;
-    --blue:#5aa9ff;
+    --bg:#0e1116; --bg2:#161b22; --bg3:#1f2630; --line:#2b333f;
+    --text:#e6edf3; --muted:#8b97a6;
+    --gold:#f5c451; --gold-d:#caa233; --green:#5bd17a; --red:#ff6b6b; --blue:#5aa9ff;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:"Segoe UI","Malgun Gothic","맑은 고딕",sans-serif;
-    font-size:14px; line-height:1.5;
-  }
-  /* ====== 상단 헤더 ====== */
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:"Segoe UI","Malgun Gothic","맑은 고딕",sans-serif; font-size:14px; line-height:1.5;}
+
+  /* ===== 헤더 ===== */
   header{
-    background:linear-gradient(90deg,#1a1f27,#10141a);
-    border-bottom:2px solid var(--gold-d);
-    padding:16px 22px; display:flex; align-items:center; justify-content:space-between;
-    flex-wrap:wrap; gap:12px;
+    background:linear-gradient(90deg,#1a1f27,#10141a); border-bottom:2px solid var(--gold-d);
+    padding:14px 22px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;
   }
-  header h1{
-    margin:0; font-size:20px; letter-spacing:1px;
-    color:var(--gold); display:flex; align-items:center; gap:10px;
+  header h1{margin:0; font-size:19px; letter-spacing:1px; color:var(--gold); display:flex; align-items:center; gap:10px; white-space:nowrap;}
+  header h1 .badge{font-size:11px; background:var(--gold); color:#1a1500; padding:2px 8px; border-radius:6px; font-weight:700; letter-spacing:0;}
+  .hnav{display:flex; gap:8px;}
+  .hnav button{
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    padding:8px 16px; border-radius:9px; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; transition:.15s;
   }
-  header h1 .badge{
-    font-size:11px; background:var(--gold); color:#1a1500; padding:2px 8px;
-    border-radius:6px; font-weight:700; letter-spacing:0;
-  }
-  .total-banner{
-    background:var(--bg2); border:1px solid var(--line); border-radius:10px;
-    padding:10px 18px; text-align:right;
-  }
+  .hnav button:hover{color:var(--text); border-color:var(--gold);}
+  .hnav button.active{color:var(--gold); border-color:var(--gold); background:rgba(245,196,81,.1);}
+  .total-banner{margin-left:auto; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:8px 18px; text-align:right;}
   .total-banner .label{font-size:11px; color:var(--muted);}
-  .total-banner .value{font-size:22px; font-weight:800; color:var(--gold);}
+  .total-banner .value{font-size:21px; font-weight:800; color:var(--gold);}
   .total-banner .sub{font-size:11px; color:var(--muted);}
 
   .wrap{max-width:1200px; margin:0 auto; padding:22px;}
+  #status{font-size:12px; color:var(--muted); margin-bottom:16px;}
+  #status b{color:var(--green);} #status.err b{color:var(--red);}
 
-  /* ====== 연결 상태 표시 ====== */
-  #status{
-    font-size:12px; color:var(--muted); margin-bottom:14px;
-  }
-  #status b{color:var(--green);}
-  #status.err b{color:var(--red);}
+  .view{display:none;} .view.active{display:block;}
+  .panel-box{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:18px;}
+  .section-title{font-size:13px; color:var(--gold); font-weight:700; letter-spacing:.5px; margin:0 0 14px;}
 
-  /* ====== 캐릭터 카드 그리드 ====== */
-  .grid{
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;
-  }
-  .card{
-    background:var(--bg2); border:1px solid var(--line); border-radius:14px;
-    padding:18px; cursor:pointer; transition:.15s; position:relative; overflow:hidden;
-  }
+  /* ===== 대시보드 ===== */
+  .dash-top{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:22px;}
+  .stat{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:16px 18px; position:relative; overflow:hidden;}
+  .stat::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold);}
+  .stat .label{font-size:12px; color:var(--muted);}
+  .stat .num{font-size:26px; font-weight:800; color:var(--gold); margin-top:4px;}
+  .stat.blue::before{background:var(--blue);} .stat.blue .num{color:var(--blue);}
+  .stat.green::before{background:var(--green);} .stat.green .num{color:var(--green);}
+  .dash-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:760px){ .dash-grid{grid-template-columns:1fr;} }
+  .bar-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .bar-row.clickable{cursor:pointer;}
+  .bar-row .nm{width:110px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .bar-track{flex:1; background:var(--bg3); border-radius:7px; height:24px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:7px; background:linear-gradient(90deg,var(--gold-d),var(--gold)); min-width:2px; transition:width .3s;}
+  .bar-row .vl{width:92px; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; font-size:13px;}
+  .bar-row.clickable:hover .nm{color:var(--gold);}
+
+  /* ===== 캐릭터 카드 ===== */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;}
+  .card{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:18px; cursor:pointer; transition:.15s; position:relative; overflow:hidden;}
+  .card::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold-d); opacity:.7;}
   .card:hover{border-color:var(--gold); transform:translateY(-2px);}
   .card .cname{font-size:17px; font-weight:700; margin-bottom:10px; padding-right:24px;}
   .card .cmeta{font-size:12px; color:var(--muted); margin-bottom:14px;}
   .card .cprice{font-size:20px; font-weight:800; color:var(--gold);}
   .card .cprice small{font-size:11px; color:var(--muted); font-weight:400;}
   .card .arrow{position:absolute; bottom:14px; right:16px; color:var(--gold); font-size:18px;}
+  .card.add{display:flex; align-items:center; justify-content:center; flex-direction:column; border-style:dashed; color:var(--muted); min-height:120px;}
+  .card.add::before{display:none;}
+  .card.add:hover{color:var(--gold);} .card.add .plus{font-size:34px; line-height:1;}
 
-  .card.add{
-    display:flex; align-items:center; justify-content:center; flex-direction:column;
-    border-style:dashed; color:var(--muted); min-height:120px;
-  }
-  .card.add:hover{color:var(--gold);}
-  .card.add .plus{font-size:34px; line-height:1;}
-
-  /* ====== 상세 화면 ====== */
-  #detail{display:none;}
-  .detail-head{display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap;}
-  .detail-head input.cname-edit{
-    background:transparent; border:none; border-bottom:2px solid var(--line);
-    color:var(--gold); font-size:22px; font-weight:800; padding:4px 2px; min-width:200px;
-  }
+  /* ===== 상세 ===== */
+  .detail-head{display:flex; align-items:center; gap:14px; margin:14px 0 18px; flex-wrap:wrap;}
+  .detail-head input.cname-edit{background:transparent; border:none; border-bottom:2px solid var(--line); color:var(--gold); font-size:22px; font-weight:800; padding:4px 2px; min-width:200px;}
   .detail-head input.cname-edit:focus{outline:none; border-color:var(--gold);}
   .ctotal-box{margin-left:auto; text-align:right;}
   .ctotal-box .label{font-size:11px; color:var(--muted);}
   .ctotal-box .value{font-size:22px; font-weight:800; color:var(--gold);}
 
-  /* ====== 버튼 ====== */
-  button{font-family:inherit;}
-  .btn{
-    border:1px solid var(--line); background:var(--bg3); color:var(--text);
-    padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; transition:.15s;
-  }
-  .btn:hover{border-color:var(--gold);}
-  .btn.primary{background:var(--gold); color:#1a1500; border-color:var(--gold); font-weight:700;}
-  .btn.primary:hover{background:#ffd56b;}
-  .btn.ghost{background:transparent;}
-  .btn.danger{color:var(--red); border-color:#4a2a2a;}
-  .btn.danger:hover{background:#2a1a1a;}
-  .btn.sm{padding:4px 9px; font-size:12px;}
-
-  /* ====== 아이템 표 ====== */
   .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px;}
   table{width:100%; border-collapse:collapse; min-width:760px;}
   th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--line); vertical-align:middle;}
@@ -120,52 +95,45 @@
   td.cat{font-weight:700; white-space:nowrap;}
   .chip{display:inline-block; padding:2px 9px; border-radius:20px; font-size:12px; font-weight:700;}
   .empty-msg{padding:40px; text-align:center; color:var(--muted);}
-
-  /* 카테고리별 색상 */
-  .c-캐릭터{background:#2e2418; color:#f0c674;}
-  .c-무기{background:#2a1d1d; color:#ff9b9b;}
-  .c-방어구{background:#1d2a22; color:#8fe0a8;}
-  .c-악세사리{background:#1d2230; color:#9bc4ff;}
-  .c-메테리얼{background:#2a1d2a; color:#e6a8e6;}
-  .c-창고{background:#262626; color:#cfcfcf;}
-
+  .c-캐릭터{background:#2e2418; color:#f0c674;} .c-무기{background:#2a1d1d; color:#ff9b9b;}
+  .c-방어구{background:#1d2a22; color:#8fe0a8;} .c-악세사리{background:#1d2230; color:#9bc4ff;}
+  .c-메테리얼{background:#2a1d2a; color:#e6a8e6;} .c-창고{background:#262626; color:#cfcfcf;}
   .status-chip{font-size:11px; padding:2px 8px; border-radius:6px;}
-  .s-보유{background:#1d2a22; color:#8fe0a8;}
-  .s-판매대기{background:#2e2818; color:#f0c674;}
-  .s-판매완료{background:#26222e; color:#b89bff;}
-  .s-기타{background:#262626; color:#cfcfcf;}
+  .s-보유{background:#1d2a22; color:#8fe0a8;} .s-판매대기{background:#2e2818; color:#f0c674;}
+  .s-판매완료{background:#26222e; color:#b89bff;} .s-기타{background:#262626; color:#cfcfcf;}
+  .row-actions{display:flex; gap:6px; white-space:nowrap;}
 
-  /* ====== 모달 ====== */
-  .modal-bg{
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
-    align-items:center; justify-content:center; z-index:50; padding:16px;
-  }
+  /* ===== 버튼 ===== */
+  button{font-family:inherit;}
+  .btn{border:1px solid var(--line); background:var(--bg3); color:var(--text); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; transition:.15s;}
+  .btn:hover{border-color:var(--gold);}
+  .btn.primary{background:var(--gold); color:#1a1500; border-color:var(--gold); font-weight:700;}
+  .btn.primary:hover{background:#ffd56b;}
+  .btn.ghost{background:transparent;}
+  .btn.danger{color:var(--red); border-color:#4a2a2a;} .btn.danger:hover{background:#2a1a1a;}
+  .btn.sm{padding:4px 9px; font-size:12px;}
+
+  /* ===== 모달 ===== */
+  .modal-bg{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:50; padding:16px;}
   .modal-bg.show{display:flex;}
-  .modal{
-    background:var(--bg2); border:1px solid var(--line); border-radius:14px;
-    width:100%; max-width:460px; padding:22px; max-height:90vh; overflow-y:auto;
-  }
+  .modal{background:var(--bg2); border:1px solid var(--line); border-radius:14px; width:100%; max-width:460px; padding:22px; max-height:90vh; overflow-y:auto;}
   .modal h3{margin:0 0 18px; color:var(--gold); font-size:17px;}
   .field{margin-bottom:14px;}
   .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
-  .field input,.field select{
-    width:100%; background:var(--bg3); border:1px solid var(--line); color:var(--text);
-    padding:9px 11px; border-radius:8px; font-size:14px; font-family:inherit;
-  }
+  .field input,.field select{width:100%; background:var(--bg3); border:1px solid var(--line); color:var(--text); padding:9px 11px; border-radius:8px; font-size:14px; font-family:inherit;}
   .field input:focus,.field select:focus{outline:none; border-color:var(--gold);}
   .modal-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:8px;}
-
-  .row-actions{display:flex; gap:6px; white-space:nowrap;}
-  @media(max-width:600px){
-    .total-banner{width:100%; text-align:left;}
-    .wrap{padding:14px;}
-  }
+  @media(max-width:600px){ .total-banner{margin-left:0;} .wrap{padding:14px;} }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>⚔️ R2 ONLINE 자산 관리 <span class="badge">FIREBASE</span></h1>
+  <h1>⚔️ R2 ONLINE <span class="badge">FIREBASE</span></h1>
+  <nav class="hnav">
+    <button id="nav-dash" onclick="showView('dash')">📊 대시보드</button>
+    <button id="nav-list" onclick="showView('list')">🧝 캐릭터 목록</button>
+  </nav>
   <div class="total-banner">
     <div class="label">전체 자산 합계</div>
     <div class="value" id="grandTotal">0</div>
@@ -176,15 +144,34 @@
 <div class="wrap">
   <div id="status">데이터베이스 연결 중...</div>
 
-  <!-- ========== 목록 화면 (캐릭터 카드) ========== -->
-  <div id="listView">
+  <!-- ===== 대시보드 ===== -->
+  <div class="view" id="view-dash">
+    <div class="dash-top">
+      <div class="stat"><div class="label">전체 자산</div><div class="num" id="d_total">0</div></div>
+      <div class="stat blue"><div class="label">캐릭터 수</div><div class="num" id="d_chars">0</div></div>
+      <div class="stat green"><div class="label">아이템 수</div><div class="num" id="d_items">0</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="panel-box">
+        <h3 class="section-title">캐릭터별 자산 (클릭 시 상세)</h3>
+        <div id="d_charBars"></div>
+      </div>
+      <div class="panel-box">
+        <h3 class="section-title">카테고리별 자산 합계</h3>
+        <div id="d_catBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 캐릭터 목록 ===== -->
+  <div class="view" id="view-list">
     <div class="grid" id="cardGrid"></div>
   </div>
 
-  <!-- ========== 상세 화면 ========== -->
-  <div id="detail">
-    <button class="btn ghost" onclick="goList()">← 캐릭터 목록</button>
-    <div class="detail-head" style="margin-top:14px;">
+  <!-- ===== 상세 ===== -->
+  <div class="view" id="view-detail">
+    <button class="btn ghost" onclick="showView('list')">← 캐릭터 목록</button>
+    <div class="detail-head">
       <input class="cname-edit" id="detailName" placeholder="캐릭터 이름" onchange="renameCharacter()">
       <button class="btn danger sm" onclick="deleteCharacter()">캐릭터 삭제</button>
       <div class="ctotal-box">
@@ -192,64 +179,45 @@
         <div class="value" id="detailTotal">0</div>
       </div>
     </div>
-
     <div style="margin-bottom:14px;">
       <button class="btn primary" onclick="openItemModal()">＋ 아이템 추가</button>
     </div>
-
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th style="width:90px;">구분</th>
-            <th style="width:130px;">대항목</th>
-            <th>소항목</th>
-            <th style="width:130px; text-align:right;">판매 예상 가격</th>
-            <th style="width:90px;">상태</th>
-            <th>비고</th>
-            <th style="width:110px;">관리</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="width:90px;">구분</th><th style="width:130px;">대항목</th><th>소항목</th>
+          <th style="width:130px; text-align:right;">판매 예상 가격</th>
+          <th style="width:90px;">상태</th><th>비고</th><th style="width:110px;">관리</th>
+        </tr></thead>
         <tbody id="itemBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ========== 아이템 입력 모달 ========== -->
+<!-- ===== 아이템 모달 ===== -->
 <div class="modal-bg" id="itemModal">
   <div class="modal">
     <h3 id="modalTitle">아이템 추가</h3>
-    <div class="field">
-      <label>구분</label>
+    <div class="field"><label>구분</label>
       <select id="f_category" onchange="updateTypeHints()">
         <option>캐릭터</option><option>무기</option><option>방어구</option>
         <option>악세사리</option><option>메테리얼</option><option>창고</option>
       </select>
     </div>
-    <div class="field">
-      <label>대항목 (예: 갑옷, 반지, 파괴 ...)</label>
-      <input id="f_type" list="typeHints" placeholder="대항목 입력">
-      <datalist id="typeHints"></datalist>
+    <div class="field"><label>대항목 (예: 갑옷, 반지, 파괴 ...)</label>
+      <input id="f_type" list="typeHints" placeholder="대항목 입력"><datalist id="typeHints"></datalist>
     </div>
-    <div class="field">
-      <label>소항목 (아이템 상세)</label>
+    <div class="field"><label>소항목 (아이템 상세)</label>
       <input id="f_detail" placeholder="예: 7벨제, 8대검, 파괴의 반지 ...">
     </div>
-    <div class="field">
-      <label>판매 예상 가격 (원)</label>
+    <div class="field"><label>판매 예상 가격 (원)</label>
       <input id="f_price" type="number" inputmode="numeric" placeholder="0">
     </div>
-    <div class="field">
-      <label>아이템 상태</label>
-      <select id="f_status">
-        <option>보유</option><option>판매대기</option><option>판매완료</option><option>기타</option>
-      </select>
+    <div class="field"><label>아이템 상태</label>
+      <select id="f_status"><option>보유</option><option>판매대기</option><option>판매완료</option><option>기타</option></select>
     </div>
-    <div class="field">
-      <label>비고</label>
-      <input id="f_note" placeholder="메모 (선택)">
-    </div>
+    <div class="field"><label>비고</label><input id="f_note" placeholder="메모 (선택)"></div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeItemModal()">취소</button>
       <button class="btn primary" onclick="saveItem()">저장</button>
@@ -258,10 +226,7 @@
 </div>
 
 <script>
-/* ============================================================
-   1) Firebase 설정  ★★★ 본인 프로젝트 값으로 교체하세요 ★★★
-   Firebase 콘솔 > 프로젝트 설정 > 일반 > 내 앱 > SDK 구성 에서 복사
-============================================================ */
+/* ===== 1) Firebase 설정 ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
   authDomain: "openzeroc.firebaseapp.com",
@@ -271,167 +236,153 @@ const firebaseConfig = {
   appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
   measurementId: "G-M4K79K2XPG"
 };
-
-let db, COL;   // Firebase 핸들 (SDK 로드 성공 시 할당)
+let db, COL;
 const FIREBASE_OK = (typeof firebase !== "undefined");
-if (FIREBASE_OK) {
+if (FIREBASE_OK){
   firebase.initializeApp(firebaseConfig);
-  db  = firebase.firestore();
-  // 회사망/프록시 환경에서 통신 채널이 막혀 멈추는 것을 방지 (long-polling 자동 감지)
-  try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch(e){}
-  COL = db.collection("r2online");   // 데이터 저장 컬렉션
+  db = firebase.firestore();
+  try{ db.settings({ experimentalAutoDetectLongPolling:true, merge:true }); }catch(e){}
+  COL = db.collection("r2online");
 }
 
-/* ============================================================
-   2) 전역 상태
-============================================================ */
+/* ===== 2) 상수/상태 ===== */
 const CATEGORIES = ["캐릭터","무기","방어구","악세사리","메테리얼","창고"];
-// 카테고리별 대항목 추천 목록
 const TYPE_HINTS = {
-  "캐릭터": ["본캐","부캐"],
-  "무기": ["무기"],
-  "방어구": ["갑옷","투구","부츠","장갑","망토","방패"],
-  "악세사리": ["반지","목걸이","귀걸이","벨트"],
-  "메테리얼": ["파괴","수호","숙련","영혼","생명"],
-  "창고": ["기타"]
+  "캐릭터":["본캐","부캐"], "무기":["무기"],
+  "방어구":["갑옷","투구","부츠","장갑","망토","방패"],
+  "악세사리":["반지","목걸이","귀걸이","벨트"],
+  "메테리얼":["파괴","수호","숙련","영혼","생명"], "창고":["기타"]
 };
+const CAT_COLOR = {"캐릭터":"#f0c674","무기":"#ff9b9b","방어구":"#8fe0a8","악세사리":"#9bc4ff","메테리얼":"#e6a8e6","창고":"#cfcfcf"};
 
-let characters = [];      // [{id, name, order, items:[...] }]
-let currentId = null;     // 현재 보고 있는 캐릭터 id
-let editingIndex = null;  // 수정 중인 아이템 index (null이면 신규)
+let characters = [];
+let currentId = null;
+let curView = "dash";          // dash | list | detail
+let editingIndex = null;
 
-/* ============================================================
-   3) 유틸 함수
-============================================================ */
+/* ===== 3) 유틸 ===== */
 const won = n => (Number(n)||0).toLocaleString("ko-KR");
 const $ = id => document.getElementById(id);
+const getCurrent = () => characters.find(c=>c.id===currentId);
+const itemTotal = items => (items||[]).reduce((s,it)=>s+(Number(it.price)||0),0);
+function setStatus(msg,err){ const el=$("status"); el.className=err?"err":""; el.innerHTML=msg; }
+function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
-function setStatus(msg, isErr){
-  const el = $("status");
-  el.className = isErr ? "err" : "";
-  el.innerHTML = msg;
-}
-
-function itemTotal(items){
-  return (items||[]).reduce((s,it)=> s + (Number(it.price)||0), 0);
-}
-
-/* ============================================================
-   4) 데이터 불러오기 (실시간 X, 변경 시마다 다시 로드)
-============================================================ */
+/* ===== 4) 로드/저장 ===== */
 async function loadAll(){
-  // 8초 동안 응답이 없으면 원인 안내 (멈춤 방지)
-  let answered = false;
-  setTimeout(()=>{
-    if(!answered){
-      setStatus(
-        "⏳ 응답이 지연되고 있습니다. 다음을 확인하세요.<br>" +
-        "· Firebase 콘솔에서 <b>Firestore Database가 생성</b>되어 있는지 (Build → Firestore Database → 데이터베이스 만들기)<br>" +
-        "· 회사망/방화벽이 <b>firestore.googleapis.com</b> 접속을 막고 있는지 (휴대폰 핫스팟 등으로 테스트)",
-        true
-      );
-    }
-  }, 8000);
-
+  let answered=false;
+  setTimeout(()=>{ if(!answered) setStatus(
+    "⏳ 응답 지연 중.<br>· Firestore Database가 <b>생성</b>되어 있는지 (Build → Firestore Database)<br>· 회사망이 <b>firestore.googleapis.com</b>을 막는지 (핫스팟 테스트)", true);
+  },8000);
   try{
     const snap = await COL.orderBy("order").get();
-    answered = true;
-    characters = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    answered=true;
+    characters = snap.docs.map(d=>({id:d.id, ...d.data()}));
     setStatus('데이터베이스 연결됨 · <b>정상</b>');
     render();
-  }catch(e){
-    answered = true;
-    console.error(e);
-    setStatus('연결 실패: '+e.message+' (Firebase 설정/규칙 확인)', true);
-  }
+  }catch(e){ answered=true; console.error(e); setStatus('연결 실패: '+e.message,true); }
+}
+async function saveCurrent(){
+  const c=getCurrent(); if(!c) return;
+  try{ await COL.doc(c.id).update({ name:c.name, order:c.order, items:c.items, updatedAt:Date.now() }); }
+  catch(e){ alert("저장 실패: "+e.message); }
 }
 
-/* ============================================================
-   5) 화면 그리기
-============================================================ */
+/* ===== 5) 화면 전환 ===== */
+function showView(v){
+  curView = v;
+  if(v!=="detail") currentId = null;
+  ["dash","list","detail"].forEach(x=>$("view-"+x).classList.toggle("active", x===v));
+  $("nav-dash").classList.toggle("active", v==="dash");
+  $("nav-list").classList.toggle("active", v==="list" || v==="detail");
+  render();
+}
 function render(){
-  renderGrandTotal();
-  if(currentId){ renderDetail(); }
-  else{ renderList(); }
+  renderGrand();
+  if(curView==="dash") renderDash();
+  else if(curView==="list") renderList();
+  else if(curView==="detail") renderDetail();
 }
-
-function renderGrandTotal(){
-  const grand = characters.reduce((s,c)=> s + itemTotal(c.items), 0);
+function renderGrand(){
+  const grand = characters.reduce((s,c)=>s+itemTotal(c.items),0);
   $("grandTotal").textContent = won(grand);
-  $("grandSub").textContent = "캐릭터 " + characters.length + "개";
+  $("grandSub").textContent = "캐릭터 "+characters.length+"개";
 }
 
-/* ----- 목록(카드) ----- */
+/* ===== 6) 대시보드 ===== */
+function renderDash(){
+  const grand = characters.reduce((s,c)=>s+itemTotal(c.items),0);
+  const itemCnt = characters.reduce((s,c)=>s+(c.items?c.items.length:0),0);
+  $("d_total").textContent = won(grand);
+  $("d_chars").textContent = characters.length;
+  $("d_items").textContent = itemCnt;
+
+  const charData = characters.map(c=>({id:c.id, name:c.name||"이름없음", val:itemTotal(c.items)}))
+                             .sort((a,b)=>b.val-a.val);
+  const maxC = Math.max(1, ...charData.map(d=>d.val));
+  $("d_charBars").innerHTML = charData.length ? charData.map(d=>`
+    <div class="bar-row clickable" onclick="openDetail('${d.id}')">
+      <div class="nm">${escapeHtml(d.name)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(d.val/maxC*100)}%"></div></div>
+      <div class="vl">${won(d.val)}</div>
+    </div>`).join("") : `<div class="empty-msg">캐릭터가 없습니다.</div>`;
+
+  const catSum={}; CATEGORIES.forEach(c=>catSum[c]=0);
+  characters.forEach(c=>(c.items||[]).forEach(it=>{ if(catSum[it.category]!=null) catSum[it.category]+=Number(it.price)||0; }));
+  const maxK = Math.max(1, ...Object.values(catSum));
+  $("d_catBars").innerHTML = CATEGORIES.map(cat=>`
+    <div class="bar-row">
+      <div class="nm" style="color:${CAT_COLOR[cat]}">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(catSum[cat]/maxK*100)}%; background:${CAT_COLOR[cat]}"></div></div>
+      <div class="vl">${won(catSum[cat])}</div>
+    </div>`).join("");
+}
+
+/* ===== 7) 캐릭터 목록 ===== */
 function renderList(){
-  $("listView").style.display = "block";
-  $("detail").style.display = "none";
-
-  const grid = $("cardGrid");
-  grid.innerHTML = "";
-
+  const grid=$("cardGrid"); grid.innerHTML="";
   characters.forEach(c=>{
-    const div = document.createElement("div");
-    div.className = "card";
-    div.onclick = ()=> openDetail(c.id);
-    div.innerHTML = `
+    const div=document.createElement("div");
+    div.className="card"; div.onclick=()=>openDetail(c.id);
+    div.innerHTML=`
       <div class="cname">${escapeHtml(c.name||"이름없음")}</div>
-      <div class="cmeta">아이템 ${ (c.items||[]).length }개</div>
+      <div class="cmeta">아이템 ${(c.items||[]).length}개</div>
       <div class="cprice">${won(itemTotal(c.items))} <small>원</small></div>
       <div class="arrow">›</div>`;
     grid.appendChild(div);
   });
-
-  // + 캐릭터 추가 카드
-  const add = document.createElement("div");
-  add.className = "card add";
-  add.onclick = addCharacter;
-  add.innerHTML = `<div class="plus">＋</div><div>캐릭터 추가</div>`;
+  const add=document.createElement("div");
+  add.className="card add"; add.onclick=addCharacter;
+  add.innerHTML=`<div class="plus">＋</div><div>캐릭터 추가</div>`;
   grid.appendChild(add);
 }
 
-/* ----- 상세 ----- */
-function openDetail(id){ currentId = id; render(); }
-function goList(){ currentId = null; render(); }
-
-function getCurrent(){ return characters.find(c=> c.id===currentId); }
-
+/* ===== 8) 상세 ===== */
+function openDetail(id){ currentId=id; showView("detail"); }
 function renderDetail(){
-  const c = getCurrent();
-  if(!c){ goList(); return; }
+  const c=getCurrent();
+  if(!c){ showView("list"); return; }
+  $("detailName").value=c.name||"";
+  $("detailTotal").textContent=won(itemTotal(c.items));
 
-  $("listView").style.display = "none";
-  $("detail").style.display = "block";
-
-  $("detailName").value = c.name || "";
-  $("detailTotal").textContent = won(itemTotal(c.items));
-
-  const body = $("itemBody");
-  body.innerHTML = "";
-  const items = c.items || [];
-
-  if(items.length === 0){
-    body.innerHTML = `<tr><td colspan="7" class="empty-msg">아이템이 없습니다. ＋ 아이템 추가 버튼으로 등록하세요.</td></tr>`;
+  const body=$("itemBody"); body.innerHTML="";
+  const items=c.items||[];
+  if(items.length===0){
+    body.innerHTML=`<tr><td colspan="7" class="empty-msg">아이템이 없습니다. ＋ 아이템 추가 버튼으로 등록하세요.</td></tr>`;
     return;
   }
-
-  // 카테고리 순서대로 그룹핑하여 출력 (구분 칸은 rowspan으로 묶음)
   CATEGORIES.forEach(cat=>{
-    // 해당 카테고리 아이템의 원본 index까지 함께 보관
-    const rows = items.map((it,idx)=>({it,idx})).filter(r=> r.it.category===cat);
+    const rows=items.map((it,idx)=>({it,idx})).filter(r=>r.it.category===cat);
     rows.forEach((r,i)=>{
-      const it = r.it;
-      const tr = document.createElement("tr");
-      let catCell = "";
-      if(i===0){
-        catCell = `<td class="cat" rowspan="${rows.length}"><span class="chip c-${cat}">${cat}</span></td>`;
-      }
-      tr.innerHTML = `
+      const it=r.it; const tr=document.createElement("tr");
+      const catCell = (i===0) ? `<td class="cat" rowspan="${rows.length}"><span class="chip c-${cat}">${cat}</span></td>` : "";
+      tr.innerHTML=`
         ${catCell}
-        <td>${escapeHtml(it.type||"")}</td>
-        <td>${escapeHtml(it.detail||"")}</td>
+        <td>${escapeHtml(it.type)}</td>
+        <td>${escapeHtml(it.detail)}</td>
         <td class="price">${ it.price ? won(it.price) : "" }</td>
         <td><span class="status-chip s-${it.status||"기타"}">${it.status||"-"}</span></td>
-        <td>${escapeHtml(it.note||"")}</td>
+        <td>${escapeHtml(it.note)}</td>
         <td class="row-actions">
           <button class="btn sm" onclick="openItemModal(${r.idx})">수정</button>
           <button class="btn sm danger" onclick="deleteItem(${r.idx})">삭제</button>
@@ -441,130 +392,72 @@ function renderDetail(){
   });
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-/* ============================================================
-   6) 캐릭터 추가 / 이름변경 / 삭제
-============================================================ */
+/* ===== 9) 캐릭터 CRUD ===== */
 async function addCharacter(){
-  const name = prompt("새 캐릭터 이름을 입력하세요");
-  if(!name) return;
-  const order = characters.length ? Math.max(...characters.map(c=>c.order||0))+1 : 0;
-  try{
-    await COL.add({ name, order, items:[], updatedAt: Date.now() });
-    await loadAll();
-  }catch(e){ alert("추가 실패: "+e.message); }
+  const name=prompt("새 캐릭터 이름"); if(!name) return;
+  const order=characters.length?Math.max(...characters.map(c=>c.order||0))+1:0;
+  try{ await COL.add({name, order, items:[], updatedAt:Date.now()}); await loadAll(); }
+  catch(e){ alert("추가 실패: "+e.message); }
 }
-
 async function renameCharacter(){
-  const c = getCurrent(); if(!c) return;
-  const name = $("detailName").value.trim();
-  if(!name) return;
-  try{
-    await COL.doc(c.id).update({ name, updatedAt: Date.now() });
-    c.name = name;          // 로컬도 갱신
-    renderGrandTotal();
-  }catch(e){ alert("이름 변경 실패: "+e.message); }
+  const c=getCurrent(); if(!c) return;
+  const name=$("detailName").value.trim(); if(!name) return;
+  c.name=name; renderGrand();
+  try{ await COL.doc(c.id).update({name, updatedAt:Date.now()}); }catch(e){ alert("이름 변경 실패: "+e.message); }
 }
-
 async function deleteCharacter(){
-  const c = getCurrent(); if(!c) return;
-  if(!confirm(`'${c.name}' 캐릭터를 삭제할까요? (아이템 전체 삭제)`)) return;
-  try{
-    await COL.doc(c.id).delete();
-    currentId = null;
-    await loadAll();
-  }catch(e){ alert("삭제 실패: "+e.message); }
+  const c=getCurrent(); if(!c) return;
+  if(!confirm(`'${c.name}' 캐릭터를 삭제할까요?`)) return;
+  try{ await COL.doc(c.id).delete(); currentId=null; await loadAll(); showView("list"); }
+  catch(e){ alert("삭제 실패: "+e.message); }
 }
 
-/* ============================================================
-   7) 아이템 추가 / 수정 / 삭제 (모달)
-============================================================ */
+/* ===== 10) 아이템 모달 ===== */
 function updateTypeHints(){
-  const cat = $("f_category").value;
-  const dl = $("typeHints");
-  dl.innerHTML = (TYPE_HINTS[cat]||[]).map(t=>`<option value="${t}">`).join("");
+  const cat=$("f_category").value;
+  $("typeHints").innerHTML=(TYPE_HINTS[cat]||[]).map(t=>`<option value="${t}">`).join("");
 }
-
 function openItemModal(index){
-  editingIndex = (typeof index === "number") ? index : null;
-  $("modalTitle").textContent = editingIndex===null ? "아이템 추가" : "아이템 수정";
-
+  editingIndex=(typeof index==="number")?index:null;
+  $("modalTitle").textContent= editingIndex===null ? "아이템 추가":"아이템 수정";
   if(editingIndex===null){
-    $("f_category").value = "무기";
-    $("f_type").value = "";
-    $("f_detail").value = "";
-    $("f_price").value = "";
-    $("f_status").value = "보유";
-    $("f_note").value = "";
+    $("f_category").value="무기"; $("f_type").value=""; $("f_detail").value="";
+    $("f_price").value=""; $("f_status").value="보유"; $("f_note").value="";
   }else{
-    const it = getCurrent().items[editingIndex];
-    $("f_category").value = it.category || "무기";
-    $("f_type").value = it.type || "";
-    $("f_detail").value = it.detail || "";
-    $("f_price").value = it.price || "";
-    $("f_status").value = it.status || "보유";
-    $("f_note").value = it.note || "";
+    const it=getCurrent().items[editingIndex];
+    $("f_category").value=it.category||"무기"; $("f_type").value=it.type||"";
+    $("f_detail").value=it.detail||""; $("f_price").value=it.price||"";
+    $("f_status").value=it.status||"보유"; $("f_note").value=it.note||"";
   }
   updateTypeHints();
   $("itemModal").classList.add("show");
 }
 function closeItemModal(){ $("itemModal").classList.remove("show"); }
-
 async function saveItem(){
-  const c = getCurrent(); if(!c) return;
-  const item = {
-    category: $("f_category").value,
-    type:     $("f_type").value.trim(),
-    detail:   $("f_detail").value.trim(),
-    price:    Number($("f_price").value) || 0,
-    status:   $("f_status").value,
-    note:     $("f_note").value.trim()
+  const c=getCurrent(); if(!c) return;
+  const item={
+    category:$("f_category").value, type:$("f_type").value.trim(),
+    detail:$("f_detail").value.trim(), price:Number($("f_price").value)||0,
+    status:$("f_status").value, note:$("f_note").value.trim()
   };
   if(!item.detail && !item.type){ alert("대항목 또는 소항목을 입력하세요."); return; }
-
-  const items = (c.items || []).slice();
-  if(editingIndex===null) items.push(item);
-  else items[editingIndex] = item;
-
-  try{
-    await COL.doc(c.id).update({ items, updatedAt: Date.now() });
-    c.items = items;        // 로컬 갱신
-    closeItemModal();
-    render();
-  }catch(e){ alert("저장 실패: "+e.message); }
+  const items=(c.items||[]).slice();
+  if(editingIndex===null) items.push(item); else items[editingIndex]=item;
+  c.items=items; closeItemModal(); render();
+  await saveCurrent();
 }
-
 async function deleteItem(index){
-  const c = getCurrent(); if(!c) return;
+  const c=getCurrent(); if(!c) return;
   if(!confirm("이 아이템을 삭제할까요?")) return;
-  const items = (c.items||[]).slice();
-  items.splice(index,1);
-  try{
-    await COL.doc(c.id).update({ items, updatedAt: Date.now() });
-    c.items = items;
-    render();
-  }catch(e){ alert("삭제 실패: "+e.message); }
+  const items=(c.items||[]).slice(); items.splice(index,1);
+  c.items=items; render();
+  await saveCurrent();
 }
-
-/* 모달 바깥 클릭 시 닫기 */
 $("itemModal").addEventListener("click", e=>{ if(e.target.id==="itemModal") closeItemModal(); });
 
-/* ============================================================
-   8) 시작
-============================================================ */
-if (FIREBASE_OK) {
-  loadAll();
-} else {
-  setStatus(
-    "⚠ Firebase SDK를 불러오지 못했습니다.<br>" +
-    "· 미리보기 창이 아니라 <b>다운로드한 파일을 브라우저(크롬/엣지)로 직접</b> 열어주세요.<br>" +
-    "· 인터넷 연결(gstatic.com 접속)도 확인해 주세요.",
-    true
-  );
-}
+/* ===== 11) 시작 ===== */
+if(FIREBASE_OK){ showView("dash"); loadAll(); }
+else{ setStatus("⚠ Firebase SDK를 불러오지 못했습니다.<br>· 미리보기가 아니라 <b>다운로드한 파일을 브라우저로 직접</b> 열어주세요.", true); }
 </script>
 </body>
 </html>
