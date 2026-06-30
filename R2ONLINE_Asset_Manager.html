@@ -263,17 +263,24 @@
    Firebase 콘솔 > 프로젝트 설정 > 일반 > 내 앱 > SDK 구성 에서 복사
 ============================================================ */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
+  authDomain: "openzeroc.firebaseapp.com",
+  projectId: "openzeroc",
+  storageBucket: "openzeroc.firebasestorage.app",
+  messagingSenderId: "465944510778",
+  appId: "1:465944510778:web:df0d19b7c6b98d129f5003",
+  measurementId: "G-M4K79K2XPG"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const COL = db.collection("r2online");   // 데이터 저장 컬렉션
+let db, COL;   // Firebase 핸들 (SDK 로드 성공 시 할당)
+const FIREBASE_OK = (typeof firebase !== "undefined");
+if (FIREBASE_OK) {
+  firebase.initializeApp(firebaseConfig);
+  db  = firebase.firestore();
+  // 회사망/프록시 환경에서 통신 채널이 막혀 멈추는 것을 방지 (long-polling 자동 감지)
+  try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch(e){}
+  COL = db.collection("r2online");   // 데이터 저장 컬렉션
+}
 
 /* ============================================================
    2) 전역 상태
@@ -313,12 +320,27 @@ function itemTotal(items){
    4) 데이터 불러오기 (실시간 X, 변경 시마다 다시 로드)
 ============================================================ */
 async function loadAll(){
+  // 8초 동안 응답이 없으면 원인 안내 (멈춤 방지)
+  let answered = false;
+  setTimeout(()=>{
+    if(!answered){
+      setStatus(
+        "⏳ 응답이 지연되고 있습니다. 다음을 확인하세요.<br>" +
+        "· Firebase 콘솔에서 <b>Firestore Database가 생성</b>되어 있는지 (Build → Firestore Database → 데이터베이스 만들기)<br>" +
+        "· 회사망/방화벽이 <b>firestore.googleapis.com</b> 접속을 막고 있는지 (휴대폰 핫스팟 등으로 테스트)",
+        true
+      );
+    }
+  }, 8000);
+
   try{
     const snap = await COL.orderBy("order").get();
+    answered = true;
     characters = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     setStatus('데이터베이스 연결됨 · <b>정상</b>');
     render();
   }catch(e){
+    answered = true;
     console.error(e);
     setStatus('연결 실패: '+e.message+' (Firebase 설정/규칙 확인)', true);
   }
@@ -533,7 +555,16 @@ $("itemModal").addEventListener("click", e=>{ if(e.target.id==="itemModal") clos
 /* ============================================================
    8) 시작
 ============================================================ */
-loadAll();
+if (FIREBASE_OK) {
+  loadAll();
+} else {
+  setStatus(
+    "⚠ Firebase SDK를 불러오지 못했습니다.<br>" +
+    "· 미리보기 창이 아니라 <b>다운로드한 파일을 브라우저(크롬/엣지)로 직접</b> 열어주세요.<br>" +
+    "· 인터넷 연결(gstatic.com 접속)도 확인해 주세요.",
+    true
+  );
+}
 </script>
 </body>
 </html>
