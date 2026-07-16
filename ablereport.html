@@ -824,8 +824,18 @@ function syncSupplier(keep){ const cat=getRadio('supportCategory'); const sel=$(
 
 function nextDbId(){ let m=0; reports.forEach(r=>{ if(typeof r.id==='number') m=Math.max(m,r.id); }); return m+1; }
 
+/* 관리번호 자동 부여: 올해 연도(YY) + 해당 연도 기존 최대 번호 +1 (예: 26-031). 없으면 26-001 */
+function nextMgmtNo(){
+  const yy=String(new Date().getFullYear()).slice(-2);   // 2026 → "26", 2027 → "27"
+  let max=0;
+  reports.forEach(r=>{ const m=String(r.mgmtNo||'').trim().match(/^(\d{2})-0*(\d+)$/);
+    if(m && m[1]===yy){ const n=parseInt(m[2],10); if(n>max) max=n; } });
+  return `${yy}-${String(max+1).padStart(3,'0')}`;
+}
+
 function resetForm(){ editingId=null; editingDocId=null; clearForm();
   $('f_id').value='#'+String(nextDbId()).padStart(4,'0');
+  $('f_mgmtNo').value=nextMgmtNo();   // 관리번호 자동 부여 (수정 가능)
   $('f_supportCount').value='1'; $('f_partnerName').value='㈜에이블컴'; $('f_writerCompany').value='㈜에이블컴'; $('f_workResult').value='특이사항 없음'; $('f_remark').value='특이사항 없음';
   $('f_supplierDetail').innerHTML='<option value="">선택</option>';
   $('formTitle').textContent='새 리포트 작성'; $('deleteBtn').style.display='none';
