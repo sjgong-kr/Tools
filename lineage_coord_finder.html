@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>리니지 클래식 좌표 자동 맞춤 추적기</title>
+<style>
+  :root {
+    --bg: #14130f;
+    --surface-0: #1b1a15;
+    --surface-1: #22211b;
+    --surface-2: #2a2922;
+    --border: #3a3934;
+    --border-strong: #4d4b44;
+    --text-primary: #ecebe3;
+    --text-secondary: #a8a69c;
+    --text-muted: #7a786f;
+    --accent: #378ADD;
+    --accent-bg: rgba(55, 138, 221, 0.12);
+    --accent-border: rgba(55, 138, 221, 0.4);
+    --coral: #D85A30;
+    --success: #5DCAA5;
+    --success-bg: rgba(29, 158, 117, 0.14);
+    --success-border: rgba(29, 158, 117, 0.4);
+    --warning: #EF9F27;
+    --warning-bg: rgba(239, 159, 39, 0.14);
+    --warning-border: rgba(239, 159, 39, 0.4);
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font-family: var(--sans);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 48px;
+  }
+  .app { width: 100%; max-width: 720px; }
+
+  .hdr { margin-bottom: 22px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .hdr h1 { font-size: 24px; font-weight: 600; letter-spacing: 0.01em; }
+  .hdr p { font-size: 13px; color: var(--text-secondary); margin-top: 5px; }
+
+  .panel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .field { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .field.primary { border-color: var(--accent-border); background: var(--accent-bg); }
+  .field-head { font-size: 12px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .field.primary .field-head { color: var(--accent); }
+  .pin { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .pin-a { background: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.22); }
+  .pin-b { background: var(--coral); box-shadow: 0 0 0 3px rgba(216,90,48,0.22); }
+  .duo { display: flex; gap: 8px; }
+  .duo > div { flex: 1; }
+  .duo label { font-size: 10px; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; }
+  .duo input {
+    width: 100%; padding: 9px 10px; font-size: 16px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-0);
+    color: var(--text-primary); font-family: var(--mono);
+    transition: border-color 0.15s; -moz-appearance: textfield;
+  }
+  .duo input::-webkit-outer-spin-button, .duo input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .field.primary .duo input { background: var(--surface-2); }
+  .duo input:focus { outline: none; border-color: var(--accent); }
+
+  .status { display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 12px; padding: 13px; margin-bottom: 12px; font-size: 15px; font-weight: 600; transition: all 0.2s; }
+  .status.in { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+  .status.out { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+  .status .ico { font-size: 18px; line-height: 1; }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .metric { background: var(--surface-1); border-radius: 10px; padding: 12px 8px; text-align: center; }
+  .metric .k { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .metric .v { font-size: 18px; font-weight: 600; font-family: var(--mono); }
+  .metric .v.hl { color: var(--accent); }
+
+  .screen { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .screen-head .lbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+  .screen-head .rng { font-size: 11px; color: var(--text-secondary); font-family: var(--mono); }
+  canvas { display: block; border-radius: 12px; width: 100%; height: auto; }
+  .foot { display: flex; gap: 20px; margin-top: 12px; justify-content: center; }
+  .foot-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .foot-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .credit { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 20px; }
+
+  @media (max-width: 520px) {
+    .panel { grid-template-columns: 1fr; }
+    .duo input { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="eyebrow">◆ Lineage Classic</div>
+    <h1>좌표 자동 맞춤 추적기</h1>
+    <p>두 캐릭터가 항상 화면에 꽉 차게 표시됩니다 · 거리에 따라 자동 확대·축소</p>
+  </div>
+
+  <div class="panel">
+    <div class="field primary">
+      <div class="field-head"><span class="pin pin-a"></span> 1번 · 기준 (목적지)</div>
+      <div class="duo">
+        <div><label>북/남</label><input type="number" id="t-y" value="32716"></div>
+        <div><label>동/서</label><input type="number" id="t-x" value="33050"></div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-head"><span class="pin pin-b"></span> 2번 · 나 (현재 위치)</div>
+      <div class="duo">
+        <div><label>북/남</label><input type="number" id="m-y" value="32690"></div>
+        <div><label>동/서</label><input type="number" id="m-x" value="33095"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status in" id="status">
+    <span class="ico">◉</span>
+    <span id="status-text">화면 안에 있습니다</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="k">동/서</div><div class="v hl" id="m-dx">—</div></div>
+    <div class="metric"><div class="k">북/남</div><div class="v hl" id="m-dy">—</div></div>
+    <div class="metric"><div class="k">직선 거리</div><div class="v" id="m-dist">—</div></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-head">
+      <span class="lbl">▣ 미니맵 · 자동 맞춤</span>
+      <span class="rng" id="zoom-lbl">—</span>
+    </div>
+    <canvas id="map" width="688" height="390"></canvas>
+    <div class="foot">
+      <div class="foot-item"><span class="foot-dot" style="background:#378ADD"></span> 1번 (기준)</div>
+      <div class="foot-item"><span class="foot-dot" style="background:#D85A30"></span> 2번 (나)</div>
+    </div>
+  </div>
+
+  <div class="credit">시야 범위: 상하 10칸 · 좌우 18칸 · 좌표 1 = 한 걸음</div>
+</div>
+
+<script>
+const HALF_X = 18, HALF_Y = 10;
+
+function v(id) { return parseInt(document.getElementById(id).value) || 0; }
+
+function draw(ty, tx, my, mx) {
+  const cv = document.getElementById('map'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const pal = {
+    bg: '#1c1b16', gridMinor: '#302f28', axis: '#4a483f',
+    edge: '#3a3934', textAxis: '#b0ad9f', link: '#6b6960'
+  };
+
+  const pad = 32;
+  const innerW = W - pad * 2, innerH = H - pad * 2;
+
+  const minX = Math.min(tx, mx), maxX = Math.max(tx, mx);
+  const minY = Math.min(ty, my), maxY = Math.max(ty, my);
+  const spanX = Math.max(maxX - minX, 4);
+  const spanY = Math.max(maxY - minY, 4);
+  const marginX = spanX * 0.35 + 3;
+  const marginY = spanY * 0.35 + 3;
+
+  const viewMinX = minX - marginX, viewMaxX = maxX + marginX;
+  const viewMinY = minY - marginY, viewMaxY = maxY + marginY;
+
+  const scaleX = innerW / (viewMaxX - viewMinX);
+  const scaleY = innerH / (viewMaxY - viewMinY);
+  const scale = Math.min(scaleX, scaleY);
+
+  const contentW = (viewMaxX - viewMinX) * scale;
+  const contentH = (viewMaxY - viewMinY) * scale;
+  const offX = pad + (innerW - contentW) / 2;
+  const offY = pad + (innerH - contentH) / 2;
+
+  function px(x) { return offX + (x - viewMinX) * scale; }
+  function py(y) { return offY + (viewMaxY - y) * scale; }
+
+  document.getElementById('zoom-lbl').textContent = `1칸 ≈ ${scale.toFixed(1)}px`;
+
+  ctx.fillStyle = pal.bg;
+  roundRect(ctx, 0, 0, W, H, 12); ctx.fill();
+
+  ctx.save();
+  roundRect(ctx, 0, 0, W, H, 12); ctx.clip();
+
+  if (scale > 3) {
+    ctx.strokeStyle = pal.gridMinor;
+    ctx.lineWidth = 0.5;
+    for (let gx = Math.ceil(viewMinX); gx <= Math.floor(viewMaxX); gx++) {
+      const X = px(gx);
+      ctx.beginPath(); ctx.moveTo(X, 0); ctx.lineTo(X, H); ctx.stroke();
+    }
+    for (let gy = Math.ceil(viewMinY); gy <= Math.floor(viewMaxY); gy++) {
+      const Y = py(gy);
+      ctx.beginPath(); ctx.moveTo(0, Y); ctx.lineTo(W, Y); ctx.stroke();
+    }
+  }
+
+  const p1x = px(tx), p1y = py(ty);
+  const p2x = px(mx), p2y = py(my);
+
+  ctx.strokeStyle = pal.link;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.moveTo(p2x, p2y); ctx.lineTo(p1x, p1y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const midX = (p1x + p2x) / 2, midY = (p1y + p2y) / 2;
+  const dxRaw = mx - tx, dyRaw = my - ty;
+  const dist = Math.round(Math.sqrt(dxRaw*dxRaw + dyRaw*dyRaw));
+  if (dist > 0) {
+    ctx.save();
+    ctx.font = '600 12px monospace';
+    const txt = `${dist}칸`;
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = pal.bg;
+    roundRect(ctx, midX - tw/2 - 7, midY - 11, tw + 14, 20, 6); ctx.fill();
+    ctx.strokeStyle = pal.edge; ctx.lineWidth = 1;
+    roundRect(ctx, midX - tw/2 - 7, midY - 11, tw + 14, 20, 6); ctx.stroke();
+    ctx.fillStyle = pal.textAxis;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(txt, midX, midY);
+    ctx.restore();
+  }
+
+  ctx.restore();
+
+  drawPin(ctx, p1x, p1y, '#378ADD', pal.bg, '1');
+  drawPin(ctx, p2x, p2y, '#D85A30', pal.bg, '2');
+}
+
+function drawPin(ctx, x, y, color, bg, label) {
+  ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2);
+  ctx.fillStyle = color + '22'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.fillStyle = color; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = bg; ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = '600 12px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function calc() {
+  const ty = v('t-y'), tx = v('t-x'), my = v('m-y'), mx = v('m-x');
+  const dx = mx - tx, dy = my - ty;
+  const dist = Math.round(Math.sqrt(dx*dx + dy*dy));
+
+  document.getElementById('m-dx').textContent = dx === 0 ? '0' : (dx > 0 ? `${Math.abs(dx)} 동` : `${Math.abs(dx)} 서`);
+  document.getElementById('m-dy').textContent = dy === 0 ? '0' : (dy > 0 ? `${Math.abs(dy)} 북` : `${Math.abs(dy)} 남`);
+  document.getElementById('m-dist').textContent = `${dist} 걸음`;
+
+  const inside = Math.abs(dx) <= HALF_X && Math.abs(dy) <= HALF_Y;
+  const st = document.getElementById('status');
+  if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+    st.className = 'status in';
+    st.innerHTML = '<span class="ico">◎</span><span>같은 위치에 있습니다</span>';
+  } else if (inside) {
+    st.className = 'status in';
+    st.innerHTML = '<span class="ico">◉</span><span>화면 안에 있습니다 — 바로 보임</span>';
+  } else {
+    const need = [];
+    if (Math.abs(dx) > HALF_X) need.push(`${Math.abs(dx) - HALF_X}칸 ${dx > 0 ? '동' : '서'}`);
+    if (Math.abs(dy) > HALF_Y) need.push(`${Math.abs(dy) - HALF_Y}칸 ${dy > 0 ? '북' : '남'}`);
+    st.className = 'status out';
+    st.innerHTML = `<span class="ico">◌</span><span>화면 밖 — ${need.join(', ')} 이동 필요</span>`;
+  }
+
+  draw(ty, tx, my, mx);
+}
+
+['t-y','t-x','m-y','m-x'].forEach(id => document.getElementById(id).addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
