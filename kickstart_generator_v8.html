@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kickstart / virt-install 생성기 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f1b2d; --paper:#eef1f6; --panel:#fff; --line:#cbd3e0; --muted:#66748c;
+    --accent:#0a6a5a; --warn:#b4531a; --term-bg:#111823; --term-fg:#d8e2ef;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans KR',-apple-system,sans-serif;font-size:14px}
+  code,pre,input,select,textarea{font-family:'JetBrains Mono','IBM Plex Sans KR',monospace}
+  header{background:var(--ink);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.4px}
+  header select{width:auto;background:#1d2b40;color:#cfe0f5;border:1px solid #34486a;padding:6px 10px;border-radius:4px;font-size:12px}
+  header .spacer{flex:1}
+  .wrap{display:flex;align-items:flex-start;gap:18px;padding:18px;max-width:1750px;margin:0 auto}
+  .left{flex:1 1 660px;min-width:0}
+  .right{flex:1 1 620px;min-width:0;position:sticky;top:70px}
+  section.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
+  .card>h2{margin:0;padding:11px 14px;font-size:13px;font-weight:600;background:#f6f8fb;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;cursor:pointer}
+  .card>h2 .num{font-family:'JetBrains Mono';font-size:11px;color:#fff;background:var(--ink);padding:2px 6px;border-radius:3px}
+  .card>h2 .hint{font-weight:400;color:var(--muted);font-size:12px}
+  .card>h2 .caret{color:var(--muted);font-size:11px}
+  section.card:not([data-card])>h2 .caret{margin-left:auto}
+  .card.collapsed .body{display:none}
+  .body{padding:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 12px}
+  label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+  label.f>span b{color:var(--ink);font-weight:600}
+  input[type=text],input[type=number],select,textarea{border:1px solid var(--line);border-radius:4px;padding:7px 8px;background:#fff;color:var(--ink);font-size:13px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+  .inline-chks{display:flex;flex-wrap:wrap;gap:9px 16px;margin-top:8px}
+  .inline-chks label{display:flex;align-items:center;gap:5px;font-size:13px}
+  .inline-chks input{width:auto}
+  button{border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;font-family:'IBM Plex Sans KR'}
+  button:hover{background:#f0f3f8}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.ghost{background:transparent;border-color:#3a4c66;color:#cfe0f5}
+  button.ghost:hover{background:#22314a}
+  button.sm{padding:3px 8px;font-size:11px}
+  button.del{color:var(--warn);border-color:#e8cdbc}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:6px;background:#f6f8fb;border-bottom:1px solid var(--line);color:var(--muted);font-weight:600;font-size:11px}
+  td{padding:3px 4px;border-bottom:1px solid #eef1f6}
+  td input,td select{padding:5px 6px;font-size:12px}
+  td input[type=checkbox]{width:auto}
+  .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .toolbar .grow{flex:1}
+  .meter{margin-top:10px;font-family:'JetBrains Mono';font-size:12px;background:#f6f8fb;border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+  .meter.bad{background:#fdf0e8;border-color:#e8cdbc;color:var(--warn)}
+  .term{background:var(--term-bg);border:1px solid #1e2a3c;border-radius:6px;overflow:hidden}
+  .tabs{display:flex;background:#0b1220;border-bottom:1px solid #1e2a3c}
+  .tabs button{background:transparent;border:0;border-right:1px solid #1e2a3c;color:#7b8ca6;padding:10px 14px;font-family:'JetBrains Mono';font-size:12px;border-radius:0}
+  .tabs button.on{background:var(--term-bg);color:#7ee0c8;box-shadow:inset 0 -2px 0 #7ee0c8}
+  .tabs .acts{margin-left:auto;display:flex;gap:6px;padding:6px 8px}
+  pre.out{margin:0;padding:14px;color:var(--term-fg);font-size:12.5px;line-height:1.55;overflow:auto;height:calc(100vh - 180px);white-space:pre}
+  pre.out .c{color:#5c7085}
+  pre.out .k{color:#7ee0c8}
+  pre.out .s{color:#e6c07b}
+  .hidden{display:none!important}
+  /* 카드 사용 토글 */
+  .cardsw{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:500;cursor:pointer;user-select:none}
+  .cardsw input{width:auto;cursor:pointer}
+  section.card.off{opacity:.5}
+  section.card.off .body{display:none}
+  section.card.off > h2{background:#eef1f6}
+  section.card.off .cardsw{color:var(--warn)}
+  .caret{margin-left:8px}
+  .note{font-size:12px;color:var(--muted);line-height:1.6;margin:6px 0 0}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 18px;border-radius:5px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+  .toast.on{opacity:1;bottom:30px}
+  @media(max-width:1150px){.wrap{flex-direction:column}.right{position:static;width:100%}pre.out{height:520px}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kickstart / virt-install 생성기</h1>
+  <span class="spacer"></span>
+  <button class="ghost" onclick="saveProfile()">프로파일 저장</button>
+  <button class="ghost" onclick="document.getElementById('loadFile').click()">불러오기</button>
+  <input type="file" id="loadFile" accept=".json" class="hidden" onchange="loadProfile(this)">
+</header>
+
+<div class="wrap">
+<div class="left">
+
+  <!-- 01 기본 -->
+  <section class="card">
+    <h2 onclick="tog(this)"><span class="num">01</span> 프리셋 선택 <span class="hint">여기서 고르고 아래를 세부 조정하세요</span><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>서버 프로파일</b></span>
+          <select id="profile" onchange="switchProfile()">
+            <option value="nsp">Nokia NSP / NFM-P · RHEL 7 (BIOS)</option>
+            <option value="tnms">Infinera TNMS · RHEL 8 (UEFI)</option>
+            <option value="wsnoc_host">Nokia WS-NOC Host · RHEL 8.6 (KVM 호스트)</option>
+            <option value="wsnoc_guest">Nokia WS-NOC Guest · OTNE Standard (게스트 VM)</option>
+          </select></label>
+
+        <label class="f"><span><b>파티션 · LVM 프리셋</b></span>
+          <select id="lvPreset">
+            <optgroup label="Nokia NSP">
+              <option value="nsp">NSP NFM-P (샘플 그대로)</option>
+            </optgroup>
+            <optgroup label="Infinera TNMS (가이드 Table 8)">
+              <option value="tnms_small">TNMS Small — 단일 디스크 (/ 940G)</option>
+              <option value="tnms_medium">TNMS Medium — sda+sdb (ora1~3 300/300/150G)</option>
+              <option value="tnms_large">TNMS Large — sda+sdb (ora1~3 600/2500/1500G)</option>
+              <option value="tnms_kt">TNMS — KT 현장 실제 구성 (KTTNMS-H)</option>
+              <option value="tnms_lab">TNMS Lab — 단일 디스크 통합 (테스트용)</option>
+            </optgroup>
+            <optgroup label="Nokia WS-NOC (R23.6 / R23.12)">
+              <option value="wsnoc_host">WS-NOC Host — RHEL 8.6 KVM 호스트</option>
+              <option value="wsnoc_std">WS-NOC Guest — OTNE Standard (620G)</option>
+              <option value="wsnoc_lab">WS-NOC Guest — Lab 축소 (테스트용)</option>
+            </optgroup>
+            <optgroup label="일반">
+              <option value="server">일반 서버</option>
+              <option value="min">최소 (/ + swap)</option>
+            </optgroup>
+          </select></label>
+
+        <label class="f"><span><b>패키지 프리셋</b></span>
+          <select id="pkgPreset">
+            <option value="nsp">NSP 샘플 (@core + 유틸)</option>
+            <option value="tnms">TNMS 사전요구 패키지 (RHEL8)</option>
+            <option value="wsnoc_host">WS-NOC Host (Server with GUI + 도구)</option>
+            <option value="wsnoc_guest">WS-NOC Guest (Minimal + 필수 패키지)</option>
+            <option value="full">운영 서버 풀세트</option>
+            <option value="min">@core 만</option>
+          </select></label>
+      </div>
+
+      <div class="toolbar" style="margin-top:12px">
+        <button class="primary" onclick="applyAllPresets()">▶ 프리셋 일괄 적용</button>
+        <button onclick="applyPreset()">파티션만 적용</button>
+        <button onclick="applyPkgPreset()">패키지만 적용</button>
+      </div>
+      <p class="note"><b>프로파일</b>을 바꾸면 파티션·패키지·VM 설정이 통째로 전환됩니다. 프리셋을 적용하면 VM 디스크 용량도 자동 계산됩니다.</p>
+    </div>
+  </section>
+  <section class="card" data-card="cardBasic">
+    <h2 onclick="tog(this)"><span class="num">02</span> 기본 설정 <span class="hint">언어 · 키보드 · 시간대 · 계정</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardBasic" checked onchange="toggleCard('cardBasic',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>호스트명</b></span><input type="text" id="hostname" value="hiravm1"></label>
+        <label class="f"><span><b>언어 (lang)</b></span>
+          <select id="lang"><option>en_US.UTF-8</option><option>ko_KR.UTF-8</option></select></label>
+        <label class="f"><span><b>키보드</b></span><select id="keyboard"><option>us</option><option>kr</option></select></label>
+        <label class="f"><span><b>시간대</b></span><select id="timezone"><option>Asia/Seoul</option><option>UTC</option></select></label>
+        <label class="f"><span><b>root 암호</b></span><input type="text" id="rootpw" value="Root+123"></label>
+        <label class="f"><span><b>설치 소스</b></span>
+          <select id="srcType"><option value="cdrom">cdrom (ISO)</option><option value="url">url (네트워크 repo)</option></select></label>
+        <label class="f" id="urlWrap"><span><b>repo URL</b></span><input type="text" id="repoUrl" value="http://10.1.1.40/repo/rhel8/BaseOS/x86_64/"></label>
+      </div>
+      <div class="inline-chks">
+        <label><input type="checkbox" id="textMode" checked> 텍스트 모드</label>
+        <label><input type="checkbox" id="skipx" checked> skipx</label>
+        <label><input type="checkbox" id="selinuxOff" checked> SELinux 비활성</label>
+        <label><input type="checkbox" id="fwOff" checked> 방화벽 비활성</label>
+        <label><input type="checkbox" id="firstbootOff" checked> firstboot 비활성</label>
+        <label><input type="checkbox" id="rebootOn" checked> 설치 후 reboot</label>
+        <label><input type="checkbox" id="efiMode"> <b>UEFI 부팅</b> (/boot/efi 사용)</label>
+      </div>
+    </div>
+  </section>
+  <section class="card" data-card="cardVm">
+    <h2 onclick="tog(this)"><span class="num">03</span> 가상머신 (virt-install) <span class="hint">CPU · RAM · qcow2 · 브리지</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardVm" checked onchange="toggleCard('cardVm',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>VM 이름</b></span><input type="text" id="vmName" value="hiravm1_1911_SP11_Active"></label>
+        <label class="f"><span><b>vCPU</b></span><input type="number" id="vcpus" value="8"></label>
+        <label class="f"><span><b>메모리 (GB)</b></span><input type="number" id="ramGb" value="64"></label>
+        <label class="f"><span><b>디스크1 (GB)</b></span><input type="number" id="diskGb" value="800"></label>
+        <label class="f"><span><b>디스크2 (GB)</b> · 0이면 생략</span><input type="number" id="diskGb2" value="0"></label>
+        <label class="f"><span><b>UUID</b></span><span style="display:flex;gap:5px">
+          <input type="text" id="uuid" value="07b64200-6c42-4f51-a4ec-7aae88df0f27"><button class="sm" onclick="genUuid()">↻</button></span></label>
+        <label class="f"><span><b>OS variant</b></span>
+          <select id="osVariant">
+            <option value="rhel8.9">rhel8.9</option>
+            <option value="rhel8.8">rhel8.8</option>
+            <option value="rhel8.6">rhel8.6</option>
+            <option value="rhel8.0">rhel8.0 (호환용)</option>
+            <option value="rhel8-unknown">rhel8-unknown</option>
+            <option value="rhel7.9">rhel7.9</option>
+            <option value="rhel7">rhel7</option>
+            <option value="centos7.0">centos7.0</option>
+          </select></label>
+        <label class="f"><span><b>브리지 1</b></span><input type="text" id="br1" value="br0"></label>
+        <label class="f"><span><b>브리지 2</b></span><input type="text" id="br2" value=""></label>
+        <label class="f"><span><b>qcow2 경로</b></span><input type="text" id="imgDir" value="/var/lib/libvirt/images/NSP"></label>
+        <label class="f"><span><b>설치 ISO</b></span><input type="text" id="isoPath" value="/opt/MW_OS-Boot-V7.6.08_x86_64.iso"></label>
+        <label class="f"><span><b>KS 파일 경로 (호스트)</b></span><input type="text" id="ksPath" value="/opt/KickStart/ks_RHEL7_NFMP.ks"></label>
+        <label class="f"><span><b>콘솔</b></span>
+          <select id="graphics"><option value="nographics">--nographics</option><option value="vnc">VNC</option></select></label>
+      </div>
+      <div class="inline-chks">
+        <label><input type="checkbox" id="isoCdrom" checked> <b>ISO 를 CD-ROM 으로 연결</b> (%post 로컬 repo 구성에 필요)</label>
+        <label><input type="checkbox" id="osFallback" checked> <b>os-variant 자동 폴백</b> (호스트에 없으면 대체값 사용)</label>
+        <label><input type="checkbox" id="brCheck" checked> <b>브리지 존재 확인</b> (없으면 목록 출력 후 중단)</label>
+        <label><input type="checkbox" id="checkOff" checked> --check disk_size=off</label>
+        <label><input type="checkbox" id="autostart"> --autostart</label>
+        <label><input type="checkbox" id="uefiVm"> --boot uefi (UEFI VM)</label>
+      </div>
+      <p class="note">브리지 이름은 호스트마다 다릅니다 (<code>br0</code>, <code>Bridge0</code>, <code>bond0</code> …). <code>ip -o link show type bridge</code> 로 확인하세요. <code>--os-variant</code> 는 호스트의 <b>osinfo-db</b> 에 등록된 값만 쓸 수 있습니다.</p>
+    </div>
+  </section>
+  <section class="card" data-card="cardNet">
+    <h2 onclick="tog(this)"><span class="num">04</span> 네트워크 <span class="hint">고정 IP · DHCP · /etc/hosts</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardNet" checked onchange="toggleCard('cardNet',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>인터페이스</b></span>
+          <select id="netDev">
+            <option value="enp1s0">enp1s0 — virtio VM 기본 (권장)</option>
+            <option value="link">link — 연결된 첫 NIC</option>
+            <option value="eth0">eth0 (net.ifnames=0 필요)</option>
+            <option value="ens3">ens3</option>
+            <option value="eno1">eno1</option>
+            <option value="__custom">직접 입력 →</option>
+          </select></label>
+        <label class="f"><span><b>인터페이스 직접 입력</b></span><input type="text" id="netDevCustom" value="" placeholder="위에서 '직접 입력' 선택 시 사용"></label>
+        <label class="f"><span><b>부팅 방식</b></span>
+          <select id="bootproto"><option value="static">static</option><option value="dhcp">dhcp</option></select></label>
+        <label class="f staticOnly"><span><b>IP 주소</b></span><input type="text" id="ip" value="13.0.244.212"></label>
+        <label class="f staticOnly"><span><b>넷마스크</b></span><input type="text" id="netmask" value="255.255.255.240"></label>
+        <label class="f staticOnly"><span><b>게이트웨이</b></span><input type="text" id="gateway" value="13.0.244.209"></label>
+        <label class="f staticOnly"><span><b>DNS</b></span><input type="text" id="dns" value=""></label>
+      </div>
+      <div class="inline-chks">
+        <label><input type="checkbox" id="noipv6" checked> IPv6 사용 안 함</label>
+        <label><input type="checkbox" id="onboot" checked> 부팅 시 활성화 (--onboot=yes --activate)</label>
+        <label><input type="checkbox" id="legacyNic"> <b>구식 NIC 이름 강제</b> (net.ifnames=0 → eth0)</label>
+        <label><input type="checkbox" id="netFix" checked> <b>%post 에서 nmcli 로 IP 재확인</b> (이중 안전장치)</label>
+      </div>
+      <p class="note">⚠ VM의 NIC 이름은 <b>호스트와 다릅니다</b>. 호스트가 <code>eno1</code> 이어도 게스트는 보통 <code>enp1s0</code> 입니다. 이름을 잘못 적으면 anaconda가 network 줄을 <b>조용히 무시</b>하고 DHCP로 떨어집니다. <code>link</code> 를 쓰면 이름과 무관하게 잡힙니다.</p>
+      <label class="f" style="margin-top:10px"><span><b>/etc/hosts 추가 항목</b> (IP 호스트명 / 한 줄에 하나)</span>
+        <textarea id="hostsExtra" placeholder="10.1.1.10  tnms-primary&#10;10.1.1.11  tnms-secondary"></textarea></label>
+    </div>
+  </section>
+  <section class="card" data-card="cardDisk">
+    <h2 onclick="tog(this)"><span class="num">05</span> 디스크 · LVM <span class="hint">볼륨그룹 · 파티션 · 논리볼륨</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardDisk" checked onchange="toggleCard('cardDisk',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>초기화할 디스크</b> (콤마 구분)</span><input type="text" id="disks" value="vda"></label>
+        <label class="f"><span><b>PE 크기 (KB)</b></span><input type="number" id="pesize" value="4096"></label>
+        <label class="f"><span><b>부트로더 위치</b></span><select id="blLoc"><option>mbr</option><option>partition</option></select></label>
+      </div>
+
+      <div class="toolbar" style="margin-top:14px">
+        <b style="font-size:12px">볼륨그룹(VG)</b>
+        <button class="sm" onclick="addVg()">+ VG 추가</button>
+      </div>
+      <table><thead><tr><th style="width:45%">VG 이름</th><th style="width:45%">소속 디스크</th><th></th></tr></thead>
+        <tbody id="vgBody"></tbody></table>
+
+      <div class="toolbar" style="margin-top:16px">
+        <button onclick="mergeToSingleDisk()" title="현재 표의 모든 볼륨을 디스크 1개 · VG 1개로 합칩니다">↴ 단일 디스크로 통합</button>
+        <span class="grow"></span>
+        <button class="primary sm" onclick="addLv()">+ 볼륨 추가</button>
+      </div>
+      <div class="toolbar" style="margin-top:-4px">
+        <b style="font-size:12px">용량 단위</b>
+        <select id="unit" style="width:auto" onchange="setUnit()">
+          <option value="MB">MB</option>
+          <option value="GB">GB</option>
+        </select>
+        <span style="color:var(--muted);font-size:12px">|</span>
+        <b style="font-size:12px">swap 자동</b>
+        <select id="swapPct" style="width:auto">
+          <option value="50">메모리의 50% (TNMS Server 기준)</option>
+          <option value="100">메모리의 100% (TNMS Mediation 분리 시)</option>
+        </select>
+        <button class="sm" onclick="autoSwap()">swap 적용</button>
+      </div>
+      <table><thead><tr>
+        <th style="width:9%">유형</th><th style="width:27%">마운트</th><th style="width:13%">디스크/VG</th>
+        <th style="width:22%">LV 이름</th><th style="width:11%">FS</th><th style="width:11%" id="szHead">MB</th>
+        <th style="width:6%">grow</th><th></th></tr></thead>
+        <tbody id="lvBody"></tbody></table>
+      <div class="meter" id="lvMeter"></div>
+      <p class="note"><b>유형</b> — part: 물리 파티션(/boot 등, 디스크 지정) · efi: EFI 시스템 파티션 · lv: 논리볼륨(VG 지정). grow 체크 시 남은 공간을 모두 사용합니다.</p>
+    </div>
+  </section>
+  <section class="card" data-card="cardPkg">
+    <h2 onclick="tog(this)"><span class="num">06</span> 패키지 (%packages) <span class="hint">설치 미디어에서 설치</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardPkg" checked onchange="toggleCard('cardPkg',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1 1 260px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px">Base Environment <span style="color:var(--muted);font-weight:400">(하나만 · @^)</span></div>
+          <div id="baseEnv" style="display:flex;flex-direction:column;gap:5px;font-size:13px">
+            <label><input type="radio" name="baseEnv" value="" checked> 없음 (@core 만)</label>
+            <label><input type="radio" name="baseEnv" value="@^minimal-environment"> Minimal Install</label>
+            <label><input type="radio" name="baseEnv" value="@^server-product-environment"> Server</label>
+            <label><input type="radio" name="baseEnv" value="@^graphical-server-environment"> Server with GUI</label>
+            <label><input type="radio" name="baseEnv" value="@^workstation-product-environment"> Workstation</label>
+            <label><input type="radio" name="baseEnv" value="@^virtualization-host-environment"> Virtualization Host</label>
+          </div>
+        </div>
+        <div style="flex:2 1 380px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px">Add-ons for Selected Environment <span style="color:var(--muted);font-weight:400">(여러 개 · @)</span></div>
+          <div id="addonChks" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12.5px">
+            <label><input type="checkbox" class="grp" value="@debugging"> Debugging Tools</label>
+            <label><input type="checkbox" class="grp" value="@network-file-system-client"> Network File System Client</label>
+            <label><input type="checkbox" class="grp" value="@performance"> Performance Tools</label>
+            <label><input type="checkbox" class="grp" value="@remote-system-management"> Remote Management for Linux</label>
+            <label><input type="checkbox" class="grp" value="@virtualization-client"> Virtualization Client</label>
+            <label><input type="checkbox" class="grp" value="@virtualization-hypervisor"> Virtualization Hypervisor</label>
+            <label><input type="checkbox" class="grp" value="@virtualization-tools"> Virtualization Tools</label>
+            <label><input type="checkbox" class="grp" value="@graphical-admin-tools"> Graphical Administration Tools</label>
+            <label><input type="checkbox" class="grp" value="@security-tools"> Security Tools</label>
+            <label><input type="checkbox" class="grp" value="@system-tools"> System Tools</label>
+            <label><input type="checkbox" class="grp" value="@development"> Development Tools</label>
+            <label><input type="checkbox" class="grp" value="@base"> Base</label>
+            <label><input type="checkbox" class="grp" value="@core" checked> Core <span style="color:var(--muted)">(항상 권장)</span></label>
+          </div>
+          <div class="toolbar" style="margin-top:8px">
+            <button class="sm" onclick="wsnocSoftware()">WS-NOC Host 11종 한 번에 선택</button>
+            <button class="sm" onclick="clearAddons()">애드온 전체 해제</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f"><span><b>설치할 패키지</b></span><textarea id="pkgList" style="min-height:150px">vim
+wget
+tcpdump
+screen
+ntp</textarea></label>
+        <label class="f"><span><b>제외할 패키지</b></span><textarea id="pkgExclude" style="min-height:150px">chronyd</textarea></label>
+      </div>
+      <div class="inline-chks"><label><input type="checkbox" id="ignoreMissing" checked> --ignoremissing</label></div>
+    </div>
+  </section>
+  <section class="card" data-card="cardPost">
+    <h2 onclick="tog(this)"><span class="num">07</span> 설치 후 작업 (%post) <span class="hint">유틸 설치 · 서비스 · 튜닝</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardPost" checked onchange="toggleCard('cardPost',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="grid">
+        <label class="f"><span><b>패키지 저장소(repo) 구성</b></span>
+          <select id="repoMode">
+            <option value="iso_copy">ISO 를 /iso 로 복사 → 로컬 repo (폐쇄망 · 권장)</option>
+            <option value="iso_mount">ISO 를 /media/iso 로 마운트 (복사 없음 · CD 유지 필요)</option>
+            <option value="url">사내 repo 서버 URL</option>
+            <option value="none">구성 안 함 (%packages 만 사용)</option>
+          </select></label>
+        <label class="f" id="repoUrlWrap"><span><b>사내 repo URL</b> (BaseOS/AppStream 상위 경로)</span>
+          <input type="text" id="repoBase" value="http://12.12.12.80/repo/rhel8"></label>
+        <label class="f"><span><b>NTP 서버 (Primary)</b></span><input type="text" id="ntp1" value="203.248.240.140"></label>
+        <label class="f"><span><b>NTP 서버 (Backup)</b></span><input type="text" id="ntp2" value=""></label>
+      </div>
+      <p class="note">⚠ 설치가 끝나면 ISO 가 분리되고 RHEL 은 구독 등록 전까지 <b>repo 가 하나도 없습니다.</b> 이 설정이 없으면 <code>%post</code> 의 <code>dnf install</code> 이 전부 실패합니다. <code>ISO → /iso 복사</code> 를 쓰려면 아래 <b>07번 카드의 "ISO 를 CD-ROM 으로 연결"</b> 이 켜져 있어야 합니다.</p>
+      <label class="f" style="margin-top:10px"><span><b>추가 설치 패키지</b> (yum/dnf)</span>
+        <textarea id="postYum" style="min-height:70px">net-tools bind-utils lsof sysstat unzip</textarea></label>
+      <div class="inline-chks">
+        <label><input type="checkbox" id="pTimeSvc" checked> 시간 동기화 서비스 설정</label>
+        <label><input type="checkbox" id="pSshRoot" checked> root SSH 로그인 허용</label>
+        <label><input type="checkbox" id="pFwOff" checked> firewalld stop/disable</label>
+        <label><input type="checkbox" id="pLimits"> ulimit 상향</label>
+        <label><input type="checkbox" id="pWall" checked> 완료 시 wall 메시지</label>
+      </div>
+      <label class="f" style="margin-top:12px"><span><b>추가 셸 스크립트</b></span>
+        <textarea id="postCustom" style="min-height:60px" placeholder="# 그대로 %post 안에 삽입됩니다"></textarea></label>
+    </div>
+  </section>
+  <section class="card" id="tnmsCard" data-card="cardTnms">
+    <h2 onclick="tog(this)"><span class="num">08</span> OS 상세 설정 <span class="hint">locale · hosts · sysctl · ssh · ftp · noexec (TNMS 가이드 기준)</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardTnms" checked onchange="toggleCard('cardTnms',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="inline-chks" style="margin-top:0">
+        <label><input type="checkbox" id="tLocale" checked> locale 적용 (localectl / unset LC_ALL)</label>
+        <label><input type="checkbox" id="tHosts" checked> /etc/hosts 에 자기 IP·호스트명 등록</label>
+        <label><input type="checkbox" id="tIso" checked> /iso 디렉터리 생성</label>
+        <label><input type="checkbox" id="tMkdir" checked> /oradata/ora1~3 디렉터리 생성</label>
+        <label><input type="checkbox" id="tTune2fs" checked> oradata 예약블록 해제 (tune2fs -m0)</label>
+        <label><input type="checkbox" id="tSysctl" checked> 가상메모리 튜닝 (vm.*)</label>
+        <label><input type="checkbox" id="tSshLimit" checked> sshd MaxStartups 150 / MaxSessions 100</label>
+        <label><input type="checkbox" id="tUmask" checked> root umask 0022</label>
+        <label><input type="checkbox" id="tVsftpd" checked> vsftpd anonymous_enable=NO</label>
+        <label><input type="checkbox" id="tChrony" checked> chronyd 로 NTP 설정</label>
+        <label><input type="checkbox" id="tOracleUser"> oracle 계정/그룹 생성</label>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f"><span><b>/tmp 의 noexec 옵션</b></span>
+          <select id="tNoexecMode">
+            <option value="remove">제거 (가이드 4.7.4 · 권장)</option>
+            <option value="add">적용 (보안 강화 — 설치 중에는 비권장)</option>
+            <option value="skip">건드리지 않음</option>
+          </select></label>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f"><span><b>vm.swappiness</b></span><input type="text" id="vmSwappiness" value="1"></label>
+        <label class="f"><span><b>vm.min_free_kbytes</b></span><input type="text" id="vmMinFree" value="1048576"></label>
+        <label class="f"><span><b>vm.dirty_ratio</b></span><input type="text" id="vmDirty" value="15"></label>
+        <label class="f"><span><b>vm.dirty_background_ratio</b></span><input type="text" id="vmDirtyBg" value="3"></label>
+        <label class="f"><span><b>Oracle 홈</b></span><input type="text" id="oraHome" value="/opt/oracle"></label>
+      </div>
+      <label class="f" style="margin-top:10px"><span><b>TNMS 사전요구 패키지 (dnf, %post 에서 설치)</b></span>
+        <textarea id="tnmsPkgs" style="min-height:70px">attr bc elfutils-libelf-devel fontconfig-devel ftp gcc gcc-c++ ksh jemalloc libaio-devel libnsl libzip make psmisc sysstat vsftpd</textarea></label>
+      <div class="inline-chks">
+        <label><input type="checkbox" id="tEpel"> <b>EPEL 저장소 추가</b> (jemalloc 설치용 · 인터넷 필요)</label>
+        <label><input type="checkbox" id="tPkgVerify" checked> 설치 결과 검증 (누락 패키지 목록 출력)</label>
+      </div>
+      <p class="note">Infinera 가이드에서 <code>dnf install -y</code> 로 하나씩 설치하도록 안내한 목록입니다.<br>
+      <b>⚠ <code>jemalloc</code> 은 RHEL 8 설치 ISO(BaseOS/AppStream)에 없고 EPEL 저장소에만 있습니다.</b> 설치 미디어만으로는 조용히 빠지므로, 위 EPEL 옵션을 켜거나 rpm 을 따로 받아 설치해야 합니다.</p>
+    </div>
+  </section>
+
+  <!-- 09 WS-NOC 전용 -->
+  <section class="card" id="wsnocCard" data-card="cardWsnoc">
+    <h2 onclick="tog(this)"><span class="num">09</span> WS-NOC 전용 설정 <span class="hint">IPv6 비활성 · ip_forward · inotify · chrony · 브리지</span><label class="cardsw" onclick="event.stopPropagation()"><input type="checkbox" id="sw_cardWsnoc" checked onchange="toggleCard('cardWsnoc',this.checked)"> 사용</label><span class="caret">▾</span></h2>
+    <div class="body">
+      <div class="inline-chks" style="margin-top:0">
+        <label><input type="checkbox" id="wIpv6Off" checked> IPv6 완전 비활성 (sysctl disable_ipv6)</label>
+        <label><input type="checkbox" id="wIpForward" checked> net.ipv4.ip_forward = 1</label>
+        <label><input type="checkbox" id="wInotify" checked> fs.inotify.max_user_watches = 20000</label>
+        <label><input type="checkbox" id="wFwOff" checked> firewalld stop/disable</label>
+        <label><input type="checkbox" id="wChrony" checked> chrony.conf 작성 (server/allow/local)</label>
+        <label><input type="checkbox" id="wBridge"> %post 에서 Bridge0 생성 (호스트용)</label>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f"><span><b>chrony server (상위 NTP)</b></span><input type="text" id="wNtpServer" value="1.184.4.12"></label>
+        <label class="f"><span><b>chrony allow (허용 대역, 콤마)</b></span><input type="text" id="wNtpAllow" value="91.1.1.0/24, 93.1.1.0/24"></label>
+        <label class="f"><span><b>local stratum</b></span><input type="text" id="wStratum" value="6"></label>
+      </div>
+      <label class="f" style="margin-top:12px"><span><b>/etc/hosts 추가 (noc / drc 등, 한 줄에 하나)</b></span>
+        <textarea id="wHosts" style="min-height:60px" placeholder="112.216.252.106  wsnoc-noc&#10;112.216.252.107  wsnoc-drc"></textarea></label>
+
+      <div style="border-top:1px solid var(--line);margin:14px 0;padding-top:12px">
+        <b style="font-size:12px">브리지(Bridge0) 생성 파라미터 — 호스트 설치 시</b>
+        <div class="grid" style="margin-top:8px">
+          <label class="f"><span><b>브리지 이름</b></span><input type="text" id="wBrName" value="Bridge0"></label>
+          <label class="f"><span><b>슬레이브 NIC</b></span><input type="text" id="wBrSlave" value="eno5"></label>
+          <label class="f"><span><b>브리지 IP/CIDR</b></span><input type="text" id="wBrIp" value="13.240.217.105/24"></label>
+          <label class="f"><span><b>브리지 게이트웨이</b></span><input type="text" id="wBrGw" value="13.240.217.1"></label>
+        </div>
+        <p class="note">호스트는 보통 킥스타트 없이 직접 설치하므로, 이 값들은 <b>미리보기의 "브리지 생성 명령"</b> 으로도 출력됩니다(호스트에서 복사해 실행). <code>%post 에서 Bridge0 생성</code> 을 켜면 킥스타트 안에도 포함됩니다.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="right">
+  <div class="term">
+    <div class="tabs">
+      <button id="tabKs" class="on" onclick="showTab('ks')">ks.cfg</button>
+      <button id="tabSh" onclick="showTab('sh')">virt-install.sh</button>
+      <button id="tabCk" onclick="showTab('ck')">check.sh</button>
+      <div class="acts">
+        <button class="ghost sm" onclick="copyOut()">복사</button>
+        <button class="ghost sm" onclick="downloadOne()">저장</button>
+        <button class="ghost sm" onclick="downloadAll()">전체</button>
+      </div>
+    </div>
+    <pre class="out" id="out"></pre>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 프리셋 ================= */
+/* [유형, 마운트, 디스크/VG, LV명, FS, MB, grow] */
+const PRESETS = {
+  nsp: { disks:'vda', vgs:[['rhel','vda']], rows:[
+    ['part','/boot','vda','','xfs',1024,false],
+    ['lv','/home','rhel','home','xfs',512,false],
+    ['lv','/tmp','rhel','tmp','xfs',4096,false],
+    ['lv','/var','rhel','var','xfs',65536,false],
+    ['lv','/','rhel','root','ext4',1,true],
+    ['lv','swap','rhel','swap','swap',16384,false],
+    ['lv','/opt/nsp','rhel','opt_vol','ext4',163840,false],
+    ['lv','/opt/nsp/nfmp/dbbackup','rhel','opt_nsp_nfmp_dbbackup','ext4',71680,false],
+    ['lv','/opt/nsp/nfmp/db','rhel','opt_nsp_nfmp_db','ext4',204800,false],
+    ['lv','/opt/nsp/nfmp/db/archivelog','rhel','opt_nsp_nfmp_db_archivelog','ext4',71680,false],
+    ['lv','/opt/nsp/nfmp/db/server/nms/log','rhel','opt_nsp_nfmp_db_server_nms_log','ext4',40960,false],
+    ['lv','/opt/nsp/nfmp/db/server/xml_output','rhel','opt_nsp_nfmp_db_server_xml_output','ext4',10240,false],
+    ['lv','/opt/nsp/os','rhel','opt_nsp_os','ext4',92160,false],
+    ['lv','/extra','rhel','extra','ext4',51200,false]
+  ]},
+  /* --- Infinera TNMS : 가이드 Table 8 (GB → MB) --- */
+  /* Small : 단일 디스크(sda). sdb 없음 */
+  tnms_small: { disks:'sda', vgs:[['rhel1','sda']], rows:[
+    ['efi','/boot/efi','sda','','efi',600,false],
+    ['part','/boot','sda','','ext4',1024,false],
+    ['lv','/','rhel1','root','ext4',962560,false],      /* 940 GB */
+    ['lv','swap','rhel1','swap','swap',61440,false]     /* 60 GB */
+  ]},
+  /* Medium : sda + sdb */
+  tnms_medium: { disks:'sda,sdb', vgs:[['rhel1','sda'],['rhel2','sdb']], rows:[
+    ['efi','/boot/efi','sda','','efi',600,false],
+    ['part','/boot','sda','','ext4',1024,false],
+    ['lv','/','rhel1','root','ext4',153600,false],              /* 150 GB */
+    ['lv','swap','rhel1','swap','swap',102400,false],           /* 100 GB */
+    ['lv','/tmp','rhel1','tmp','ext4',51200,false],             /*  50 GB */
+    ['lv','/oradata/ora1','rhel1','oradata_ora1','ext4',307200,false],  /* 300 GB */
+    ['lv','/oradata/ora2','rhel2','oradata_ora2','ext4',307200,false],  /* 300 GB */
+    ['lv','/oradata/ora3','rhel2','oradata_ora3','ext4',153600,false],  /* 150 GB */
+    ['lv','/coriant','rhel2','coriant','ext4',153600,false]             /* 150 GB (/nokia) */
+  ]},
+  /* Large : sda + sdb */
+  tnms_large: { disks:'sda,sdb', vgs:[['rhel1','sda'],['rhel2','sdb']], rows:[
+    ['efi','/boot/efi','sda','','efi',600,false],
+    ['part','/boot','sda','','ext4',1024,false],
+    ['lv','/','rhel1','root','ext4',174080,false],              /* 170 GB */
+    ['lv','swap','rhel1','swap','swap',133120,false],           /* 130 GB */
+    ['lv','/tmp','rhel1','tmp','ext4',61440,false],             /*  60 GB */
+    ['lv','/oradata/ora1','rhel1','oradata_ora1','ext4',614400,false],   /*  600 GB */
+    ['lv','/oradata/ora2','rhel2','oradata_ora2','ext4',2560000,false],  /* 2500 GB */
+    ['lv','/oradata/ora3','rhel2','oradata_ora3','ext4',1536000,false],  /* 1500 GB */
+    ['lv','/coriant','rhel2','coriant','ext4',819200,false]              /*  800 GB (/nokia) */
+  ]},
+  /* Lab : 단일 디스크 · 단일 VG 통합. Medium 의 구조는 유지하되 용량을 축소 */
+  tnms_lab: { disks:'vda', vgs:[['rhel1','vda']], rows:[
+    ['efi','/boot/efi','vda','','efi',600,false],
+    ['part','/boot','vda','','ext4',1024,false],
+    ['lv','/','rhel1','root','ext4',61440,false],                     /*  60 GB */
+    ['lv','swap','rhel1','swap','swap',32768,false],                  /*  32 GB */
+    ['lv','/tmp','rhel1','tmp','ext4',20480,false],                   /*  20 GB */
+    ['lv','/oradata/ora1','rhel1','oradata_ora1','ext4',61440,false], /*  60 GB */
+    ['lv','/oradata/ora2','rhel1','oradata_ora2','ext4',61440,false], /*  60 GB */
+    ['lv','/oradata/ora3','rhel1','oradata_ora3','ext4',30720,false], /*  30 GB */
+    ['lv','/coriant','rhel1','coriant','ext4',1,true]                 /* 남은 공간 전부 */
+  ]},
+  /* KT 현장 실제 구성 (KTTNMS-H 파티션 화면 그대로) */
+  tnms_kt: { disks:'sda,sdb', vgs:[['rhel1','sda'],['rhel2','sdb']], rows:[
+    ['efi','/boot/efi','sda','','efi',600,false],
+    ['part','/boot','sda','','ext4',1024,false],
+    ['lv','swap','rhel1','swap','swap',102400,false],
+    ['lv','/','rhel1','root','ext4',153600,false],
+    ['lv','/tmp','rhel1','tmp','ext4',51200,false],
+    ['lv','/oradata/ora1','rhel1','oradata_ora1','ext4',263465,false],
+    ['lv','/coriant','rhel2','coriant','ext4',213893,false],
+    ['lv','/oradata/ora2','rhel2','oradata_ora2','ext4',204800,false],
+    ['lv','/oradata/ora3','rhel2','oradata_ora3','ext4',153590,false]
+  ]},
+  /* --- Nokia WS-NOC Host : KVM 호스트 (RHEL 8.6) --- */
+  /* /var/lib/libvirt 는 나머지 전부(grow) */
+  wsnoc_host: { disks:'sda', vgs:[['rhel','sda']], rows:[
+    ['efi','/boot/efi','sda','','efi',200,false],
+    ['part','/boot','sda','','xfs',1024,false],
+    ['lv','swap','rhel','swap','swap',32768,false],          /* 32G */
+    ['lv','/','rhel','root','xfs',24576,false],              /* 24G */
+    ['lv','/DEPOT','rhel','depot','xfs',102400,false],       /* 100G — ISO 저장소 */
+    ['lv','/home','rhel','home','xfs',4096,false],           /* 4G */
+    ['lv','/tmp','rhel','tmp','xfs',8192,false],             /* 8G */
+    ['lv','/var','rhel','var','xfs',20480,false],            /* 20G */
+    ['lv','/var/tmp','rhel','var_tmp','xfs',6144,false],     /* 6G */
+    ['lv','/var/log','rhel','var_log','xfs',6144,false],     /* 6G */
+    ['lv','/var/log/audit','rhel','var_log_audit','xfs',6144,false], /* 6G */
+    ['lv','/var/lib/libvirt','rhel','libvirt','xfs',1,true]  /* REST — 나머지 전부 */
+  ]},
+  /* --- WS-NOC Guest : OTNE Standard 구성 --- */
+  wsnoc_std: { disks:'vda', vgs:[['rhel','vda']], rows:[
+    ['efi','/boot/efi','vda','','efi',200,false],
+    ['part','/boot','vda','','xfs',1024,false],
+    ['lv','swap','rhel','swap','swap',49152,false],          /* 48G ≈ RAM 1/3 */
+    ['lv','/','rhel','root','xfs',512000,false],             /* 500G */
+    ['lv','/mcp/maintenance','rhel','mcp_maint','xfs',51200,false], /* 50G */
+    ['lv','/home','rhel','home','xfs',4096,false]            /* 4G */
+  ]},
+  /* --- WS-NOC Guest : Lab 축소 --- */
+  wsnoc_lab: { disks:'vda', vgs:[['rhel','vda']], rows:[
+    ['efi','/boot/efi','vda','','efi',200,false],
+    ['part','/boot','vda','','xfs',1024,false],
+    ['lv','swap','rhel','swap','swap',16384,false],          /* 16G */
+    ['lv','/','rhel','root','xfs',102400,false],             /* 100G */
+    ['lv','/mcp/maintenance','rhel','mcp_maint','xfs',30720,false], /* 30G */
+    ['lv','/home','rhel','home','xfs',4096,false]
+  ]},
+  server: { disks:'vda', vgs:[['rhel','vda']], rows:[
+    ['part','/boot','vda','','xfs',1024,false],
+    ['lv','/','rhel','root','xfs',51200,false],
+    ['lv','swap','rhel','swap','swap',16384,false],
+    ['lv','/var','rhel','var','xfs',51200,false],
+    ['lv','/tmp','rhel','tmp','xfs',8192,false],
+    ['lv','/home','rhel','home','xfs',1,true]
+  ]},
+  min: { disks:'vda', vgs:[['rhel','vda']], rows:[
+    ['part','/boot','vda','','xfs',1024,false],
+    ['lv','swap','rhel','swap','swap',8192,false],
+    ['lv','/','rhel','root','xfs',1,true]
+  ]}
+};
+const PKG_PRESETS = {
+  nsp:{base:'', grp:['@core'],list:'vim\nwget\ntcpdump\nscreen\nntp',ex:'chronyd'},
+  tnms:{base:'@^server-product-environment', grp:['@core'],
+        list:'attr\nbc\nelfutils-libelf-devel\nfontconfig-devel\nftp\ngcc\ngcc-c++\nksh\njemalloc\nlibaio-devel\nlibnsl\nlibzip\nmake\npsmisc\nsysstat\nvsftpd\nchrony\nvim\nwget\nunzip\nnet-tools',ex:''},
+  full:{base:'', grp:['@core','@base'],list:'vim\nwget\ncurl\ntcpdump\nscreen\ntmux\nntp\nnet-tools\nbind-utils\nlsof\nsysstat\nunzip\nrsync\ntelnet\nnmap-ncat\ntraceroute',ex:'chronyd'},
+  /* WS-NOC Host : Server with GUI + 애드온 10종 (가이드 그대로) */
+  wsnoc_host:{base:'@^graphical-server-environment',
+        grp:['@core','@debugging','@network-file-system-client','@performance','@remote-system-management','@virtualization-client','@virtualization-hypervisor','@virtualization-tools','@graphical-admin-tools','@security-tools','@system-tools'],
+        list:'python3\ntar\nchrony\npolicycoreutils\ncontainer-selinux\nnet-tools\ntelnet\nvim\nwget',ex:''},
+  /* WS-NOC Guest : Minimal + 가이드 명시 패키지 */
+  wsnoc_guest:{base:'@^minimal-environment', grp:['@core'],
+        list:'python3\ntar\nchrony\npolicycoreutils\ncontainer-selinux\nnet-tools\ntelnet\nvim\nwget',ex:''},
+  min:{base:'', grp:['@core'],list:'',ex:''}
+};
+
+/* 프로파일 전환 시 기본값 */
+const PROFILE_DEFAULT = {
+  nsp:{ efiMode:false, uefiVm:false, osVariant:'rhel7', lvPreset:'nsp', pkgPreset:'nsp',
+        ksPath:'/opt/KickStart/ks_RHEL7_NFMP.ks', imgDir:'/var/lib/libvirt/images/NSP',
+        isoPath:'/opt/MW_OS-Boot-V7.6.08_x86_64.iso', vmName:'hiravm1_1911_SP11_Active',
+        hostname:'hiravm1', ramGb:64, diskGb:800, diskGb2:0, vcpus:8 },
+  tnms:{ efiMode:true, uefiVm:true, osVariant:'rhel8.9', lvPreset:'tnms_medium', pkgPreset:'tnms',
+        ksPath:'/opt/KickStart/ks_RHEL8_TNMS.ks', imgDir:'/var/lib/libvirt/images/TNMS',
+        isoPath:'/iso/rhel-8.9-x86_64-dvd.iso', vmName:'KTTNMS-H',
+        hostname:'KTTNMS-H', ramGb:64, diskGb:600, diskGb2:600, vcpus:16 },
+  /* WS-NOC Host : 물리 KVM 호스트 (직접 설치 · virt-install 불필요하지만 값 유지) */
+  wsnoc_host:{ efiMode:true, uefiVm:true, osVariant:'rhel8.6', lvPreset:'wsnoc_host', pkgPreset:'wsnoc_host',
+        ksPath:'/DEPOT/ks_RHEL8_WSNOC_HOST.ks', imgDir:'/var/lib/libvirt/images',
+        isoPath:'/DEPOT/rhel-8.6-x86_64-dvd.iso', vmName:'wsnoc-host',
+        hostname:'wsnoc-noc', ramGb:256, diskGb:1024, diskGb2:0, vcpus:24,
+        repoMode:'iso_copy', ntp1:'1.184.4.12' },
+  /* WS-NOC Guest : OTNE Standard VM */
+  wsnoc_guest:{ efiMode:true, uefiVm:true, osVariant:'rhel8.6', lvPreset:'wsnoc_std', pkgPreset:'wsnoc_guest',
+        ksPath:'/DEPOT/ks_RHEL8_WSNOC_OTNE.ks', imgDir:'/var/lib/libvirt/images',
+        isoPath:'/DEPOT/rhel-8.6-x86_64-dvd.iso', vmName:'wsnoc-otne',
+        hostname:'wsnoc-otne', ramGb:128, diskGb:620, diskGb2:0, vcpus:18,
+        repoMode:'iso_mount', ntp1:'1.184.4.12' }
+};
+
+const V = id => (document.getElementById(id).value||'').trim();
+const C = id => document.getElementById(id).checked;
+
+/* ---------- 카드 사용 on/off ---------- */
+/* 프로파일별로 기본 켜지는 카드 (02~09). 나열되지 않은 카드는 꺼짐 */
+const CARD_SET = {
+  nsp:        ['cardBasic','cardVm','cardNet','cardDisk','cardPkg','cardPost'],
+  tnms:       ['cardBasic','cardVm','cardNet','cardDisk','cardPkg','cardPost','cardTnms'],
+  wsnoc_host: ['cardBasic','cardNet','cardDisk','cardPkg','cardPost','cardWsnoc'],
+  wsnoc_guest:['cardBasic','cardVm','cardNet','cardDisk','cardPkg','cardPost','cardWsnoc']
+};
+const ALL_CARDS = ['cardBasic','cardVm','cardNet','cardDisk','cardPkg','cardPost','cardTnms','cardWsnoc'];
+
+/* 카드가 켜져 있는지 — 생성 로직에서 이걸로 판단 */
+function cardOn(cid){
+  const sw = document.getElementById('sw_'+cid);
+  return sw ? sw.checked : true;
+}
+function toggleCard(cid, on){
+  const sec = document.querySelector(`section[data-card="${cid}"]`);
+  if(sec) sec.classList.toggle('off', !on);
+  render();
+}
+/* 프로파일에 맞춰 카드 세트를 자동 적용 */
+function applyCardSet(profile){
+  const on = CARD_SET[profile] || ALL_CARDS;
+  ALL_CARDS.forEach(cid=>{
+    const sw = document.getElementById('sw_'+cid);
+    if(!sw) return;
+    sw.checked = on.includes(cid);
+    const sec = document.querySelector(`section[data-card="${cid}"]`);
+    if(sec) sec.classList.toggle('off', !sw.checked);
+  });
+}
+const isTNMS = () => V('profile')==='tnms';
+/* 인터페이스 이름: 셀렉트 값, '직접 입력'이면 텍스트칸 사용 */
+function netDev(){
+  const s = V('netDev');
+  if(s==='__custom') return V('netDevCustom') || 'link';
+  return s || 'link';
+}
+/* 255.255.255.0 → 24 */
+function maskToCidr(m){
+  const p = (m||'').split('.').map(Number);
+  if(p.length!==4 || p.some(isNaN)) return 24;
+  return p.reduce((a,b)=>a + ((b>>>0).toString(2).match(/1/g)||[]).length, 0);
+}
+
+/* ---------- 용량 단위 (내부는 항상 MB, 화면 표기만 MB/GB) ---------- */
+const U = () => document.getElementById('unit').value;
+const toMB   = v => U()==='GB' ? Math.round(parseFloat(v||0)*1024) : Math.round(parseFloat(v||0));
+const toView = mb => U()==='GB' ? +(mb/1024).toFixed(2) : mb;
+
+function setUnit(){
+  document.getElementById('szHead').textContent = U();
+  document.querySelectorAll('#lvBody tr').forEach(tr=>{
+    const el = tr.querySelector('.sz');
+    el.value = toView(parseInt(tr.dataset.mb||0));
+    el.step  = U()==='GB' ? '0.01' : '1';
+  });
+  render();
+}
+/* swap = 물리 메모리 × (50% | 100%) — TNMS 가이드 4.8.4 */
+function autoSwap(){
+  const ramGb=parseInt(V('ramGb'))||0, pct=parseInt(V('swapPct'));
+  if(!ramGb){ toast('먼저 VM 메모리(GB)를 입력하세요.'); return; }
+  const mb=Math.round(ramGb*1024*pct/100);
+  let hit=false;
+  document.querySelectorAll('#lvBody tr').forEach(tr=>{
+    if(tr.querySelector('.fs').value==='swap'){
+      tr.dataset.mb=mb; tr.querySelector('.sz').value=toView(mb);
+      tr.querySelector('.gw').checked=false; hit=true;
+    }
+  });
+  if(!hit){ toast('표에 swap 볼륨이 없습니다.'); return; }
+  render(); toast(`swap = ${(mb/1024).toFixed(0)} GB (메모리 ${ramGb}GB 의 ${pct}%)`);
+}
+
+/* ================= 테이블 ================= */
+function addVg(vg='rhel',dk='vda'){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input type="text" class="vg" value="${vg}" oninput="render()"></td>
+    <td><input type="text" class="vd" value="${dk}" oninput="render()"></td>
+    <td><button class="sm del" onclick="this.closest('tr').remove();render()">삭제</button></td>`;
+  document.getElementById('vgBody').appendChild(tr); render();
+}
+function addLv(kind='lv',mp='',tgt='rhel',nm='',fs='xfs',sz=1024,gw=false){
+  const tr=document.createElement('tr');
+  tr.dataset.mb = sz;                                   /* 내부 저장은 항상 MB */
+  tr.innerHTML=`
+   <td><select class="kd" onchange="render()">${['lv','part','efi'].map(k=>`<option ${k===kind?'selected':''}>${k}</option>`).join('')}</select></td>
+   <td><input type="text" class="mp" value="${mp}" oninput="render()"></td>
+   <td><input type="text" class="tg" value="${tgt}" oninput="render()"></td>
+   <td><input type="text" class="nm" value="${nm}" oninput="render()"></td>
+   <td><select class="fs" onchange="render()">${['xfs','ext4','ext3','swap','efi'].map(f=>`<option ${f===fs?'selected':''}>${f}</option>`).join('')}</select></td>
+   <td><input type="number" class="sz" step="${U()==='GB'?'0.01':'1'}" value="${toView(sz)}" oninput="this.closest('tr').dataset.mb=toMB(this.value);render()"></td>
+   <td style="text-align:center"><input type="checkbox" class="gw" ${gw?'checked':''} onchange="render()"></td>
+   <td><button class="sm del" onclick="this.closest('tr').remove();render()">삭제</button></td>`;
+  document.getElementById('lvBody').appendChild(tr); render();
+}
+function readVgs(){ return [...document.querySelectorAll('#vgBody tr')].map(t=>({
+  vg:t.querySelector('.vg').value.trim(), dk:t.querySelector('.vd').value.trim()})).filter(v=>v.vg&&v.dk); }
+function readLvs(){ return [...document.querySelectorAll('#lvBody tr')].map(t=>({
+  kd:t.querySelector('.kd').value, mp:t.querySelector('.mp').value.trim(),
+  tg:t.querySelector('.tg').value.trim(), nm:t.querySelector('.nm').value.trim(),
+  fs:t.querySelector('.fs').value, sz:parseInt(t.dataset.mb||0),
+  gw:t.querySelector('.gw').checked})).filter(v=>v.mp); }
+
+function applyPreset(){
+  const p=PRESETS[V('lvPreset')];
+  document.getElementById('disks').value=p.disks;
+  document.getElementById('vgBody').innerHTML='';
+  p.vgs.forEach(v=>addVg(v[0],v[1]));
+  document.getElementById('lvBody').innerHTML='';
+  p.rows.forEach(r=>addLv(...r));
+  autoDiskSize(p);
+  render();
+}
+/* 현재 표를 디스크 1개 · VG 1개로 접는다 (Lab 변환) */
+function mergeToSingleDisk(){
+  const lvs=readLvs();
+  if(!lvs.length){ toast('볼륨이 없습니다.'); return; }
+  const dk = (V('disks').split(/[,\s]+/)[0]) || 'vda';
+  const vg = (readVgs()[0]||{}).vg || 'rhel1';
+
+  document.getElementById('disks').value = dk;
+  document.getElementById('vgBody').innerHTML=''; addVg(vg, dk);
+
+  /* LV 이름 중복 방지 (rhel1/rhel2 를 합치면 이름이 겹칠 수 있음) */
+  const used = new Set();
+  const uniq = n => { let x=n||'lv', i=2; while(used.has(x)) x = n+'_'+(i++); used.add(x); return x; };
+
+  document.getElementById('lvBody').innerHTML='';
+  lvs.forEach(v=>{
+    const tgt = (v.kd==='lv') ? vg : dk;
+    addLv(v.kd, v.mp, tgt, v.kd==='lv' ? uniq(v.nm) : '', v.fs, v.sz, v.gw);
+  });
+
+  /* 디스크2 제거 후 디스크1 용량 재계산 */
+  const fixed = lvs.filter(v=>!v.gw).reduce((a,b)=>a+b.sz,0);
+  document.getElementById('diskGb').value  = Math.ceil(fixed/1024*1.05/10)*10 || 100;
+  document.getElementById('diskGb2').value = 0;
+  render();
+  toast(`디스크 ${dk} · VG ${vg} 하나로 통합했습니다.`);
+}
+
+/* 프리셋의 첫 번째 디스크 / 두 번째 디스크 합계를 구해 VM 디스크 GB 를 자동 설정 (+5% 여유) */
+function autoDiskSize(p){
+  const disks=p.disks.split(',');
+  const vgOf={}; p.vgs.forEach(v=>vgOf[v[0]]=v[1]);
+  const sum={}, grow={};
+  p.rows.forEach(r=>{
+    const dk = r[0]==='lv' ? vgOf[r[2]] : r[2];
+    if(!dk) return;
+    if(r[6]) grow[dk]=(grow[dk]||0)+1;        // grow 볼륨 개수
+    else     sum[dk]=(sum[dk]||0)+r[5];       // 고정 할당 MB
+  });
+  /* grow 볼륨이 있으면 디스크당 100GB 여유를 더 준다 */
+  const gb = d => sum[d] ? Math.ceil((sum[d]/1024*1.05 + (grow[d]?100:0))/10)*10 : 0;
+  document.getElementById('diskGb').value  = gb(disks[0]) || 100;
+  document.getElementById('diskGb2').value = disks[1] ? gb(disks[1]) : 0;
+}
+/* 프리셋 일괄 적용 : 파티션 + 패키지 + VM 디스크 용량 */
+function applyAllPresets(){
+  applyPreset();
+  applyPkgPreset();
+  toast('프리셋을 적용했습니다.');
+}
+function applyPkgPreset(){
+  const p=PKG_PRESETS[V('pkgPreset')];
+  document.querySelectorAll('.grp').forEach(c=>c.checked=p.grp.includes(c.value));
+  /* Base Environment 라디오 설정 */
+  const base = p.base || '';
+  const be = document.querySelector(`input[name="baseEnv"][value="${base}"]`);
+  if(be) be.checked = true;
+  else { const none=document.querySelector('input[name="baseEnv"][value=""]'); if(none) none.checked=true; }
+  document.getElementById('pkgList').value=p.list;
+  document.getElementById('pkgExclude').value=p.ex;
+  render();
+}
+/* WS-NOC Host 11종 한 번에 선택 */
+function wsnocSoftware(){
+  document.querySelector('input[name="baseEnv"][value="@^graphical-server-environment"]').checked = true;
+  const on = ['@core','@debugging','@network-file-system-client','@performance','@remote-system-management',
+              '@virtualization-client','@virtualization-hypervisor','@virtualization-tools',
+              '@graphical-admin-tools','@security-tools','@system-tools'];
+  document.querySelectorAll('.grp').forEach(c=>c.checked = on.includes(c.value));
+  render(); toast('WS-NOC Host 소프트웨어 11종 선택됨');
+}
+function clearAddons(){
+  document.querySelectorAll('.grp').forEach(c=>c.checked = c.value==='@core');
+  render(); toast('애드온 해제 (@core 유지)');
+}
+function switchProfile(){
+  const d=PROFILE_DEFAULT[V('profile')];
+  for(const k in d){ const el=document.getElementById(k);
+    if(!el) continue;
+    if(el.type==='checkbox') el.checked=d[k]; else el.value=d[k];
+  }
+  applyCardSet(V('profile'));
+  applyPreset(); applyPkgPreset(); render();
+}
+
+/* ================= Kickstart ================= */
+function buildKS(){
+  const L=[], T=isTNMS();
+  L.push('# ============================================================');
+  L.push('# Kickstart : ' + V('hostname') + (T?'  [Infinera TNMS / RHEL 8]':'  [Nokia NSP / RHEL 7]'));
+  L.push('# Generated : ' + new Date().toISOString().slice(0,10));
+  L.push('# ============================================================');
+  if(C('textMode')) L.push('\ntext');
+  if(C('skipx'))    L.push('skipx');
+  L.push('install');
+  L.push('\n# 설치 소스');
+  L.push(V('srcType')==='cdrom' ? 'cdrom' : 'url --url=' + V('repoUrl'));
+  L.push('\n# 언어 / 키보드 / 시간대');
+  L.push('lang ' + V('lang'));
+  L.push('keyboard ' + V('keyboard'));
+  L.push('timezone ' + V('timezone') + ' --utc');
+
+  L.push('\n# 네트워크');
+  L.push('#  주의: 게스트 NIC 이름은 호스트와 다릅니다 (virtio 는 보통 enp1s0).');
+  L.push('#        이 줄이 무시되어도 %post 의 ifcfg 직접 작성이 백업으로 동작합니다.');
+  const dev = netDev();
+  if(V('bootproto')==='dhcp'){
+    L.push(`network --device=${dev} --bootproto=dhcp --hostname=${V('hostname')}` +
+      (C('noipv6')?' --noipv6':'') + (C('onboot')?' --onboot=yes --activate':''));
+  }else{
+    let n=`network --device=${dev} --bootproto=static --ip=${V('ip')} --netmask=${V('netmask')} --gateway=${V('gateway')}`;
+    n += ' --nameserver=' + (V('dns') ? V('dns').replace(/\s/g,'') : V('gateway'));
+    if(C('noipv6')) n+=' --noipv6';
+    if(C('onboot')) n+=' --onboot=yes --activate';
+    L.push(n+' --hostname='+V('hostname'));
+  }
+
+  L.push('\n# 인증 / root 암호');
+  L.push(T ? 'authselect --useshadow --passalgo=sha512' : 'auth --useshadow --enablemd5');
+  L.push('rootpw ' + V('rootpw'));
+  L.push('\n# 보안');
+  L.push('selinux --' + (C('selinuxOff')?'disabled':'enforcing'));
+  L.push('firewall --' + (C('fwOff')?'disabled':'enabled'));
+
+  const disks=V('disks').split(/[,\s]+/).filter(Boolean);
+  L.push('\n# 부트로더 / 디스크 초기화');
+  L.push('ignoredisk --only-use=' + disks.join(','));
+  L.push('bootloader --location=' + V('blLoc') + ' --boot-drive=' + disks[0]
+         + (C('legacyNic') ? ' --append="net.ifnames=0 biosdevname=0"' : ''));
+  L.push('zerombr');
+  L.push('clearpart --all --initlabel --drives=' + disks.join(','));
+  if(C('firstbootOff')) L.push('firstboot --disable');
+  L.push('logging --level=info');
+  if(C('rebootOn')) L.push('reboot');
+
+  const lvs=readLvs(), vgs=readVgs();
+  L.push('\n# 파티션');
+  lvs.filter(v=>v.kd==='efi').forEach(v=>
+    L.push(`part ${v.mp} --fstype=efi --size=${v.sz} --ondisk=${v.tg} --fsoptions="umask=0077,shortname=winnt"`));
+  lvs.filter(v=>v.kd==='part').forEach(v=>
+    L.push(`part ${v.mp} --fstype=${v.fs} --size=${v.sz} --ondisk=${v.tg}`));
+
+  L.push('\n# 볼륨그룹');
+  vgs.forEach((g,i)=>{
+    const pv='pv.'+(i+1);
+    L.push(`part ${pv} --fstype="lvmpv" --ondisk=${g.dk} --grow --size=1`);
+    L.push(`volgroup ${g.vg} --pesize=${V('pesize')} ${pv}`);
+  });
+
+  L.push('\n# 논리볼륨');
+  lvs.filter(v=>v.kd==='lv').forEach(v=>{
+    const sz = v.gw ? '--grow --size=1' : '--size='+v.sz;
+    L.push(`logvol ${v.mp} --fstype=${v.fs} ${sz} --name=${v.nm} --vgname=${v.tg}`);
+  });
+
+  L.push('\n# 설치 패키지');
+  L.push('%packages' + (C('ignoreMissing')?' --ignoremissing':''));
+  /* Base Environment (@^) 를 맨 위에 — 하나만 */
+  const be = document.querySelector('input[name="baseEnv"]:checked');
+  if(be && be.value) L.push(be.value);
+  /* Add-on 그룹 (@) */
+  document.querySelectorAll('.grp:checked').forEach(c=>L.push(c.value));
+  V('pkgList').split(/[\s,]+/).filter(Boolean).forEach(p=>L.push(p));
+  V('pkgExclude').split(/[\s,]+/).filter(Boolean).forEach(p=>L.push('-'+p.replace(/^-/,'')));
+  L.push('%end');
+
+  /* ---------------- %post ---------------- */
+  L.push('\n# ------------------- 설치 후 작업 -------------------');
+  L.push('%post --log=/root/ks-post.log');
+  L.push('set -x');
+
+  const rm = V('repoMode');
+  if(rm==='iso_copy'){
+    L.push('\n# ============================================================');
+    L.push('# 로컬 저장소 구성 : CD-ROM(ISO) 내용을 /iso 로 복사');
+    L.push('#  설치가 끝나면 ISO 가 분리되고 RHEL 은 repo 가 없는 상태가 된다.');
+    L.push('#  → ISO 를 디스크로 복사해 두고 file:// repo 로 등록한다.');
+    L.push('# ============================================================');
+    L.push('mkdir -p /iso /mnt/cdrom');
+    L.push('CDROM=""');
+    L.push('for d in /dev/sr0 /dev/sr1 /dev/cdrom; do');
+    L.push('  if [ -b "$d" ] && mount -o ro "$d" /mnt/cdrom 2>/dev/null; then CDROM="$d"; break; fi');
+    L.push('done');
+    L.push('');
+    L.push('if [ -n "$CDROM" ] && [ -d /mnt/cdrom/BaseOS ]; then');
+    L.push('  echo "[i] CD-ROM 감지: $CDROM → /iso 로 복사 시작 (수 분 소요)"');
+    L.push('  cp -a /mnt/cdrom/. /iso/ 2>/dev/null');
+    L.push('  umount /mnt/cdrom');
+    L.push('  echo "[i] 복사 완료: $(du -sh /iso | cut -f1)"');
+    L.push('');
+    L.push('  cat > /etc/yum.repos.d/local-iso.repo << "EOF"');
+    L.push('[LocalISO-BaseOS]');
+    L.push('name=RHEL 8 - BaseOS (Local ISO)');
+    L.push('baseurl=file:///iso/BaseOS');
+    L.push('enabled=1');
+    L.push('gpgcheck=1');
+    L.push('gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release');
+    L.push('');
+    L.push('[LocalISO-AppStream]');
+    L.push('name=RHEL 8 - AppStream (Local ISO)');
+    L.push('baseurl=file:///iso/AppStream');
+    L.push('enabled=1');
+    L.push('gpgcheck=1');
+    L.push('gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release');
+    L.push('EOF');
+    L.push('');
+    L.push('  # 구독 관리 플러그인 비활성 (등록 안 된 시스템에서 dnf 를 막는다)');
+    L.push('  sed -i "s/^enabled=1/enabled=0/" /etc/yum/pluginconf.d/subscription-manager.conf 2>/dev/null');
+    L.push('  subscription-manager config --rhsm.manage_repos=0 2>/dev/null');
+    L.push('');
+    L.push('  dnf clean all');
+    L.push('  dnf repolist');
+    L.push('else');
+    L.push('  echo "[X] CD-ROM 을 찾을 수 없습니다. virt-install 에 ISO 가 cdrom 으로 연결됐는지 확인하세요."');
+    L.push('  echo "[X] %post 의 dnf 설치는 모두 실패할 것입니다."');
+    L.push('fi');
+  }
+  else if(rm==='iso_mount'){
+    L.push('\n# 로컬 저장소 : CD-ROM 을 /media/iso 로 상시 마운트');
+    L.push('mkdir -p /media/iso');
+    L.push('mount -o ro /dev/sr0 /media/iso 2>/dev/null');
+    L.push('echo "/dev/sr0  /media/iso  iso9660  ro,nofail  0 0" >> /etc/fstab');
+    L.push('cat > /etc/yum.repos.d/local-iso.repo << "EOF"');
+    L.push('[LocalISO-BaseOS]');
+    L.push('name=RHEL 8 - BaseOS');
+    L.push('baseurl=file:///media/iso/BaseOS');
+    L.push('enabled=1');
+    L.push('gpgcheck=0');
+    L.push('');
+    L.push('[LocalISO-AppStream]');
+    L.push('name=RHEL 8 - AppStream');
+    L.push('baseurl=file:///media/iso/AppStream');
+    L.push('enabled=1');
+    L.push('gpgcheck=0');
+    L.push('EOF');
+    L.push('subscription-manager config --rhsm.manage_repos=0 2>/dev/null');
+    L.push('dnf clean all; dnf repolist');
+  }
+  else if(rm==='url'){
+    L.push('\n# 로컬 저장소 : 사내 repo 서버');
+    L.push('cat > /etc/yum.repos.d/local.repo << "EOF"');
+    L.push('[Local-BaseOS]');
+    L.push('name=RHEL 8 - BaseOS');
+    L.push('baseurl=' + V('repoBase') + '/BaseOS');
+    L.push('enabled=1');
+    L.push('gpgcheck=0');
+    L.push('');
+    L.push('[Local-AppStream]');
+    L.push('name=RHEL 8 - AppStream');
+    L.push('baseurl=' + V('repoBase') + '/AppStream');
+    L.push('enabled=1');
+    L.push('gpgcheck=0');
+    L.push('EOF');
+    L.push('subscription-manager config --rhsm.manage_repos=0 2>/dev/null');
+    L.push('dnf clean all; dnf repolist');
+  }
+
+  const pm = isTNMS() ? 'dnf' : 'yum';
+  /* 표에서 /oradata* 논리볼륨을 찾아 /dev/mapper 경로를 만든다 */
+  const oradataLvs = readLvs().filter(v=>v.kd==='lv' && v.mp.startsWith('/oradata') && v.nm);
+
+  /* [보험] network 줄이 무시됐을 경우를 대비해 ifcfg 를 직접 쓴다.
+     %post 는 chroot 라서 NetworkManager 가 안 떠 있고 nmcli 가 동작하지 않는다.
+     따라서 /sys/class/net 을 직접 읽어 NIC 이름을 알아낸다. */
+  if(V('bootproto')==='static' && V('ip') && C('netFix')){
+    const cidr = maskToCidr(V('netmask'));
+    const dns  = V('dns') ? V('dns').replace(/\s/g,'').split(',')[0] : V('gateway');
+    L.push('\n# [보험] ifcfg 직접 작성 — NIC 이름이 달라 network 줄이 무시된 경우 대비');
+    L.push('#  주의: %post 는 chroot 라 nmcli 가 동작하지 않으므로 /sys 를 직접 읽는다');
+    L.push('NIC=$(ls /sys/class/net 2>/dev/null | grep -vE "^(lo|virbr|docker|bond|team|sit|tun)" | head -1)');
+    L.push('[ -z "$NIC" ] && NIC="' + (netDev()==='link' ? 'enp1s0' : netDev()) + '"');
+    L.push('echo "[i] 네트워크 설정 대상 NIC : $NIC"');
+    L.push('');
+    L.push('# 기존 ifcfg 를 모두 치우고 새로 만든다');
+    L.push('mkdir -p /etc/sysconfig/network-scripts/backup');
+    L.push('mv -f /etc/sysconfig/network-scripts/ifcfg-* /etc/sysconfig/network-scripts/backup/ 2>/dev/null');
+    L.push('');
+    L.push('cat > /etc/sysconfig/network-scripts/ifcfg-$NIC << EOF');
+    L.push('TYPE=Ethernet');
+    L.push('PROXY_METHOD=none');
+    L.push('BROWSER_ONLY=no');
+    L.push('BOOTPROTO=none');
+    L.push('DEFROUTE=yes');
+    L.push('IPV4_FAILURE_FATAL=no');
+    L.push(C('noipv6') ? 'IPV6INIT=no' : 'IPV6INIT=yes');
+    L.push('NAME=$NIC');
+    L.push('DEVICE=$NIC');
+    L.push('ONBOOT=yes');
+    L.push('IPADDR=' + V('ip'));
+    L.push('PREFIX=' + cidr);
+    L.push('GATEWAY=' + V('gateway'));
+    L.push('DNS1=' + dns);
+    L.push('EOF');
+    L.push('chmod 644 /etc/sysconfig/network-scripts/ifcfg-$NIC');
+    L.push('');
+    L.push('echo "[i] 생성된 ifcfg-$NIC :"');
+    L.push('cat /etc/sysconfig/network-scripts/ifcfg-$NIC');
+  }
+
+  const yum = V('postYum').split(/[\s,]+/).filter(Boolean);
+  if(yum.length) L.push(`\n# 유틸리티 설치\n${pm} -y install ${yum.join(' ')}`);
+
+  if(cardOn('cardTnms') && V('tnmsPkgs').trim()){
+    const plist = V('tnmsPkgs').split(/[\s,]+/).filter(Boolean).join(' ');
+    if(C('tEpel')){
+      L.push('\n# EPEL 저장소 (jemalloc 등 ISO 에 없는 패키지용)');
+      L.push(pm + ' install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || \\');
+      L.push('  echo "[!] EPEL 설치 실패 (인터넷 미연결?) — jemalloc 은 수동 설치 필요"');
+    }
+    L.push('\n# 사전요구 패키지 (하나씩 설치)');
+    L.push('for p in ' + plist + '; do');
+    L.push('  ' + pm + ' install -y $p');
+    L.push('done');
+    if(C('tPkgVerify')){
+      L.push('\n# 설치 결과 검증 — 누락된 패키지를 로그에 남긴다');
+      L.push('MISSING=""');
+      L.push('for p in ' + plist + '; do');
+      L.push('  rpm -q $p >/dev/null 2>&1 || MISSING="$MISSING $p"');
+      L.push('done');
+      L.push('if [ -n "$MISSING" ]; then');
+      L.push('  echo "==================================================="');
+      L.push('  echo "[!] 설치되지 않은 패키지:$MISSING"');
+      L.push('  echo "    → 저장소에 없는 패키지입니다 (jemalloc = EPEL)"');
+      L.push('  echo "==================================================="');
+      L.push('  echo "MISSING:$MISSING" > /root/ks-missing-packages.txt');
+      L.push('else');
+      L.push('  echo "[OK] 사전요구 패키지 전부 설치됨"');
+      L.push('fi');
+    }
+  }
+
+  /* [4] /etc/hosts — localhost 줄 "위"에 자기 IP·호스트명을 넣는다 */
+  const selfHost = (V('bootproto')==='static' && V('ip')) ? `${V('ip')}\t${V('hostname')}` : '';
+  const hostLines = [];
+  if(cardOn('cardTnms') && C('tHosts') && selfHost) hostLines.push(selfHost);
+  V('hostsExtra').split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>hostLines.push(l));
+  if(hostLines.length){
+    L.push('\n# [4] /etc/hosts  (localhost 항목 위에 삽입)');
+    L.push('cp /etc/hosts /etc/hosts.org');
+    L.push('cat > /tmp/hosts.new << "EOF"');
+    hostLines.forEach(l=>L.push(l));
+    L.push('EOF');
+    L.push('cat /tmp/hosts.new /etc/hosts.org > /etc/hosts');
+    L.push('rm -f /tmp/hosts.new');
+    L.push('cat /etc/hosts');
+  }
+
+  if(C('pTimeSvc')){
+    L.push('\n# 시간 동기화');
+    if(T || (cardOn('cardTnms') && C('tChrony'))){
+      L.push("sed -i '/^pool /d;/^server /d' /etc/chrony.conf");
+      if(V('ntp1')) L.push(`echo "server ${V('ntp1')} iburst" >> /etc/chrony.conf`);
+      if(V('ntp2')) L.push(`echo "server ${V('ntp2')} iburst" >> /etc/chrony.conf`);
+      L.push('systemctl enable --now chronyd');
+    }else{
+      if(V('ntp1')){
+        L.push("sed -i '/^server /d' /etc/ntp.conf");
+        L.push(`echo "server ${V('ntp1')} iburst" >> /etc/ntp.conf`);
+        if(V('ntp2')) L.push(`echo "server ${V('ntp2')} iburst" >> /etc/ntp.conf`);
+      }
+      L.push('systemctl stop chronyd 2>/dev/null; systemctl disable chronyd 2>/dev/null');
+      L.push('systemctl enable ntpd; systemctl start ntpd');
+    }
+  }
+
+  if(C('pSshRoot') || (cardOn('cardTnms') && C('tSshLimit'))){
+    L.push('\n# [7-2] SSH / SFTP');
+    if(C('pSshRoot')){
+      L.push("sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config");
+      L.push('grep -q "^PermitRootLogin yes" /etc/ssh/sshd_config || echo "PermitRootLogin yes" >> /etc/ssh/sshd_config');
+    }
+    if(cardOn('cardTnms') && C('tSshLimit')){
+      L.push("sed -i '/^#*MaxStartups/d;/^#*MaxSessions/d' /etc/ssh/sshd_config");
+      L.push('echo "MaxStartups 150" >> /etc/ssh/sshd_config');
+      L.push('echo "MaxSessions 100" >> /etc/ssh/sshd_config');
+    }
+    L.push('systemctl restart sshd 2>/dev/null || true');
+  }
+
+  if(C('pFwOff')) L.push('\n# 방화벽 해제\nsystemctl stop firewalld\nsystemctl disable firewalld');
+
+  if(C('pLimits')) L.push('\n# 리소스 한계\ncat >> /etc/security/limits.conf << "EOF"\n*  soft  nofile  65536\n*  hard  nofile  65536\n*  soft  nproc   32768\n*  hard  nproc   32768\nEOF');
+
+  /* ---- OS 상세 설정 (08번 카드가 켜져 있을 때만) ---- */
+  if(cardOn('cardTnms')){
+    if(C('tLocale')){
+      L.push('\n# [3] 시스템 로케일');
+      L.push('localectl set-locale LANG=' + V('lang'));
+      L.push('unset LC_ALL');
+      L.push("sed -i '/^LC_ALL=/d' /etc/environment 2>/dev/null");
+      L.push('echo "LANG=' + V('lang') + '" > /etc/locale.conf');
+    }
+    if(C('tSysctl')){
+      L.push('\n# [5] 가상메모리 튜닝 (/etc/sysctl.conf)');
+      L.push('cat >> /etc/sysctl.conf << "EOF"');
+      L.push('vm.swappiness = ' + V('vmSwappiness'));
+      L.push('vm.min_free_kbytes = ' + V('vmMinFree'));
+      L.push('vm.dirty_ratio = ' + V('vmDirty'));
+      L.push('vm.dirty_background_ratio = ' + V('vmDirtyBg'));
+      L.push('EOF');
+      L.push('sysctl -p');
+    }
+    if(C('tIso') || C('tMkdir')){
+      L.push('\n# [1] 디렉터리 생성');
+      if(C('tIso'))   L.push('mkdir -p /iso');
+      if(C('tMkdir')){
+        oradataLvs.forEach(v=>L.push('mkdir -p ' + v.mp));
+        if(!oradataLvs.length) L.push('mkdir -p /oradata/ora1 /oradata/ora2 /oradata/ora3');
+        L.push('mkdir -p ' + V('oraHome') + '/oramedia');
+      }
+    }
+    if(C('tTune2fs')){
+      L.push('\n# [1] oradata 파일시스템 예약블록 0% 로 (tune2fs -m0)');
+      L.push('df | grep oradata | cut -d " " -f1');
+      if(oradataLvs.length){
+        oradataLvs.forEach(v=>L.push(`tune2fs -m0 /dev/mapper/${v.tg}-${v.nm}`));
+      }else{
+        L.push('for dev in $(df | grep oradata | cut -d " " -f1); do tune2fs -m0 $dev; done');
+      }
+    }
+    if(C('tUmask')){
+      L.push('\n# [7-1] root umask 0022  (확인: umask → 0022)');
+      L.push('cat > /etc/profile.d/tnms-umask.sh << "EOF"');
+      L.push('umask 0022');
+      L.push('EOF');
+      L.push('chmod 644 /etc/profile.d/tnms-umask.sh');
+      L.push("sed -i 's/^[[:space:]]*umask[[:space:]]\\+0[0-7][0-7][0-7]/    umask 0022/' /root/.bashrc 2>/dev/null");
+      L.push('grep -q "umask 0022" /root/.bashrc       || echo "umask 0022" >> /root/.bashrc');
+      L.push('grep -q "umask 0022" /root/.bash_profile || echo "umask 0022" >> /root/.bash_profile');
+    }
+    const nx = V('tNoexecMode');
+    if(nx==='remove'){
+      L.push('\n# [8] /tmp 에 noexec 가 있으면 제거 (설치 스크립트 실행을 위해 필요)');
+      L.push("sed -i '\\|[[:space:]]/tmp[[:space:]]| s/,noexec//g; \\|[[:space:]]/tmp[[:space:]]| s/noexec,//g; \\|[[:space:]]/tmp[[:space:]]| s/[[:space:]]noexec / defaults /g' /etc/fstab");
+      L.push('mount -o remount /tmp 2>/dev/null || true');
+      L.push('cat /etc/fstab | grep /tmp');
+    }else if(nx==='add'){
+      L.push('\n# [8] /tmp 에 noexec 옵션 적용');
+      L.push("sed -i '\\|[[:space:]]/tmp[[:space:]]| s/defaults/defaults,noexec,nosuid,nodev/' /etc/fstab");
+      L.push('mount -o remount /tmp 2>/dev/null || true');
+      L.push('cat /etc/fstab | grep /tmp');
+    }
+    if(C('tVsftpd')){
+      L.push('\n# [6] FTP (레거시 / Embargo NE 관리용)');
+      L.push("sed -i 's/^#*anonymous_enable=.*/anonymous_enable=NO/' /etc/vsftpd/vsftpd.conf");
+      L.push('grep -q "^anonymous_enable=NO" /etc/vsftpd/vsftpd.conf || echo "anonymous_enable=NO" >> /etc/vsftpd/vsftpd.conf');
+      L.push('systemctl enable vsftpd');
+    }
+    if(C('tOracleUser')){
+      L.push('\n# Oracle 계정 / 권한');
+      L.push('groupadd -g 54321 oinstall');
+      L.push('groupadd -g 54322 dba');
+      L.push('useradd -u 54321 -g oinstall -G dba oracle');
+      L.push('echo "e2eNet4u" | passwd --stdin oracle');
+      L.push('chown -R oracle:oinstall ' + V('oraHome') + ' /oradata');
+      L.push('chmod -R 775 ' + V('oraHome') + ' /oradata');
+    }
+    L.push('\n# [9] swap 확인 (물리 메모리의 50% 이상이어야 함)');
+    L.push('swapon -s');
+    L.push('free -g');
+  }
+
+  /* ---- WS-NOC 전용 (09번 카드가 켜져 있을 때만) ---- */
+  if(cardOn('cardWsnoc')){
+    if(C('wIpv6Off')){
+      L.push('\n# [WS-NOC] IPv6 완전 비활성');
+      L.push('cat >> /etc/sysctl.conf << "EOF"');
+      L.push('# disable ipv6');
+      L.push('net.ipv6.conf.all.disable_ipv6 = 1');
+      L.push('net.ipv6.conf.default.disable_ipv6 = 1');
+      L.push('net.ipv6.conf.lo.disable_ipv6 = 1');
+      L.push('EOF');
+    }
+    if(C('wIpForward') || C('wInotify')){
+      L.push('\n# [WS-NOC] 커널 파라미터');
+      L.push('cat >> /etc/sysctl.conf << "EOF"');
+      if(C('wIpForward')) L.push('net.ipv4.ip_forward = 1');
+      if(C('wInotify'))   L.push('fs.inotify.max_user_watches = 20000');
+      L.push('EOF');
+    }
+    if(C('wIpv6Off') || C('wIpForward') || C('wInotify')) L.push('sysctl -p');
+
+    if(C('wFwOff')) L.push('\n# [WS-NOC] 방화벽 비활성\nsystemctl stop firewalld\nsystemctl disable firewalld');
+
+    if(C('wHosts') && V('wHosts').trim()){
+      L.push('\n# [WS-NOC] /etc/hosts (noc / drc)');
+      L.push('cat >> /etc/hosts << "EOF"');
+      V('wHosts').split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>L.push(l));
+      L.push('EOF');
+    }
+
+    if(C('wChrony')){
+      L.push('\n# [WS-NOC] chrony (NTP)');
+      L.push('cat >> /etc/chrony.conf << "EOF"');
+      if(V('wNtpServer')) L.push('server ' + V('wNtpServer'));
+      V('wNtpAllow').split(',').map(s=>s.trim()).filter(Boolean).forEach(a=>L.push('allow ' + a));
+      L.push('local stratum ' + V('wStratum'));
+      L.push('EOF');
+      L.push('systemctl enable chronyd');
+      L.push('systemctl restart chronyd');
+    }
+
+    if(C('wBridge')){
+      L.push('\n# [WS-NOC] Bridge0 생성 (호스트)');
+      L.push('#  주의: %post(chroot) 에서는 nmcli 데몬이 없어 즉시 적용되지 않습니다.');
+      L.push('#        아래는 ifcfg 파일로 직접 작성하여 재부팅 후 적용되도록 합니다.');
+      const brip = V('wBrIp').split('/');
+      const brcidr = brip[1] || '24';
+      L.push('cat > /etc/sysconfig/network-scripts/ifcfg-' + V('wBrName') + ' << "EOF"');
+      L.push('DEVICE=' + V('wBrName'));
+      L.push('NAME=' + V('wBrName'));
+      L.push('TYPE=Bridge');
+      L.push('BOOTPROTO=none');
+      L.push('ONBOOT=yes');
+      L.push('IPADDR=' + brip[0]);
+      L.push('PREFIX=' + brcidr);
+      L.push('GATEWAY=' + V('wBrGw'));
+      L.push('STP=no');
+      L.push('EOF');
+      L.push('cat > /etc/sysconfig/network-scripts/ifcfg-slave0-' + V('wBrName') + ' << "EOF"');
+      L.push('DEVICE=' + V('wBrSlave'));
+      L.push('NAME=slave0-' + V('wBrName'));
+      L.push('TYPE=Ethernet');
+      L.push('ONBOOT=yes');
+      L.push('BRIDGE=' + V('wBrName'));
+      L.push('EOF');
+    }
+  }
+
+  if(V('postCustom')) L.push('\n# 사용자 정의\n' + V('postCustom'));
+  if(C('pWall')) L.push('\nwall !!_INSTALL_DONE_!!');
+  L.push('%end');
+  return L.join('\n')+'\n';
+}
+
+/* ================= virt-install ================= */
+function buildSH(){
+  if(!cardOn('cardVm')){
+    return '#!/bin/bash\n'
+      + '# ------------------------------------------------------------\n'
+      + '# 이 프로파일은 가상머신(virt-install)을 사용하지 않습니다.\n'
+      + '#  (WS-NOC Host 는 물리 서버에 직접 설치)\n'
+      + '#  03번 "가상머신" 카드를 켜면 virt-install 스크립트가 생성됩니다.\n'
+      + '# ------------------------------------------------------------\n';
+  }
+  const ks=V('ksPath').split('/').pop();
+  const L=[];
+  L.push('#!/bin/bash');
+  L.push('# virt-install : ' + V('vmName') + '   (' + new Date().toISOString().slice(0,10) + ')');
+  L.push('');
+  L.push('NAME=' + V('vmName'));
+  L.push('RAM_MB=' + (parseInt(V('ramGb'))*1024) + '        # ' + V('ramGb') + ' GB');
+  L.push('DISK_GB=' + V('diskGb'));
+  if(parseInt(V('diskGb2'))>0) L.push('DISK2_GB=' + V('diskGb2'));
+  L.push('VCPUS=' + V('vcpus'));
+  L.push('UUID="' + V('uuid') + '"');
+  L.push('IMG_DIR="' + V('imgDir') + '"');
+  L.push('ISO="' + V('isoPath') + '"');
+  L.push('KS_HOST="' + V('ksPath') + '"');
+  L.push('KS_FILE="' + ks + '"');
+  L.push('');
+  L.push('mkdir -p "$IMG_DIR"');
+  L.push('');
+  if(C('osFallback')){
+    const fam = V('osVariant').startsWith('rhel8') ? 'rhel8' : 'rhel7';
+    L.push('# ---- os-variant 자동 폴백 --------------------------------');
+    L.push('OSV="' + V('osVariant') + '"');
+    L.push('AVAIL=$(osinfo-query os short-id 2>/dev/null | awk \'NR>2 {print $1}\')');
+    L.push('if [ -n "$AVAIL" ] && ! echo "$AVAIL" | grep -qxF "$OSV"; then');
+    L.push('  ALT=$(echo "$AVAIL" | grep -E "^' + fam + '\\." | sort -V | tail -1)');
+    L.push('  [ -z "$ALT" ] && ALT=$(echo "$AVAIL" | grep -xF "' + fam + '-unknown")');
+    L.push('  [ -z "$ALT" ] && ALT=$(echo "$AVAIL" | grep -xF "' + fam + '")');
+    L.push('  if [ -n "$ALT" ]; then');
+    L.push('    echo "[!] os-variant \'$OSV\' 없음 → \'$ALT\' 로 대체 (dnf update osinfo-db 권장)"');
+    L.push('    OSV="$ALT"');
+    L.push('  else');
+    L.push('    echo "[!] ' + fam + ' 계열 os-variant 를 찾지 못했습니다 → 자동 감지 모드로 진행"');
+    L.push('    OSV=""');
+    L.push('  fi');
+    L.push('fi');
+    L.push('if [ -n "$OSV" ]; then OS="--os-variant=$OSV"; else OS="--os-variant detect=on,require=off"; fi');
+    L.push('# ----------------------------------------------------------');
+  }else{
+    L.push('OS="--os-variant=' + V('osVariant') + '"');
+  }
+
+  if(C('brCheck')){
+    const brs = [V('br1'), V('br2')].filter(Boolean);
+    L.push('');
+    L.push('# ---- 브리지 존재 확인 -------------------------------------');
+    L.push('for BR in ' + brs.join(' ') + '; do');
+    L.push('  if ! ip link show "$BR" >/dev/null 2>&1; then');
+    L.push('    echo "[X] 브리지 \'$BR\' 가 이 호스트에 없습니다."');
+    L.push('    echo "    사용 가능한 브리지 목록:"');
+    L.push('    ip -o link show type bridge | awk -F\': \' \'{print "      - "$2}\'');
+    L.push('    exit 1');
+    L.push('  fi');
+    L.push('done');
+    L.push('# ----------------------------------------------------------');
+  }
+  L.push('');
+  L.push('Net1="--network model=virtio,bridge=' + V('br1') + '"');
+  if(V('br2')) L.push('Net2="--network model=virtio,bridge=' + V('br2') + '"');
+  L.push('Disk1="--disk $IMG_DIR/$NAME.qcow2,size=$DISK_GB,format=qcow2,cache=none,io=native"');
+  if(parseInt(V('diskGb2'))>0)
+    L.push('Disk2="--disk $IMG_DIR/${NAME}_data.qcow2,size=$DISK2_GB,format=qcow2,cache=none,io=native"');
+  L.push('Src="--location=$ISO"');
+  if(C('isoCdrom'))
+    L.push('IsoCd="--disk path=$ISO,device=cdrom,readonly=on"   # %post 로컬 repo 구성용');
+  L.push(V('graphics')==='nographics'?'Gr="--nographics"':'Gr="--graphics vnc,listen=0.0.0.0"');
+  L.push('Cpu="--vcpus=$VCPUS"');
+  L.push('Ram="--ram=$RAM_MB"');
+  L.push('KsInject="--initrd-inject=$KS_HOST"');
+  if(C('uefiVm')) L.push('Boot="--boot uefi"');
+  L.push('');
+  const o=['$OS','$Net1', V('br2')?'$Net2':'', '$Disk1', parseInt(V('diskGb2'))>0?'$Disk2':'',
+           C('isoCdrom')?'$IsoCd':'',
+           '$Src','$Gr','$Cpu','$Ram','--uuid=$UUID','--name=$NAME','$KsInject',
+           C('uefiVm')?'$Boot':'', C('checkOff')?'--check disk_size=off':'',
+           C('autostart')?'--autostart':''].filter(Boolean).join(' ');
+  L.push('virt-install ' + o + ' \\');
+  L.push('  -x "ks=file:/$KS_FILE console=ttyS0,115200n8'
+         + (C('legacyNic') ? ' net.ifnames=0 biosdevname=0' : '') + '"');
+  L.push('');
+  L.push('# 콘솔 접속   : virsh console $NAME');
+  L.push('# 브리지 확인 : ip -o link show type bridge');
+  L.push('# 설치 실패 시 정리 후 재실행 :');
+  L.push('#   virsh destroy $NAME 2>/dev/null; virsh undefine $NAME --nvram --remove-all-storage 2>/dev/null');
+  L.push('#   rm -f $IMG_DIR/$NAME.qcow2');
+  return L.join('\n')+'\n';
+}
+
+/* ================= 설치 후 검증 스크립트 ================= */
+function buildCheck(){
+  const L=[], lvs=readLvs();
+  const oradata = lvs.filter(v=>v.kd==='lv' && v.mp.startsWith('/oradata') && v.nm);
+  const allPkgs = [...V('tnmsPkgs').split(/[\s,]+/), ...V('postYum').split(/[\s,]+/),
+                   ...V('pkgList').split(/[\s,]+/)].filter(Boolean);
+  const pkgs = [...new Set(allPkgs)].join(' ');
+  const nx = V('tNoexecMode');
+
+  L.push('#!/bin/bash');
+  L.push('# ============================================================');
+  L.push('#  설치 후 검증 스크립트 : ' + V('hostname'));
+  L.push('#  사용법 : bash ' + ckName());
+  L.push('#  결과   : [ OK ] 정상 / [FAIL] 불일치 / [WARN] 확인 필요');
+  L.push('# ============================================================');
+  L.push('');
+  L.push('PASS=0; FAIL=0; WARN=0');
+  L.push('ok()   { echo -e "  [ OK ] $1"; PASS=$((PASS+1)); }');
+  L.push('ng()   { echo -e "  [FAIL] $1"; FAIL=$((FAIL+1)); }');
+  L.push('warn() { echo -e "  [WARN] $1"; WARN=$((WARN+1)); }');
+  L.push('sec()  { echo; echo "── $1 ────────────────────────────────"; }');
+  L.push('');
+
+  /* 1. 네트워크 */
+  L.push('sec "1. 네트워크"');
+  if(V('bootproto')==='static' && V('ip')){
+    L.push(`IP_EXP="${V('ip')}"`);
+    L.push('IP_CUR=$(ip -4 -o addr show scope global | awk \'{print $4}\' | cut -d/ -f1 | head -1)');
+    L.push('[ "$IP_CUR" = "$IP_EXP" ] && ok "IP = $IP_CUR" || ng "IP 불일치 (기대: $IP_EXP / 실제: ${IP_CUR:-없음})"');
+    L.push(`GW_EXP="${V('gateway')}"`);
+    L.push('GW_CUR=$(ip route | awk \'/^default/ {print $3}\' | head -1)');
+    L.push('[ "$GW_CUR" = "$GW_EXP" ] && ok "GW = $GW_CUR" || ng "게이트웨이 불일치 (기대: $GW_EXP / 실제: ${GW_CUR:-없음})"');
+    L.push('NIC=$(ip -o link show | awk -F": " \'{print $2}\' | grep -vE "^(lo|virbr|docker)" | head -1)');
+    L.push('echo "  감지된 NIC: ${NIC:-없음}"');
+    L.push('CFG=/etc/sysconfig/network-scripts/ifcfg-$NIC');
+    L.push('BP=$(grep -h "^BOOTPROTO=" $CFG 2>/dev/null | cut -d= -f2)');
+    L.push('case "$BP" in');
+    L.push('  none|static) ok "BOOTPROTO=$BP (고정 IP)" ;;');
+    L.push('  dhcp)        ng "BOOTPROTO=dhcp — 고정 IP 설정이 적용되지 않았습니다" ;;');
+    L.push('  *)           warn "BOOTPROTO=${BP:-없음}" ;;');
+    L.push('esac');
+    L.push('ONB=$(grep -h "^ONBOOT=" $CFG 2>/dev/null | cut -d= -f2)');
+    L.push('[ "$ONB" = "yes" ] && ok "ONBOOT=yes ($NIC)" || ng "ONBOOT 이 yes 가 아님 ($NIC → ${ONB:-없음})"');
+    L.push('ping -c1 -W2 $GW_EXP >/dev/null 2>&1 && ok "게이트웨이 ping 성공" || warn "게이트웨이 ping 실패 (방화벽일 수 있음)"');
+  }else{
+    L.push('ip -4 -o addr show scope global | awk \'{print "  IP: "$2" "$4}\'');
+    L.push('warn "DHCP 설정 — IP 자동 검증 생략"');
+  }
+  L.push(`HN=$(hostname); [ "$HN" = "${V('hostname')}" ] && ok "호스트명 = $HN" || ng "호스트명 불일치 (기대: ${V('hostname')} / 실제: $HN)"`);
+
+  /* 2. 파티션 */
+  L.push('');
+  L.push('sec "2. 파일시스템 / 마운트"');
+  lvs.filter(v=>v.fs!=='swap').forEach(v=>{
+    L.push(`mountpoint -q "${v.mp}" && ok "${v.mp} 마운트됨 ($(df -h ${v.mp} 2>/dev/null | awk 'NR==2{print $2}'))" || ng "${v.mp} 마운트 안 됨"`);
+  });
+
+  /* 3. swap */
+  L.push('');
+  L.push('sec "3. swap (메모리의 50% 이상)"');
+  L.push('MEM_MB=$(free -m | awk \'/^Mem:/ {print $2}\')');
+  L.push('SWP_MB=$(free -m | awk \'/^Swap:/ {print $2}\')');
+  L.push('MIN_MB=$((MEM_MB / 2))');
+  L.push('echo "  메모리 ${MEM_MB}MB / swap ${SWP_MB}MB / 최소요구 ${MIN_MB}MB"');
+  L.push('[ "$SWP_MB" -ge "$MIN_MB" ] && ok "swap 충분" || ng "swap 부족 (메모리의 50% 미만)"');
+
+  /* 4. tune2fs */
+  if(cardOn('cardTnms') && C('tTune2fs') && oradata.length){
+    L.push('');
+    L.push('sec "4. oradata 예약블록 (tune2fs -m0)"');
+    oradata.forEach(v=>{
+      const dev = `/dev/mapper/${v.tg}-${v.nm}`;
+      L.push(`R=$(tune2fs -l ${dev} 2>/dev/null | awk -F: '/Reserved block count/{print $2}' | tr -d " ")`);
+      L.push(`if [ -z "$R" ]; then warn "${dev} : ext 파일시스템 아님 또는 없음"`);
+      L.push(`elif [ "$R" = "0" ]; then ok "${v.mp} 예약블록 0"`);
+      L.push(`else ng "${v.mp} 예약블록 $R (tune2fs -m0 ${dev} 필요)"; fi`);
+    });
+  }
+
+  /* 5. 디렉터리 */
+  if(C('tIso') || C('tMkdir')){
+    L.push('');
+    L.push('sec "5. 디렉터리"');
+    const dirs=[];
+    if(C('tIso')) dirs.push('/iso');
+    if(C('tMkdir')){ oradata.forEach(v=>dirs.push(v.mp)); dirs.push(V('oraHome')+'/oramedia'); }
+    dirs.forEach(d=>L.push(`[ -d "${d}" ] && ok "${d}" || ng "${d} 없음"`));
+  }
+
+  /* 6. locale */
+  if(C('tLocale')){
+    L.push('');
+    L.push('sec "6. 로케일"');
+    L.push(`LC=$(localectl status 2>/dev/null | awk -F= '/LANG/{print $2}' | tr -d " ")`);
+    L.push(`[ "$LC" = "${V('lang')}" ] && ok "LANG = $LC" || ng "LANG 불일치 (기대: ${V('lang')} / 실제: ${'${LC:-없음}'})"`);
+    L.push('[ -z "$LC_ALL" ] && ok "LC_ALL 미설정" || ng "LC_ALL 이 설정됨: $LC_ALL"');
+  }
+
+  /* 7. hosts */
+  L.push('');
+  L.push('sec "7. /etc/hosts"');
+  if(C('tHosts') && V('bootproto')==='static' && V('ip')){
+    L.push(`grep -q "^${V('ip')}[[:space:]]" /etc/hosts && ok "${V('ip')} ${V('hostname')} 등록됨" || ng "자기 IP 항목 없음"`);
+    L.push('LN_SELF=$(grep -n "^' + V('ip') + '[[:space:]]" /etc/hosts | head -1 | cut -d: -f1)');
+    L.push('LN_LOCAL=$(grep -n "localhost" /etc/hosts | head -1 | cut -d: -f1)');
+    L.push('if [ -n "$LN_SELF" ] && [ -n "$LN_LOCAL" ]; then');
+    L.push('  [ "$LN_SELF" -lt "$LN_LOCAL" ] && ok "localhost 위에 위치 ($LN_SELF행 < $LN_LOCAL행)" || ng "localhost 아래에 있음"');
+    L.push('fi');
+  }
+  V('hostsExtra').split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>{
+    const ipx=l.split(/\s+/)[0];
+    L.push(`grep -q "^${ipx}[[:space:]]" /etc/hosts && ok "${l}" || ng "${l} 없음"`);
+  });
+
+  /* 8. sysctl */
+  if(cardOn('cardTnms') && C('tSysctl')){
+    L.push('');
+    L.push('sec "8. sysctl 가상메모리"');
+    [['vm.swappiness',V('vmSwappiness')],['vm.min_free_kbytes',V('vmMinFree')],
+     ['vm.dirty_ratio',V('vmDirty')],['vm.dirty_background_ratio',V('vmDirtyBg')]].forEach(([k,v])=>{
+      L.push(`CUR=$(sysctl -n ${k} 2>/dev/null)`);
+      L.push(`[ "$CUR" = "${v}" ] && ok "${k} = $CUR" || ng "${k} = $CUR (기대: ${v})"`);
+    });
+  }
+
+  /* 9. vsftpd */
+  if(cardOn('cardTnms') && C('tVsftpd')){
+    L.push('');
+    L.push('sec "9. vsftpd"');
+    L.push('grep -qE "^anonymous_enable[[:space:]]*=[[:space:]]*NO" /etc/vsftpd/vsftpd.conf 2>/dev/null \\');
+    L.push('  && ok "anonymous_enable=NO" || ng "anonymous_enable 이 NO 가 아님"');
+    L.push('systemctl is-enabled vsftpd >/dev/null 2>&1 && ok "vsftpd enabled" || warn "vsftpd 비활성"');
+  }
+
+  /* 10. SSH */
+  L.push('');
+  L.push('sec "10. SSH / umask"');
+  if(C('pSshRoot'))
+    L.push('grep -qE "^PermitRootLogin[[:space:]]+yes" /etc/ssh/sshd_config && ok "PermitRootLogin yes" || ng "PermitRootLogin 이 yes 아님"');
+  if(cardOn('cardTnms') && C('tSshLimit')){
+    L.push('grep -qE "^MaxStartups[[:space:]]+150" /etc/ssh/sshd_config && ok "MaxStartups 150" || ng "MaxStartups 150 아님"');
+    L.push('grep -qE "^MaxSessions[[:space:]]+100" /etc/ssh/sshd_config && ok "MaxSessions 100" || ng "MaxSessions 100 아님"');
+  }
+  L.push('systemctl is-active sshd >/dev/null 2>&1 && ok "sshd 실행 중" || ng "sshd 중지됨"');
+  if(cardOn('cardTnms') && C('tUmask')){
+    L.push('UM=$(umask)');
+    L.push('[ "$UM" = "0022" ] && ok "umask = $UM" || ng "umask = $UM (기대: 0022)"');
+  }
+
+  /* 11. /tmp noexec */
+  if(cardOn('cardTnms') && nx!=='skip'){
+    L.push('');
+    L.push('sec "11. /tmp noexec"');
+    L.push('TMPOPT=$(findmnt -no OPTIONS /tmp 2>/dev/null)');
+    L.push('echo "  현재 옵션: ${TMPOPT:-(별도 마운트 아님)}"');
+    if(nx==='remove'){
+      L.push('if echo "$TMPOPT" | grep -q noexec; then ng "/tmp 에 noexec 가 걸려 있음 (설치 스크립트 실행 불가)"');
+      L.push('else ok "/tmp 에 noexec 없음"; fi');
+    }else{
+      L.push('if echo "$TMPOPT" | grep -q noexec; then ok "/tmp 에 noexec 적용됨"');
+      L.push('else ng "/tmp 에 noexec 없음"; fi');
+    }
+  }
+
+  /* 12. 서비스 */
+  L.push('');
+  L.push('sec "12. 서비스 / 보안"');
+  if(C('selinuxOff'))
+    L.push('S=$(getenforce 2>/dev/null); [ "$S" = "Disabled" ] && ok "SELinux Disabled" || ng "SELinux = $S"');
+  if(C('pFwOff'))
+    L.push('systemctl is-active firewalld >/dev/null 2>&1 && ng "firewalld 실행 중" || ok "firewalld 중지됨"');
+  if(C('tChrony')){
+    L.push('systemctl is-active chronyd >/dev/null 2>&1 && ok "chronyd 실행 중" || ng "chronyd 중지됨"');
+    if(V('ntp1')) L.push(`grep -q "${V('ntp1')}" /etc/chrony.conf && ok "NTP 서버 ${V('ntp1')} 등록" || ng "NTP 서버 미등록"`);
+    L.push('chronyc sources 2>/dev/null | tail -n +3 | head -3 | sed "s/^/    /"');
+  }
+
+  /* 12b. WS-NOC 전용 검증 */
+  if(cardOn('cardWsnoc') && (C('wIpv6Off') || C('wIpForward') || C('wInotify') || C('wChrony'))){
+    L.push('');
+    L.push('sec "12b. WS-NOC 커널/네트워크"');
+    if(C('wIpv6Off')){
+      L.push('V6=$(sysctl -n net.ipv6.conf.all.disable_ipv6 2>/dev/null)');
+      L.push('[ "$V6" = "1" ] && ok "IPv6 비활성 (disable_ipv6=1)" || ng "IPv6 활성 상태 (disable_ipv6=$V6)"');
+    }
+    if(C('wIpForward')){
+      L.push('FW=$(sysctl -n net.ipv4.ip_forward 2>/dev/null)');
+      L.push('[ "$FW" = "1" ] && ok "ip_forward = 1" || ng "ip_forward = $FW (기대: 1)"');
+    }
+    if(C('wInotify')){
+      L.push('IN=$(sysctl -n fs.inotify.max_user_watches 2>/dev/null)');
+      L.push('[ "$IN" = "20000" ] && ok "inotify.max_user_watches = 20000" || ng "inotify = $IN (기대: 20000)"');
+    }
+    if(C('wChrony') && V('wNtpServer'))
+      L.push(`grep -q "${V('wNtpServer')}" /etc/chrony.conf && ok "chrony server ${V('wNtpServer')} 등록" || ng "chrony server 미등록"`);
+  }
+
+  /* 13. 저장소 */
+  L.push('');
+  L.push('sec "13. 패키지 저장소 (repo)"');
+  L.push('RC=$(dnf repolist 2>/dev/null | grep -c "^[a-zA-Z]" )');
+  L.push('if dnf repolist 2>/dev/null | grep -qiE "baseos|appstream"; then');
+  L.push('  ok "저장소 활성 — dnf install 사용 가능"');
+  L.push('  dnf repolist 2>/dev/null | sed "s/^/    /" | head -5');
+  L.push('else');
+  L.push('  ng "활성 저장소 없음 — dnf install 이 전부 실패합니다"');
+  L.push('  echo "        → /etc/yum.repos.d/ 확인, 또는 /iso 복사 여부 확인"');
+  L.push('fi');
+  if(V('repoMode')==='iso_copy'){
+    L.push('[ -d /iso/BaseOS ] && ok "/iso/BaseOS 존재 ($(du -sh /iso 2>/dev/null | cut -f1))" || ng "/iso/BaseOS 없음 — ISO 복사 실패"');
+    L.push('[ -d /iso/AppStream ] && ok "/iso/AppStream 존재" || ng "/iso/AppStream 없음"');
+  }
+
+  /* 14. 패키지 */
+  L.push('');
+  L.push('sec "14. 패키지"');
+  L.push('MISS=""');
+  L.push('for p in ' + pkgs + '; do');
+  L.push('  case "$p" in @*|-*) continue;; esac');
+  L.push('  if rpm -q "$p" >/dev/null 2>&1; then PASS=$((PASS+1));');
+  L.push('  else MISS="$MISS $p"; fi');
+  L.push('done');
+  L.push('if [ -z "$MISS" ]; then ok "요청 패키지 전부 설치됨"');
+  L.push('else');
+  L.push('  ng "미설치 패키지:$MISS"');
+  L.push('  echo "        → jemalloc 은 EPEL 저장소에만 있습니다 (설치 ISO 에 없음)"');
+  L.push('fi');
+
+  /* 요약 */
+  L.push('');
+  L.push('echo');
+  L.push('echo "════════════════════════════════════════════════"');
+  L.push('echo "  결과 : OK ${PASS}  /  FAIL ${FAIL}  /  WARN ${WARN}"');
+  L.push('echo "════════════════════════════════════════════════"');
+  L.push('[ "$FAIL" -eq 0 ] && echo "  ✔ 모든 필수 항목 통과" || echo "  ✘ FAIL 항목을 확인하세요"');
+  L.push('exit $FAIL');
+  return L.join('\n')+'\n';
+}
+
+/* ================= 렌더 ================= */
+let curTab='ks';
+function showTab(t){curTab=t;
+  document.getElementById('tabKs').classList.toggle('on',t==='ks');
+  document.getElementById('tabSh').classList.toggle('on',t==='sh');
+  document.getElementById('tabCk').classList.toggle('on',t==='ck');
+  render();}
+function curText(){ return curTab==='ks'?buildKS() : curTab==='sh'?buildSH() : buildCheck(); }
+function curName(){ return curTab==='ks'?ksName() : curTab==='sh'?shName() : ckName(); }
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function hi(t){return esc(t).split('\n').map(l=>{
+  if(/^\s*#/.test(l)) return '<span class="c">'+l+'</span>';
+  return l.replace(/^([a-zA-Z_%][\w\-]*)/,'<span class="k">$1</span>')
+          .replace(/("[^"]*")/g,'<span class="s">$1</span>');}).join('\n');}
+function render(){
+  /* 탭 라벨을 실제 저장될 파일명으로 표시 */
+  document.getElementById('tabKs').textContent = ksName();
+  document.getElementById('tabSh').textContent = shName();
+  document.getElementById('tabCk').textContent = ckName();
+
+  document.getElementById('urlWrap').style.display = V('srcType')==='url'?'flex':'none';
+  document.getElementById('repoUrlWrap').style.display = V('repoMode')==='url'?'flex':'none';
+  document.querySelectorAll('.staticOnly').forEach(e=>e.style.display = V('bootproto')==='static'?'flex':'none');
+
+  const lvs=readLvs();
+  const disks=V('disks').split(/[,\s]+/).filter(Boolean);
+  const total=(parseInt(V('diskGb'))||0)+(parseInt(V('diskGb2'))||0);
+  const fixed=lvs.filter(v=>!v.gw).reduce((a,b)=>a+b.sz,0);
+  const growN=lvs.filter(v=>v.gw).length;
+  const free=total*1024-fixed;
+  const m=document.getElementById('lvMeter');
+  const swapMb = lvs.filter(v=>v.fs==='swap').reduce((a,b)=>a+b.sz,0);
+  const ramMb  = (parseInt(V('ramGb'))||0)*1024;
+  const swapBad = ramMb>0 && swapMb < ramMb*0.5;
+  m.className='meter'+((free<2048||swapBad)?' bad':'');
+  m.innerHTML=`디스크 <b>${disks.join(', ')||'-'}</b> 총 <b>${total} GB</b> · 고정 할당 <b>${(fixed/1024).toFixed(1)} GB</b> · 남은 공간 <b>${(free/1024).toFixed(1)} GB</b>`
+    + (growN?` → grow 볼륨 ${growN}개가 사용`:' · grow 볼륨 없음')
+    + `<br>swap <b>${(swapMb/1024).toFixed(0)} GB</b> / 메모리 <b>${V('ramGb')} GB</b> (${ramMb?Math.round(swapMb/ramMb*100):0}%)`
+    + (swapBad?' ⚠ TNMS 요구사항은 메모리의 50% 이상입니다.':' ✓')
+    + (free<2048?'<br>⚠ 디스크 용량 부족 — VM 디스크 GB를 늘리세요.':'');
+
+  document.getElementById('out').innerHTML = hi(curText());
+}
+
+/* ================= 유틸 ================= */
+function tog(h){h.closest('.card').classList.toggle('collapsed');}
+function genUuid(){document.getElementById('uuid').value='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);});render();}
+function dl(n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=n;a.click();URL.revokeObjectURL(a.href);}
+/* KS 파일 경로(호스트)에 입력된 이름을 그대로 사용한다 */
+function ksName(){
+  let n = V('ksPath').split('/').pop().trim();
+  if(!n) n = 'ks_' + (V('hostname')||'server') + '.ks';
+  if(!/\.(ks|cfg)$/i.test(n)) n += '.ks';
+  return n;
+}
+function shName(){ return 'virt_install_' + (V('vmName')||'vm') + '.sh'; }
+function ckName(){ return 'check_' + (V('hostname')||'server') + '.sh'; }
+function downloadOne(){ dl(curName(), curText()); toast(curName() + ' 저장'); }
+function downloadAll(){
+  dl(ksName(), buildKS());
+  setTimeout(()=>dl(shName(), buildSH()), 300);
+  setTimeout(()=>dl(ckName(), buildCheck()), 600);
+  toast('3개 파일을 저장했습니다.');
+}
+function copyOut(){navigator.clipboard.writeText(curText());toast(curName()+' 복사됨');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800);}
+
+function saveProfile(){
+  const d={inputs:{},checks:{},grps:[],vgs:[],lvs:[]};
+  document.querySelectorAll('input[type=text],input[type=number],select,textarea').forEach(e=>{if(e.id)d.inputs[e.id]=e.value;});
+  document.querySelectorAll('input[type=checkbox]').forEach(e=>{if(e.id)d.checks[e.id]=e.checked;});
+  document.querySelectorAll('.grp:checked').forEach(c=>d.grps.push(c.value));
+  const be=document.querySelector('input[name="baseEnv"]:checked'); d.baseEnv = be?be.value:'';
+  d.vgs=readVgs().map(v=>[v.vg,v.dk]);
+  d.lvs=readLvs().map(v=>[v.kd,v.mp,v.tg,v.nm,v.fs,v.sz,v.gw]);
+  dl((V('hostname')||'profile')+'_ks.json',JSON.stringify(d,null,2));
+  toast('프로파일을 저장했습니다.');
+}
+function loadProfile(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const d=JSON.parse(e.target.result);
+    for(const k in d.inputs){const el=document.getElementById(k); if(el)el.value=d.inputs[k];}
+    for(const k in d.checks){const el=document.getElementById(k); if(el)el.checked=d.checks[k];}
+    document.querySelectorAll('.grp').forEach(c=>c.checked=d.grps.includes(c.value));
+    const be=document.querySelector(`input[name="baseEnv"][value="${d.baseEnv||''}"]`); if(be)be.checked=true;
+    document.getElementById('vgBody').innerHTML='';
+    (d.vgs||[]).forEach(v=>addVg(v[0],v[1]));
+    document.getElementById('lvBody').innerHTML='';
+    (d.lvs||[]).forEach(v=>addLv(...v));
+    render(); toast('불러왔습니다.');
+  }catch(err){toast('불러오기 실패: JSON을 확인하세요.');}};
+  r.readAsText(f); inp.value='';
+}
+
+document.querySelectorAll('input,select,textarea').forEach(e=>{
+  e.addEventListener('input',render); e.addEventListener('change',render);
+});
+applyCardSet(V('profile')); applyPreset(); render();
+</script>
+</body>
+</html>
