@@ -114,6 +114,11 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
   table.pv-table tbody tr:nth-child(even){ background:#f3f7fb; }
   /* 폼 포커스 시 A4 해당 셀 강조 */
   #sheet [data-f].hl{ background:#fff3b0 !important; box-shadow:inset 0 0 0 2px #e0a800; }
+  /* A4 클릭 → 좌측 폼으로 이동 (클릭 가능 표시) */
+  #sheet [data-f]{ cursor:pointer; }
+  #sheet [data-f]:hover{ outline:2px dashed #93b4f5; outline-offset:-2px; }
+  .form-flash{ animation:formFlash 1.2s ease; border-radius:8px; }
+  @keyframes formFlash{ 0%,100%{ background:transparent; } 20%,60%{ background:#dbeafe; } }
   #sheet .rs-action .ac-sub.hl{ background:#fff3b0 !important; box-shadow:inset 0 0 0 2px #e0a800; }
   .form-actions{display:flex; gap:8px; margin-top:6px; padding-top:16px; border-top:1px solid var(--line);}
   .save-note{font-size:11px; color:var(--warn); background:#fffbeb; border:1px solid #fde68a; border-radius:7px;
@@ -1049,6 +1054,30 @@ function applyHighlight(){ const sheet=$('sheet'); if(!sheet) return;
   const tgt=sheet.querySelector(`[data-f="${hlField}"]`);
   if(tgt){ tgt.classList.add('hl'); tgt.scrollIntoView({block:'nearest',behavior:'smooth'}); } }
 function setHighlight(el){ const t=tokenFromEl(el); if(t!==hlField){ hlField=t; applyHighlight(); } }
+
+/* ===== A4 미리보기 클릭 → 좌측 입력 항목으로 자동 안내 ===== */
+/* data-f 토큰 → 폼에서 포커스할 대상 (id 또는 radio name) */
+const A4_TO_FORM={ issue:'f_issueSummary', handling:'f_handlingSummary', supportStaff:'staff',
+  severity:'severity', asWarranty:'asWarranty', supportCategory:'supportCategory' };
+function focusFormField(token){ if(!token) return;
+  const RADIO=['severity','asWarranty','supportCategory'];
+  let el=null;
+  if(token==='supportStaff'){ el=document.querySelector('.staffName'); }
+  else if(RADIO.includes(token)){ el=document.querySelector(`input[name="${token}"]`); }
+  else { el=$(A4_TO_FORM[token]||('f_'+token)); }
+  if(!el) return;
+  // 좌측 폼 영역을 해당 항목 위치로 스크롤 + 포커스 + 잠깐 깜빡임
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+  try{ el.focus({preventScroll:true}); }catch(e){ el.focus(); }
+  const box = el.closest('.field') || el.closest('.form-row') || el.parentElement || el;
+  box.classList.add('form-flash'); setTimeout(()=> box.classList.remove('form-flash'), 1200);
+  hlField=token; applyHighlight();
+}
+// A4 셀 클릭 위임 (미리보기는 매번 새로 그려지므로 부모에 위임)
+function bindSheetClick(){ const sheet=$('sheet'); if(!sheet) return;
+  sheet.addEventListener('click', e=>{ const cell=e.target.closest('[data-f]'); if(!cell) return;
+    focusFormField(cell.getAttribute('data-f')); }); }
+bindSheetClick();
 
 /* 인쇄 */
 function printCurrent(){ $('printRoot').innerHTML=`<div class="report-sheet">${buildSheetHTML(getForm())}</div>`; window.print(); }
