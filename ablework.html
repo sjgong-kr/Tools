@@ -51,15 +51,128 @@
 
   /* ===== Login Screen ===== */
   #login-overlay {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+    position: fixed; inset: 0; display: flex; z-index: 9999; background: var(--bg);
   }
-  .login-box {
-    background: var(--bg-elev); padding: 40px 30px; border-radius: 8px;
-    box-shadow: var(--shadow-md); width: 100%; max-width: 360px; text-align: center;
-    border: 1px solid var(--line);
+
+  /* 왼쪽 : 브랜드 비주얼 패널 */
+  .login-visual {
+    flex: 1; position: relative; overflow: hidden;
+    background: linear-gradient(155deg, #232D48 0%, #1A2238 45%, #10162A 100%);
+    color: #E8E4DC;
+    padding: 60px 56px;
+    display: flex; flex-direction: column; justify-content: space-between;
   }
-  .login-box .form-group { text-align: left; margin-bottom: 16px; }
+  /* 은은한 격자 무늬 */
+  .login-visual::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(ellipse at 30% 20%, #000 20%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse at 30% 20%, #000 20%, transparent 78%);
+  }
+  /* 황동빛 광원 */
+  .login-visual::after {
+    content: ''; position: absolute; pointer-events: none;
+    width: 620px; height: 620px; right: -220px; bottom: -260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,163,94,0.20) 0%, rgba(201,163,94,0.06) 45%, transparent 70%);
+  }
+  .login-visual > * { position: relative; z-index: 1; }
+
+  .lv-top { display: flex; align-items: center; gap: 12px; }
+  .lv-logo {
+    width: 42px; height: 42px; border-radius: 6px; flex-shrink: 0;
+    background: linear-gradient(140deg, var(--brass-soft), var(--brass));
+    display: flex; align-items: center; justify-content: center;
+    color: #1A2238; font-size: 19px; box-shadow: 0 4px 14px rgba(168,120,56,0.35);
+  }
+  .lv-logo-text { font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 0.02em; }
+  .lv-logo-sub { font-size: 11px; color: rgba(232,228,220,0.55); letter-spacing: 0.14em; margin-top: 1px; }
+
+  .lv-headline {
+    font-family: var(--serif); font-size: 40px; font-weight: 600;
+    line-height: 1.32; letter-spacing: -0.01em; margin-bottom: 18px;
+  }
+  .lv-headline em { font-style: normal; color: var(--brass-soft); }
+  .lv-desc { font-size: 14px; color: rgba(232,228,220,0.62); line-height: 1.85; font-weight: 300; }
+  .lv-rule { width: 46px; height: 2px; background: var(--brass); margin-bottom: 26px; }
+
+  .lv-features { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 34px; }
+  .lv-feature { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: rgba(232,228,220,0.72); }
+  .lv-feature i { color: var(--brass-soft); font-size: 13px; }
+
+  .lv-foot { font-size: 11px; color: rgba(232,228,220,0.34); letter-spacing: 0.04em; }
+
+  /* 오른쪽 : 입력 패널 */
+  .login-panel {
+    width: 480px; flex-shrink: 0; background: var(--bg-elev);
+    display: flex; align-items: center; justify-content: center; padding: 40px 56px;
+    box-shadow: -1px 0 0 var(--line);
+  }
+  .login-box { width: 100%; max-width: 340px; }
+
+  .login-eyebrow {
+    font-size: 11px; letter-spacing: 0.2em; color: var(--brass); font-weight: 600; margin-bottom: 10px;
+  }
+  .login-title { font-family: var(--serif); font-size: 27px; font-weight: 600; color: var(--ink); }
+  .login-sub { font-size: 13px; color: var(--muted); margin-top: 8px; margin-bottom: 34px; }
+
+  .login-field { margin-bottom: 18px; }
+  .login-field label {
+    display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-2);
+    letter-spacing: 0.06em; margin-bottom: 7px;
+  }
+  .login-input-wrap { position: relative; }
+  .login-input-wrap > i.fld-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 13px; transition: color 0.18s;
+  }
+  .login-input-wrap input {
+    width: 100%; padding: 13px 14px 13px 40px;
+    border: 1px solid var(--line); border-radius: 6px;
+    background: var(--paper); font-size: 14px; color: var(--ink);
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  }
+  .login-input-wrap input::placeholder { color: #A9A396; font-weight: 300; }
+  .login-input-wrap input:focus {
+    border-color: var(--brass); background: var(--bg-elev);
+    box-shadow: 0 0 0 3px rgba(168,120,56,0.11);
+  }
+  .login-input-wrap input:focus + i.fld-icon,
+  .login-input-wrap input:focus ~ i.fld-icon { color: var(--brass); }
+  .pw-toggle {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    padding: 8px 10px; color: var(--muted); font-size: 13px; border-radius: 4px;
+  }
+  .pw-toggle:hover { color: var(--ink); }
+
+  .btn-login {
+    width: 100%; padding: 14px; margin-top: 8px;
+    background: var(--ink); color: #F7F4ED; border-radius: 6px;
+    font-size: 14px; font-weight: 600; letter-spacing: 0.02em;
+    transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+    box-shadow: 0 3px 12px rgba(26,34,56,0.16);
+  }
+  .btn-login:hover:not(:disabled) { background: #252F4C; box-shadow: 0 6px 18px rgba(26,34,56,0.22); }
+  .btn-login:active:not(:disabled) { transform: translateY(1px); }
+  .btn-login:disabled { opacity: 0.62; cursor: default; }
+
+  .login-error-box {
+    display: none; align-items: center; gap: 8px; margin-top: 16px;
+    padding: 11px 13px; border-radius: 6px;
+    background: rgba(139,42,42,0.06); border: 1px solid rgba(139,42,42,0.22);
+    color: var(--accent); font-size: 12.5px; font-weight: 500;
+  }
+  .login-note {
+    margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 11.5px; color: var(--muted); line-height: 1.75;
+  }
+
+  @media (max-width: 980px) {
+    .login-visual { display: none; }
+    .login-panel { width: 100%; box-shadow: none; padding: 32px 24px; }
+  }
 
   /* ===== Layout ===== */
   .app {
@@ -490,19 +603,75 @@
 
 <!-- LOGIN VIEW -->
 <div id="login-overlay">
-  <div class="login-box">
-    <div class="brand-mark" style="color:var(--ink); font-size:24px; margin-bottom:24px;">에이블컴 업무관리</div>
-    <div class="form-group">
-      <label>아이디</label>
-      <input type="text" id="login-id" placeholder="아이디 입력 (예: ablecom)" onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+
+  <!-- 왼쪽 : 브랜드 비주얼 -->
+  <div class="login-visual">
+    <div class="lv-top">
+      <div class="lv-logo"><i class="fa-solid fa-network-wired"></i></div>
+      <div>
+        <div class="lv-logo-text">주식회사 에이블컴</div>
+        <div class="lv-logo-sub">ABLECOM · TECH TEAM</div>
+      </div>
     </div>
-    <div class="form-group">
-      <label>비밀번호</label>
-      <input type="password" id="login-pw" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') window.handleLogin()">
+
+    <div>
+      <div class="lv-rule"></div>
+      <div class="lv-headline">기술팀의 모든 업무를<br><em>하나의 흐름</em>으로.</div>
+      <div class="lv-desc">
+        주간 실적부터 월간 보고까지, 흩어져 있던 기록을<br>
+        한 곳에서 정리하고 즉시 문서로 만듭니다.
+      </div>
+      <div class="lv-features">
+        <div class="lv-feature"><i class="fa-solid fa-calendar-check"></i> 주간 · 월간 업무보고</div>
+        <div class="lv-feature"><i class="fa-solid fa-diagram-project"></i> 프로젝트 진행 관리</div>
+        <div class="lv-feature"><i class="fa-solid fa-file-excel"></i> 보고서 자동 생성</div>
+      </div>
     </div>
-    <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:10px; font-size:14px;" onclick="window.handleLogin()">로그인</button>
-    <div id="login-error" style="color:var(--accent); font-size:12px; margin-top:14px; display:none; font-weight:500;"></div>
+
+    <div class="lv-foot">© ABLECOM · Technical Support Division</div>
   </div>
+
+  <!-- 오른쪽 : 로그인 입력 -->
+  <div class="login-panel">
+    <div class="login-box">
+      <div class="login-eyebrow">WORK MANAGEMENT</div>
+      <div class="login-title">업무관리 시스템</div>
+      <div class="login-sub">사내 계정으로 로그인해 주세요.</div>
+
+      <div class="login-field">
+        <label for="login-id">아이디</label>
+        <div class="login-input-wrap">
+          <input type="text" id="login-id" autocomplete="username" placeholder="아이디 입력"
+                 onkeypress="if(event.key==='Enter') document.getElementById('login-pw').focus()">
+          <i class="fa-regular fa-user fld-icon"></i>
+        </div>
+      </div>
+
+      <div class="login-field">
+        <label for="login-pw">비밀번호</label>
+        <div class="login-input-wrap">
+          <input type="password" id="login-pw" autocomplete="current-password" placeholder="비밀번호 입력"
+                 onkeypress="if(event.key==='Enter') window.handleLogin()">
+          <i class="fa-solid fa-lock fld-icon"></i>
+          <button type="button" class="pw-toggle" id="pw-toggle" onclick="window.togglePw()" title="비밀번호 표시">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-login" id="btn-login" onclick="window.handleLogin()">로그인</button>
+
+      <div id="login-error" class="login-error-box">
+        <i class="fa-solid fa-circle-exclamation"></i><span id="login-error-msg"></span>
+      </div>
+
+      <div class="login-note">
+        계정이 없으시면 기술팀 관리자에게 문의해 주세요.<br>
+        본 시스템은 사내 업무용으로만 사용됩니다.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="app">
@@ -1126,11 +1295,12 @@
     const errEl = document.getElementById('login-error');
 
     if(!idInput || !pwInput) {
-        errEl.textContent = "아이디와 비밀번호를 입력해주세요.";
-        errEl.style.display = "block";
+        document.getElementById('login-error-msg').textContent = "아이디와 비밀번호를 입력해주세요.";
+        errEl.style.display = "flex";
         return;
     }
     errEl.style.display = "none";
+    setLoginLoading(true);
     if(document.activeElement) document.activeElement.blur();
 
     try {
@@ -1172,9 +1342,29 @@
 
   function showLoginError(msg) {
       const errEl = document.getElementById('login-error');
-      errEl.textContent = msg;
-      errEl.style.display = "block";
+      document.getElementById('login-error-msg').textContent = msg;
+      errEl.style.display = "flex";
+      setLoginLoading(false);
   }
+
+  // 로그인 버튼 로딩 상태 (중복 클릭 방지)
+  function setLoginLoading(on) {
+      const btn = document.getElementById('btn-login');
+      if (!btn) return;
+      btn.disabled = on;
+      btn.innerHTML = on
+        ? '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:7px;"></i>확인 중...'
+        : '로그인';
+  }
+
+  // 비밀번호 표시 / 숨김
+  window.togglePw = function() {
+      const inp = document.getElementById('login-pw');
+      const icon = document.querySelector('#pw-toggle i');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+  };
 
   window.doLogout = function() {
       try { sessionStorage.removeItem('ablework_session'); } catch(e){}
@@ -1899,7 +2089,56 @@
   };
 
   // 엑셀 Export (주간 보고서)
-  window.exportWeeklyExcel = function() {
+  window.exportWeeklyExcel = async function() {
+    if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+    if (typeof ExcelJS === 'undefined') {
+      window.showToast('서식 라이브러리를 불러오지 못해 기본 형식으로 내보냅니다.');
+      return exportWeeklyExcelLegacy();
+    }
+
+    try {
+      // 전주 / 금주 기간 문자열 계산
+      const [sy, sm, sd] = activeWeek.start.split('-');
+      const prevStart = new Date(sy, sm - 1, sd - 7);
+      const prevEnd = new Date(prevStart);
+      prevEnd.setDate(prevEnd.getDate() + 6);
+
+      const prevRangeStr = `${prevStart.getMonth()+1}/${prevStart.getDate()} ~ ${prevEnd.getMonth()+1}/${prevEnd.getDate()}`;
+      const thisRangeStr = `${parseInt(activeWeek.start.split('-')[1])}/${parseInt(activeWeek.start.split('-')[2])} ~ ${parseInt(activeWeek.end.split('-')[1])}/${parseInt(activeWeek.end.split('-')[2])}`;
+
+      const wb = await xlBuildReport({
+        sheetName: '주간업무보고',
+        docTitle: '주간 업무보고',
+        subtitle: `${activeWeek.title}   (${activeWeek.start} ~ ${activeWeek.end})`,
+        columns: [
+          { header: '구 분',    width: 14 },
+          { header: '사 업 명', width: 28 },
+          { header: `전 주 실 적\n( ${prevRangeStr} )`, width: 46 },
+          { header: `금 주 계 획\n( ${thisRangeStr} )`, width: 46 }
+        ],
+        sections: activeWeek.categories
+          .filter(cat => cat.projects.length > 0)
+          .map(cat => ({
+            label: cat.name,
+            rows: cat.projects.map(p => ([
+              { t: 'proj', name: p.name, owner: p.owner },
+              { t: 'bullets', text: p.prev },
+              { t: 'bullets', text: p.plan }
+            ]))
+          }))
+      });
+
+      await xlDownload(wb, `에이블컴_주간업무보고_${activeWeek.start}`);
+      window.showToast('주간 업무보고서(xlsx)가 생성되었습니다.');
+    } catch (e) {
+      console.error(e);
+      window.showToast('엑셀 생성 실패: ' + e.message + ' (기본 형식으로 대체합니다)');
+      exportWeeklyExcelLegacy();
+    }
+  };
+
+  // [예비] 구버전 주간 엑셀 - ExcelJS 로딩 실패 시 사용
+  function exportWeeklyExcelLegacy() {
     if (!activeWeek || activeWeek.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
 
     const [sy, sm, sd] = activeWeek.start.split('-');
@@ -1951,7 +2190,8 @@
     `;
 
     exportHtmlTableToExcel(htmlTable, `에이블컴_주간업무보고_${activeWeek.start}`);
-  };
+  }
+
 
 
   /* =========================================================================
@@ -2318,171 +2558,215 @@
     return Math.max(1, total);
   }
 
+  /* -------------------------------------------------------------------------
+     공통 보고서 생성기
+     opt = {
+       sheetName, docTitle, subtitle, fileName,
+       columns : [{ header, width }]           // 0번은 항상 좌측 병합(구분/사업명) 열
+       sections: [{ label, rows: [[cell, ...]] }]   // cell 은 1번 열부터
+     }
+     cell 종류
+       { t:'proj',    name, owner }   → ■ 사업명 + 담당자
+       { t:'bullets', text }          → • 목록
+       { t:'label',   main, sub }     → 가운데 정렬 제목 + 회색 보조문구
+     ------------------------------------------------------------------------- */
+  async function xlBuildReport(opt) {
+    const todayStr = fmtDate(new Date());
+    const thin = { style: 'thin', color: { argb: XL.border } };
+    const boxBorder = { top: thin, left: thin, bottom: thin, right: thin };
+    const nCol = opt.columns.length;
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '에이블컴 기술팀';
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet(opt.sheetName, {
+      views: [{ state: 'frozen', ySplit: 6, showGridLines: false }],
+      pageSetup: {
+        paperSize: 9,                                      // A4
+        orientation: 'landscape',                          // 가로
+        fitToPage: true, fitToWidth: 1, fitToHeight: 0,    // 너비 1페이지 맞춤
+        horizontalCentered: true,
+        margins: { left: 0.4, right: 0.4, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 }
+      },
+      headerFooter: {
+        oddHeader: `&R&"${XL_FONT}"&9&K808080주식회사 에이블컴`,
+        oddFooter: `&L&"${XL_FONT}"&9&K808080작성일 : ${todayStr}`
+                 + `&C&"${XL_FONT}"&9&K808080&P / &N`
+                 + `&R&"${XL_FONT}"&9&K808080${opt.docTitle}`
+      }
+    });
+
+    ws.columns = opt.columns.map((c, i) => ({ key: 'c' + i, width: c.width }));
+
+    // ---------- 상단 타이틀 ----------
+    const spaced = opt.docTitle.split('').join(' ');   // "월간 업무보고" → "월 간   업 무 보 고"
+    const mergeRow = (rowNo) => ws.mergeCells(rowNo, 1, rowNo, nCol);
+
+    mergeRow(1);
+    const cTitle = ws.getCell(1, 1);
+    cTitle.value = spaced;
+    cTitle.font = { name: XL_FONT, size: 24, bold: true, color: { argb: XL.primary } };
+    cTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(1).height = 42;
+
+    mergeRow(2);
+    const cDept = ws.getCell(2, 1);
+    cDept.value = '주식회사 에이블컴  ·  기술팀';
+    cDept.font = { name: XL_FONT, size: 11, color: { argb: XL.text } };
+    cDept.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 20;
+
+    mergeRow(3);
+    const cSub = ws.getCell(3, 1);
+    cSub.value = opt.subtitle;
+    cSub.font = { name: XL_FONT, size: 12, bold: true, color: { argb: XL.primary } };
+    cSub.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(3).height = 20;
+
+    // 제목 아래 얇은 네이비 라인
+    mergeRow(4);
+    ws.getRow(4).height = 6;
+    for (let c = 1; c <= nCol; c++) {
+      ws.getCell(4, c).border = { bottom: { style: 'medium', color: { argb: XL.primary } } };
+    }
+
+    // 작성일 (우측)
+    mergeRow(5);
+    const cDate = ws.getCell(5, 1);
+    cDate.value = `작성일 : ${todayStr}`;
+    cDate.font = { name: XL_FONT, size: 9, color: { argb: XL.sub } };
+    cDate.alignment = { horizontal: 'right', vertical: 'middle' };
+    ws.getRow(5).height = 18;
+
+    // ---------- 표 헤더 ----------
+    const head = ws.getRow(6);
+    head.values = opt.columns.map(c => c.header);
+    head.height = 30;
+    head.eachCell(cell => {
+      cell.font = { name: XL_FONT, size: 12, bold: true, color: { argb: XL.white } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.primary } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top:    { style: 'thin', color: { argb: XL.primary } },
+        bottom: { style: 'thin', color: { argb: XL.primary } },
+        left:   { style: 'thin', color: { argb: XL.white } },
+        right:  { style: 'thin', color: { argb: XL.white } }
+      };
+    });
+
+    // ---------- 본문 ----------
+    let r = 7;
+    let zebra = 0;
+
+    opt.sections.forEach(sec => {
+      const startRow = r;
+
+      sec.rows.forEach(cells => {
+        const row = ws.getRow(r);
+        const bg = (zebra % 2 === 1) ? XL.zebra : XL.white;
+        let needLines = 1;
+
+        // 좌측 구분 열 (연한 파랑 + Bold + 가운데)
+        const cCat = ws.getCell(r, 1);
+        if (r === startRow) cCat.value = sec.label;
+        cCat.font = { name: XL_FONT, size: 11, bold: true, color: { argb: XL.primary } };
+        cCat.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.secondary } };
+        cCat.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cCat.border = boxBorder;
+
+        // 나머지 열
+        cells.forEach((desc, i) => {
+          const colIdx = i + 2;
+          const colW = opt.columns[colIdx - 1].width;
+          const cell = ws.getCell(r, colIdx);
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+          cell.border = boxBorder;
+
+          if (desc.t === 'proj') {
+            const hasOwner = desc.owner && String(desc.owner).trim() !== '';
+            const rich = [
+              { font: { name: XL_FONT, size: 12, bold: true, color: { argb: XL.primary } }, text: '■ ' },
+              { font: { name: XL_FONT, size: 12, bold: true, color: { argb: XL.text } },    text: desc.name }
+            ];
+            if (hasOwner) rich.push({ font: { name: XL_FONT, size: 9, color: { argb: XL.sub } }, text: '\n     ' + desc.owner });
+            cell.value = { richText: rich };
+            cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
+            needLines = Math.max(needLines, xlEstimateLines([desc.name], colW) + (hasOwner ? 1 : 0));
+
+          } else if (desc.t === 'label') {
+            const rich = [{ font: { name: XL_FONT, size: 11, bold: true, color: { argb: XL.text } }, text: desc.main }];
+            if (desc.sub) rich.push({ font: { name: XL_FONT, size: 9, color: { argb: XL.sub } }, text: '\n' + desc.sub });
+            cell.value = { richText: rich };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            needLines = Math.max(needLines, desc.sub ? 2 : 1);
+
+          } else {
+            const bullets = xlToBullets(desc.text);
+            cell.value = bullets.length ? bullets.join('\n') : '-';
+            cell.font = { name: XL_FONT, size: 11, color: { argb: XL.text } };
+            cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
+            needLines = Math.max(needLines, xlEstimateLines(bullets.length ? bullets : ['-'], colW));
+          }
+        });
+
+        row.height = Math.max(28, needLines * 18 + 14);
+        zebra++;
+        r++;
+      });
+
+      // 같은 구분에 2건 이상이면 세로 병합하여 하나의 섹션처럼
+      if (r - 1 > startRow) ws.mergeCells(startRow, 1, r - 1, 1);
+    });
+
+    const lastRow = r - 1;
+    ws.pageSetup.printArea = `A1:${String.fromCharCode(64 + nCol)}${lastRow}`;
+    ws.pageSetup.printTitlesRow = '1:6';   // 페이지마다 제목·헤더 반복
+
+    return wb;
+  }
+
+  // 워크북을 파일로 다운로드
+  async function xlDownload(wb, fileName) {
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName + '.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  // ---------- 월간 업무보고 ----------
   window.exportMonthlyExcel = async function() {
     if (!activeMonth || activeMonth.categories.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
-
-    // 라이브러리가 로드되지 않았으면(오프라인 등) 예전 방식으로 대체합니다.
     if (typeof ExcelJS === 'undefined') {
       window.showToast('서식 라이브러리를 불러오지 못해 기본 형식으로 내보냅니다.');
       return exportMonthlyExcelLegacy();
     }
 
     try {
-      const todayStr = fmtDate(new Date());
-      const thin = { style: 'thin', color: { argb: XL.border } };
-      const boxBorder = { top: thin, left: thin, bottom: thin, right: thin };
-
-      const wb = new ExcelJS.Workbook();
-      wb.creator = '에이블컴 기술팀';
-      wb.created = new Date();
-
-      const ws = wb.addWorksheet('월간업무보고', {
-        views: [{ state: 'frozen', ySplit: 6, showGridLines: false }],
-        pageSetup: {
-          paperSize: 9,                 // A4
-          orientation: 'landscape',     // 가로
-          fitToPage: true, fitToWidth: 1, fitToHeight: 0,   // 너비 1페이지 맞춤
-          horizontalCentered: true,
-          margins: { left: 0.4, right: 0.4, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 }
-        },
-        headerFooter: {
-          oddHeader: `&R&"${XL_FONT}"&9&K808080주식회사 에이블컴`,
-          oddFooter: `&L&"${XL_FONT}"&9&K808080작성일 : ${todayStr}`
-                   + `&C&"${XL_FONT}"&9&K808080&P / &N`
-                   + `&R&"${XL_FONT}"&9&K808080월간 업무보고`
-        }
+      const wb = await xlBuildReport({
+        sheetName: '월간업무보고',
+        docTitle: '월간 업무보고',
+        subtitle: activeMonth.title,
+        columns: [
+          { header: '구 분',      width: 16 },
+          { header: '사 업 명',   width: 32 },
+          { header: '월 간 실 적', width: 92 }
+        ],
+        sections: activeMonth.categories.map(cat => ({
+          label: cat.name,
+          rows: cat.projects.map(p => ([
+            { t: 'proj', name: p.name, owner: p.owner },
+            { t: 'bullets', text: p.perf }
+          ]))
+        }))
       });
 
-      ws.columns = [
-        { key: 'cat',  width: 16 },
-        { key: 'proj', width: 32 },
-        { key: 'perf', width: 92 }
-      ];
-
-      // ---------- 상단 타이틀 영역 ----------
-      ws.mergeCells('A1:C1');
-      const cTitle = ws.getCell('A1');
-      cTitle.value = '월 간 업 무 보 고';
-      cTitle.font = { name: XL_FONT, size: 24, bold: true, color: { argb: XL.primary } };
-      cTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(1).height = 42;
-
-      ws.mergeCells('A2:C2');
-      const cDept = ws.getCell('A2');
-      cDept.value = '주식회사 에이블컴  ·  기술팀';
-      cDept.font = { name: XL_FONT, size: 11, color: { argb: XL.text } };
-      cDept.alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(2).height = 20;
-
-      ws.mergeCells('A3:C3');
-      const cMonth = ws.getCell('A3');
-      cMonth.value = activeMonth.title;
-      cMonth.font = { name: XL_FONT, size: 12, bold: true, color: { argb: XL.primary } };
-      cMonth.alignment = { horizontal: 'center', vertical: 'middle' };
-      ws.getRow(3).height = 20;
-
-      // 제목 아래 얇은 네이비 라인
-      ws.mergeCells('A4:C4');
-      ws.getRow(4).height = 6;
-      ['A4', 'B4', 'C4'].forEach(addr => {
-        ws.getCell(addr).border = { bottom: { style: 'medium', color: { argb: XL.primary } } };
-      });
-
-      // 작성일 (우측 정렬)
-      ws.mergeCells('A5:C5');
-      const cDate = ws.getCell('A5');
-      cDate.value = `작성일 : ${todayStr}`;
-      cDate.font = { name: XL_FONT, size: 9, color: { argb: XL.sub } };
-      cDate.alignment = { horizontal: 'right', vertical: 'middle' };
-      ws.getRow(5).height = 18;
-
-      // ---------- 표 헤더 ----------
-      const head = ws.getRow(6);
-      head.values = ['구 분', '사 업 명', '월 간 실 적'];
-      head.height = 30;
-      head.eachCell(cell => {
-        cell.font = { name: XL_FONT, size: 12, bold: true, color: { argb: XL.white } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.primary } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-          top:    { style: 'thin', color: { argb: XL.primary } },
-          bottom: { style: 'thin', color: { argb: XL.primary } },
-          left:   { style: 'thin', color: { argb: XL.white } },
-          right:  { style: 'thin', color: { argb: XL.white } }
-        };
-      });
-
-      // ---------- 본문 ----------
-      let r = 7;
-      let zebra = 0;
-
-      activeMonth.categories.forEach(cat => {
-        const startRow = r;
-
-        cat.projects.forEach(p => {
-          const row = ws.getRow(r);
-          const bullets = xlToBullets(p.perf);
-          const bg = (zebra % 2 === 1) ? XL.zebra : XL.white;
-          const hasOwner = p.owner && String(p.owner).trim() !== '';
-
-          // 구분 : 연한 파랑 + Bold + 가운데 정렬 (아래에서 세로 병합)
-          const cCat = ws.getCell(r, 1);
-          if (r === startRow) cCat.value = cat.name;
-          cCat.font = { name: XL_FONT, size: 11, bold: true, color: { argb: XL.primary } };
-          cCat.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.secondary } };
-          cCat.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-          cCat.border = boxBorder;
-
-          // 사업명 : ■ 아이콘 + Bold 12pt, 담당자는 아랫줄 작은 회색
-          const cProj = ws.getCell(r, 2);
-          const rich = [
-            { font: { name: XL_FONT, size: 12, bold: true, color: { argb: XL.primary } }, text: '■ ' },
-            { font: { name: XL_FONT, size: 12, bold: true, color: { argb: XL.text } },    text: p.name }
-          ];
-          if (hasOwner) {
-            rich.push({ font: { name: XL_FONT, size: 9, color: { argb: XL.sub } }, text: '\n     ' + p.owner });
-          }
-          cProj.value = { richText: rich };
-          cProj.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-          cProj.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
-          cProj.border = boxBorder;
-
-          // 월간 실적 : 불릿 목록 + 자동 줄바꿈
-          const cPerf = ws.getCell(r, 3);
-          cPerf.value = bullets.length ? bullets.join('\n') : '-';
-          cPerf.font = { name: XL_FONT, size: 11, color: { argb: XL.text } };
-          cPerf.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-          cPerf.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
-          cPerf.border = boxBorder;
-
-          // 행 높이 : 실적 줄 수에 맞춰 여유 있게 (최소 28)
-          const lineCnt = xlEstimateLines(bullets.length ? bullets : ['-'], 92);
-          const projLines = hasOwner ? 2 : 1;
-          row.height = Math.max(28, lineCnt * 18 + 14, projLines * 18 + 12);
-
-          zebra++;
-          r++;
-        });
-
-        // 같은 구분에 사업이 2건 이상이면 세로 병합하여 하나의 섹션처럼 보이게 합니다.
-        if (r - 1 > startRow) ws.mergeCells(startRow, 1, r - 1, 1);
-      });
-
-      const lastRow = r - 1;
-      ws.pageSetup.printArea = `A1:C${lastRow}`;
-      ws.pageSetup.printTitlesRow = '1:6';   // 페이지마다 제목·헤더 반복
-
-      // ---------- 다운로드 ----------
-      const buf = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `에이블컴_월간업무보고_${activeMonth.id}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-
+      await xlDownload(wb, `에이블컴_월간업무보고_${activeMonth.id}`);
       window.showToast('월간 업무보고서(xlsx)가 생성되었습니다.');
     } catch (e) {
       console.error(e);
@@ -2705,7 +2989,85 @@
   };
 
   // 엑셀 Export (프로젝트 진행 내역)
-  window.exportHistoryExcel = function() {
+  window.exportHistoryExcel = async function() {
+    const projSel = document.getElementById('history-proj-select');
+    const monthSel = document.getElementById('history-month-select');
+    if(!projSel || !monthSel) return;
+
+    if (typeof ExcelJS === 'undefined') {
+      window.showToast('서식 라이브러리를 불러오지 못해 기본 형식으로 내보냅니다.');
+      return exportHistoryExcelLegacy();
+    }
+
+    const projId = projSel.value;
+    const monthFilter = monthSel.value;
+
+    let conditionText = (projId === 'all')
+      ? '전체 프로젝트 종합'
+      : projSel.options[projSel.selectedIndex].text;
+    if (monthFilter !== 'all') conditionText += `  (${monthSel.options[monthSel.selectedIndex].text})`;
+
+    // 조건에 맞는 항목 수집
+    const rawItems = [];
+    data.archives.filter(a => a.isSaved === true).forEach(arch => {
+      if (monthFilter !== 'all' && arch.start.substring(0, 7) !== monthFilter) return;
+      arch.categories.forEach(cat => {
+        cat.projects.forEach(p => {
+          if (projId === 'all' || p.id === projId) {
+            rawItems.push({
+              projId: p.id, projName: p.name,
+              weekTitle: arch.title, range: `${arch.start} ~ ${arch.end}`,
+              prev: p.prev, plan: p.plan, weekId: arch.id
+            });
+          }
+        });
+      });
+    });
+
+    if (rawItems.length === 0) return window.showToast('내보낼 데이터가 없습니다.');
+
+    // 사업별로 묶기
+    const grouped = {};
+    rawItems.forEach(item => {
+      if (!grouped[item.projId]) grouped[item.projId] = { name: item.projName, items: [] };
+      grouped[item.projId].items.push(item);
+    });
+
+    try {
+      const wb = await xlBuildReport({
+        sheetName: '프로젝트진행내역',
+        docTitle: '프로젝트 진행 내역',
+        subtitle: `조회 조건 : ${conditionText}`,
+        columns: [
+          { header: '사 업 명',    width: 26 },
+          { header: '보 고 주 차', width: 20 },
+          { header: '주 간 실 적', width: 46 },
+          { header: '차 주 계 획', width: 46 }
+        ],
+        sections: Object.values(grouped).map(group => {
+          group.items.sort((a, b) => b.weekId.localeCompare(a.weekId));   // 최신 주차부터
+          return {
+            label: group.name,
+            rows: group.items.map(item => ([
+              { t: 'label', main: item.weekTitle, sub: item.range },
+              { t: 'bullets', text: item.prev },
+              { t: 'bullets', text: item.plan }
+            ]))
+          };
+        })
+      });
+
+      await xlDownload(wb, '에이블컴_프로젝트_진행내역');
+      window.showToast('진행 내역(xlsx)이 생성되었습니다.');
+    } catch (e) {
+      console.error(e);
+      window.showToast('엑셀 생성 실패: ' + e.message + ' (기본 형식으로 대체합니다)');
+      exportHistoryExcelLegacy();
+    }
+  };
+
+  // [예비] 구버전 진행내역 엑셀 - ExcelJS 로딩 실패 시 사용
+  function exportHistoryExcelLegacy() {
     const projSel = document.getElementById('history-proj-select');
     const monthSel = document.getElementById('history-month-select');
     if(!projSel || !monthSel) return;
@@ -2786,7 +3148,8 @@
     `;
 
     exportHtmlTableToExcel(htmlTable, `에이블컴_프로젝트_진행내역`);
-  };
+  }
+
 
   // --- 11. CATEGORY MANAGEMENT ---
   window.openCategoryModal = function() {
