@@ -459,16 +459,27 @@
   .wk-pt-box label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
   .edit-area textarea {
     width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 10px;
-    background: var(--paper); font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 70px;
+    background: var(--paper); font-size: 12.5px; line-height: 1.6;
+    /* 내용에 따라 높이가 자동으로 늘어나므로 스크롤바와 수동 리사이즈는 사용하지 않습니다 */
+    resize: none; overflow-y: hidden; min-height: 84px;
+    transition: border-color 0.18s, background 0.18s;
   }
   .edit-area textarea:focus { border-color: var(--brass); background: var(--bg-elev); outline: none; }
+
+  /* 외부 링크 메뉴 */
+  .nav-item.nav-ext { position: relative; }
+  .nav-item.nav-ext .ext-icon {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    font-size: 9.5px; opacity: 0.45;
+  }
+  .nav-item.nav-ext:hover .ext-icon { opacity: 0.9; }
   
   .pt-area { display: none; } /* 평상시에는 텍스트 출력 영역 숨김 */
 
   /* ===== 월간 보고서 전용 (실적 1열) ===== */
   .proj-grid.mo-single,
   body.presentation-mode .proj-grid.mo-single { grid-template-columns: 1fr !important; }
-  .mo-single .edit-area textarea { min-height: 110px; }
+  .mo-single .edit-area textarea { min-height: 120px; }
   .arch-filter-btn {
     padding: 6px 14px; border: 1px solid var(--line); background: var(--bg-elev);
     border-radius: 4px; font-size: 12.5px; font-weight: 500; cursor: pointer; color: var(--muted);
@@ -689,6 +700,12 @@
       <div class="nav-item" data-view="history" onclick="window.goView('history')"><span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> 프로젝트 진행 내역</div>
       <div class="nav-item" data-view="projects" onclick="window.goView('projects')"><span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span> 프로젝트 관리</div>
       <div class="nav-item" data-view="archive" onclick="window.goView('archive')"><span class="nav-icon"><i class="fa-solid fa-box-archive"></i></span> 보고서 아카이브</div>
+
+      <div class="nav-label" style="margin-top:15px;">Link</div>
+      <div class="nav-item nav-ext" onclick="window.openExtLink('https://sjgong-kr.github.io/Tools/ablereport.html')" title="새 창으로 열립니다">
+        <span class="nav-icon"><i class="fa-solid fa-headset"></i></span> 기술지원 리포트
+        <i class="fa-solid fa-arrow-up-right-from-square ext-icon"></i>
+      </div>
       <div class="nav-label" id="nav-label-admin" style="display:none; margin-top:15px;">Admin</div>
       <div class="nav-item" id="nav-accounts" data-view="accounts" onclick="window.goView('accounts')" style="display:none;"><span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> 계정 관리</div>
       <div class="nav-item" id="nav-backup" data-view="backup" onclick="window.goView('backup')" style="display:none;"><span class="nav-icon"><i class="fa-solid fa-floppy-disk"></i></span> 설정 · 백업</div>
@@ -1174,6 +1191,41 @@
     window.openModal('modal-confirm');
   };
 
+  /* -------------------------------------------------------------------------
+     입력창 자동 높이 조절
+     - 내용이 길어지면 스크롤 대신 입력 영역 자체가 아래로 늘어납니다.
+     - 주간보고처럼 좌우 두 칸이 나란히 있으면 둘 중 긴 쪽에 높이를 맞춰
+       화면이 들쭉날쭉해 보이지 않게 합니다.
+     ------------------------------------------------------------------------- */
+  window.autoGrow = function(el) {
+    if (!el) return;
+    // 화면에 보이지 않는 상태(다른 탭 등)에서는 높이를 잴 수 없으므로 건너뜁니다.
+    if (el.offsetParent === null) return;
+
+    const grid = el.closest('.proj-grid');
+    const group = (grid && grid.querySelectorAll('textarea').length > 1)
+      ? Array.from(grid.querySelectorAll('textarea'))
+      : [el];
+
+    let max = 0;
+    group.forEach(t => {
+      t.style.height = 'auto';                       // 먼저 초기화해야 정확히 측정됩니다
+      if (t.scrollHeight > max) max = t.scrollHeight;
+    });
+    group.forEach(t => { t.style.height = (max + 2) + 'px'; });
+  };
+
+  // 특정 영역 안의 모든 입력창 높이를 한 번에 맞춥니다.
+  function autoGrowAll(container) {
+    if (!container) return;
+    container.querySelectorAll('.edit-area textarea').forEach(t => window.autoGrow(t));
+  }
+
+  // 새 창으로 외부 링크 열기
+  window.openExtLink = function(url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   window.goView = function(name, resetWeekly = true) {
     isRendering = true;
     document.querySelectorAll('.view, .nav-item').forEach(v => v.classList.remove('active'));
@@ -1185,7 +1237,10 @@
     if (name === 'weekly' && resetWeekly) displayWeekDate = new Date();
     if (name === 'monthly' && resetWeekly) displayMonthDate = new Date();
     updateAllUI();
-    
+
+    // 화면이 표시된 뒤에 높이를 계산해야 정확합니다.
+    if (viewEl) requestAnimationFrame(() => autoGrowAll(viewEl));
+
     setTimeout(() => { isRendering = false; }, 100);
   };
 
@@ -1973,12 +2028,12 @@
                 <div class="proj-grid">
                   <div class="wk-pt-box">
                       <label>전주 실적</label>
-                      <div class="edit-area"><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
+                      <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateWeekData(${ci}, ${pi}, 'prev', this.value)" placeholder="- 완료 내용">${escapeHtml(p.prev)}</textarea></div>
                       <div class="pt-area">${escapeHtml(p.prev) || '-'}</div>
                   </div>
                   <div class="wk-pt-box">
                       <label>금주 계획</label>
-                      <div class="edit-area"><textarea onchange="window.updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
+                      <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateWeekData(${ci}, ${pi}, 'plan', this.value)" placeholder="- 예정 내용">${escapeHtml(p.plan)}</textarea></div>
                       <div class="pt-area">${escapeHtml(p.plan) || '-'}</div>
                   </div>
                 </div>
@@ -2002,9 +2057,25 @@
         `).join('');
       }
     }
+
+    // 저장된 내용에 맞춰 입력창 높이를 늘려줍니다.
+    requestAnimationFrame(() => autoGrowAll(container));
   }
 
   window.updateWeekData = function(ci, pi, field, val) { activeWeek.categories[ci].projects[pi][field] = val; window.triggerSave(); };
+
+  // 현재 보이는 화면의 입력창 높이를 다시 계산합니다.
+  function refreshVisibleAutoGrow() {
+    const v = document.querySelector('.view.active');
+    if (v) autoGrowAll(v);
+  }
+
+  // 창 크기가 바뀌면 줄바꿈 위치가 달라지므로 높이를 다시 맞춥니다.
+  let _agTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(_agTimer);
+    _agTimer = setTimeout(refreshVisibleAutoGrow, 150);
+  });
 
   // --- PRESENTATION MODE ---
   window.startPresentation = function() {
@@ -2014,9 +2085,13 @@
   window.exitPresentation = function() {
     document.body.classList.remove('presentation-mode');
     if (document.fullscreenElement) document.exitFullscreen();
+    requestAnimationFrame(refreshVisibleAutoGrow);
   };
   document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement) document.body.classList.remove('presentation-mode');
+    if (!document.fullscreenElement) {
+      document.body.classList.remove('presentation-mode');
+      requestAnimationFrame(refreshVisibleAutoGrow);
+    }
   });
 
   // --- PRINT & NATIVE EXCEL EXPORT (100% UI Match) ---
@@ -2431,7 +2506,7 @@
               <div class="proj-grid mo-single">
                 <div class="wk-pt-box">
                   <label>월간 실적</label>
-                  <div class="edit-area"><textarea onchange="window.updateMonthData(${ci}, ${pi}, this.value)" placeholder="- 실적 내용">${escapeHtml(p.perf)}</textarea></div>
+                  <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateMonthData(${ci}, ${pi}, this.value)" placeholder="- 실적 내용">${escapeHtml(p.perf)}</textarea></div>
                   <div class="pt-area">${escapeHtml(p.perf) || '-'}</div>
                 </div>
               </div>
@@ -2440,6 +2515,9 @@
         </div>
       </div>
     `).join('');
+
+    // 저장된 내용에 맞춰 입력창 높이를 늘려줍니다.
+    requestAnimationFrame(() => autoGrowAll(container));
   }
 
   // 월간 보고서 인쇄 (구분 | 사업명 | 실적 3열)
