@@ -116,7 +116,7 @@
                 </button>
 
                 <h1 class="text-3xl font-bold flex items-center justify-center gap-2 mt-8 md:mt-2">
-                    <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.0
+                    <i data-lucide="book-open" class="w-8 h-8"></i> 캐릭터 성장 일기장 3.1
                 </h1>
                 <p class="mt-2 opacity-90 text-sm mb-5">실시간 확률 시뮬레이션 및 자산 평가 시스템</p>
 
@@ -396,6 +396,14 @@
                                     <label class="block text-xs font-bold text-gray-500 mb-1">달성 레벨</label>
                                     <input type="number" id="logLv" placeholder="예: 46" class="w-full p-2 border rounded-lg outline-none focus:border-indigo-500 font-bold">
                                 </div>
+                                <!-- 🌟 달성 일시 (신규) -->
+                                <div>
+                                    <label class="block text-xs font-bold text-emerald-600 mb-1">달성 일시 (날짜 + 시간)</label>
+                                    <div class="flex gap-1">
+                                        <input type="datetime-local" id="logDate" class="flex-1 p-2 border border-emerald-200 rounded-lg outline-none focus:border-emerald-500 font-bold text-gray-700 text-sm">
+                                        <button onclick="setNowLogDate()" class="px-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold hover:bg-emerald-100 transition whitespace-nowrap">지금</button>
+                                    </div>
+                                </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-xs font-bold text-red-500 mb-1">최대 HP</label>
@@ -412,13 +420,18 @@
                                 </div>
                             </div>
                             <button onclick="saveGrowthLog()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow mt-auto">기록 / 덮어쓰기</button>
+                            <!-- 🌟 메모 → 날짜 자동 이전 버튼 (신규) -->
+                            <button onclick="migrateMemoDates()" class="w-full mt-2 bg-white border-2 border-dashed border-amber-300 text-amber-700 hover:bg-amber-50 font-bold py-2 rounded-lg transition text-xs flex items-center justify-center gap-1">
+                                <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> 메모에서 날짜 가져오기 (1회 실행)
+                            </button>
                         </div>
                         <div class="md:col-span-2 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col h-full">
                             <div class="bg-gray-200 px-4 py-2 text-xs font-bold text-gray-600 grid grid-cols-12 gap-2 text-center items-center">
                                 <div class="col-span-2">레벨</div>
-                                <div class="col-span-3">총 HP/MP</div>
+                                <div class="col-span-2">총 HP/MP</div>
                                 <div class="col-span-2">상승량</div>
-                                <div class="col-span-3">메모</div>
+                                <div class="col-span-2">달성 일시</div>
+                                <div class="col-span-2">비고 (소요)</div>
                                 <div class="col-span-2">관리</div>
                             </div>
                             <ul id="growthLogList" class="flex-1 overflow-y-auto p-2 space-y-2 text-sm custom-scrollbar">
@@ -434,7 +447,6 @@
                         <i data-lucide="swords" class="w-6 h-6 text-gray-700"></i> 인벤토리 및 장비 가치 평가
                     </h2>
                     
-                    <!-- 💡 비율을 5:7 비율로 조정 (col-span-6:col-span-6 50:50으로 공간 확보) -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         
                         <!-- 왼쪽 6칸 컨텐츠 (아데나 기록 + 공용 아이템 시세) -->
@@ -531,7 +543,6 @@
                             <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
                                 <div class="flex justify-between items-center mb-2">
                                     <h4 class="text-sm font-bold text-gray-700 flex items-center gap-1">적용 중인 버프 & 추가 방어력</h4>
-                                    <!-- 💡 버프 추가 버튼 -->
                                     <button onclick="openBuffModal()" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 transition shadow-sm">
                                         <i data-lucide="plus" class="w-3 h-3"></i> 버프 추가
                                     </button>
@@ -1308,90 +1319,175 @@
         let userBuffs = [];
 
         // ==========================================
-        // 성장 일지
+        // 성장 일지 (🌟 달성 일시 + 소요/누적 시간)
         // ==========================================
+
+        // Date 객체 → datetime-local 입력값 형식 (YYYY-MM-DDTHH:mm)
+        function toLocalInputValue(d) {
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+
+        window.setNowLogDate = function() {
+            document.getElementById('logDate').value = toLocalInputValue(new Date());
+        };
+
+        // 밀리초 → "3일 5시간" 형태로 변환
+        function formatDurationLog(ms) {
+            if (ms < 0) return '-';
+            const mins = Math.floor(ms / 60000);
+            if (mins < 1) return '방금';
+            const d = Math.floor(mins / 1440);
+            const h = Math.floor((mins % 1440) / 60);
+            const m = mins % 60;
+            const parts = [];
+            if (d > 0) parts.push(`${d}일`);
+            if (h > 0) parts.push(`${h}시간`);
+            if (d === 0 && m > 0) parts.push(`${m}분`);
+            return parts.join(' ') || '0분';
+        }
+
+        // 🌟 메모에 적어둔 날짜를 '달성 일시' 필드로 옮기기 (1회성 마이그레이션)
+        window.migrateMemoDates = function() {
+            window.showConfirm('메모 날짜 가져오기',
+                '메모 속 날짜(예: 2026-04-01 21:00)를 달성 일시로 옮기고 메모에서는 지웁니다. 되돌릴 수 없으니 백업 후 진행하세요.',
+                () => {
+                    const re = /(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})(?:[\sT]+(\d{1,2}):(\d{2}))?/;
+                    let cnt = 0;
+                    growthLogs.forEach(log => {
+                        if (log.at) return;
+                        const m = (log.memo || '').match(re);
+                        if (!m) return;
+                        const y = m[1], mo = m[2].padStart(2,'0'), dd = m[3].padStart(2,'0');
+                        const hh = (m[4] || '00').padStart(2,'0'), mi = m[5] || '00';
+                        log.at = `${y}-${mo}-${dd}T${hh}:${mi}`;
+                        log.memo = log.memo.replace(m[0], '').trim();
+                        cnt++;
+                    });
+                    appData.growthDiary = growthLogs;
+                    triggerSave();
+                    renderGrowthLog();
+                    alert(`✅ ${cnt}건의 날짜를 '달성 일시'로 옮겼습니다.`);
+                });
+        };
+
         window.saveGrowthLog = function() {
             const lv = parseInt(document.getElementById('logLv').value);
             const hp = parseInt(document.getElementById('logHp').value);
             const mp = parseInt(document.getElementById('logMp').value);
             const memo = document.getElementById('logMemo').value || '';
-            
+            const at = document.getElementById('logDate').value || '';
+
             if (!lv || !hp || !mp) return;
-            
+
+            const record = { lv, hp, mp, memo, at, date: new Date().toLocaleDateString() };
             const idx = growthLogs.findIndex(l => l.lv === lv);
             if (idx !== -1) {
-                growthLogs[idx] = { lv, hp, mp, memo, date: new Date().toLocaleDateString() }; 
+                growthLogs[idx] = record;
             } else {
-                growthLogs.push({ lv, hp, mp, memo, date: new Date().toLocaleDateString() });
+                growthLogs.push(record);
             }
-            
-            growthLogs.sort((a, b) => a.lv - b.lv); 
-            appData.growthDiary = growthLogs; 
+
+            growthLogs.sort((a, b) => a.lv - b.lv);
+            appData.growthDiary = growthLogs;
             triggerSave();
-            
-            document.getElementById('logLv').value = ''; 
-            document.getElementById('logHp').value = ''; 
-            document.getElementById('logMp').value = ''; 
-            document.getElementById('logMemo').value = ''; 
-            
+
+            document.getElementById('logLv').value = '';
+            document.getElementById('logHp').value = '';
+            document.getElementById('logMp').value = '';
+            document.getElementById('logMemo').value = '';
+            document.getElementById('logDate').value = '';
+
             renderGrowthLog();
         };
 
-        window.editGrowthLog = function(lv) { 
-            const log = growthLogs.find(l => l.lv === lv); 
-            if (log) { 
-                document.getElementById('logLv').value = log.lv; 
-                document.getElementById('logHp').value = log.hp; 
-                document.getElementById('logMp').value = log.mp; 
-                document.getElementById('logMemo').value = log.memo || ''; 
-                document.getElementById('logLv').focus(); 
-            } 
+        window.editGrowthLog = function(lv) {
+            const log = growthLogs.find(l => l.lv === lv);
+            if (log) {
+                document.getElementById('logLv').value = log.lv;
+                document.getElementById('logHp').value = log.hp;
+                document.getElementById('logMp').value = log.mp;
+                document.getElementById('logMemo').value = log.memo || '';
+                document.getElementById('logDate').value = log.at || '';
+                document.getElementById('logLv').focus();
+            }
         };
 
-        window.deleteGrowthLog = function(lv) { 
-            window.showConfirm('일지 삭제', `Lv.${lv} 기록을 삭제하시겠습니까?`, () => { 
-                growthLogs = growthLogs.filter(l => l.lv !== lv); 
-                appData.growthDiary = growthLogs; 
-                triggerSave(); 
-                renderGrowthLog(); 
-            }); 
+        window.deleteGrowthLog = function(lv) {
+            window.showConfirm('일지 삭제', `Lv.${lv} 기록을 삭제하시겠습니까?`, () => {
+                growthLogs = growthLogs.filter(l => l.lv !== lv);
+                appData.growthDiary = growthLogs;
+                triggerSave();
+                renderGrowthLog();
+            });
         };
 
         function renderGrowthLog() {
-            const list = document.getElementById('growthLogList'); 
+            const list = document.getElementById('growthLogList');
             list.innerHTML = '';
-            
-            if (growthLogs.length === 0) { 
-                list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.</li>'; 
-                return; 
+
+            if (growthLogs.length === 0) {
+                list.innerHTML = '<li class="text-center text-gray-400 py-8 text-sm">기록된 레벨업 일지가 없습니다.</li>';
+                return;
             }
-            
+
+            // 누적 계산 기준 = 날짜가 입력된 가장 첫 기록
+            const firstLog = growthLogs.find(l => l.at);
+            const firstAt = firstLog ? new Date(firstLog.at) : null;
+
             growthLogs.forEach((log, i) => {
+                // --- 상승량 ---
                 let diffHtml = '<span class="text-xs text-gray-400 font-normal">초기 기록</span>';
-                if (i > 0) { 
-                    const prev = growthLogs[i - 1]; 
-                    let hD = log.hp - prev.hp;
-                    let mD = log.mp - prev.mp; 
-                    
-                    let hDClass = hD >= 12 ? 'text-red-600 font-bold' : hD <= 6 ? 'text-red-300' : 'text-red-500';
-                    let mDClass = mD >= 6 ? 'text-blue-600 font-bold' : 'text-blue-500';
-                    
-                    diffHtml = `<div class="flex justify-center gap-1"><span class="${hDClass} bg-red-50 px-1 rounded">+${hD}</span><span class="${mDClass} bg-blue-50 px-1 rounded">+${mD}</span></div>`; 
+                if (i > 0) {
+                    const prev = growthLogs[i - 1];
+                    const hD = log.hp - prev.hp;
+                    const mD = log.mp - prev.mp;
+                    const hDClass = hD >= 12 ? 'text-red-600 font-bold' : hD <= 6 ? 'text-red-300' : 'text-red-500';
+                    const mDClass = mD >= 6 ? 'text-blue-600 font-bold' : 'text-blue-500';
+                    diffHtml = `<div class="flex justify-center gap-1"><span class="${hDClass} bg-red-50 px-1 rounded">+${hD}</span><span class="${mDClass} bg-blue-50 px-1 rounded">+${mD}</span></div>`;
                 }
-                
-                const li = document.createElement('li'); 
-                li.className = "grid grid-cols-12 gap-2 text-center items-center px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
+
+                // --- 달성 일시 ---
+                const atDate = log.at ? new Date(log.at) : null;
+                const atHtml = atDate
+                    ? `<div class="text-[11px] font-bold text-gray-700 leading-tight">${log.at.split('T')[0]}<br><span class="text-[10px] text-gray-400 font-normal">${log.at.split('T')[1] || ''}</span></div>`
+                    : `<span class="text-[11px] text-gray-300">미입력</span>`;
+
+                // --- 비고 (소요 시간 + 누적) ---
+                let noteHtml = '<span class="text-gray-300 text-[11px]">-</span>';
+                if (atDate) {
+                    let prevAt = null;
+                    for (let j = i - 1; j >= 0; j--) {
+                        if (growthLogs[j].at) { prevAt = new Date(growthLogs[j].at); break; }
+                    }
+                    if (prevAt) {
+                        const gapMs = atDate - prevAt;
+                        const totalMs = firstAt ? atDate - firstAt : 0;
+                        noteHtml = `<div class="text-[11px] font-black text-emerald-600 leading-tight">${formatDurationLog(gapMs)}</div>
+                                    <div class="text-[10px] text-gray-400">누적 ${formatDurationLog(totalMs)}</div>`;
+                    } else {
+                        noteHtml = `<span class="text-[11px] font-bold text-gray-400">시작점</span>`;
+                    }
+                }
+
+                const li = document.createElement('li');
+                li.className = "px-2 py-2 bg-white rounded-lg border border-gray-100 shadow-sm transition hover:bg-gray-50";
                 li.innerHTML = `
-                    <div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div>
-                    <div class="col-span-3 font-bold"><span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span></div>
-                    <div class="col-span-2 text-xs font-bold">${diffHtml}</div>
-                    <div class="col-span-3 text-xs text-gray-600 text-left truncate" title="${log.memo}">${log.memo || '-'}</div>
-                    <div class="col-span-2 flex justify-center gap-2">
-                        <button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>`; 
+                    <div class="grid grid-cols-12 gap-2 text-center items-center">
+                        <div class="col-span-2 font-black text-indigo-600">Lv.${log.lv}</div>
+                        <div class="col-span-2 font-bold"><span class="text-red-600">${log.hp}</span> / <span class="text-blue-600">${log.mp}</span></div>
+                        <div class="col-span-2 text-xs font-bold">${diffHtml}</div>
+                        <div class="col-span-2">${atHtml}</div>
+                        <div class="col-span-2">${noteHtml}</div>
+                        <div class="col-span-2 flex justify-center gap-2">
+                            <button onclick="editGrowthLog(${log.lv})" class="text-indigo-400 hover:text-indigo-600 transition"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                            <button onclick="deleteGrowthLog(${log.lv})" class="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    ${log.memo ? `<div class="mt-1.5 pt-1.5 border-t border-dashed border-gray-100 text-[11px] text-gray-500 truncate text-left px-1" title="${log.memo}">📝 ${log.memo}</div>` : ''}
+                `;
                 list.appendChild(li);
-            }); 
+            });
             window.lucide.createIcons();
         }
 
