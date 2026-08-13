@@ -135,6 +135,8 @@ h1{
 }
 .tag.출석{background:rgba(69,199,122,.14);color:var(--live)}
 .tag.등록{background:rgba(106,115,240,.16);color:var(--accent)}
+.tag.경험치{background:rgba(106,115,240,.16);color:var(--accent)}
+.tag.아데나{background:rgba(232,163,61,.16);color:var(--warn)}
 
 .body-col{flex:1;min-width:0}
 .who{font-size:13px;font-weight:600;margin-bottom:2px}
@@ -177,12 +179,12 @@ h1{
     <span class="status-text" id="statusText">연결하는 중</span>
   </div>
 
-  <h1>출석 현황</h1>
+  <h1>성장 현황</h1>
   <p class="sub">디스코드에서 남긴 기록이 이 화면에 바로 나타납니다.</p>
 
   <div class="stats">
-    <div class="stat today"><span class="num" id="sToday">0</span><span class="lbl">오늘 출석</span></div>
-    <div class="stat"><span class="num" id="sPeople">0</span><span class="lbl">참여자</span></div>
+    <div class="stat today"><span class="num" id="sExp">0</span><span class="lbl">오늘 경험치 (%p)</span></div>
+    <div class="stat"><span class="num" id="sAdena">0</span><span class="lbl">오늘 아데나</span></div>
     <div class="stat"><span class="num" id="sAll">0</span><span class="lbl">전체 기록</span></div>
   </div>
 
@@ -293,18 +295,34 @@ function render(rows){
 }
 
 function updateStats(rows, todayStr){
-  let today = 0;
-  const people = new Set();
+  let expPP = 0, adena = 0;
 
   rows.forEach(r => {
-    if(r.userId) people.add(r.userId);
     const d = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null;
-    if(d && d.toDateString() === todayStr && r.type === "출석") today++;
+    if(!d || d.toDateString() !== todayStr) return;
+    if(typeof r.gainPP === "number")    expPP += r.gainPP;
+    if(typeof r.gainAdena === "number") adena += r.gainAdena;
   });
 
-  document.getElementById("sToday").textContent  = today;
-  document.getElementById("sPeople").textContent = people.size;
-  document.getElementById("sAll").textContent    = rows.length;
+  const sign = n => (n > 0 ? "+" : "");
+  document.getElementById("sExp").textContent   = sign(expPP) + expPP.toFixed(2);
+  document.getElementById("sAdena").textContent = sign(adena) + korMoney(adena);
+  document.getElementById("sAll").textContent   = rows.length;
+}
+
+/* 120000000 -> '1억 2,000만' */
+function korMoney(n){
+  const neg = n < 0 ? "-" : "";
+  n = Math.abs(Math.round(n));
+  if(n < 10000) return neg + n.toLocaleString();
+  const eok  = Math.floor(n / 100000000);
+  const man  = Math.floor((n % 100000000) / 10000);
+  const one  = n % 10000;
+  const out = [];
+  if(eok) out.push(eok.toLocaleString() + "억");
+  if(man) out.push(man.toLocaleString() + "만");
+  if(one && !eok) out.push(one.toLocaleString());
+  return neg + out.join(" ");
 }
 
 /* ----- 도우미 ----- */
