@@ -114,6 +114,24 @@ h1{
 
 .list{display:flex;flex-direction:column;gap:8px}
 
+.filters{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin-bottom:14px;
+}
+.chip{
+  font-family:var(--body);font-size:12px;
+  padding:6px 13px;border-radius:999px;
+  border:1px solid var(--line);
+  background:transparent;color:var(--muted);
+  cursor:pointer;transition:.15s;
+}
+.chip:hover{border-color:var(--accent);color:var(--text)}
+.chip.sel{
+  background:var(--accent);border-color:var(--accent);
+  color:#fff;font-weight:600;
+}
+.chip:focus-visible{outline:2px solid var(--live);outline-offset:2px}
+
 .row{
   display:flex;align-items:flex-start;gap:14px;
   padding:14px 16px;
@@ -192,6 +210,7 @@ h1{
     <h2>기록</h2>
     <span class="count" id="count"></span>
   </div>
+  <div class="filters" id="filters"></div>
   <div class="list" id="list"></div>
 
 </div>
@@ -222,6 +241,8 @@ const listEl     = document.getElementById("list");
 
 let firstLoad = true;
 let knownIds  = new Set();
+let allRows   = [];
+let selUser   = "all";
 
 function setStatus(state, msg){
   dot.className = "dot" + (state ? " " + state : "");
@@ -260,18 +281,51 @@ try{
    3. 화면 그리기
    ============================================================ */
 function render(rows){
+  allRows = rows;
+  drawFilters(rows);
+  draw();
+}
+
+/* 사람별 필터 칩 */
+function drawFilters(rows){
+  const users = new Map();
+  rows.forEach(r => {
+    if(r.userId) users.set(r.userId, r.userName || r.userId);
+  });
+
+  const box = document.getElementById("filters");
+  if(users.size <= 1){ box.innerHTML = ""; return; }
+
+  let html = chip("all", "전체");
+  users.forEach((name, id) => { html += chip(id, name); });
+  box.innerHTML = html;
+
+  box.querySelectorAll(".chip").forEach(b => {
+    b.onclick = () => { selUser = b.dataset.id; drawFilters(allRows); draw(); };
+  });
+}
+
+function chip(id, label){
+  return '<button class="chip' + (selUser === id ? ' sel' : '') +
+         '" data-id="' + esc(id) + '">' + esc(label) + '</button>';
+}
+
+function draw(){
+  const rows = selUser === "all"
+    ? allRows
+    : allRows.filter(r => r.userId === selUser);
+
   document.getElementById("count").textContent = rows.length + "건";
+  const todayStr = new Date().toDateString();
 
   if(rows.length === 0){
     listEl.innerHTML =
       '<div class="empty"><p>아직 기록이 없습니다.</p>' +
-      '<p>디스코드에서 <code>/출석</code> 을 입력해 보세요.</p></div>';
-    updateStats([]);
+      '<p>디스코드에서 <code>/경험치 45 63.1075%</code> 를 입력해 보세요.</p></div>';
+    updateStats([], todayStr);
     firstLoad = false;
     return;
   }
-
-  const todayStr = new Date().toDateString();
 
   listEl.innerHTML = rows.map(r => {
     const d    = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null;
@@ -289,7 +343,7 @@ function render(rows){
            '</div>';
   }).join("");
 
-  knownIds = new Set(rows.map(r => r.id));
+  knownIds = new Set(allRows.map(r => r.id));
   firstLoad = false;
   updateStats(rows, todayStr);
 }
