@@ -119,6 +119,16 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
   #sheet [data-f]:hover{ outline:2px dashed #93b4f5; outline-offset:-2px; }
   .form-flash{ animation:formFlash 1.2s ease; border-radius:8px; }
   @keyframes formFlash{ 0%,100%{ background:transparent; } 20%,60%{ background:#dbeafe; } }
+  /* 일시 입력: 15분 단위 기본 + 1분 조정 버튼 */
+  .dt-wrap{ display:flex; align-items:stretch; gap:5px; flex-wrap:nowrap; }
+  .dt-wrap .dt-date{ flex:1 1 140px; min-width:110px; width:auto; }
+  .dt-wrap .dt-ap{ flex:0 1 82px; min-width:70px; width:auto; }
+  .dt-wrap .dt-h{ flex:0 1 74px; min-width:62px; width:auto; }
+  .dt-wrap .dt-m{ flex:0 1 98px; min-width:68px; width:auto; }
+  .dt-btn{ width:26px; flex:0 0 26px; border:1px solid var(--line-strong); background:#fff; border-radius:8px;
+    cursor:pointer; font-size:10px; color:var(--muted); line-height:1; padding:0; }
+  .req-empty-wrap .dt-date, .req-empty-wrap .dt-ap, .req-empty-wrap .dt-h, .req-empty-wrap .dt-m{ background:#fff1f5; border-color:#f2a9bf; }
+  .dt-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
   #sheet .rs-action .ac-sub.hl{ background:#fff3b0 !important; box-shadow:inset 0 0 0 2px #e0a800; }
   .form-actions{display:flex; gap:8px; margin-top:6px; padding-top:16px; border-top:1px solid var(--line);}
   .save-note{font-size:11px; color:var(--warn); background:#fffbeb; border:1px solid #fde68a; border-radius:7px;
@@ -400,10 +410,42 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
         <div class="group">
           <p class="group-title"><span class="num">4</span> 일정</p>
           <div class="grid2">
-            <div class="field"><label>고객 요청 일시 <span class="req">*</span></label><input type="datetime-local" id="f_requestAt"></div>
-            <div class="field"><label>출동 시간</label><input type="datetime-local" id="f_dispatchAt"></div>
-            <div class="field"><label>도착 시간</label><input type="datetime-local" id="f_arriveAt"></div>
-            <div class="field"><label>복귀 시간</label><input type="datetime-local" id="f_returnAt"></div>
+            <div class="field full"><label>고객 요청 일시 <span class="req">*</span></label>
+              <input type="hidden" id="f_requestAt">
+              <div class="dt-wrap" id="w_requestAt">
+                <input type="date" class="dt-date" id="d_requestAt" onchange="dtChanged('requestAt')">
+                <select class="dt-ap" id="ap_requestAt" onchange="dtChanged('requestAt')"></select>
+                <select class="dt-h" id="h_requestAt" onchange="dtChanged('requestAt')"></select>
+                <select class="dt-m" id="m_requestAt" onchange="dtChanged('requestAt')"></select>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_requestAt',-1)" title="1분 감소">▼</button>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_requestAt',1)" title="1분 증가">▲</button></div></div>
+            <div class="field full"><label>출동 시간 </label>
+              <input type="hidden" id="f_dispatchAt">
+              <div class="dt-wrap" id="w_dispatchAt">
+                <input type="date" class="dt-date" id="d_dispatchAt" onchange="dtChanged('dispatchAt')">
+                <select class="dt-ap" id="ap_dispatchAt" onchange="dtChanged('dispatchAt')"></select>
+                <select class="dt-h" id="h_dispatchAt" onchange="dtChanged('dispatchAt')"></select>
+                <select class="dt-m" id="m_dispatchAt" onchange="dtChanged('dispatchAt')"></select>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_dispatchAt',-1)" title="1분 감소">▼</button>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_dispatchAt',1)" title="1분 증가">▲</button></div></div>
+            <div class="field full"><label>도착 시간 </label>
+              <input type="hidden" id="f_arriveAt">
+              <div class="dt-wrap" id="w_arriveAt">
+                <input type="date" class="dt-date" id="d_arriveAt" onchange="dtChanged('arriveAt')">
+                <select class="dt-ap" id="ap_arriveAt" onchange="dtChanged('arriveAt')"></select>
+                <select class="dt-h" id="h_arriveAt" onchange="dtChanged('arriveAt')"></select>
+                <select class="dt-m" id="m_arriveAt" onchange="dtChanged('arriveAt')"></select>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_arriveAt',-1)" title="1분 감소">▼</button>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_arriveAt',1)" title="1분 증가">▲</button></div></div>
+            <div class="field full"><label>복귀 시간 </label>
+              <input type="hidden" id="f_returnAt">
+              <div class="dt-wrap" id="w_returnAt">
+                <input type="date" class="dt-date" id="d_returnAt" onchange="dtChanged('returnAt')">
+                <select class="dt-ap" id="ap_returnAt" onchange="dtChanged('returnAt')"></select>
+                <select class="dt-h" id="h_returnAt" onchange="dtChanged('returnAt')"></select>
+                <select class="dt-m" id="m_returnAt" onchange="dtChanged('returnAt')"></select>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_returnAt',-1)" title="1분 감소">▼</button>
+                <button type="button" class="dt-btn" onclick="bumpMin('f_returnAt',1)" title="1분 증가">▲</button></div></div>
           </div>
         </div>
 
@@ -754,13 +796,13 @@ function getForm(){
   o.supportStaffList = getStaff(); o.supportStaff = o.supportStaffList.join(', ');  // 첫 명만 Excel용
   o.id = $('f_id').value ? parseInt($('f_id').value.replace('#',''),10) : null; return o;
 }
-function setForm(d){ FIELDS.forEach(k=> $('f_'+k).value=d[k]||''); RADIOS.forEach(k=> setRadio(k,d[k]||''));
+function setForm(d){ FIELDS.forEach(k=> $('f_'+k).value=d[k]||''); RADIOS.forEach(k=> setRadio(k,d[k]||'')); syncAllDtUI();
   $('f_partnerName').value='㈜에이블컴'; $('f_writerCompany').value='㈜에이블컴';  // 고정입력
   let list = Array.isArray(d.supportStaffList) ? d.supportStaffList.slice()
            : (d.supportStaff ? String(d.supportStaff).split(/[,\n]/).map(s=>s.trim()).filter(Boolean) : []);
   renderStaff(list);
   $('f_id').value = d.id!=null ? '#'+String(d.id).padStart(4,'0') : ''; }
-function clearForm(){ FIELDS.forEach(k=> $('f_'+k).value=''); RADIOS.forEach(k=> setRadio(k,'')); renderStaff(['']); }
+function clearForm(){ FIELDS.forEach(k=> $('f_'+k).value=''); RADIOS.forEach(k=> setRadio(k,'')); renderStaff(['']); syncAllDtUI(); }
 
 function showView(name){ const w=name==='write';
   $('viewWrite').classList.toggle('hidden',!w); $('viewList').classList.toggle('hidden',w);
@@ -849,12 +891,16 @@ function newReport(){ showPage('reports'); resetForm(); showView('write'); $('f_
 
 /* 필수(Excel 전송) 항목: 비어 있으면 분홍 표시 */
 function markRequired(){ Object.keys(REQUIRED).forEach(k=>{ const el=$('f_'+k); if(!el)return;
-  el.classList.toggle('req-empty', !String(el.value||'').trim()); }); }
+  const empty=!String(el.value||'').trim();
+  if(el.type==='hidden'){ const w=$('w_'+k); if(w) w.classList.toggle('req-empty-wrap', empty); }
+  else el.classList.toggle('req-empty', empty); }); }
 
 async function saveReport(){ const d=getForm();
   const missing=Object.keys(REQUIRED).filter(k=> !String(d[k]||'').trim());
   markRequired();
-  if(missing.length){ const first=$('f_'+missing[0]); if(first){ first.focus(); }
+  if(missing.length){ let first=$('f_'+missing[0]);
+    if(first && first.type==='hidden') first=$('d_'+missing[0]);
+    if(first){ first.scrollIntoView({block:'center',behavior:'smooth'}); first.focus(); }
     toast(`필수 항목 ${missing.length}개 누락: ${missing.map(k=>REQUIRED[k]).join(', ')}`); return; }
   const now=new Date().toISOString();
   if(fbReady && COL){   // ---- Firestore ----
@@ -1033,6 +1079,49 @@ function buildSheetHTML(d){
     </table>`;
 }
 function acBody(sum,det){ let h=''; if(sum) h+=`<div style="font-weight:700;">■ ${esc(sum)}</div>`; if(det) h+=`<div>${esc(det)}</div>`; return h||'<span class="empty-val">&nbsp;</span>'; }
+/* ===== 일시 입력: 날짜 + 오전·오후 + 시(12) + 분(15분 단위) + 1분 미세조정 ===== */
+const DT_KEYS=['requestAt','dispatchAt','arriveAt','returnAt'];
+const DT_FIELDS=DT_KEYS.map(k=>'f_'+k);
+const p2n=n=>String(n).padStart(2,'0');
+const HOUR_ORDER=[12,1,2,3,4,5,6,7,8,9,10,11];   // 시간 흐름 순서 (오전 12시 = 자정)
+function buildDtSelects(key){
+  const ap=$('ap_'+key), h=$('h_'+key), m=$('m_'+key); if(!ap||!h||!m) return;
+  ap.innerHTML='<option value="">오전/오후</option><option value="AM">오전</option><option value="PM">오후</option>';
+  h.innerHTML='<option value="">시</option>'+HOUR_ORDER.map(v=>`<option value="${v}">${v}시</option>`).join('');
+  m.innerHTML='<option value="">분</option>'+[0,15,30,45].map(v=>`<option value="${v}">${p2n(v)}분</option>`).join('');
+}
+/* 12시간제 → 24시간제 */
+function to24(apv, h12){ let h=Number(h12)%12; if(apv==='PM') h+=12; return h; }
+/* 숨은 값(f_x) → 화면 반영. 분이 15분 배수가 아니면 임시 옵션 추가 */
+function syncDtUI(key){ const hid=$('f_'+key), d=$('d_'+key), ap=$('ap_'+key), h=$('h_'+key), m=$('m_'+key);
+  if(!hid||!d||!ap||!h||!m) return;
+  const v=hid.value||'';
+  if(v.length>=16){
+    d.value=v.slice(0,10);
+    const H=parseInt(v.slice(11,13),10), M=parseInt(v.slice(14,16),10);
+    ap.value = H<12 ? 'AM' : 'PM';
+    let h12=H%12; if(h12===0) h12=12; h.value=String(h12);
+    if(!Array.from(m.options).some(o=>o.value===String(M))){
+      const op=document.createElement('option'); op.value=String(M); op.textContent=p2n(M)+'분 (분 단위)'; op.dataset.temp='1'; m.appendChild(op); }
+    m.value=String(M);
+  }else{ d.value=''; ap.value=''; h.value=''; m.value=''; }
+  Array.from(m.querySelectorAll('option[data-temp]')).forEach(o=>{ if(o.value!==m.value) o.remove(); }); }
+function syncAllDtUI(){ DT_KEYS.forEach(syncDtUI); }
+/* 화면 → 숨은 값 (네 항목이 모두 선택되어야 값 생성) */
+function dtChanged(key){ const hid=$('f_'+key), d=$('d_'+key), ap=$('ap_'+key), h=$('h_'+key), m=$('m_'+key);
+  hid.value = (d.value && ap.value && h.value!=='' && m.value!=='')
+    ? `${d.value}T${p2n(to24(ap.value,h.value))}:${p2n(Number(m.value))}` : '';
+  updatePreview(); markRequired(); }
+/* ▲▼ 버튼: 1분 증감 (값 없으면 현재 시각을 15분 단위로 채움) */
+function bumpMin(fid, delta){ const key=fid.slice(2); const hid=$(fid); if(!hid) return;
+  let base;
+  if(hid.value && hid.value.length>=16){ base=new Date(hid.value); }
+  else { base=new Date(); base.setSeconds(0,0); base.setMinutes(Math.round(base.getMinutes()/15)*15); delta=0; }
+  if(isNaN(base)) return;
+  base.setMinutes(base.getMinutes()+delta);
+  hid.value=`${base.getFullYear()}-${p2n(base.getMonth()+1)}-${p2n(base.getDate())}T${p2n(base.getHours())}:${p2n(base.getMinutes())}`;
+  syncDtUI(key); updatePreview(); markRequired(); }
+
 function updatePreview(){ $('sheet').innerHTML=buildSheetHTML(getForm()); if(typeof markRequired==='function') markRequired(); applyHighlight(); }
 /* 폼 항목 포커스 → A4에서 해당 부분 강조 */
 const HL_MAP={ mgmtNo:'mgmtNo', requestOrg:'requestOrg', workSite:'workSite', requestAt:'requestAt', requester:'requester',
@@ -1044,6 +1133,7 @@ const HL_MAP={ mgmtNo:'mgmtNo', requestOrg:'requestOrg', workSite:'workSite', re
   confirmOrg:'confirmOrg', confirmName:'confirmName', confirmSign:'confirmSign' };
 let hlField=null;
 function tokenFromEl(el){ if(!el) return null;
+  if(el.id && (el.id.startsWith('d_')||el.id.startsWith('t_'))) return HL_MAP[el.id.slice(2)]||null;
   if(el.id && el.id.startsWith('f_')) return HL_MAP[el.id.slice(2)]||null;
   if(el.name && HL_MAP[el.name]) return HL_MAP[el.name];
   if(el.classList && el.classList.contains('staffName')) return 'supportStaff';
@@ -1058,7 +1148,8 @@ function setHighlight(el){ const t=tokenFromEl(el); if(t!==hlField){ hlField=t; 
 /* ===== A4 미리보기 클릭 → 좌측 입력 항목으로 자동 안내 ===== */
 /* data-f 토큰 → 폼에서 포커스할 대상 (id 또는 radio name) */
 const A4_TO_FORM={ issue:'f_issueSummary', handling:'f_handlingSummary', supportStaff:'staff',
-  severity:'severity', asWarranty:'asWarranty', supportCategory:'supportCategory' };
+  severity:'severity', asWarranty:'asWarranty', supportCategory:'supportCategory',
+  requestAt:'d_requestAt', dispatchAt:'d_dispatchAt', arriveAt:'d_arriveAt', returnAt:'d_returnAt' };
 function focusFormField(token){ if(!token) return;
   const RADIO=['severity','asWarranty','supportCategory'];
   let el=null;
@@ -1468,6 +1559,8 @@ function download(blob,name){ const u=URL.createObjectURL(blob); const a=documen
 let toastTimer; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400); }
 
 FIELDS.forEach(k=>{ const e=$('f_'+k); e.addEventListener('input',updatePreview); e.addEventListener('change',updatePreview); });
+DT_KEYS.forEach(buildDtSelects);
+syncAllDtUI();
 RADIOS.forEach(n=> document.querySelectorAll(`input[name="${n}"]`).forEach(r=> r.addEventListener('change',updatePreview)));
 // 포커스 시 A4 해당 항목 강조 (동적 지원요원 칸 포함 — 위임)
 document.querySelector('.form-panel').addEventListener('focusin', e=> setHighlight(e.target));
