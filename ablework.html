@@ -476,10 +476,12 @@
   
   .pt-area { display: none; } /* 평상시에는 텍스트 출력 영역 숨김 */
 
-  /* ===== 월간 보고서 전용 (실적 1열) ===== */
-  .proj-grid.mo-single,
-  body.presentation-mode .proj-grid.mo-single { grid-template-columns: 1fr !important; }
-  .mo-single .edit-area textarea { min-height: 120px; }
+  /* ===== 월간 보고서 (실적 좌/우 2칸) ===== */
+  #view-monthly .edit-area textarea { min-height: 120px; }
+  /* 화면이 좁을 때는 위아래로 자연스럽게 접힙니다 */
+  @media (max-width: 1100px) {
+    #view-monthly .proj-grid { grid-template-columns: 1fr; }
+  }
   .arch-filter-btn {
     padding: 6px 14px; border: 1px solid var(--line); background: var(--bg-elev);
     border-radius: 4px; font-size: 12.5px; font-weight: 500; cursor: pointer; color: var(--muted);
@@ -1165,7 +1167,13 @@
   } catch(e) {} 
 
   const hardcodedUsers = {
-      'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' }
+      'ablecom': { id: 'ablecom', pw: 'ablecom+123', name: '최고관리자', role: 'admin' },
+      'jhjung': { id: 'jhjung', pw: 'ablecom+123', name: '정지훈', role: 'user' },
+      'jwpark': { id: 'jwpark', pw: 'ablecom+123', name: '박지원', role: 'user' },
+      'kcw75': { id: 'kcw75', pw: 'ablecom+123', name: '김찬우', role: 'user' },
+      'mikey': { id: 'mikey', pw: 'ablecom+123', name: '마이키', role: 'user' },
+      'sean.lee': { id: 'sean.lee', pw: 'ablecom+123', name: '이시언', role: 'user' },
+      'sunwoo.choi': { id: 'sunwoo.choi', pw: 'ablecom+123', name: '최선우', role: 'user' }
   };
 
   // --- 3. Window Core Functions ---
@@ -2358,12 +2366,17 @@
         if (edited) finalText = old.perf;
       }
 
+      // 실적② 는 자동 집계 대상이 아니라 직접 입력하는 칸이므로 항상 그대로 지킵니다.
+      // (단, [완전 재생성] 시에는 함께 비웁니다.)
+      const finalText2 = (keepEdits && old && old.perf2) ? old.perf2 : '';
+
       target.projects.push({
         id: pid,
         name: c.name,
         owner: c.owner,
-        perf: finalText,   // 화면에 보이고 수정 가능한 실적 내용
-        auto: autoText     // 자동 생성 원본 (수정 여부 판단용)
+        perf: finalText,    // 실적① : 주간보고에서 자동 집계 + 수정 가능
+        perf2: finalText2,  // 실적② : 직접 입력 전용
+        auto: autoText      // 자동 생성 원본 (수정 여부 판단용)
       });
     });
 
@@ -2379,6 +2392,15 @@
     monthObj.weekCount = weeks.length;
     monthObj.rangeStart = weeks.length ? weeks[0].start : '';
     monthObj.rangeEnd = weeks.length ? weeks[weeks.length - 1].end : '';
+  }
+
+  // 실적① 과 실적② 를 줄바꿈으로 이어 하나의 내용으로 만듭니다.
+  // (화면에서는 좌우 2칸이지만 엑셀·인쇄에서는 한 칸으로 합쳐 출력합니다.)
+  function mergeMonthPerf(p) {
+    return [p.perf, p.perf2]
+      .map(t => String(t || '').trim())
+      .filter(t => t !== '')
+      .join('\n');
   }
 
   function loadMonth(dateObj) {
@@ -2448,9 +2470,9 @@
       });
   };
 
-  window.updateMonthData = function(ci, pi, val) {
+  window.updateMonthData = function(ci, pi, field, val) {
     if (!activeMonth) return;
-    activeMonth.categories[ci].projects[pi].perf = val;
+    activeMonth.categories[ci].projects[pi][field] = val;
     if (!data.monthly.some(x => x.id === activeMonth.id)) {
       data.monthly.push(activeMonth);
       data.monthly.sort((a, b) => b.id.localeCompare(a.id));
@@ -2497,11 +2519,16 @@
               <div class="proj-header">
                 <div class="proj-name">${escapeHtml(p.name)} <span style="font-size:11px;font-weight:normal;color:var(--muted);margin-left:6px;">담당: ${escapeHtml(p.owner || '-')}</span></div>
               </div>
-              <div class="proj-grid mo-single">
+              <div class="proj-grid">
                 <div class="wk-pt-box">
-                  <label>월간 실적</label>
-                  <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateMonthData(${ci}, ${pi}, this.value)" placeholder="- 실적 내용">${escapeHtml(p.perf)}</textarea></div>
+                  <label>월간 실적 ① <span style="font-weight:400; color:var(--muted);">(주간보고 자동 집계)</span></label>
+                  <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateMonthData(${ci}, ${pi}, 'perf', this.value)" placeholder="- 실적 내용">${escapeHtml(p.perf)}</textarea></div>
                   <div class="pt-area">${escapeHtml(p.perf) || '-'}</div>
+                </div>
+                <div class="wk-pt-box">
+                  <label>월간 실적 ② <span style="font-weight:400; color:var(--muted);">(직접 입력)</span></label>
+                  <div class="edit-area"><textarea oninput="window.autoGrow(this)" onchange="window.updateMonthData(${ci}, ${pi}, 'perf2', this.value)" placeholder="- 추가 실적 내용">${escapeHtml(p.perf2 || '')}</textarea></div>
+                  <div class="pt-area">${escapeHtml(p.perf2 || '') || '-'}</div>
                 </div>
               </div>
             </div>
@@ -2521,7 +2548,7 @@
     let rowsHtml = '';
     activeMonth.categories.forEach(cat => {
       cat.projects.forEach((p, idx) => {
-        const perfText = escapeHtml(p.perf).split('\n').filter(l => l.trim() !== '').map(l => `<div class="print-text">${l}</div>`).join('');
+        const perfText = escapeHtml(mergeMonthPerf(p)).split('\n').filter(l => l.trim() !== '').map(l => `<div class="print-text">${l}</div>`).join('');
         const ownerHtml = (p.owner && String(p.owner).trim() !== '')
           ? `<span class="print-owner">[${escapeHtml(p.owner)}]</span>` : '';
         rowsHtml += `<tr>`;
@@ -2564,7 +2591,7 @@
     let rowsHtml = '';
     activeMonth.categories.forEach(cat => {
       cat.projects.forEach((p, idx) => {
-        const perfText = escapeHtml(p.perf).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
+        const perfText = escapeHtml(mergeMonthPerf(p)).replace(/\n/g, '<br style="mso-data-placement:same-cell;"/>') || '-';
         // 담당자가 지정되지 않은 경우 [-] 를 아예 표시하지 않습니다.
         const ownerHtml = (p.owner && String(p.owner).trim() !== '')
           ? `<br style="mso-data-placement:same-cell;"/><span class="owner-text">[${escapeHtml(p.owner)}]</span>`
@@ -2833,7 +2860,7 @@
           label: cat.name,
           rows: cat.projects.map(p => ([
             { t: 'proj', name: p.name, owner: p.owner },
-            { t: 'bullets', text: p.perf }
+            { t: 'bullets', text: mergeMonthPerf(p) }
           ]))
         }))
       });
