@@ -276,6 +276,31 @@
       padding: 10px 0 0 0 !important; /* 불필요한 패딩 제거 */
   }
 
+  /* ===== 월간 업무보고 전용 : 가로(와이드) 프레젠테이션 =====
+     내용이 많아 세로형 문서 폭으로는 좁으므로, 화면 전체 폭을 사용합니다. */
+  body.presentation-mode.pt-wide .main {
+    max-width: none !important;
+    width: 97% !important;
+    margin: 24px auto !important;
+    padding: 38px 46px !important;
+  }
+  /* 실적 ① / ② 를 좌우로 넓게 벌려 배치 */
+  body.presentation-mode.pt-wide .proj-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 36px !important;
+  }
+  /* 가로가 넓어진 만큼 세로 여백을 줄여 한 화면에 더 담기도록 조정 */
+  body.presentation-mode.pt-wide .category-block { margin-bottom: 38px !important; }
+  body.presentation-mode.pt-wide .proj-row { margin-bottom: 26px !important; }
+  body.presentation-mode.pt-wide .proj-name { font-size: 22px !important; margin-bottom: 16px !important; }
+  body.presentation-mode.pt-wide .cat-title { font-size: 24px !important; }
+  body.presentation-mode.pt-wide .pt-area { font-size: 17px !important; line-height: 1.65 !important; }
+  body.presentation-mode.pt-wide .wk-pt-box { padding: 18px 22px !important; }
+  /* 프로젝터·노트북 등 화면이 좁을 때는 위아래로 접어 글자가 눌리지 않게 합니다 */
+  @media (max-width: 1100px) {
+    body.presentation-mode.pt-wide .proj-grid { grid-template-columns: 1fr !important; }
+  }
+
   .btn-exit-pt {
     display: none; position: fixed; top: 20px; right: 20px; z-index: 10000;
     background: var(--accent); color: white; padding: 12px 24px; border-radius: 50px;
@@ -2081,17 +2106,22 @@
 
   // --- PRESENTATION MODE ---
   window.startPresentation = function() {
+    // 월간 업무보고 화면에서는 내용이 많으므로 가로(와이드)로 펼쳐서 보여줍니다.
+    const activeView = document.querySelector('.view.active');
+    const isMonthly = activeView && activeView.id === 'view-monthly';
+    document.body.classList.toggle('pt-wide', !!isMonthly);
+
     document.body.classList.add('presentation-mode');
     document.documentElement.requestFullscreen().catch(e => console.warn(e));
   };
   window.exitPresentation = function() {
-    document.body.classList.remove('presentation-mode');
+    document.body.classList.remove('presentation-mode', 'pt-wide');
     if (document.fullscreenElement) document.exitFullscreen();
     requestAnimationFrame(refreshVisibleAutoGrow);
   };
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement) {
-      document.body.classList.remove('presentation-mode');
+      document.body.classList.remove('presentation-mode', 'pt-wide');
       requestAnimationFrame(refreshVisibleAutoGrow);
     }
   });
