@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>기술지원 REPORT 작성</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Firebase (compat SDK) — Firestore 기반 저장 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -16,12 +19,19 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 </script>
 <style>
   :root{
-    --bg:#f1f5f9; --surface:#fff; --ink:#0f1b2e; --muted:#64748b;
-    --line:#e5eaf0; --line-strong:#cbd5e1; --accent:#2563eb; --accent-dark:#1d4ed8;
-    --accent-soft:#eaf1ff; --danger:#dc2626; --warn:#b45309; --header:#0b1220;
-    --red:#e2231a; --radius:12px; --shadow:0 1px 2px rgba(15,27,45,.06),0 4px 12px rgba(15,27,45,.06);
-    --shadow-lg:0 10px 30px rgba(15,27,45,.12);
-    --sidebar-w:236px;
+    /* 업무보고 · Issue Report와 동일한 디자인 토큰 */
+    --bg:#F7F4ED; --bg-elev:#FFFFFF; --paper:#FBFAF6; --surface:#FFFFFF;
+    --ink:#1A2238; --ink-2:#3A4358; --muted:#707788;
+    --line:#DDD6C8; --line-strong:#B8AE99;
+    --brass:#A87838; --brass-soft:#C9A35E;
+    --accent:#8B2A2A; --accent-dark:#6F2020; --accent-soft:#F3E7E0;
+    --good:#2F6A4A; --danger:#8B2A2A; --warn:#B86A1A; --header:#1A2238;
+    --red:#8B2A2A; --radius:6px;
+    --shadow:0 1px 2px rgba(26,34,56,.04), 0 1px 1px rgba(26,34,56,.02);
+    --shadow-lg:0 6px 24px rgba(26,34,56,.06), 0 2px 6px rgba(26,34,56,.04);
+    --serif:'Noto Serif KR','Nanum Myeongjo','Batang',serif;
+    --sans:'Noto Sans KR','Pretendard','Malgun Gothic',-apple-system,'Segoe UI',sans-serif;
+    --sidebar-w:240px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -293,6 +303,83 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
     body:not(.nav-open) .sidebar{ width:0; flex-basis:0; overflow:hidden; }
     .content{ padding:16px; }
   }
+  /* ===================================================================
+     디자인 통일 — 주간/월간 업무보고 · Issue Report와 동일한 스타일
+     =================================================================== */
+  body{ font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  /* 상단바 : 사이드바와 같은 잉크색으로 연결 */
+  header.topbar{ background:var(--ink); border-bottom:1px solid #0F1626; box-shadow:none; }
+  .brand h1{ font-family:var(--serif); font-weight:700; font-size:19px; letter-spacing:-.02em; color:#F4EFE3; }
+  .brand span{ color:#9A9386; }
+  .brand .dot{ background:var(--brass-soft); }
+  header.topbar .btn-ghost{ color:#C7C0B2; border-color:transparent; background:transparent; }
+  header.topbar .btn-ghost:hover{ background:rgba(255,255,255,.07); color:#F4EFE3; }
+  header.topbar .btn-primary{ background:var(--brass); color:#1A2238; border-color:var(--brass); font-weight:600; }
+  header.topbar .btn-primary:hover{ background:var(--brass-soft); }
+  /* 사이드바 */
+  .sidebar{ background:var(--ink); color:#E8E4DC; border-right:1px solid #0F1626; }
+  .nav-group-title{ font-size:10px; color:#6B6655; letter-spacing:.18em; padding:14px 18px 8px; font-weight:600; }
+  .nav-item{ color:#C7C0B2; font-size:13.5px; font-weight:400; padding:10px 14px; margin:1px 10px; border-radius:6px; border-left:2px solid transparent; }
+  .nav-item:hover{ background:rgba(255,255,255,.04); color:#F4EFE3; }
+  .nav-item.active{ background:rgba(201,163,94,.10); color:#F4EFE3; border-left-color:var(--brass-soft); font-weight:500; }
+  .nav-sub .nav-item{ padding-left:40px; font-size:12.5px; }
+  /* 페이지 제목 : 명조 + 밑줄 */
+  .page-title{ font-family:var(--serif); font-size:28px; font-weight:600; letter-spacing:-.01em; }
+  .page-sub{ padding-bottom:16px; border-bottom:1px solid var(--line); margin-bottom:24px; font-size:12.5px; }
+  /* 카드 · 패널 */
+  .panel, .card-box, .stat-card, .dash-section, .modal{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .panel-head, .modal-head{ border-bottom:1px solid var(--line); background:transparent; }
+  .panel-head h2, .modal-head b, .card-box h3, .dash-section h3{ font-family:var(--serif); font-weight:600; color:var(--ink); }
+  .panel-head h2{ font-size:17px; }
+  .stat-card .ic{ background:var(--paper); color:var(--brass); border:1px solid var(--line); border-radius:6px; }
+  .stat-card .num{ font-family:var(--serif); font-weight:700; }
+  .sec-head, .form-sec-head{ background:var(--paper); border-bottom:1px solid var(--line); }
+  /* 버튼 */
+  .btn{ border-radius:5px; font-size:12.5px; font-weight:500; }
+  .btn-primary{ background:var(--ink); color:#F4EFE3; border-color:var(--ink); }
+  .btn-primary:hover{ background:#28324B; }
+  .btn-outline{ background:var(--bg-elev); border:1px solid var(--line-strong); color:var(--ink-2); }
+  .btn-outline:hover{ background:var(--paper); border-color:var(--ink-2); color:var(--ink); }
+  .btn-danger{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .mini-btn{ border:1px solid var(--line); background:var(--bg-elev); color:var(--ink-2); border-radius:4px; }
+  .mini-btn:hover{ background:var(--paper); border-color:var(--line-strong); color:var(--ink); }
+  /* 입력 */
+  input, select, textarea{ font-family:inherit; border:1px solid var(--line); border-radius:4px; background:var(--bg-elev); color:var(--ink); }
+  input:focus, select:focus, textarea:focus{ border-color:var(--brass); box-shadow:0 0 0 2px rgba(168,120,56,.12); }
+  textarea{ background:var(--paper); }
+  textarea:focus{ background:var(--bg-elev); }
+  label, .field > label{ color:var(--ink-2); }
+  /* 목록 테이블 */
+  table.list thead th{ background:var(--paper); border-bottom:2px solid var(--ink); color:var(--ink); font-weight:600; }
+  table.list tbody td{ border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  table.list tbody td:first-child{ border-left:1px solid var(--line); border-radius:6px 0 0 6px; }
+  table.list tbody td:last-child{ border-right:1px solid var(--line); border-radius:0 6px 6px 0; }
+  table.list tbody tr:hover td{ background:var(--paper); }
+  table.pv-table th{ background:var(--ink); color:#F4EFE3; }
+  table.pv-table tbody tr:nth-child(even){ background:var(--paper); }
+  /* 기타 */
+  .seg-tabs{ background:var(--paper); border:1px solid var(--line); border-radius:6px; }
+  .seg-tabs button{ border-radius:4px; }
+  .seg-tabs button.active{ background:var(--ink); color:#F4EFE3; box-shadow:none; }
+  .pg-btn{ border:1px solid var(--line-strong); background:var(--bg-elev); border-radius:5px; }
+  .pg-btn:hover:not(:disabled){ border-color:var(--ink-2); color:var(--ink); }
+  .pg-btn.active{ background:var(--ink); border-color:var(--ink); color:#F4EFE3; }
+  .mini-badge{ background:var(--paper); border:1px solid var(--line); color:var(--ink-2); }
+  .fb-badge.fb-on{ background:rgba(47,106,74,.20); color:#8FD6AE; }
+  .fb-badge.fb-wait{ background:rgba(184,106,26,.20); color:#E8B171; }
+  .fb-badge.fb-off{ background:rgba(139,42,42,.24); color:#F0A3A3; }
+  .dt-btn{ border:1px solid var(--line); background:var(--bg-elev); }
+  .dt-btn:hover{ border-color:var(--brass); color:var(--brass); background:var(--paper); }
+  .group-title{ background:var(--paper); border-bottom:1px solid var(--line); color:var(--ink);
+    font-family:var(--serif); font-weight:600; border-radius:5px 5px 0 0; }
+  .group-title .num{ background:var(--ink); color:#F4EFE3; border-radius:4px; font-family:var(--sans); }
+  .group{ border:1px solid var(--line); border-radius:6px; }
+  table.list tbody tr:hover{ background:transparent; }
+  .req-empty{ background:#FBEDE9 !important; border-color:#D9A79B !important; }
+  .req-empty-wrap .dt-date, .req-empty-wrap .dt-ap, .req-empty-wrap .dt-h, .req-empty-wrap .dt-m{ background:#FBEDE9; border-color:#D9A79B; }
+  .sheet-scroll{ background:#E8E4DC; }
+  .toast{ background:var(--ink); color:#F4EFE3; }
+  .mini-badge{ background:var(--paper); border:1px solid var(--line); color:var(--ink-2); font-weight:600; }
 </style>
 </head>
 <body>
