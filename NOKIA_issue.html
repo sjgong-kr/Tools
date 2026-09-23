@@ -174,6 +174,17 @@
   .no-sel { padding: 60px 20px; text-align: center; color: var(--muted); }
   .no-sel .btn { margin-top: 14px; }
 
+  /* 사업자(고객사) 필터 */
+  .cust-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cust-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 14px; background: var(--bg-elev); }
+  .cust-chip:hover { border-color: var(--line-strong); color: var(--ink); }
+  .cust-chip.on { background: rgba(168,120,56,0.12); border-color: var(--brass); color: var(--ink); font-weight: 600; }
+  .cust-chip .box { width: 13px; height: 13px; border: 1px solid var(--line-strong); border-radius: 3px; font-size: 9px; line-height: 12px; text-align: center; background: #fff; color: var(--brass); }
+  .cust-chip.on .box { border-color: var(--brass); }
+  .cust-chip .c { font-size: 11px; opacity: .7; }
+  .cust { font-size: 11px; font-weight: 700; color: #fff; background: var(--ink-2); padding: 1px 7px; border-radius: 3px; white-space: nowrap; }
+  .ticket { font-size: 11.5px; color: var(--brass); font-weight: 600; }
+
   /* 이슈 관리 탭 */
   .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
   .tab { padding: 9px 18px; font-size: 13.5px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
@@ -250,8 +261,8 @@
             <div id="dash-open"></div>
           </div>
           <div class="dcard">
-            <div class="section-head"><div class="section-title">프로젝트별 현황</div><div class="section-meta">진행 중 / 완료</div></div>
-            <div id="dash-proj"></div>
+            <div class="section-head"><div class="section-title">사업자(고객사)별 Issue 현황</div><div class="section-meta">진행 중 / 완료</div></div>
+            <div id="dash-cust"></div>
           </div>
         </div>
         <div class="dcard">
@@ -284,6 +295,7 @@
           <div class="list-tools">
             <div class="seg" id="filter"></div>
             <input class="inp" id="search" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case)" oninput="setQ(this.value)">
+            <div id="cust-bar"></div>
           </div>
           <div class="list" id="list"></div>
         </div>
@@ -295,6 +307,7 @@
         <div class="filter-bar">
           <div class="seg" id="filter-t"></div>
           <input class="inp" id="search-t" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case, 내용)" oninput="setQ(this.value)">
+          <div id="cust-bar-t" style="width:100%;"></div>
         </div>
         <div class="tcard"><table class="table" id="table-all"></table></div>
       </div>
@@ -557,15 +570,19 @@ function renderDashboard() {
                                      : '<span class="t-sub" style="color:var(--accent);">진행 기록 없음</span>'}</td>
       </tr>`; }).join('')}</tbody></table>` : '<div class="prog-empty">진행 중인 이슈가 없습니다.</div>';
 
-  // 프로젝트별 현황
-  const projs = {};
-  all.forEach(i => { const k = i.project || '(프로젝트 미지정)'; projs[k] = projs[k] || { ing: 0, done: 0 }; projs[k][i.status === DONE ? 'done' : 'ing']++; });
-  const keys = Object.keys(projs).sort();
-  document.getElementById('dash-proj').innerHTML = keys.length ? `<table class="table">
-    <thead><tr><th>프로젝트</th><th style="text-align:right;">진행 중</th><th style="text-align:right;">완료</th></tr></thead><tbody>
-    ${keys.map(k => `<tr><td>${esc(k)}</td>
-      <td style="text-align:right; font-weight:600; color:var(--warn);">${projs[k].ing}</td>
-      <td style="text-align:right; color:var(--good);">${projs[k].done}</td></tr>`).join('')}</tbody></table>`
+  // 사업자(고객사)별 Issue 현황
+  const cs = customerStats(all);
+  const ckeys = Object.keys(cs).sort();
+  document.getElementById('dash-cust').innerHTML = ckeys.length ? `<table class="table">
+    <thead><tr><th>고객사</th><th class="c">진행 중</th><th class="c">완료</th><th class="c">합계</th><th class="c">평균 경과</th><th class="c">진행 기록</th></tr></thead><tbody>
+    ${ckeys.map(k => { const o = cs[k], sum = o.ing + o.done; return `
+      <tr class="row-link" onclick="filterByCustomer('${esc(k).replace(/'/g, "\\'")}')">
+        <td><span class="cust">${esc(k)}</span></td>
+        <td class="c" style="font-weight:600; color:var(--warn);">${o.ing}</td>
+        <td class="c" style="color:var(--good);">${o.done}</td>
+        <td class="c">${sum}</td>
+        <td class="c">${o.ageN ? Math.round(o.ageSum / o.ageN) + '일' : '-'}</td>
+        <td class="c">${o.prog}</td></tr>`; }).join('')}</tbody></table>`
     : '<div class="prog-empty">등록된 이슈가 없습니다.</div>';
 
   const recent = [];
@@ -588,6 +605,7 @@ function renderList() {
   document.getElementById('summary').innerHTML = `전체 <b>${DB.issues.length}</b>건 · 진행 중 <b>${ing}</b>건 · 완료 <b>${DB.issues.length - ing}</b>건`;
 
   document.getElementById('filter').innerHTML = segHTML();
+  document.getElementById('cust-bar').innerHTML = custHTML();
   document.getElementById('tab-cnt').textContent = DB.issues.length;
   const q = Q.trim().toLowerCase();
   const rows = filteredIssues();
@@ -595,9 +613,9 @@ function renderList() {
   document.getElementById('list').innerHTML = rows.length ? rows.map(i => {
     const last = sortedProgress(i)[0];
     return `<button class="item ${i.no === SEL ? 'sel' : ''} ${i.status === DONE ? 'done' : ''}" onclick="selectIssue('${i.no}')">
-      <div class="item-top"><span class="no-tag">${i.no}</span>${stBadge(i.status)}${i.project ? `<span class="proj">${esc(i.project)}</span>` : ''}</div>
+      <div class="item-top"><span class="no-tag">${i.no}</span>${stBadge(i.status)}<span class="cust">${esc(i.customer) || '사업자 미지정'}</span>${i.project ? `<span class="proj">${esc(i.project)}</span>` : ''}</div>
       <div class="item-title">${esc(i.title) || '(이슈명 없음)'}</div>
-      <div class="item-meta">${esc(i.customer)} · ${esc(i.issueDate)}${i.status === DONE && i.completeDate ? ' → 완료 ' + i.completeDate : (last && last.date ? ' · 최근 진행 ' + last.date.slice(5) : '')}</div>
+      <div class="item-meta"><span class="ticket">Ticket ${esc(i.arCase) || '미등록'}</span> · ${esc(i.issueDate)}${i.status === DONE && i.completeDate ? ' → 완료 ' + i.completeDate : (last && last.date ? ' · 최근 진행 ' + last.date.slice(5) : '')}</div>
     </button>`;
   }).join('') : `<div class="empty">${q ? '검색 결과가 없습니다.' : '이 상태의 이슈가 없습니다.'}</div>`;
 }
@@ -626,6 +644,7 @@ function setQ(v) {
 function filteredIssues() {
   const q = Q.trim().toLowerCase();
   return DB.issues.filter(i => (FILTER === 'all' || i.status === FILTER) &&
+    (CUST.size === 0 || CUST.has(i.customer)) &&
     (!q || [i.no, i.title, i.project, i.arCase, i.content, i.problem, i.cause, i.memo, i.customer].join(' ').toLowerCase().includes(q)));
 }
 function segHTML(targetId) {
@@ -634,12 +653,38 @@ function segHTML(targetId) {
     `<button class="${FILTER === f ? 'active' : ''}" onclick="setFilter('${f}')">${label}<span class="c">${cnt(f)}</span></button>`).join('');
 }
 function setFilter(f) { FILTER = f; if (TAB === 'table') renderTable(); else renderList(); }
+/* --- 사업자(고객사) 필터 -------------------------------------------------- */
+let CUST = new Set();   // 비어 있으면 전체 고객사
+
+function customerList() { return [...new Set(DB.issues.map(i => i.customer).filter(Boolean))].sort(); }
+function toggleCust(name) {
+  if (CUST.has(name)) CUST.delete(name); else CUST.add(name);
+  if (TAB === 'table') renderTable(); else renderList();
+}
+function clearCust() { CUST.clear(); if (TAB === 'table') renderTable(); else renderList(); }
+function custHTML() {
+  const names = customerList();
+  if (!names.length) return '';
+  const cnt = c => DB.issues.filter(i => i.customer === c).length;
+  return `<div class="cust-bar">
+    <button class="cust-chip ${CUST.size ? '' : 'on'}" onclick="clearCust()">전체 사업자</button>
+    ${names.map(c => `<button class="cust-chip ${CUST.has(c) ? 'on' : ''}" onclick="toggleCust('${esc(c).replace(/'/g, "\\'")}')">
+        <span class="box">${CUST.has(c) ? '✓' : ''}</span>${esc(c)}<span class="c">${cnt(c)}</span></button>`).join('')}
+  </div>`;
+}
+
+// 대시보드에서 고객사 줄을 누르면 그 사업자만 걸러서 봅니다
+function filterByCustomer(name) {
+  CUST = new Set([name]); FILTER = 'all'; Q = '';
+  TAB = 'table'; goView('issues'); setTab('table');
+}
 
 // 표에서 행을 누르면 편집 보기로 이동합니다
 function openInEditor(no) { SEL = no; EDIT_P = null; setTab('edit'); window.scrollTo(0, 0); }
 
 function renderTable() {
   document.getElementById('filter-t').innerHTML = segHTML();
+  document.getElementById('cust-bar-t').innerHTML = custHTML();
   document.getElementById('tab-cnt').textContent = DB.issues.length;
   const rows = filteredIssues();
   document.getElementById('table-all').innerHTML = `
@@ -1007,14 +1052,14 @@ function sheetDashboard(wb) {
                        ws.getRow(r - 1).getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }; });
   r++;
 
-  // 프로젝트별 현황
-  r = xlSection(ws, r, '프로젝트별 현황', n);
-  r = xlHeader(ws, r, [{ h: '프로젝트' }, { h: '진행 중' }, { h: '완료' }, { h: '합계' }, { h: '' }, { h: '' }]);
-  const projs = {};
-  all.forEach(i => { const k = i.project || '(프로젝트 미지정)'; projs[k] = projs[k] || { ing: 0, done: 0 }; projs[k][i.status === DONE ? 'done' : 'ing']++; });
-  Object.keys(projs).sort().forEach(k => {
-    r = xlRow(ws, r, [k, projs[k].ing, projs[k].done, projs[k].ing + projs[k].done], { bold: [0], minHeight: 22 });
-    [2, 3, 4].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  // 사업자(고객사)별 Issue 현황
+  r = xlSection(ws, r, '사업자(고객사)별 Issue 현황', n);
+  r = xlHeader(ws, r, ['고객사', '진행 중', '완료', '합계', '평균 경과(일)', '진행 기록']);
+  const cs2 = customerStats(all);
+  Object.keys(cs2).sort().forEach(k => {
+    const o = cs2[k];
+    r = xlRow(ws, r, [k, o.ing, o.done, o.ing + o.done, o.ageN ? Math.round(o.ageSum / o.ageN) : 0, o.prog], { bold: [0], minHeight: 22 });
+    for (let c = 2; c <= 6; c++) ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
   });
   r++;
 
@@ -1047,6 +1092,117 @@ function sheetDashboard(wb) {
   return ws;
 }
 
+
+/* --- 시트 4 : 전체 통계 ---------------------------------------------------- */
+function customerStats(list) {
+  const m = {};
+  list.forEach(i => {
+    const k = i.customer || '(고객사 미지정)';
+    m[k] = m[k] || { ing: 0, done: 0, prog: 0, ageSum: 0, ageN: 0, leadSum: 0, leadN: 0, ar: 0 };
+    const o = m[k];
+    o[i.status === DONE ? 'done' : 'ing']++;
+    o.prog += (i.progress || []).length;
+    if (i.arCase) o.ar++;
+    if (i.status === DONE) { if (i.completeDate && i.issueDate) { o.leadSum += Math.max(0, Math.round((new Date(i.completeDate) - new Date(i.issueDate)) / 86400000)); o.leadN++; } }
+    else if (i.issueDate) { o.ageSum += daysSince(i.issueDate); o.ageN++; }
+  });
+  return m;
+}
+function projectStats(list) {
+  const m = {};
+  list.forEach(i => { const k = i.project || '(프로젝트 미지정)'; m[k] = m[k] || { ing: 0, done: 0, prog: 0 };
+                      m[k][i.status === DONE ? 'done' : 'ing']++; m[k].prog += (i.progress || []).length; });
+  return m;
+}
+
+function sheetStats(wb, list) {
+  const widths = [20, 14, 12, 12, 12, 14, 14, 42];
+  const n = widths.length;
+  const ws = wb.addWorksheet('전체 통계', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+  });
+  ws.columns = widths.map(w => ({ width: w }));
+  const ing = list.filter(i => i.status === ING), done = list.filter(i => i.status === DONE);
+  const totalProg = list.reduce((s, i) => s + (i.progress || []).length, 0);
+  const [wFrom, wTo] = thisWeek();
+  const weekCnt = list.reduce((s, i) => s + (i.progress || []).filter(p => p.date >= wFrom && p.date <= wTo).length, 0);
+  const ages = ing.filter(i => i.issueDate).map(i => daysSince(i.issueDate));
+  const leads = done.filter(i => i.completeDate && i.issueDate).map(i => Math.max(0, Math.round((new Date(i.completeDate) - new Date(i.issueDate)) / 86400000)));
+  const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0;
+
+  let r = xlTitle(ws, 1, '전체 현황 통계', `에이블컴 기술팀  |  기준일 ${today()}  |  대상 ${list.length}건`, n);
+  r++;
+
+  // 전체 요약
+  r = xlSection(ws, r, '전체 요약', n);
+  r = xlHeader(ws, r, ['구분', '값', '단위', '', '', '', '', '비고']);
+  [['전체 이슈', list.length, '건', ''],
+   ['진행 중', ing.length, '건', ing.filter(i => !(i.progress || []).length).length ? `진행 기록 없는 이슈 ${ing.filter(i => !(i.progress || []).length).length}건` : ''],
+   ['완료', done.length, '건', list.length ? `완료율 ${Math.round(done.length / list.length * 100)}%` : ''],
+   ['진행 기록 누적', totalProg, '건', `이슈당 평균 ${list.length ? (totalProg / list.length).toFixed(1) : 0}건`],
+   ['이번 주 진행 기록', weekCnt, '건', `${wFrom} ~ ${wTo}`],
+   ['진행 중 평균 경과', avg(ages), '일', ages.length ? `최장 ${Math.max(...ages)}일` : ''],
+   ['완료 평균 소요', avg(leads), '일', leads.length ? `최장 ${Math.max(...leads)}일` : '완료일이 입력된 이슈 기준'],
+   ['AR Case 등록', list.filter(i => i.arCase).length, '건', `미등록 ${list.filter(i => !i.arCase).length}건`]
+  ].forEach((s, k) => {
+    r = xlRow(ws, r, [s[0], s[1], s[2], '', '', '', '', s[3]], { bold: [0, 1], zebra: k % 2 === 1, minHeight: 22 });
+    [2, 3].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  });
+  r++;
+
+  // 사업자(고객사)별 현황
+  r = xlSection(ws, r, '사업자(고객사)별 현황', n);
+  r = xlHeader(ws, r, ['고객사', '진행 중', '완료', '합계', '비중(%)', '평균 경과(일)', '평균 소요(일)', 'AR Case / 진행 기록']);
+  const cs = customerStats(list);
+  Object.keys(cs).sort().forEach((k, idx) => {
+    const o = cs[k], sum = o.ing + o.done;
+    r = xlRow(ws, r, [k, o.ing, o.done, sum, list.length ? Math.round(sum / list.length * 100) : 0,
+                      o.ageN ? Math.round(o.ageSum / o.ageN) : 0, o.leadN ? Math.round(o.leadSum / o.leadN) : 0,
+                      `AR ${o.ar}건 / 진행 기록 ${o.prog}건`], { bold: [0], zebra: idx % 2 === 1, minHeight: 22 });
+    for (let c = 2; c <= 7; c++) ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+  r++;
+
+  // 프로젝트별 현황
+  r = xlSection(ws, r, '프로젝트별 현황', n);
+  r = xlHeader(ws, r, ['프로젝트', '진행 중', '완료', '합계', '진행 기록', '', '', '']);
+  const ps = projectStats(list);
+  Object.keys(ps).sort().forEach((k, idx) => {
+    r = xlRow(ws, r, [k, ps[k].ing, ps[k].done, ps[k].ing + ps[k].done, ps[k].prog], { bold: [0], zebra: idx % 2 === 1, minHeight: 22 });
+    for (let c = 2; c <= 5; c++) ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+  r++;
+
+  // 월별 발생 / 완료
+  r = xlSection(ws, r, '월별 발생 · 완료', n);
+  r = xlHeader(ws, r, ['월', '발생', '완료', '월말 미결(누적)', '진행 기록', '', '', '']);
+  const months = new Set();
+  list.forEach(i => { if (i.issueDate) months.add(i.issueDate.slice(0, 7)); if (i.completeDate) months.add(i.completeDate.slice(0, 7)); });
+  list.forEach(i => (i.progress || []).forEach(p => { if (p.date) months.add(p.date.slice(0, 7)); }));
+  let cum = 0;
+  [...months].sort().forEach((m, idx) => {
+    const opened = list.filter(i => (i.issueDate || '').slice(0, 7) === m).length;
+    const closed = list.filter(i => (i.completeDate || '').slice(0, 7) === m).length;
+    const prog = list.reduce((s, i) => s + (i.progress || []).filter(p => (p.date || '').slice(0, 7) === m).length, 0);
+    cum += opened - closed;
+    r = xlRow(ws, r, [m, opened, closed, cum, prog], { bold: [0], zebra: idx % 2 === 1, minHeight: 22 });
+    for (let c = 1; c <= 5; c++) ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+  r++;
+
+  // 이슈별 진행 기록 현황
+  r = xlSection(ws, r, '이슈별 진행 기록 현황', n);
+  r = xlHeader(ws, r, ['문서번호', '고객사', '처리 상태', '진행 건수', '최초 기록', '최근 기록', '경과(일)', '이슈명']);
+  list.forEach((i, idx) => {
+    const ps2 = [...(i.progress || [])].map(p => p.date).filter(Boolean).sort();
+    r = xlRow(ws, r, [i.no, i.customer, i.status, (i.progress || []).length, ps2[0] || '-', ps2[ps2.length - 1] || '-',
+                      i.status === DONE ? '' : daysSince(i.issueDate), i.title],
+              { bold: [0], statusCol: 2, zebra: idx % 2 === 1, wrapFrom: 7, widths, minHeight: 22 });
+    for (let c = 1; c <= 7; c++) ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+  return ws;
+}
+
 /* --- 내보내기 실행 -------------------------------------------------------- */
 async function buildWorkbook(kind) {
   const list = [...DB.issues].sort((a, b) => a.no.localeCompare(b.no));
@@ -1056,10 +1212,11 @@ async function buildWorkbook(kind) {
   try {
     const wb = new ExcelJS.Workbook();
     wb.creator = '에이블컴 기술팀';
-    if (kind === 'dashboard') {            // 대시보드 + 이슈 관리 내역
+    if (kind === 'dashboard') {            // 대시보드 + 전체 통계 + 이슈 관리 내역
       sheetDashboard(wb);
-      sheetDetail(wb, list, 'Issue 관리 내역');
+      sheetStats(wb, list);
       sheetSummary(wb, list);
+      sheetDetail(wb, list, 'Issue 관리 내역');
     } else {                               // 상세 + 요약
       sheetDetail(wb, list);
       sheetSummary(wb, list);
