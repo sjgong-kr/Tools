@@ -114,7 +114,7 @@
   .item.done .item-title { color: var(--muted); }
   .item-meta { font-size: 11.5px; color: var(--muted); }
   .no-tag { font-size: 11px; font-weight: 700; color: var(--brass); letter-spacing: 0.04em; }
-  .proj { font-size: 11px; font-weight: 600; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); padding: 1px 7px; border-radius: 3px; }
+  .proj { font-size: 11px; font-weight: 600; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); padding: 1px 7px; border-radius: 3px; white-space: nowrap; display: inline-block; }
   .empty { padding: 36px 16px; text-align: center; color: var(--muted); font-size: 13px; }
 
   .st { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
@@ -174,6 +174,19 @@
   .no-sel { padding: 60px 20px; text-align: center; color: var(--muted); }
   .no-sel .btn { margin-top: 14px; }
 
+  /* 이슈 관리 탭 */
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .tab { padding: 9px 18px; font-size: 13.5px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--brass); font-weight: 600; }
+  .tab .c { font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .tcard { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow-sm); padding: 6px 10px; overflow-x: auto; }
+  .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-bar .seg { flex: 0 0 auto; width: 280px; }
+  .filter-bar .inp { flex: 1; min-width: 220px; }
+  .table td.c, .table th.c { text-align: center; }
+  .table .nowrap { white-space: nowrap; }
+
   .card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm); max-width: 620px; }
   .card-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 0; border-bottom: 1px solid var(--line); }
   .card-row:last-child { border-bottom: none; }
@@ -225,7 +238,7 @@
           <div class="topbar-sub" id="dash-sub"></div>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-secondary" onclick="exportExcel()">엑셀 출력</button>
+          <button class="btn btn-secondary" onclick="exportDashboard()">대시보드 엑셀 출력</button>
           <button class="btn btn-primary" onclick="addIssue()">+ 새 이슈</button>
         </div>
       </div>
@@ -260,15 +273,30 @@
           <button class="btn btn-primary" onclick="addIssue()">+ 새 이슈</button>
         </div>
       </div>
+      <div class="tabs" id="issue-tabs">
+        <button class="tab active" data-tab="edit" onclick="setTab('edit')">편집 보기</button>
+        <button class="tab" data-tab="table" onclick="setTab('table')">전체 내역<span class="c" id="tab-cnt"></span></button>
+      </div>
+
+      <div id="pane-edit">
       <div class="work">
         <div class="list-panel">
           <div class="list-tools">
             <div class="seg" id="filter"></div>
-            <input class="inp" id="search" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case)" oninput="renderList()">
+            <input class="inp" id="search" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case)" oninput="setQ(this.value)">
           </div>
           <div class="list" id="list"></div>
         </div>
         <div class="editor" id="editor"></div>
+      </div>
+      </div>
+
+      <div id="pane-table" style="display:none;">
+        <div class="filter-bar">
+          <div class="seg" id="filter-t"></div>
+          <input class="inp" id="search-t" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case, 내용)" oninput="setQ(this.value)">
+        </div>
+        <div class="tcard"><table class="table" id="table-all"></table></div>
       </div>
     </section>
 
@@ -437,8 +465,8 @@ function applySnapshot(list) {
   DB.issues = list.sort((a, b) => a.no.localeCompare(b.no));
   if (mine) { const k = DB.issues.findIndex(x => x.no === mine.no); if (k >= 0) DB.issues[k] = mine; }
   saveLocal();
-  renderList();
-  if (!typing) renderEditor();
+  if (TAB === 'table') renderTable(); else renderList();
+  if (!typing && TAB === 'edit') renderEditor();
   if (document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
 }
 
@@ -481,7 +509,7 @@ function goView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
   if (name === 'dashboard') renderDashboard();
-  if (name === 'issues') { renderList(); renderEditor(); }
+  if (name === 'issues') { if (TAB === 'table') renderTable(); else { renderList(); renderEditor(); } }
   if (name === 'backup') document.getElementById('db-path').textContent = PATH.join(' / ') + ' / {문서번호}';
   window.scrollTo(0, 0);
 }
@@ -489,7 +517,7 @@ function renderCurrent() {
   const v = document.querySelector('.view.active');
   goView(v ? v.id.replace('view-', '') : 'dashboard');
 }
-function openIssue(no) { const i = getIssue(no); FILTER = i.status; SEL = no; EDIT_P = null; goView('issues'); }
+function openIssue(no) { const i = getIssue(no); FILTER = i.status; SEL = no; EDIT_P = null; TAB = 'edit'; setTab('edit'); goView('issues'); }
 
 /* ==========================================================================
    5. 대시보드
@@ -559,13 +587,10 @@ function renderList() {
   const ing = DB.issues.filter(i => i.status === ING).length;
   document.getElementById('summary').innerHTML = `전체 <b>${DB.issues.length}</b>건 · 진행 중 <b>${ing}</b>건 · 완료 <b>${DB.issues.length - ing}</b>건`;
 
-  const cnt = f => f === 'all' ? DB.issues.length : DB.issues.filter(i => i.status === f).length;
-  document.getElementById('filter').innerHTML = [[ING, '진행 중'], [DONE, '완료'], ['all', '전체']].map(([f, label]) =>
-    `<button class="${FILTER === f ? 'active' : ''}" onclick="FILTER='${f}'; renderList()">${label}<span class="c">${cnt(f)}</span></button>`).join('');
-
-  const q = document.getElementById('search').value.trim().toLowerCase();
-  const rows = DB.issues.filter(i => (FILTER === 'all' || i.status === FILTER) &&
-    (!q || [i.no, i.title, i.project, i.arCase, i.content, i.problem, i.cause, i.memo, i.customer].join(' ').toLowerCase().includes(q)));
+  document.getElementById('filter').innerHTML = segHTML();
+  document.getElementById('tab-cnt').textContent = DB.issues.length;
+  const q = Q.trim().toLowerCase();
+  const rows = filteredIssues();
 
   document.getElementById('list').innerHTML = rows.length ? rows.map(i => {
     const last = sortedProgress(i)[0];
@@ -576,6 +601,73 @@ function renderList() {
     </button>`;
   }).join('') : `<div class="empty">${q ? '검색 결과가 없습니다.' : '이 상태의 이슈가 없습니다.'}</div>`;
 }
+
+/* ==========================================================================
+   6-1. 전체 내역 탭 (표 보기)
+   ========================================================================== */
+let TAB = 'edit';
+let Q = '';
+
+function setTab(t) {
+  TAB = t;
+  document.querySelectorAll('#issue-tabs .tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.getElementById('pane-edit').style.display = t === 'edit' ? '' : 'none';
+  document.getElementById('pane-table').style.display = t === 'table' ? '' : 'none';
+  if (t === 'table') renderTable(); else { renderList(); renderEditor(); }
+}
+// 두 탭의 검색창을 같은 값으로 맞춥니다
+function setQ(v) {
+  Q = v;
+  const a = document.getElementById('search'), b = document.getElementById('search-t');
+  if (a.value !== v) a.value = v;
+  if (b.value !== v) b.value = v;
+  if (TAB === 'table') renderTable(); else renderList();
+}
+function filteredIssues() {
+  const q = Q.trim().toLowerCase();
+  return DB.issues.filter(i => (FILTER === 'all' || i.status === FILTER) &&
+    (!q || [i.no, i.title, i.project, i.arCase, i.content, i.problem, i.cause, i.memo, i.customer].join(' ').toLowerCase().includes(q)));
+}
+function segHTML(targetId) {
+  const cnt = f => f === 'all' ? DB.issues.length : DB.issues.filter(i => i.status === f).length;
+  return [[ING, '진행 중'], [DONE, '완료'], ['all', '전체']].map(([f, label]) =>
+    `<button class="${FILTER === f ? 'active' : ''}" onclick="setFilter('${f}')">${label}<span class="c">${cnt(f)}</span></button>`).join('');
+}
+function setFilter(f) { FILTER = f; if (TAB === 'table') renderTable(); else renderList(); }
+
+// 표에서 행을 누르면 편집 보기로 이동합니다
+function openInEditor(no) { SEL = no; EDIT_P = null; setTab('edit'); window.scrollTo(0, 0); }
+
+function renderTable() {
+  document.getElementById('filter-t').innerHTML = segHTML();
+  document.getElementById('tab-cnt').textContent = DB.issues.length;
+  const rows = filteredIssues();
+  document.getElementById('table-all').innerHTML = `
+    <thead><tr>
+      <th class="c">문서번호</th><th>이슈명</th><th>고객사</th><th>프로젝트</th><th class="c">상태</th>
+      <th class="c">Issue Day</th><th class="c">Complete</th><th class="c">경과</th>
+      <th>AR Case</th><th class="c">진행</th><th>최근 진행</th>
+    </tr></thead>
+    <tbody>${rows.length ? rows.map(i => {
+      const last = sortedProgress(i)[0];
+      return `<tr class="row-link" onclick="openInEditor('${i.no}')">
+        <td class="c"><span class="no-tag">${i.no}</span></td>
+        <td style="min-width:260px;"><div class="t-title">${esc(i.title) || '(이슈명 없음)'}</div>
+          ${i.content ? `<div class="t-sub">${esc(i.content.split('\n')[0])}</div>` : ''}</td>
+        <td class="nowrap">${esc(i.customer)}</td>
+        <td class="nowrap">${i.project ? `<span class="proj">${esc(i.project)}</span>` : '<span class="t-sub">-</span>'}</td>
+        <td class="c">${stBadge(i.status)}</td>
+        <td class="c nowrap">${esc(i.issueDate)}</td>
+        <td class="c nowrap">${esc(i.completeDate) || '<span class="t-sub">-</span>'}</td>
+        <td class="c nowrap">${i.status === DONE ? '<span class="t-sub">-</span>' : daysSince(i.issueDate) + '일'}</td>
+        <td class="nowrap">${esc(i.arCase) || '<span class="t-sub">-</span>'}</td>
+        <td class="c">${(i.progress || []).length}</td>
+        <td style="min-width:220px;">${last ? `<div class="t-sub" style="margin:0 0 2px;">${last.date || '날짜 없음'}</div><div class="clip">${esc(last.text)}</div>`
+                                            : '<span class="t-sub" style="color:var(--accent);">진행 기록 없음</span>'}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="11"><div class="empty">${Q ? '검색 결과가 없습니다.' : '표시할 이슈가 없습니다.'}</div></td></tr>`}</tbody>`;
+}
+
 function selectIssue(no) { SEL = no; EDIT_P = null; renderList(); renderEditor(); }
 
 /* ==========================================================================
@@ -746,17 +838,33 @@ async function deleteIssue() {
 
 /* ==========================================================================
    8. 엑셀 출력
+   - 이슈 관리 버튼 : [Issue Report(상세)] + [Issue 요약] 2개 시트
+   - 대시보드 버튼 : [대시보드] + [Issue 관리 내역] 2개 시트
    ========================================================================== */
+const XF = '맑은 고딕', NAVY = 'FF1F4E78', SOFT = 'FFD9EAF7', GRAY = 'FF808080';
+const XLINE = { style: 'thin', color: { argb: 'FFD9D9D9' } };
+
 const COLS = [
   { h: '문서번호', w: 10 }, { h: '고객사', w: 9 }, { h: '프로젝트', w: 16 }, { h: '처리 상태', w: 10 },
   { h: 'Issue Day', w: 12 }, { h: 'Complete', w: 12 }, { h: 'AR Case Open', w: 15 },
   { h: 'Issue 내용', w: 36 }, { h: '추가 진행', w: 34 }, { h: '문제점', w: 40 }, { h: '원인분석', w: 42 }, { h: '비고', w: 30 }
 ];
+const SUM_COLS = [
+  { h: '문서번호', w: 10 }, { h: '고객사', w: 9 }, { h: '프로젝트', w: 16 }, { h: '처리 상태', w: 10 },
+  { h: 'Issue Day', w: 12 }, { h: 'Complete', w: 12 }, { h: 'AR Case Open', w: 15 },
+  { h: '이슈명', w: 48 }, { h: '경과(일)', w: 9 }, { h: '진행 건수', w: 10 }, { h: '최근 진행일', w: 12 }
+];
+
 function rowValues(i) {
   const prog = [...(i.progress || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
     .map(p => (p.date ? p.date.slice(5).replace('-', '/') + ' ' : '') + p.text).join('\n');
   return [i.no, i.customer, i.project, i.status, i.issueDate, i.completeDate || '', i.arCase,
           i.title + (i.content ? '\n' + i.content : ''), prog, i.problem, i.cause, i.memo];
+}
+function summaryValues(i) {
+  const last = sortedProgress(i)[0];
+  return [i.no, i.customer, i.project, i.status, i.issueDate, i.completeDate || '', i.arCase, i.title,
+          i.status === DONE ? '' : daysSince(i.issueDate), (i.progress || []).length, last ? last.date : ''];
 }
 function estLines(text, w) {
   let n = 0;
@@ -764,70 +872,219 @@ function estLines(text, w) {
   return Math.max(1, n);
 }
 
-async function exportExcel() {
-  const list = [...DB.issues].sort((a, b) => a.no.localeCompare(b.no));
-  if (!list.length) { toast('출력할 이슈가 없습니다.', true); return; }
-  const fname = today().replace(/-/g, '') + '_Issue_Report';
-  if (typeof ExcelJS === 'undefined') { exportSimple(list, fname); return; }
-
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Issue Report', {
-    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-    views: [{ state: 'frozen', ySplit: 3 }]
-  });
-  const F = '맑은 고딕', NAVY = 'FF1F4E78', LINE = { style: 'thin', color: { argb: 'FFD9D9D9' } };
-  ws.columns = COLS.map(c => ({ width: c.w }));
-
-  ws.mergeCells(1, 1, 1, COLS.length);
-  ws.getCell(1, 1).value = 'Issue Report';
-  ws.getCell(1, 1).font = { name: F, size: 22, bold: true, color: { argb: NAVY } };
-  ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(1).height = 38;
-
-  ws.mergeCells(2, 1, 2, COLS.length);
-  ws.getCell(2, 1).value = `에이블컴 기술팀  |  기준일 ${today()}  |  진행 중 ${list.filter(i => i.status === ING).length}건 / 완료 ${list.filter(i => i.status === DONE).length}건`;
-  ws.getCell(2, 1).font = { name: F, size: 10, color: { argb: 'FF808080' } };
-  ws.getCell(2, 1).alignment = { horizontal: 'center' };
-
-  const hr = ws.getRow(3);
-  COLS.forEach((c, k) => {
-    const cell = hr.getCell(k + 1);
-    cell.value = c.h;
-    cell.font = { name: F, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+/* --- 시트 공통 부품 ------------------------------------------------------ */
+function xlTitle(ws, row, text, sub, nCols) {
+  ws.mergeCells(row, 1, row, nCols);
+  ws.getCell(row, 1).value = text;
+  ws.getCell(row, 1).font = { name: XF, size: 20, bold: true, color: { argb: NAVY } };
+  ws.getCell(row, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(row).height = 34;
+  ws.mergeCells(row + 1, 1, row + 1, nCols);
+  ws.getCell(row + 1, 1).value = sub;
+  ws.getCell(row + 1, 1).font = { name: XF, size: 10, color: { argb: GRAY } };
+  ws.getCell(row + 1, 1).alignment = { horizontal: 'center' };
+  return row + 2;
+}
+function xlSection(ws, row, text, nCols) {
+  ws.mergeCells(row, 1, row, nCols);
+  const c = ws.getCell(row, 1);
+  c.value = '■ ' + text;
+  c.font = { name: XF, size: 12, bold: true, color: { argb: NAVY } };
+  c.alignment = { vertical: 'middle' };
+  c.border = { bottom: { style: 'thin', color: { argb: NAVY } } };
+  ws.getRow(row).height = 24;
+  return row + 1;
+}
+function xlHeader(ws, row, cols) {
+  const r = ws.getRow(row);
+  cols.forEach((c, k) => {
+    const cell = r.getCell(k + 1);
+    cell.value = (typeof c === 'string') ? c : (c.h || '');
+    cell.font = { name: XF, size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     cell.border = { left: { style: 'thin', color: { argb: 'FFFFFFFF' } }, right: { style: 'thin', color: { argb: 'FFFFFFFF' } } };
   });
-  hr.height = 28;
-
-  list.forEach((i, r) => {
-    const row = ws.getRow(4 + r);
-    let lines = 1;
-    rowValues(i).forEach((v, k) => {
-      const cell = row.getCell(k + 1);
-      cell.value = v;
-      const center = k <= 6;
-      cell.font = { name: F, size: 10, bold: k === 0 || k === 3,
-                    color: { argb: k === 3 ? (i.status === DONE ? 'FF2F6A4A' : 'FFB86A1A') : 'FF333333' } };
-      cell.alignment = { horizontal: center ? 'center' : 'left', vertical: center ? 'middle' : 'top', wrapText: true };
-      cell.border = { top: LINE, left: LINE, bottom: LINE, right: LINE };
-      if (r % 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F9FC' } };
-      if (k >= 7) lines = Math.max(lines, estLines(v, COLS[k].w));
-    });
-    row.height = Math.min(409, Math.max(34, lines * 14 + 10));
+  r.height = 26;
+  return row + 1;
+}
+// 값 한 줄 쓰기 (centerTo 번째 열까지는 가운데 정렬)
+function xlRow(ws, row, values, opt) {
+  opt = opt || {};
+  const r = ws.getRow(row);
+  let lines = 1;
+  values.forEach((v, k) => {
+    const cell = r.getCell(k + 1);
+    cell.value = v;
+    const center = k < (opt.centerTo == null ? 0 : opt.centerTo);
+    cell.font = { name: XF, size: 10, color: { argb: 'FF333333' }, bold: !!(opt.bold && opt.bold.includes(k)) };
+    cell.alignment = { horizontal: center ? 'center' : (typeof v === 'number' ? 'right' : 'left'), vertical: center ? 'middle' : 'top', wrapText: true };
+    cell.border = { top: XLINE, left: XLINE, bottom: XLINE, right: XLINE };
+    if (opt.zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F9FC' } };
+    if (opt.wrapFrom != null && k >= opt.wrapFrom && opt.widths) lines = Math.max(lines, estLines(v, opt.widths[k]));
   });
-
-  const buf = await wb.xlsx.writeBuffer();
-  download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname + '.xlsx');
-  toast('엑셀 파일을 만들었습니다.');
+  if (opt.statusCol != null) {
+    const v = values[opt.statusCol];
+    r.getCell(opt.statusCol + 1).font = { name: XF, size: 10, bold: true, color: { argb: v === DONE ? 'FF2F6A4A' : 'FFB86A1A' } };
+  }
+  r.height = Math.min(409, Math.max(opt.minHeight || 22, lines * 14 + 8));
+  return row + 1;
 }
 
-function exportSimple(list, fname) {
+/* --- 시트 1 : Issue Report 상세 ------------------------------------------ */
+function sheetDetail(wb, list, name) {
+  const ws = wb.addWorksheet(name || 'Issue Report', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+    views: [{ state: 'frozen', ySplit: 4 }]
+  });
+  ws.columns = COLS.map(c => ({ width: c.w }));
+  let r = xlTitle(ws, 1, 'Issue Report',
+    `에이블컴 기술팀  |  기준일 ${today()}  |  진행 중 ${list.filter(i => i.status === ING).length}건 / 완료 ${list.filter(i => i.status === DONE).length}건`, COLS.length);
+  r = xlHeader(ws, r, COLS);
+  list.forEach((i, k) => {
+    r = xlRow(ws, r, rowValues(i), { centerTo: 7, statusCol: 3, bold: [0], zebra: k % 2 === 1,
+                                     wrapFrom: 7, widths: COLS.map(c => c.w), minHeight: 34 });
+  });
+  return ws;
+}
+
+/* --- 시트 2 : Issue 요약 -------------------------------------------------- */
+function sheetSummary(wb, list) {
+  const ws = wb.addWorksheet('Issue 요약', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+    views: [{ state: 'frozen', ySplit: 4 }]
+  });
+  ws.columns = SUM_COLS.map(c => ({ width: c.w }));
+  const n = SUM_COLS.length;
+  let r = xlTitle(ws, 1, 'Issue 요약', `기준일 ${today()}  |  전체 ${list.length}건`, n);
+  r = xlHeader(ws, r, SUM_COLS);
+  list.forEach((i, k) => {
+    r = xlRow(ws, r, summaryValues(i), { centerTo: 7, statusCol: 3, bold: [0], zebra: k % 2 === 1, minHeight: 24 });
+    ws.getRow(r - 1).getCell(8).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+    [9, 10, 11].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  });
+  // 합계 줄
+  r++;
+  ws.mergeCells(r, 1, r, 7);
+  ws.getCell(r, 1).value = '합계';
+  ws.getCell(r, 1).font = { name: XF, size: 10.5, bold: true, color: { argb: NAVY } };
+  ws.getCell(r, 1).alignment = { horizontal: 'center' };
+  ws.getCell(r, 8).value = `진행 중 ${list.filter(i => i.status === ING).length}건 / 완료 ${list.filter(i => i.status === DONE).length}건`;
+  ws.getCell(r, 8).font = { name: XF, size: 10.5, bold: true };
+  ws.getCell(r, 10).value = list.reduce((s, i) => s + (i.progress || []).length, 0);
+  ws.getCell(r, 10).font = { name: XF, size: 10.5, bold: true };
+  ws.getCell(r, 10).alignment = { horizontal: 'center' };
+  for (let c = 1; c <= n; c++) ws.getCell(r, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SOFT } };
+  return ws;
+}
+
+/* --- 시트 3 : 대시보드 ---------------------------------------------------- */
+function sheetDashboard(wb) {
+  const all = [...DB.issues].sort((a, b) => a.no.localeCompare(b.no));
+  const ing = all.filter(i => i.status === ING), done = all.filter(i => i.status === DONE);
+  const [wFrom, wTo] = thisWeek();
+  const weekCnt = all.reduce((n, i) => n + (i.progress || []).filter(p => p.date >= wFrom && p.date <= wTo).length, 0);
+  const widths = [12, 46, 22, 10, 13, 40];
+  const ws = wb.addWorksheet('대시보드', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+  });
+  ws.columns = widths.map(w => ({ width: w }));
+  const n = widths.length;
+  let r = xlTitle(ws, 1, 'Issue 대시보드',
+    `에이블컴 기술팀  |  기준일 ${today()}  |  이번 주 ${wFrom} ~ ${wTo}`, n);
+  r++;
+
+  // 요약
+  r = xlSection(ws, r, '요약', n);
+  r = xlHeader(ws, r, [{ h: '구분' }, { h: '값' }, { h: '설명' }, { h: '' }, { h: '' }, { h: '' }]);
+  const stats = [
+    ['전체 이슈', all.length, [...new Set(all.map(i => i.customer))].filter(Boolean).join(', ')],
+    ['진행 중', ing.length, ing.filter(i => !(i.progress || []).length).length ? `진행 기록 없는 이슈 ${ing.filter(i => !(i.progress || []).length).length}건` : '모두 진행 기록 있음'],
+    ['완료', done.length, all.length ? `완료율 ${Math.round(done.length / all.length * 100)}%` : '-'],
+    ['이번 주 추가 진행', weekCnt, `${wFrom.slice(5).replace('-', '/')} ~ ${wTo.slice(5).replace('-', '/')} 기록 건수`]
+  ];
+  stats.forEach(s => { r = xlRow(ws, r, [s[0], s[1], s[2]], { bold: [0, 1], minHeight: 22 });
+                       ws.getRow(r - 1).getCell(2).alignment = { horizontal: 'center', vertical: 'middle' }; });
+  r++;
+
+  // 프로젝트별 현황
+  r = xlSection(ws, r, '프로젝트별 현황', n);
+  r = xlHeader(ws, r, [{ h: '프로젝트' }, { h: '진행 중' }, { h: '완료' }, { h: '합계' }, { h: '' }, { h: '' }]);
+  const projs = {};
+  all.forEach(i => { const k = i.project || '(프로젝트 미지정)'; projs[k] = projs[k] || { ing: 0, done: 0 }; projs[k][i.status === DONE ? 'done' : 'ing']++; });
+  Object.keys(projs).sort().forEach(k => {
+    r = xlRow(ws, r, [k, projs[k].ing, projs[k].done, projs[k].ing + projs[k].done], { bold: [0], minHeight: 22 });
+    [2, 3, 4].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  });
+  r++;
+
+  // 진행 중인 이슈
+  r = xlSection(ws, r, '진행 중인 이슈', n);
+  r = xlHeader(ws, r, [{ h: '문서번호' }, { h: '이슈명' }, { h: '고객사 / 프로젝트' }, { h: '경과(일)' }, { h: '최근 진행일' }, { h: '최근 진행 내용' }]);
+  const open = [...ing].sort((a, b) => (a.issueDate || '').localeCompare(b.issueDate || ''));
+  if (open.length) open.forEach((i, k) => {
+    const last = sortedProgress(i)[0];
+    r = xlRow(ws, r, [i.no, i.title, [i.customer, i.project].filter(Boolean).join(' / '), daysSince(i.issueDate),
+                      last ? (last.date || '-') : '-', last ? last.text : '진행 기록 없음'],
+              { bold: [0], zebra: k % 2 === 1, wrapFrom: 1, widths, minHeight: 24 });
+    [1, 4, 5].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  });
+  else r = xlRow(ws, r, ['-', '진행 중인 이슈가 없습니다.', '', '', '', ''], {});
+  r++;
+
+  // 최근 추가 진행
+  r = xlSection(ws, r, '최근 추가 진행', n);
+  r = xlHeader(ws, r, [{ h: '날짜' }, { h: '진행 내용' }, { h: '이슈명' }, { h: '문서번호' }, { h: '작성자' }, { h: '' }]);
+  const recent = [];
+  all.forEach(i => (i.progress || []).forEach(p => recent.push({ i, p })));
+  recent.sort((a, b) => (b.p.date || '').localeCompare(a.p.date || ''));
+  recent.slice(0, 20).forEach((x, k) => {
+    r = xlRow(ws, r, [x.p.date || '-', x.p.text, x.i.title, x.i.no, x.p.who || ''],
+              { zebra: k % 2 === 1, wrapFrom: 1, widths, minHeight: 22 });
+    [1, 4, 5].forEach(c => ws.getRow(r - 1).getCell(c).alignment = { horizontal: 'center', vertical: 'middle' });
+  });
+  if (!recent.length) r = xlRow(ws, r, ['-', '기록된 진행 내용이 없습니다.', '', '', ''], {});
+  return ws;
+}
+
+/* --- 내보내기 실행 -------------------------------------------------------- */
+async function buildWorkbook(kind) {
+  const list = [...DB.issues].sort((a, b) => a.no.localeCompare(b.no));
+  if (!list.length) { toast('출력할 이슈가 없습니다.', true); return; }
+  const fname = today().replace(/-/g, '') + (kind === 'dashboard' ? '_Issue_Dashboard' : '_Issue_Report');
+  if (typeof ExcelJS === 'undefined') { exportSimple(list, fname, kind); return; }
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '에이블컴 기술팀';
+    if (kind === 'dashboard') {            // 대시보드 + 이슈 관리 내역
+      sheetDashboard(wb);
+      sheetDetail(wb, list, 'Issue 관리 내역');
+      sheetSummary(wb, list);
+    } else {                               // 상세 + 요약
+      sheetDetail(wb, list);
+      sheetSummary(wb, list);
+    }
+    const buf = await wb.xlsx.writeBuffer();
+    download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname + '.xlsx');
+    toast('엑셀 파일을 만들었습니다.');
+  } catch (e) { console.error(e); toast('엑셀 생성 중 오류가 발생했습니다.', true); }
+}
+function exportExcel() { buildWorkbook('issues'); }
+function exportDashboard() { buildWorkbook('dashboard'); }
+
+// 인터넷이 없을 때 : 간이 엑셀(.xls) 한 장에 표를 이어서 넣습니다
+function exportSimple(list, fname, kind) {
   const td = v => `<td>${esc(v).replace(/\n/g, '<br style="mso-data-placement:same-cell;">')}</td>`;
-  const html = `<html><head><meta charset="UTF-8"><style>td,th{border:1px solid #c0c0c0;font-family:'맑은 고딕';font-size:10pt;vertical-align:top;}th{background:#1F4E78;color:#fff;}</style></head><body>
-    <table><tr><td colspan="${COLS.length}" style="border:none;font-size:20pt;font-weight:bold;color:#1F4E78;text-align:center;">Issue Report</td></tr>
-    <tr>${COLS.map(c => `<th style="width:${c.w * 7}px">${c.h}</th>`).join('')}</tr>
-    ${list.map(i => `<tr>${rowValues(i).map(td).join('')}</tr>`).join('')}</table></body></html>`;
+  const table = (cols, rows) => `<table><tr>${cols.map(c => `<th style="width:${c.w * 7}px">${c.h}</th>`).join('')}</tr>
+    ${rows.map(v => `<tr>${v.map(td).join('')}</tr>`).join('')}</table><br>`;
+  let body = `<div style="font-size:20pt;font-weight:bold;color:#1F4E78;">${kind === 'dashboard' ? 'Issue 대시보드' : 'Issue Report'}</div>
+    <div style="color:#808080;">에이블컴 기술팀 | 기준일 ${today()}</div><br>`;
+  if (kind === 'dashboard') {
+    const ing = list.filter(i => i.status === ING), done = list.filter(i => i.status === DONE);
+    body += `<b>요약</b>${table([{ h: '구분', w: 14 }, { h: '값', w: 10 }], [['전체 이슈', list.length], ['진행 중', ing.length], ['완료', done.length]])}`;
+  }
+  body += `<b>Issue 요약</b>${table(SUM_COLS, list.map(summaryValues))}<b>Issue 관리 내역</b>${table(COLS, list.map(rowValues))}`;
+  const html = `<html><head><meta charset="UTF-8"><style>td,th{border:1px solid #c0c0c0;font-family:'맑은 고딕';font-size:10pt;vertical-align:top;}th{background:#1F4E78;color:#fff;}</style></head><body>${body}</body></html>`;
   download(new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' }), fname + '.xls');
   toast('인터넷 연결이 없어 간이 엑셀(.xls)로 저장했습니다.');
 }
