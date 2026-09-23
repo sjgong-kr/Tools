@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이블컴 기술팀 · Nokia Issue 관리</title>
+<!--
+  Nokia Issue 관리 (Firebase 공유판)
+  - 저장 위치 : Firestore  nokia_issue / data / issues / {문서번호}
+  - 로그인 없이 누구나 접속해서 함께 사용합니다. 수정하면 다른 사람 화면에도 바로 반영됩니다.
+  - 인터넷이 안 되면 자동으로 '오프라인 모드'가 되어 이 PC 브라우저에만 저장됩니다.
+  - 문서번호 : 0001, 0002, 0003 … 자동 부여
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F4ED; --bg-elev: #FFFFFF; --paper: #FBFAF6;
+    --ink: #1A2238; --ink-2: #3A4358; --muted: #707788;
+    --line: #DDD6C8; --line-strong: #B8AE99;
+    --brass: #A87838; --brass-soft: #C9A35E;
+    --accent: #8B2A2A; --good: #2F6A4A; --warn: #B86A1A;
+    --shadow-sm: 0 1px 2px rgba(26,34,56,0.04), 0 1px 1px rgba(26,34,56,0.02);
+    --serif: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
+    --sans: 'Noto Sans KR', 'Pretendard', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: var(--sans); color: var(--ink); background: var(--bg); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, textarea, select { font-family: inherit; color: inherit; outline: none; }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* 사이드바 */
+  .sidebar { background: var(--ink); color: #E8E4DC; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+  .brand { padding: 26px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .brand-mark { font-family: var(--serif); font-weight: 700; font-size: 19px; line-height: 1.15; color: #F4EFE3; letter-spacing: -0.02em; }
+  .brand-mark::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--brass-soft); border-radius: 50%; margin-right: 10px; vertical-align: middle; transform: translateY(-2px); }
+  .brand-sub { font-size: 11px; color: #9A9384; margin-top: 6px; letter-spacing: 0.08em; }
+  .nav { padding: 18px 12px; flex: 1; }
+  .nav-item { display: block; width: 100%; text-align: left; padding: 10px 14px; color: #C7C0B2; font-size: 13.5px; border-radius: 6px; border-left: 2px solid transparent; margin: 1px 0; }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: #F4EFE3; }
+  .nav-item.active { background: rgba(201,163,94,0.10); color: #F4EFE3; border-left-color: var(--brass-soft); font-weight: 500; }
+  .sidebar-foot { border-top: 1px solid rgba(255,255,255,0.08); padding: 16px 20px; font-size: 11.5px; color: #9A9384; }
+  .sidebar-foot label { display: block; margin-bottom: 5px; }
+  .name-inp { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); color: #F4EFE3; border-radius: 4px; padding: 6px 9px; font-size: 12.5px; }
+  .conn { display: flex; align-items: center; gap: 7px; margin-top: 12px; font-size: 11.5px; }
+  .conn::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #9A9384; }
+  .conn.on::before { background: #7BC49A; box-shadow: 0 0 0 3px rgba(123,196,154,0.18); }
+  .conn.off::before { background: #E5A15A; }
+
+  .main { padding: 32px 40px 50px; min-width: 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .topbar-title { font-family: var(--serif); font-size: 28px; font-weight: 600; line-height: 1.2; }
+  .topbar-sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .topbar-sub b { color: var(--ink); }
+  .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 5px; font-size: 12.5px; font-weight: 500; border: 1px solid transparent; line-height: 1; white-space: nowrap; transition: all .15s; }
+  .btn-primary { background: var(--ink); color: #F4EFE3; }
+  .btn-primary:hover { background: #28324B; }
+  .btn-secondary { background: var(--bg-elev); color: var(--ink); border-color: var(--line-strong); }
+  .btn-secondary:hover { background: var(--paper); border-color: var(--ink-2); }
+  .btn-danger { color: var(--accent); border-color: rgba(139,42,42,0.35); background: var(--bg-elev); }
+  .btn-danger:hover { background: rgba(139,42,42,0.06); }
+  .btn-sm { padding: 5px 10px; font-size: 11.5px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* 대시보드 */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 18px; border-left: 3px solid var(--brass); text-align: left; transition: background .15s; }
+  button.stat-card:hover { background: var(--paper); }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+  .stat-value { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .dash-cols { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .dcard { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; box-shadow: var(--shadow-sm); }
+  .dcard + .dcard { margin-top: 20px; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .section-title { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+  .section-meta { font-size: 11px; color: var(--muted); }
+  .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .table th { background: var(--paper); border-bottom: 2px solid var(--ink); padding: 9px 10px; text-align: left; font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .table td { border-bottom: 1px solid var(--line); padding: 11px 10px; vertical-align: top; }
+  .row-link { cursor: pointer; transition: background .12s; }
+  .row-link:hover { background: rgba(168,120,56,0.06); }
+  .t-title { font-weight: 600; }
+  .t-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .age { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+  .clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; color: var(--ink-2); }
+
+  /* 목록 + 편집창 */
+  .work { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .list-panel { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow-sm); position: sticky; top: 20px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
+  .list-tools { padding: 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+  .seg { display: flex; gap: 6px; }
+  .seg button { flex: 1; padding: 7px 0; border: 1px solid var(--line); border-radius: 4px; font-size: 12.5px; color: var(--muted); background: var(--bg-elev); }
+  .seg button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .seg button .c { font-size: 11px; opacity: .75; margin-left: 3px; }
+  .inp { width: 100%; border: 1px solid var(--line); padding: 8px 11px; border-radius: 4px; font-size: 13px; background: var(--bg-elev); }
+  .inp:focus { border-color: var(--brass); }
+  .list { overflow-y: auto; flex: 1; }
+  .item { display: block; width: 100%; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; transition: background .12s; }
+  .item:hover { background: rgba(168,120,56,0.05); }
+  .item.sel { background: rgba(201,163,94,0.12); border-left-color: var(--brass); }
+  .item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .item-title { font-weight: 600; font-size: 13.5px; line-height: 1.4; }
+  .item.done .item-title { color: var(--muted); }
+  .item-meta { font-size: 11.5px; color: var(--muted); }
+  .no-tag { font-size: 11px; font-weight: 700; color: var(--brass); letter-spacing: 0.04em; }
+  .proj { font-size: 11px; font-weight: 600; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line); padding: 1px 7px; border-radius: 3px; }
+  .empty { padding: 36px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .st { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
+  .st::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .st-ing { color: var(--warn); background: rgba(184,106,26,0.11); }
+  .st-done { color: var(--good); background: rgba(47,106,74,0.11); }
+
+  .editor { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow-sm); padding: 22px 26px; }
+  .ed-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .ed-no { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+  .saved { font-size: 11.5px; color: var(--muted); margin-left: 10px; }
+  .status-toggle { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+  .status-toggle button { padding: 8px 18px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .status-toggle button + button { border-left: 1px solid var(--line-strong); }
+  .status-toggle button.on-ing { background: var(--warn); color: #fff; }
+  .status-toggle button.on-done { background: var(--good); color: #fff; }
+
+  .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fg { display: flex; flex-direction: column; margin-bottom: 14px; }
+  .fg label { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .grid5 .fg { margin-bottom: 0; }
+  textarea.inp { resize: none; overflow-y: hidden; min-height: 64px; line-height: 1.65; background: var(--paper); }
+  textarea.inp:focus { background: var(--bg-elev); }
+  .title-inp { font-size: 15px; font-weight: 600; }
+  #e-content { min-height: 192px; }
+
+  /* 추가 진행 */
+  .sec-title { font-family: var(--serif); font-size: 15px; font-weight: 600; margin: 8px 0 10px; display: flex; align-items: baseline; gap: 8px; }
+  .sec-title .c { font-family: var(--sans); font-size: 11.5px; font-weight: 400; color: var(--muted); }
+  .prog-form { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; padding: 14px; margin-bottom: 18px; }
+  .prog-form.editing { border-color: var(--brass); background: rgba(201,163,94,0.07); }
+  .prog-add { display: grid; grid-template-columns: 150px 1fr; gap: 10px; }
+  .prog-add label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  #p-text { min-height: 44px; background: var(--bg-elev); }
+  .prog-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .timeline { position: relative; padding-left: 24px; margin-bottom: 18px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+  .tl-item { position: relative; padding-bottom: 16px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before { content: ''; position: absolute; left: -23px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg-elev); border: 2px solid var(--brass); }
+  .tl-item.latest::before { background: var(--brass); box-shadow: 0 0 0 3px rgba(168,120,56,0.16); }
+  .tl-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tl-date { font-weight: 700; font-size: 12.5px; color: var(--ink); }
+  .tl-new { font-size: 10.5px; font-weight: 600; color: var(--brass); background: rgba(201,163,94,0.14); padding: 1px 6px; border-radius: 3px; }
+  .tl-who { font-size: 11.5px; color: var(--muted); }
+  .tl-issue { font-size: 12px; font-weight: 600; color: var(--ink-2); text-align: left; }
+  .tl-issue:hover { color: var(--brass); text-decoration: underline; }
+  .tl-actions { margin-left: auto; display: flex; gap: 2px; opacity: .55; }
+  .tl-item:hover .tl-actions { opacity: 1; }
+  .tl-btn { font-size: 11.5px; color: var(--muted); padding: 2px 7px; border-radius: 3px; }
+  .tl-btn:hover { color: var(--ink); background: rgba(26,34,56,0.05); }
+  .tl-btn.del:hover { color: var(--accent); background: rgba(139,42,42,0.06); }
+  .tl-body { margin-top: 4px; font-size: 13px; line-height: 1.7; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+  .prog-empty { font-size: 12.5px; color: var(--muted); padding: 6px 0 16px; }
+  .hint { font-size: 11px; color: var(--muted); }
+  .no-sel { padding: 60px 20px; text-align: center; color: var(--muted); }
+  .no-sel .btn { margin-top: 14px; }
+
+  .card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; box-shadow: var(--shadow-sm); max-width: 620px; }
+  .card-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .card-row:last-child { border-bottom: none; }
+  .code { font-family: 'Consolas', monospace; font-size: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; white-space: pre-wrap; word-break: break-all; }
+
+  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: #F4EFE3; padding: 12px 18px; border-radius: 5px; font-size: 13px; border-left: 3px solid var(--brass); transform: translateY(100px); opacity: 0; transition: all .25s; z-index: 100; max-width: 380px; }
+  .toast.show { transform: none; opacity: 1; }
+  .toast.err { border-left-color: #E57373; }
+
+  @media (max-width: 1400px) { .grid5 { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .dash-cols, .work { grid-template-columns: 1fr; }
+    .list-panel { position: static; max-height: 420px; }
+  }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .main { padding: 22px 16px 40px; }
+    .grid5, .grid2, .prog-add { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">에이블컴<br>기술팀</div>
+      <div class="brand-sub">Nokia Issue 관리</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard" onclick="goView('dashboard')">대시보드</button>
+      <button class="nav-item" data-view="issues" onclick="goView('issues')">이슈 관리</button>
+      <button class="nav-item" data-view="backup" onclick="goView('backup')">데이터 · 백업</button>
+    </nav>
+    <div class="sidebar-foot">
+      <label for="who">작성자 이름</label>
+      <input class="name-inp" id="who" placeholder="예) 김승진" onchange="saveWho(this.value)">
+      <div class="conn" id="conn">연결 확인 중…</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- 대시보드 -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">대시보드</div>
+          <div class="topbar-sub" id="dash-sub"></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="exportExcel()">엑셀 출력</button>
+          <button class="btn btn-primary" onclick="addIssue()">+ 새 이슈</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="dash-stats"></div>
+      <div class="dash-cols">
+        <div>
+          <div class="dcard">
+            <div class="section-head"><div class="section-title">진행 중인 이슈</div><div class="section-meta">오래된 순 · 누르면 편집 화면으로 이동</div></div>
+            <div id="dash-open"></div>
+          </div>
+          <div class="dcard">
+            <div class="section-head"><div class="section-title">프로젝트별 현황</div><div class="section-meta">진행 중 / 완료</div></div>
+            <div id="dash-proj"></div>
+          </div>
+        </div>
+        <div class="dcard">
+          <div class="section-head"><div class="section-title">최근 추가 진행</div><div class="section-meta">최근 8건</div></div>
+          <div id="dash-recent"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 이슈 관리 -->
+    <section class="view" id="view-issues">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Issue Report</div>
+          <div class="topbar-sub" id="summary"></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="exportExcel()">엑셀 출력</button>
+          <button class="btn btn-primary" onclick="addIssue()">+ 새 이슈</button>
+        </div>
+      </div>
+      <div class="work">
+        <div class="list-panel">
+          <div class="list-tools">
+            <div class="seg" id="filter"></div>
+            <input class="inp" id="search" placeholder="검색 (문서번호, 이슈명, 프로젝트, AR Case)" oninput="renderList()">
+          </div>
+          <div class="list" id="list"></div>
+        </div>
+        <div class="editor" id="editor"></div>
+      </div>
+    </section>
+
+    <!-- 데이터 · 백업 -->
+    <section class="view" id="view-backup">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">데이터 · 백업</div>
+          <div class="topbar-sub">Firestore 를 함께 쓰면서, 필요할 때 JSON 파일로도 보관할 수 있습니다.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-row">
+          <b>저장 위치</b>
+          <div class="code" id="db-path"></div>
+          <span class="hint">로그인 없이 접속한 모든 사람이 같은 데이터를 보고 수정합니다.</span>
+        </div>
+        <div class="card-row">
+          <button class="btn btn-primary" onclick="backupJSON()">백업 파일 받기 (JSON)</button>
+          <span class="hint">그 시점의 전체 이슈를 파일로 내려받습니다.</span>
+        </div>
+        <div class="card-row">
+          <label class="btn btn-secondary">백업 파일 올리기
+            <input type="file" accept=".json" style="display:none;" onchange="restoreJSON(this)"></label>
+          <span class="hint">파일 속 이슈를 Firestore 에 덮어씁니다. 문서번호가 같으면 교체됩니다.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ==========================================================================
+   0. 기본값
+   ========================================================================== */
+const ING = '진행 중', DONE = '완료';
+const LOCAL_KEY = 'ablecom_issue_fb_cache';      // 오프라인용 임시 저장
+const WHO_KEY = 'ablecom_issue_who';             // 작성자 이름
+const FB_CFG = { apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o", projectId: "openzeroc" };
+const PATH = ['nokia_issue', 'data', 'issues'];  // Firestore 경로
+
+let DB = { issues: [] };
+let FB = null;          // Firebase 함수 모음
+let ONLINE = false;     // Firestore 연결 여부
+let WHO = '';           // 작성자 이름
+
+/* ==========================================================================
+   1. 처음 데이터 (첨부 엑셀 기준, Firestore 가 비어 있을 때 한 번만 등록)
+   ========================================================================== */
+function initialIssues() {
+  const base = { customer: 'KINX', project: 'KINX 유지보수', issueDate: '2026-09-06', completeDate: '',
+                 arCase: '', content: '', problem: '', cause: '', memo: '' };
+  const mk = (o) => Object.assign({}, base, { progress: [] }, o, { updatedAt: new Date().toISOString(), updatedBy: '초기 등록' });
+  return [
+    mk({ no: '0001', status: ING,
+      title: '도곡-분당 S13X100R 파장 및 경로 설정 이슈',
+      content: '(DG.ROADM.01 S13 ~ BD.ROADM.01 S13)',
+      progress: [{ date: '2026-09-22', text: '추후 실망 작업 시 실망에서 진행', who: '' }],
+      problem: '해당 회선 리라우팅 및 회선 재구성 시 파장 및 경로 수동 구성 불가.\n자동 회선 구성으로 현재 파장 중첩 및 Protection 경로가 상암SL1 경유',
+      cause: '실망 dB Restore 후 사내에서 확인 시 특이사항 없음\n(추가 원인분석은 재발생시 진행)' }),
+    mk({ no: '0002', status: ING, arCase: 'Case 59992263',
+      title: '분당 제어부 카드 절체 간 OT 순단 발생' }),
+    mk({ no: '0003', status: ING, arCase: 'Case 05938514',
+      title: '분당 Power Adjustment 및 Cluster Link Down 알람 주기적 발생',
+      problem: '분당 기준 인접노드 장애\n\n- Power Adjustment Failure, Communication time-out with upstream node\n\n[영향구간]\n분당 2/1 Egress → 도곡 2/3 Ingress\n분당 2/3 Egress → 가산 1/3 Ingress\n분당 2/2 Egress → 과천 1/3 Ingress',
+      cause: 'Debug Log 분석 결과,\n분당 IRDM20 Input/Output Power 값 Reading 중 지속적인 Timeout 발생 확인\n\nAuto Power Management를 수행하는 SCOT 관련 Processor에 Queued Signal이 다량 누적되어 처리 지연\n\n분당 2/2 IRDM20의 Power 값 Reading 지연 및 Timeout으로 Power Adjustment Failure 발생, 인접노드 요청 명령 거부(Timeout)',
+      memo: 'KINX와 유니트 교체 일정 협의 완료\n(교체 예정일: 2026-09-22)' }),
+    mk({ no: '0004', status: DONE, arCase: 'Case 06031897', completeDate: '2026-09-22',
+      title: '도곡-분당 S13X100R Working 경로 및 ZA향 레벨 이슈',
+      content: '(DG.ROADM.02 S13 ~ BD.ROADM.02 S13)',
+      problem: '도곡-분당 선로 작업 후 해당 라인카드 Working 경로가 도곡-분당 → 도곡-과천-분당으로 리라우팅\n분당센터 과천향 IRDM20 LINEOUT에서 해당 파장 레벨 Detect 불가',
+      cause: '3번 이슈(분당 2/2 IRDM20 Power 이슈)와의 연관 가능성으로 추정',
+      memo: 'dB Restore 후 TEST LAB 구성하여 원인분석 및 관련 dB수정 예정' })
+  ];
+}
+
+/* ==========================================================================
+   2. 도우미
+   ========================================================================== */
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => fmtDate(new Date());
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stBadge = s => `<span class="st ${s === DONE ? 'st-done' : 'st-ing'}">${s}</span>`;
+const daysSince = d => d ? Math.round((new Date(today() + 'T00:00:00') - new Date(d + 'T00:00:00')) / 86400000) : 0;
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+function getIssue(no) { return DB.issues.find(i => i.no === no); }
+function sortedProgress(i) { return [...(i.progress || [])].sort((a, b) => (b.date || '').localeCompare(a.date || '')); }
+function toast(msg, err) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function download(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+// 빠진 항목을 채워 넣습니다 (예전 데이터 호환)
+function normalize(d, no) {
+  return Object.assign({ no, customer: '', project: '', status: ING, issueDate: '', completeDate: '', arCase: '',
+    title: '', content: '', problem: '', cause: '', memo: '', progress: [], updatedAt: '', updatedBy: '' }, d, { no });
+}
+// 다음 문서번호 : 0001, 0002 …
+function nextNo() {
+  const max = DB.issues.reduce((m, i) => Math.max(m, parseInt(i.no, 10) || 0), 0);
+  return String(max + 1).padStart(4, '0');
+}
+function saveWho(v) { WHO = (v || '').trim(); try { localStorage.setItem(WHO_KEY, WHO); } catch (e) {} }
+
+/* ==========================================================================
+   3. Firestore 연결
+   ========================================================================== */
+function setConn(text, cls) {
+  const el = document.getElementById('conn');
+  el.textContent = text; el.className = 'conn ' + (cls || '');
+}
+
+async function initFirebase() {
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
+    ]);
+    const app = appMod.initializeApp(FB_CFG);
+    const db = fsMod.getFirestore(app);
+    FB = { db, ...fsMod };
+    FB.col = fsMod.collection(db, ...PATH);
+
+    // 실시간 구독 : 다른 사람이 고치면 내 화면도 바로 바뀝니다
+    fsMod.onSnapshot(FB.col,
+      snap => {
+        ONLINE = true;
+        setConn('온라인 · 팀 공유 중', 'on');
+        applySnapshot(snap.docs.map(d => normalize(d.data(), d.id)));
+        if (snap.empty) seedIfNeeded();
+      },
+      err => { console.error(err); goOffline('연결 실패 · 오프라인'); }
+    );
+  } catch (e) { console.error(e); goOffline('오프라인 모드'); }
+}
+
+function goOffline(msg) {
+  ONLINE = false; setConn(msg, 'off');
+  if (!DB.issues.length) loadLocal();
+  renderCurrent();
+}
+
+// Firestore 가 비어 있으면 처음 데이터를 한 번만 넣습니다
+async function seedIfNeeded() {
+  try {
+    const metaRef = FB.doc(FB.db, 'nokia_issue', 'data', 'meta', 'config');
+    const metaSnap = await FB.getDoc(metaRef);
+    if (metaSnap.exists()) return;
+    for (const i of initialIssues()) await FB.setDoc(FB.doc(FB.col, i.no), i);
+    await FB.setDoc(metaRef, { seeded: true, at: new Date().toISOString() });
+    toast('처음 데이터 4건을 등록했습니다.');
+  } catch (e) { console.error(e); }
+}
+
+// 서버 데이터가 들어오면 화면에 반영 (입력 중일 때는 편집창을 다시 그리지 않습니다)
+function applySnapshot(list) {
+  const edBox = document.getElementById('editor');
+  const typing = document.activeElement && edBox.contains(document.activeElement);
+  const mine = typing ? getIssue(SEL) : null;
+  DB.issues = list.sort((a, b) => a.no.localeCompare(b.no));
+  if (mine) { const k = DB.issues.findIndex(x => x.no === mine.no); if (k >= 0) DB.issues[k] = mine; }
+  saveLocal();
+  renderList();
+  if (!typing) renderEditor();
+  if (document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
+}
+
+// 오프라인 임시 저장
+function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(DB.issues)); } catch (e) {} }
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    DB.issues = raw ? JSON.parse(raw).map(d => normalize(d, d.no)) : initialIssues();
+  } catch (e) { DB.issues = initialIssues(); }
+}
+
+// 이슈 한 건 저장
+async function saveIssue(i, quiet) {
+  i.updatedAt = new Date().toISOString();
+  i.updatedBy = WHO || '이름 미입력';
+  saveLocal();
+  const s = document.getElementById('saved');
+  if (s) s.textContent = ONLINE ? '저장 중…' : '오프라인 저장';
+  if (!ONLINE) return;
+  try {
+    await FB.setDoc(FB.doc(FB.col, i.no), JSON.parse(JSON.stringify(i)));
+    if (s) s.textContent = '저장됨 ' + new Date().toTimeString().slice(0, 5);
+  } catch (e) {
+    console.error(e);
+    if (s) s.textContent = '저장 실패';
+    if (!quiet) toast('저장에 실패했습니다. 인터넷 연결을 확인하세요.', true);
+  }
+}
+// 글자를 입력하는 동안에는 잠깐 모아서 저장합니다
+let saveTimer = null;
+function scheduleSave(i) { clearTimeout(saveTimer); saveTimer = setTimeout(() => saveIssue(i, true), 700); }
+
+/* ==========================================================================
+   4. 화면 전환
+   ========================================================================== */
+let FILTER = ING, SEL = null, EDIT_P = null;
+
+function goView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'issues') { renderList(); renderEditor(); }
+  if (name === 'backup') document.getElementById('db-path').textContent = PATH.join(' / ') + ' / {문서번호}';
+  window.scrollTo(0, 0);
+}
+function renderCurrent() {
+  const v = document.querySelector('.view.active');
+  goView(v ? v.id.replace('view-', '') : 'dashboard');
+}
+function openIssue(no) { const i = getIssue(no); FILTER = i.status; SEL = no; EDIT_P = null; goView('issues'); }
+
+/* ==========================================================================
+   5. 대시보드
+   ========================================================================== */
+function thisWeek() {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const mon = new Date(t); mon.setDate(t.getDate() - (t.getDay() + 6) % 7);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return [fmtDate(mon), fmtDate(sun)];
+}
+
+function renderDashboard() {
+  const all = DB.issues, ing = all.filter(i => i.status === ING), done = all.filter(i => i.status === DONE);
+  const [wFrom, wTo] = thisWeek();
+  const weekCnt = all.reduce((n, i) => n + (i.progress || []).filter(p => p.date >= wFrom && p.date <= wTo).length, 0);
+  const noProg = ing.filter(i => !(i.progress || []).length).length;
+  document.getElementById('dash-sub').textContent = `기준일 ${today()} · 이번 주 ${wFrom.slice(5).replace('-', '/')} ~ ${wTo.slice(5).replace('-', '/')}`;
+
+  const card = (label, value, sub, color, onclick) =>
+    `<button class="stat-card" style="border-left-color:${color};" onclick="${onclick}">
+       <div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></button>`;
+  document.getElementById('dash-stats').innerHTML =
+    card('전체 이슈', all.length, esc([...new Set(all.map(i => i.customer))].filter(Boolean).join(', ')) || '-', 'var(--ink-2)', "FILTER='all'; goView('issues')") +
+    card('진행 중', ing.length, noProg ? `진행 기록 없는 이슈 ${noProg}건` : '모두 진행 기록 있음', 'var(--warn)', `FILTER='${ING}'; goView('issues')`) +
+    card('완료', done.length, all.length ? `완료율 ${Math.round(done.length / all.length * 100)}%` : '-', 'var(--good)', `FILTER='${DONE}'; goView('issues')`) +
+    card('이번 주 추가 진행', weekCnt, '이번 주에 기록된 진행 건수', 'var(--brass)', "goView('issues')");
+
+  const open = [...ing].sort((a, b) => (a.issueDate || '').localeCompare(b.issueDate || ''));
+  document.getElementById('dash-open').innerHTML = open.length ? `<table class="table">
+    <thead><tr><th>경과</th><th>이슈</th><th>최근 진행</th></tr></thead><tbody>
+    ${open.map(i => { const last = sortedProgress(i)[0]; return `
+      <tr class="row-link" onclick="openIssue('${i.no}')">
+        <td style="width:62px; white-space:nowrap;"><span class="age">${daysSince(i.issueDate)}</span><span class="t-sub">일</span></td>
+        <td><div class="t-title"><span class="no-tag">${i.no}</span> ${esc(i.title) || '(이슈명 없음)'}</div>
+            <div class="t-sub">${esc(i.customer)}${i.project ? ' · ' + esc(i.project) : ''} · ${esc(i.issueDate)}${i.arCase ? ' · ' + esc(i.arCase) : ''}</div></td>
+        <td style="width:36%;">${last ? `<div class="t-sub" style="margin:0 0 2px;">${last.date || '날짜 없음'}</div><div class="clip">${esc(last.text)}</div>`
+                                     : '<span class="t-sub" style="color:var(--accent);">진행 기록 없음</span>'}</td>
+      </tr>`; }).join('')}</tbody></table>` : '<div class="prog-empty">진행 중인 이슈가 없습니다.</div>';
+
+  // 프로젝트별 현황
+  const projs = {};
+  all.forEach(i => { const k = i.project || '(프로젝트 미지정)'; projs[k] = projs[k] || { ing: 0, done: 0 }; projs[k][i.status === DONE ? 'done' : 'ing']++; });
+  const keys = Object.keys(projs).sort();
+  document.getElementById('dash-proj').innerHTML = keys.length ? `<table class="table">
+    <thead><tr><th>프로젝트</th><th style="text-align:right;">진행 중</th><th style="text-align:right;">완료</th></tr></thead><tbody>
+    ${keys.map(k => `<tr><td>${esc(k)}</td>
+      <td style="text-align:right; font-weight:600; color:var(--warn);">${projs[k].ing}</td>
+      <td style="text-align:right; color:var(--good);">${projs[k].done}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="prog-empty">등록된 이슈가 없습니다.</div>';
+
+  const recent = [];
+  all.forEach(i => (i.progress || []).forEach(p => recent.push({ i, p })));
+  recent.sort((a, b) => (b.p.date || '').localeCompare(a.p.date || ''));
+  document.getElementById('dash-recent').innerHTML = recent.length ? `<div class="timeline">${recent.slice(0, 8).map((r, k) => `
+    <div class="tl-item ${k === 0 ? 'latest' : ''}">
+      <div class="tl-head"><span class="tl-date">${r.p.date || '날짜 없음'}</span>
+        ${r.p.who ? `<span class="tl-who">${esc(r.p.who)}</span>` : ''}
+        <button class="tl-issue" onclick="openIssue('${r.i.no}')">${r.i.no}. ${esc(r.i.title)}</button></div>
+      <div class="tl-body">${esc(r.p.text)}</div>
+    </div>`).join('')}</div>` : '<div class="prog-empty">아직 기록된 진행 내용이 없습니다.</div>';
+}
+
+/* ==========================================================================
+   6. 목록
+   ========================================================================== */
+function renderList() {
+  const ing = DB.issues.filter(i => i.status === ING).length;
+  document.getElementById('summary').innerHTML = `전체 <b>${DB.issues.length}</b>건 · 진행 중 <b>${ing}</b>건 · 완료 <b>${DB.issues.length - ing}</b>건`;
+
+  const cnt = f => f === 'all' ? DB.issues.length : DB.issues.filter(i => i.status === f).length;
+  document.getElementById('filter').innerHTML = [[ING, '진행 중'], [DONE, '완료'], ['all', '전체']].map(([f, label]) =>
+    `<button class="${FILTER === f ? 'active' : ''}" onclick="FILTER='${f}'; renderList()">${label}<span class="c">${cnt(f)}</span></button>`).join('');
+
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const rows = DB.issues.filter(i => (FILTER === 'all' || i.status === FILTER) &&
+    (!q || [i.no, i.title, i.project, i.arCase, i.content, i.problem, i.cause, i.memo, i.customer].join(' ').toLowerCase().includes(q)));
+
+  document.getElementById('list').innerHTML = rows.length ? rows.map(i => {
+    const last = sortedProgress(i)[0];
+    return `<button class="item ${i.no === SEL ? 'sel' : ''} ${i.status === DONE ? 'done' : ''}" onclick="selectIssue('${i.no}')">
+      <div class="item-top"><span class="no-tag">${i.no}</span>${stBadge(i.status)}${i.project ? `<span class="proj">${esc(i.project)}</span>` : ''}</div>
+      <div class="item-title">${esc(i.title) || '(이슈명 없음)'}</div>
+      <div class="item-meta">${esc(i.customer)} · ${esc(i.issueDate)}${i.status === DONE && i.completeDate ? ' → 완료 ' + i.completeDate : (last && last.date ? ' · 최근 진행 ' + last.date.slice(5) : '')}</div>
+    </button>`;
+  }).join('') : `<div class="empty">${q ? '검색 결과가 없습니다.' : '이 상태의 이슈가 없습니다.'}</div>`;
+}
+function selectIssue(no) { SEL = no; EDIT_P = null; renderList(); renderEditor(); }
+
+/* ==========================================================================
+   7. 편집창 (입력하면 자동 저장)
+   ========================================================================== */
+const FIELDS = [['problem', '문제점'], ['cause', '원인분석']];
+
+function renderEditor() {
+  const box = document.getElementById('editor');
+  const i = getIssue(SEL);
+  if (!i) {
+    box.innerHTML = `<div class="no-sel">왼쪽 목록에서 이슈를 선택하세요.<br><button class="btn btn-primary" onclick="addIssue()">+ 새 이슈 등록</button></div>`;
+    return;
+  }
+  const prog = sortedProgress(i);
+  box.innerHTML = `
+    <div class="ed-head">
+      <div><span class="ed-no">문서번호 ${i.no}</span><span class="saved" id="saved">${i.updatedBy ? '최근 수정 ' + esc(i.updatedBy) : '자동 저장'}</span></div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div class="status-toggle" role="group" aria-label="처리 상태">
+          <button class="${i.status === ING ? 'on-ing' : ''}" onclick="setStatus('${ING}')">진행 중</button>
+          <button class="${i.status === DONE ? 'on-done' : ''}" onclick="setStatus('${DONE}')">완료</button>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteIssue()">삭제</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label for="e-title">이슈명</label>
+      <input class="inp title-inp" id="e-title" data-f="title" value="${esc(i.title)}" placeholder="예) 분당 제어부 카드 절체 간 OT 순단 발생">
+    </div>
+    <div class="grid5">
+      <div class="fg"><label for="e-customer">고객사</label><input class="inp" id="e-customer" data-f="customer" list="dl-customer"></div>
+      <div class="fg"><label for="e-project">프로젝트</label><input class="inp" id="e-project" data-f="project" list="dl-project" placeholder="예) KINX 유지보수"></div>
+      <div class="fg"><label for="e-date">Issue Day</label><input type="date" class="inp" id="e-date" data-f="issueDate"></div>
+      <div class="fg"><label for="e-complete">Complete</label><input type="date" class="inp" id="e-complete" data-f="completeDate"></div>
+      <div class="fg"><label for="e-ar">AR Case Open</label><input class="inp" id="e-ar" data-f="arCase" placeholder="예) Case 59992263"></div>
+    </div>
+
+    <div class="grid2">
+      ${FIELDS.map(([f, label]) => `<div class="fg"><label for="e-${f}">${label}</label><textarea class="inp" id="e-${f}" data-f="${f}">${esc(i[f])}</textarea></div>`).join('')}
+    </div>
+    <div class="fg">
+      <label for="e-content">Issue 내용 (상세)</label>
+      <textarea class="inp" id="e-content" data-f="content" placeholder="구간, 장비, 현상 등 상세 설명 (내용이 많아지면 칸이 자동으로 늘어납니다)">${esc(i.content)}</textarea>
+    </div>
+
+    <div class="sec-title">추가 진행 <span class="c">총 ${prog.length}건 · 최신순</span></div>
+    <div class="prog-form" id="p-form">
+      <div class="prog-add">
+        <div><label for="p-date">날짜</label><input type="date" class="inp" id="p-date" value="${today()}"></div>
+        <div><label for="p-text">진행 내용</label>
+          <textarea class="inp" id="p-text" placeholder="예) Nokia AR 회신 - Debug Log 추가 요청"
+            oninput="autoGrow(this)" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addProgress();}"></textarea></div>
+      </div>
+      <div class="prog-foot">
+        <span class="hint">Enter 로 추가 · Shift+Enter 로 줄바꿈</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary btn-sm" id="p-cancel" style="display:none;" onclick="cancelEditProgress()">수정 취소</button>
+          <button class="btn btn-primary" id="p-submit" onclick="addProgress()">+ 진행 추가</button>
+        </div>
+      </div>
+    </div>
+    ${prog.length ? `<div class="timeline">${prog.map((p, k) => `
+      <div class="tl-item ${k === 0 ? 'latest' : ''}">
+        <div class="tl-head">
+          <span class="tl-date">${p.date || '날짜 없음'}</span>${k === 0 ? '<span class="tl-new">최근</span>' : ''}
+          ${p.who ? `<span class="tl-who">${esc(p.who)}</span>` : ''}
+          <span class="tl-actions">
+            <button class="tl-btn" onclick="editProgress(${i.progress.indexOf(p)})">수정</button>
+            <button class="tl-btn del" onclick="delProgress(${i.progress.indexOf(p)})">삭제</button>
+          </span>
+        </div>
+        <div class="tl-body">${esc(p.text)}</div>
+      </div>`).join('')}</div>` : '<div class="prog-empty">아직 진행 내용이 없습니다. 위 칸에 첫 기록을 남겨 주세요.</div>'}
+
+    <div class="fg"><label for="e-memo">비고</label><textarea class="inp" id="e-memo" data-f="memo">${esc(i.memo)}</textarea></div>
+    <datalist id="dl-customer">${[...new Set(DB.issues.map(x => x.customer))].filter(Boolean).map(v => `<option value="${esc(v)}">`).join('')}</datalist>
+    <datalist id="dl-project">${[...new Set(DB.issues.map(x => x.project))].filter(Boolean).map(v => `<option value="${esc(v)}">`).join('')}</datalist>
+  `;
+
+  // 값 채우기 + 입력할 때마다 저장
+  box.querySelectorAll('[data-f]').forEach(el => {
+    if (el.tagName === 'INPUT') el.value = i[el.dataset.f] || '';
+    if (el.tagName === 'TEXTAREA') autoGrow(el);
+    el.addEventListener('input', () => {
+      if (el.tagName === 'TEXTAREA') autoGrow(el);
+      i[el.dataset.f] = el.value;
+      scheduleSave(i);
+      if (['title', 'customer', 'project', 'issueDate', 'completeDate', 'arCase'].includes(el.dataset.f)) renderList();
+    });
+  });
+}
+
+// 상태 바꾸기 : 완료로 바꾸면 완료일이 오늘 날짜로 자동 입력됩니다 (나중에 수정 가능)
+function setStatus(st) {
+  const i = getIssue(SEL);
+  if (i.status === st) return;
+  i.status = st;
+  let msg = `${i.no} → ${st}`;
+  if (st === DONE && !i.completeDate) { i.completeDate = today(); msg += ` (완료일 ${i.completeDate})`; }
+  saveIssue(i);
+  toast(msg);
+  renderList(); renderEditor();
+}
+
+function addProgress() {
+  const i = getIssue(SEL);
+  const text = document.getElementById('p-text').value.trim();
+  const date = document.getElementById('p-date').value || today();
+  if (!text) { toast('진행 내용을 입력하세요.', true); return; }
+  if (EDIT_P !== null) {
+    const old = i.progress[EDIT_P];
+    i.progress[EDIT_P] = { date, text, who: old.who || WHO };
+    EDIT_P = null;
+    toast('진행 내용을 수정했습니다.');
+  } else {
+    i.progress.push({ date, text, who: WHO });
+  }
+  saveIssue(i);
+  renderList(); renderEditor();
+  document.getElementById('p-text').focus();
+}
+
+function editProgress(idx) {
+  const p = getIssue(SEL).progress[idx];
+  EDIT_P = idx;
+  document.getElementById('p-date').value = p.date || '';
+  const ta = document.getElementById('p-text');
+  ta.value = p.text; autoGrow(ta); ta.focus();
+  document.getElementById('p-form').classList.add('editing');
+  document.getElementById('p-submit').textContent = '수정 저장';
+  document.getElementById('p-cancel').style.display = '';
+  document.getElementById('p-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function cancelEditProgress() { EDIT_P = null; renderEditor(); }
+
+function delProgress(idx) {
+  const i = getIssue(SEL);
+  if (!confirm('이 진행 내용을 삭제할까요?')) return;
+  i.progress.splice(idx, 1);
+  EDIT_P = null;
+  saveIssue(i);
+  renderList(); renderEditor();
+}
+
+async function addIssue() {
+  const last = DB.issues[DB.issues.length - 1] || {};
+  const i = normalize({ customer: last.customer || '', project: last.project || '', status: ING,
+                        issueDate: today(), progress: [] }, nextNo());
+  DB.issues.push(i);
+  FILTER = ING; SEL = i.no; EDIT_P = null;
+  await saveIssue(i);
+  goView('issues');
+  const t = document.getElementById('e-title'); if (t) t.focus();
+  toast(`문서번호 ${i.no} 을(를) 만들었습니다.`);
+}
+
+async function deleteIssue() {
+  const i = getIssue(SEL);
+  if (!confirm(`문서번호 ${i.no}\n${i.title || '(이슈명 없음)'}\n\n삭제할까요? 되돌릴 수 없습니다.`)) return;
+  DB.issues = DB.issues.filter(x => x.no !== i.no);
+  SEL = null;
+  saveLocal(); renderList(); renderEditor();
+  if (ONLINE) { try { await FB.deleteDoc(FB.doc(FB.col, i.no)); } catch (e) { toast('삭제 반영에 실패했습니다.', true); return; } }
+  toast('삭제했습니다.');
+}
+
+/* ==========================================================================
+   8. 엑셀 출력
+   ========================================================================== */
+const COLS = [
+  { h: '문서번호', w: 10 }, { h: '고객사', w: 9 }, { h: '프로젝트', w: 16 }, { h: '처리 상태', w: 10 },
+  { h: 'Issue Day', w: 12 }, { h: 'Complete', w: 12 }, { h: 'AR Case Open', w: 15 },
+  { h: 'Issue 내용', w: 36 }, { h: '추가 진행', w: 34 }, { h: '문제점', w: 40 }, { h: '원인분석', w: 42 }, { h: '비고', w: 30 }
+];
+function rowValues(i) {
+  const prog = [...(i.progress || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+    .map(p => (p.date ? p.date.slice(5).replace('-', '/') + ' ' : '') + p.text).join('\n');
+  return [i.no, i.customer, i.project, i.status, i.issueDate, i.completeDate || '', i.arCase,
+          i.title + (i.content ? '\n' + i.content : ''), prog, i.problem, i.cause, i.memo];
+}
+function estLines(text, w) {
+  let n = 0;
+  String(text || '').split('\n').forEach(l => { let c = 0; for (const ch of l) c += ch.charCodeAt(0) > 127 ? 2 : 1; n += Math.max(1, Math.ceil(c / (w * 1.85))); });
+  return Math.max(1, n);
+}
+
+async function exportExcel() {
+  const list = [...DB.issues].sort((a, b) => a.no.localeCompare(b.no));
+  if (!list.length) { toast('출력할 이슈가 없습니다.', true); return; }
+  const fname = today().replace(/-/g, '') + '_Issue_Report';
+  if (typeof ExcelJS === 'undefined') { exportSimple(list, fname); return; }
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Issue Report', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+    views: [{ state: 'frozen', ySplit: 3 }]
+  });
+  const F = '맑은 고딕', NAVY = 'FF1F4E78', LINE = { style: 'thin', color: { argb: 'FFD9D9D9' } };
+  ws.columns = COLS.map(c => ({ width: c.w }));
+
+  ws.mergeCells(1, 1, 1, COLS.length);
+  ws.getCell(1, 1).value = 'Issue Report';
+  ws.getCell(1, 1).font = { name: F, size: 22, bold: true, color: { argb: NAVY } };
+  ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(1).height = 38;
+
+  ws.mergeCells(2, 1, 2, COLS.length);
+  ws.getCell(2, 1).value = `에이블컴 기술팀  |  기준일 ${today()}  |  진행 중 ${list.filter(i => i.status === ING).length}건 / 완료 ${list.filter(i => i.status === DONE).length}건`;
+  ws.getCell(2, 1).font = { name: F, size: 10, color: { argb: 'FF808080' } };
+  ws.getCell(2, 1).alignment = { horizontal: 'center' };
+
+  const hr = ws.getRow(3);
+  COLS.forEach((c, k) => {
+    const cell = hr.getCell(k + 1);
+    cell.value = c.h;
+    cell.font = { name: F, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = { left: { style: 'thin', color: { argb: 'FFFFFFFF' } }, right: { style: 'thin', color: { argb: 'FFFFFFFF' } } };
+  });
+  hr.height = 28;
+
+  list.forEach((i, r) => {
+    const row = ws.getRow(4 + r);
+    let lines = 1;
+    rowValues(i).forEach((v, k) => {
+      const cell = row.getCell(k + 1);
+      cell.value = v;
+      const center = k <= 6;
+      cell.font = { name: F, size: 10, bold: k === 0 || k === 3,
+                    color: { argb: k === 3 ? (i.status === DONE ? 'FF2F6A4A' : 'FFB86A1A') : 'FF333333' } };
+      cell.alignment = { horizontal: center ? 'center' : 'left', vertical: center ? 'middle' : 'top', wrapText: true };
+      cell.border = { top: LINE, left: LINE, bottom: LINE, right: LINE };
+      if (r % 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F9FC' } };
+      if (k >= 7) lines = Math.max(lines, estLines(v, COLS[k].w));
+    });
+    row.height = Math.min(409, Math.max(34, lines * 14 + 10));
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname + '.xlsx');
+  toast('엑셀 파일을 만들었습니다.');
+}
+
+function exportSimple(list, fname) {
+  const td = v => `<td>${esc(v).replace(/\n/g, '<br style="mso-data-placement:same-cell;">')}</td>`;
+  const html = `<html><head><meta charset="UTF-8"><style>td,th{border:1px solid #c0c0c0;font-family:'맑은 고딕';font-size:10pt;vertical-align:top;}th{background:#1F4E78;color:#fff;}</style></head><body>
+    <table><tr><td colspan="${COLS.length}" style="border:none;font-size:20pt;font-weight:bold;color:#1F4E78;text-align:center;">Issue Report</td></tr>
+    <tr>${COLS.map(c => `<th style="width:${c.w * 7}px">${c.h}</th>`).join('')}</tr>
+    ${list.map(i => `<tr>${rowValues(i).map(td).join('')}</tr>`).join('')}</table></body></html>`;
+  download(new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' }), fname + '.xls');
+  toast('인터넷 연결이 없어 간이 엑셀(.xls)로 저장했습니다.');
+}
+
+/* ==========================================================================
+   9. 백업 · 복원
+   ========================================================================== */
+function backupJSON() {
+  download(new Blob([JSON.stringify({ issues: DB.issues }, null, 2)], { type: 'application/json' }),
+           `NokiaIssue_backup_${today().replace(/-/g, '')}.json`);
+  toast('백업 파일을 받았습니다.');
+}
+function restoreJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const list = (Array.isArray(data) ? data : data.issues) || [];
+      if (!list.length) throw 0;
+      if (!confirm(`백업 파일의 이슈 ${list.length}건을 올릴까요?\n문서번호가 같은 이슈는 덮어씁니다.`)) return;
+      let n = 0;
+      for (const raw of list) {
+        const i = normalize(raw, raw.no || String(++n).padStart(4, '0'));
+        const k = DB.issues.findIndex(x => x.no === i.no);
+        if (k >= 0) DB.issues[k] = i; else DB.issues.push(i);
+        if (ONLINE) await FB.setDoc(FB.doc(FB.col, i.no), JSON.parse(JSON.stringify(i)));
+      }
+      saveLocal(); renderCurrent();
+      toast(`${list.length}건을 반영했습니다.`);
+    } catch (e) { console.error(e); toast('Issue 관리 백업 파일이 아닙니다.', true); }
+    finally { input.value = ''; }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+/* ==========================================================================
+   10. 시작
+   ========================================================================== */
+try { WHO = localStorage.getItem(WHO_KEY) || ''; } catch (e) {}
+document.getElementById('who').value = WHO;
+loadLocal();                                   // 먼저 캐시로 화면을 그리고
+SEL = (DB.issues.find(i => i.status === ING) || DB.issues[0] || {}).no || null;
+goView('dashboard');
+initFirebase();                                // 그다음 Firestore 에 연결합니다
+</script>
+</body>
+</html>
