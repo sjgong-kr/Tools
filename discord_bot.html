@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>출석 현황</title>
+<title>성장 현황</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,7 @@
   --line:#31314A;
   --accent:#6A73F0;
   --live:#45C77A;
+  --gold:#E8A33D;
   --warn:#E8A33D;
   --text:#EDEDF2;
   --muted:#8A8A9E;
@@ -37,28 +38,17 @@ body{
   padding:32px 20px 80px;
   -webkit-font-smoothing:antialiased;
 }
+.wrap{max-width:860px;margin:0 auto}
 
-.wrap{max-width:820px;margin:0 auto}
-
-/* ---------- 상단 연결 표시등 ---------- */
+/* ---------- 연결 표시등 ---------- */
 .status{
   display:flex;align-items:center;gap:12px;
   padding:14px 18px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--surface);
-  margin-bottom:28px;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);margin-bottom:28px;
 }
-.dot{
-  width:9px;height:9px;border-radius:50%;
-  background:var(--muted);
-  flex-shrink:0;
-}
-.dot.on{
-  background:var(--live);
-  box-shadow:0 0 0 0 rgba(69,199,122,.6);
-  animation:pulse 2.2s infinite;
-}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.dot.on{background:var(--live);box-shadow:0 0 0 0 rgba(69,199,122,.6);animation:pulse 2.2s infinite}
 .dot.err{background:var(--warn)}
 @keyframes pulse{
   70%{box-shadow:0 0 0 9px rgba(69,199,122,0)}
@@ -70,120 +60,124 @@ body{
 /* ---------- 제목 ---------- */
 h1{
   font-family:var(--display);
-  font-size:clamp(28px,6vw,40px);
-  font-weight:700;
-  letter-spacing:-.02em;
-  margin-bottom:6px;
+  font-size:clamp(28px,6vw,40px);font-weight:700;
+  letter-spacing:-.02em;margin-bottom:6px;
 }
 .sub{color:var(--muted);font-size:14px;margin-bottom:32px}
 
-/* ---------- 통계 ---------- */
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:36px;
-}
-.stat{
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--surface);
-  padding:18px 16px;
-}
-.stat .num{
-  font-family:var(--display);
-  font-size:32px;font-weight:700;
-  line-height:1;
-  display:block;margin-bottom:6px;
-}
-.stat .lbl{font-size:12px;color:var(--muted)}
-.stat.today .num{color:var(--live)}
-
-/* ---------- 기록 목록 ---------- */
-.head{
-  display:flex;justify-content:space-between;align-items:baseline;
-  margin-bottom:14px;
-}
+/* ---------- 섹션 머리 ---------- */
+.head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
 .head h2{
-  font-family:var(--display);
-  font-size:15px;font-weight:500;
-  letter-spacing:.04em;text-transform:uppercase;
-  color:var(--muted);
+  font-family:var(--display);font-size:15px;font-weight:500;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
 }
 .count{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
-.list{display:flex;flex-direction:column;gap:8px}
-
-.filters{
-  display:flex;flex-wrap:wrap;gap:6px;
-  margin-bottom:14px;
+/* ---------- 오늘 합계 ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px}
+.stat{
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);padding:18px 16px;
 }
+.stat .num{
+  font-family:var(--display);font-size:30px;font-weight:700;
+  line-height:1.1;display:block;margin-bottom:6px;
+}
+.stat .lbl{font-size:12px;color:var(--muted)}
+.stat.exp .num{color:var(--live)}
+.stat.ad  .num{color:var(--gold)}
+
+/* ---------- 순위 ---------- */
+.rank{margin-bottom:36px}
+.rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rank-card{
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);padding:16px;
+}
+.rank-card h3{
+  font-size:12px;font-weight:600;color:var(--muted);
+  letter-spacing:.03em;margin-bottom:12px;
+}
+.rank-row{
+  display:flex;align-items:baseline;gap:10px;
+  padding:9px 0;border-bottom:1px solid rgba(49,49,74,.5);
+}
+.rank-row:last-child{border-bottom:0}
+.rk{font-family:var(--mono);font-size:12px;color:var(--muted);width:20px;flex-shrink:0}
+.rk.top{color:var(--gold);font-weight:500}
+.rname{flex:1;font-size:13px;font-weight:600;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rval{font-family:var(--mono);font-size:13px;text-align:right;flex-shrink:0}
+.rrate{
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  flex-shrink:0;width:96px;text-align:right;
+}
+.rank-card.exp .rval{color:var(--live)}
+.rank-card.ad  .rval{color:var(--gold)}
+
+/* ---------- 필터 ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .chip{
   font-family:var(--body);font-size:12px;
   padding:6px 13px;border-radius:999px;
-  border:1px solid var(--line);
-  background:transparent;color:var(--muted);
+  border:1px solid var(--line);background:transparent;color:var(--muted);
   cursor:pointer;transition:.15s;
 }
 .chip:hover{border-color:var(--accent);color:var(--text)}
-.chip.sel{
-  background:var(--accent);border-color:var(--accent);
-  color:#fff;font-weight:600;
-}
+.chip.sel{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 .chip:focus-visible{outline:2px solid var(--live);outline-offset:2px}
 
+/* ---------- 기록 목록 ---------- */
+.list{display:flex;flex-direction:column;gap:8px}
 .row{
   display:flex;align-items:flex-start;gap:14px;
   padding:14px 16px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;background:var(--surface);
 }
 .row.new{animation:slide .5s ease}
 @keyframes slide{
   from{opacity:0;transform:translateY(-8px);border-color:var(--accent)}
   to{opacity:1;transform:none}
 }
-
 .tag{
-  font-size:11px;font-weight:600;
-  padding:3px 9px;border-radius:6px;
-  flex-shrink:0;margin-top:2px;
-  background:var(--surface-2);color:var(--muted);
+  font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;
+  flex-shrink:0;margin-top:2px;background:var(--surface-2);color:var(--muted);
 }
-.tag.출석{background:rgba(69,199,122,.14);color:var(--live)}
+.tag.경험치{background:rgba(69,199,122,.14);color:var(--live)}
+.tag.아데나{background:rgba(232,163,61,.16);color:var(--gold)}
+.tag.출석{background:rgba(106,115,240,.16);color:var(--accent)}
 .tag.등록{background:rgba(106,115,240,.16);color:var(--accent)}
-.tag.경험치{background:rgba(106,115,240,.16);color:var(--accent)}
-.tag.아데나{background:rgba(232,163,61,.16);color:var(--warn)}
 
 .body-col{flex:1;min-width:0}
 .who{font-size:13px;font-weight:600;margin-bottom:2px}
 .txt{font-size:14px;color:#C9C9D6;word-break:break-word}
-.when{
-  font-family:var(--mono);font-size:11px;color:var(--muted);
-  flex-shrink:0;margin-top:3px;
+.rate{
+  font-family:var(--mono);font-size:12px;color:var(--live);
+  margin-top:3px;
 }
+.rate.ad{color:var(--gold)}
+.when{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px}
 
-/* ---------- 빈 화면 / 오류 ---------- */
-.empty{
-  border:1px dashed var(--line);
-  border-radius:12px;
-  padding:40px 20px;text-align:center;
-}
+/* ---------- 빈 화면 ---------- */
+.empty{border:1px dashed var(--line);border-radius:12px;padding:36px 20px;text-align:center}
 .empty p{color:var(--muted);font-size:14px;margin-bottom:10px}
+.empty p:last-child{margin-bottom:0}
 .empty code{
   font-family:var(--mono);font-size:13px;
   background:var(--surface-2);color:var(--accent);
   padding:4px 9px;border-radius:6px;
 }
 
+@media (max-width:640px){
+  .rank-grid{grid-template-columns:1fr}
+  .rrate{width:auto}
+}
 @media (max-width:520px){
   .stats{grid-template-columns:1fr;gap:8px}
   .stat{display:flex;align-items:baseline;gap:12px}
-  .stat .num{margin:0;font-size:26px}
+  .stat .num{margin:0;font-size:24px}
   .when{display:none}
 }
-
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
@@ -201,10 +195,18 @@ h1{
   <p class="sub">디스코드에서 남긴 기록이 이 화면에 바로 나타납니다.</p>
 
   <div class="stats">
-    <div class="stat today"><span class="num" id="sExp">0</span><span class="lbl">오늘 경험치 (%p)</span></div>
-    <div class="stat"><span class="num" id="sAdena">0</span><span class="lbl">오늘 아데나</span></div>
-    <div class="stat"><span class="num" id="sAll">0</span><span class="lbl">전체 기록</span></div>
+    <div class="stat exp"><span class="num" id="sExp">0</span><span class="lbl">오늘 경험치 (%p)</span></div>
+    <div class="stat ad"><span class="num" id="sAdena">0</span><span class="lbl">오늘 아데나</span></div>
+    <div class="stat"><span class="num" id="sPeople">0</span><span class="lbl">오늘 참여자</span></div>
   </div>
+
+  <section class="rank">
+    <div class="head">
+      <h2>오늘 순위</h2>
+      <span class="count" id="rankDate"></span>
+    </div>
+    <div class="rank-grid" id="rankGrid"></div>
+  </section>
 
   <div class="head">
     <h2>기록</h2>
@@ -219,7 +221,7 @@ h1{
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ============================================================
-   1. Firebase 설정  ← 여기만 본인 값으로 바꾸세요
+   1. Firebase 설정
    ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyBD5-AJDFJKsneHyqH70SlNU9VixDAHl3o",
@@ -231,6 +233,7 @@ const firebaseConfig = {
 };
 
 const COLLECTION = "discord";
+const LIST_LIMIT = 40;          // 기록 목록에서 읽어올 건수
 
 /* ============================================================
    2. 초기화
@@ -249,15 +252,40 @@ function setStatus(state, msg){
   statusText.innerHTML = msg;
 }
 
+/* 한국 시간 기준 오늘 날짜 (봇이 KST로 저장하므로 맞춰준다) */
+function todayKeyKST(){
+  const kst = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000);
+  const p = n => String(n).padStart(2, "0");
+  return kst.getFullYear() + "-" + p(kst.getMonth()+1) + "-" + p(kst.getDate());
+}
+
+const TODAY = todayKeyKST();
+document.getElementById("rankDate").textContent = TODAY;
+
 try{
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
 
-  /* ----- 실시간 구독 ----- */
+  /* ----- (1) 순위·합계: 일별 집계 문서만 읽는다 -----
+     봇이 daily_<사용자>_<날짜> 문서에 미리 합산해두기 때문에
+     사람 수만큼만 읽으면 된다. 기록이 수천 건이어도 비용이 그대로다. */
+  db.collection(COLLECTION)
+    .where("date", "==", TODAY)
+    .onSnapshot(
+      snap => renderRank(snap.docs.map(d => d.data())),
+      err  => {
+        document.getElementById("rankGrid").innerHTML =
+          '<div class="empty"><p>순위를 불러오지 못했습니다.</p>' +
+          '<p>' + esc(err.message) + '</p></div>';
+      }
+    );
+
+  /* ----- (2) 기록 목록 -----
+     집계·상태·설정 문서는 createdAt 이 없어서 이 결과에 섞이지 않는다. */
   db.collection(COLLECTION)
     .orderBy("createdAt", "desc")
-    .limit(50)
+    .limit(LIST_LIMIT)
     .onSnapshot(
       snap => {
         setStatus("on", "실시간 연결됨 · 컬렉션 <b>" + COLLECTION + "</b>");
@@ -267,18 +295,76 @@ try{
         setStatus("err", "연결 실패 · " + err.code);
         listEl.innerHTML =
           '<div class="empty"><p>Firestore를 읽지 못했습니다.</p>' +
-          '<p>' + err.message + '</p></div>';
+          '<p>' + esc(err.message) + '</p></div>';
       }
     );
 }catch(e){
   setStatus("err", "설정 오류");
   listEl.innerHTML =
     '<div class="empty"><p>Firebase 설정값을 확인하세요.</p>' +
-    '<p>' + e.message + '</p></div>';
+    '<p>' + esc(e.message) + '</p></div>';
 }
 
 /* ============================================================
-   3. 화면 그리기
+   3. 순위
+   ============================================================ */
+function renderRank(days){
+  const box = document.getElementById("rankGrid");
+
+  const sum = (f) => days.reduce((a, d) => a + (d[f] || 0), 0);
+  document.getElementById("sExp").textContent    = sign(sum("expPP")) + sum("expPP").toFixed(2);
+  document.getElementById("sAdena").textContent  = sign(sum("adena")) + korMoney(sum("adena"));
+  document.getElementById("sPeople").textContent = days.length;
+
+  if(days.length === 0){
+    box.innerHTML =
+      '<div class="empty"><p>오늘 기록이 아직 없습니다.</p>' +
+      '<p>디스코드에서 <code>/경험치 45 63.1075</code> 를 입력해 보세요.</p></div>';
+    return;
+  }
+
+  box.innerHTML =
+    card("exp", "경험치", days, "expPP",
+         v => sign(v) + v.toFixed(2) + "%p",
+         v => sign(v) + v.toFixed(2) + "%p/h") +
+    card("ad", "아데나", days, "adena",
+         v => sign(v) + korMoney(v),
+         v => sign(v) + korMoney(v) + "/h");
+}
+
+function card(cls, title, days, field, fmtVal, fmtRate){
+  const rows = days.filter(d => d[field]).sort((a,b) => b[field] - a[field]).slice(0,10);
+  if(rows.length === 0){
+    return '<div class="rank-card ' + cls + '"><h3>' + title + '</h3>' +
+           '<div class="rank-row"><span class="rname" style="color:var(--muted);' +
+           'font-weight:400">기록 없음</span></div></div>';
+  }
+
+  const body = rows.map((d, i) => {
+    const rate = hourlyRate(d, field);
+    return '<div class="rank-row">' +
+             '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i+1) + '</span>' +
+             '<span class="rname">' + esc(d.userName || "?") + '</span>' +
+             '<span class="rrate">' + (rate === null ? "" : fmtRate(rate)) + '</span>' +
+             '<span class="rval">' + fmtVal(d[field]) + '</span>' +
+           '</div>';
+  }).join("");
+
+  return '<div class="rank-card ' + cls + '"><h3>' + title + '</h3>' + body + '</div>';
+}
+
+/* 첫 기록 ~ 마지막 기록 사이 시간으로 시간당 효율을 낸다 */
+function hourlyRate(d, field){
+  const f = d.firstAt && d.firstAt.toDate ? d.firstAt.toDate() : null;
+  const l = d.lastAt  && d.lastAt.toDate  ? d.lastAt.toDate()  : null;
+  if(!f || !l) return null;
+  const hrs = (l - f) / 3600000;
+  if(hrs < 0.05) return null;
+  return (d[field] || 0) / hrs;
+}
+
+/* ============================================================
+   4. 기록 목록
    ============================================================ */
 function render(rows){
   allRows = rows;
@@ -286,12 +372,9 @@ function render(rows){
   draw();
 }
 
-/* 사람별 필터 칩 */
 function drawFilters(rows){
   const users = new Map();
-  rows.forEach(r => {
-    if(r.userId) users.set(r.userId, r.userName || r.userId);
-  });
+  rows.forEach(r => { if(r.userId) users.set(r.userId, r.userName || r.userId); });
 
   const box = document.getElementById("filters");
   if(users.size <= 1){ box.innerHTML = ""; return; }
@@ -311,33 +394,37 @@ function chip(id, label){
 }
 
 function draw(){
-  const rows = selUser === "all"
-    ? allRows
-    : allRows.filter(r => r.userId === selUser);
-
+  const rows = selUser === "all" ? allRows : allRows.filter(r => r.userId === selUser);
   document.getElementById("count").textContent = rows.length + "건";
-  const todayStr = new Date().toDateString();
 
   if(rows.length === 0){
     listEl.innerHTML =
       '<div class="empty"><p>아직 기록이 없습니다.</p>' +
-      '<p>디스코드에서 <code>/경험치 45 63.1075%</code> 를 입력해 보세요.</p></div>';
-    updateStats([], todayStr);
+      '<p>디스코드에서 <code>/경험치 45 63.1075</code> 를 입력해 보세요.</p></div>';
     firstLoad = false;
     return;
   }
 
   listEl.innerHTML = rows.map(r => {
-    const d    = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null;
-    const when = d ? fmt(d) : "-";
+    const d     = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null;
+    const when  = d ? fmt(d) : "-";
     const isNew = !firstLoad && !knownIds.has(r.id);
-    const type = esc(r.type || "기록");
+    const type  = esc(r.type || "기록");
+
+    /* 시간당 효율을 한 줄로 보여준다 */
+    let rate = "";
+    if(typeof r.ratePP === "number"){
+      rate = '<div class="rate">시간당 ' + sign(r.ratePP) + r.ratePP.toFixed(2) + '%p</div>';
+    }else if(typeof r.rateAdena === "number"){
+      rate = '<div class="rate ad">시간당 ' + sign(r.rateAdena) + korMoney(r.rateAdena) + '</div>';
+    }
 
     return '<div class="row' + (isNew ? ' new' : '') + '">' +
              '<span class="tag ' + type + '">' + type + '</span>' +
              '<div class="body-col">' +
                '<div class="who">' + esc(r.userName || '알 수 없음') + '</div>' +
                '<div class="txt">' + esc(r.content || '') + '</div>' +
+               rate +
              '</div>' +
              '<span class="when">' + when + '</span>' +
            '</div>';
@@ -345,33 +432,21 @@ function draw(){
 
   knownIds = new Set(allRows.map(r => r.id));
   firstLoad = false;
-  updateStats(rows, todayStr);
 }
 
-function updateStats(rows, todayStr){
-  let expPP = 0, adena = 0;
-
-  rows.forEach(r => {
-    const d = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null;
-    if(!d || d.toDateString() !== todayStr) return;
-    if(typeof r.gainPP === "number")    expPP += r.gainPP;
-    if(typeof r.gainAdena === "number") adena += r.gainAdena;
-  });
-
-  const sign = n => (n > 0 ? "+" : "");
-  document.getElementById("sExp").textContent   = sign(expPP) + expPP.toFixed(2);
-  document.getElementById("sAdena").textContent = sign(adena) + korMoney(adena);
-  document.getElementById("sAll").textContent   = rows.length;
-}
+/* ============================================================
+   5. 도우미
+   ============================================================ */
+function sign(n){ return n > 0 ? "+" : (n < 0 ? "" : ""); }
 
 /* 120000000 -> '1억 2,000만' */
 function korMoney(n){
   const neg = n < 0 ? "-" : "";
   n = Math.abs(Math.round(n));
   if(n < 10000) return neg + n.toLocaleString();
-  const eok  = Math.floor(n / 100000000);
-  const man  = Math.floor((n % 100000000) / 10000);
-  const one  = n % 10000;
+  const eok = Math.floor(n / 100000000);
+  const man = Math.floor((n % 100000000) / 10000);
+  const one = n % 10000;
   const out = [];
   if(eok) out.push(eok.toLocaleString() + "억");
   if(man) out.push(man.toLocaleString() + "만");
@@ -379,12 +454,11 @@ function korMoney(n){
   return neg + out.join(" ");
 }
 
-/* ----- 도우미 ----- */
 function fmt(d){
   const p = n => String(n).padStart(2, "0");
-  return p(d.getMonth()+1) + "/" + p(d.getDate()) + " " +
-         p(d.getHours()) + ":" + p(d.getMinutes());
+  return p(d.getMonth()+1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
+
 function esc(s){
   return String(s).replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
